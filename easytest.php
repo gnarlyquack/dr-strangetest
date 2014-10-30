@@ -2,7 +2,14 @@
 
 namespace easytest;
 
+
 final class Runner {
+    private $reporter;
+
+    public function __construct($reporter) {
+        $this->reporter = $reporter;
+    }
+
     public function run_test_case($test) {
         foreach (preg_grep('~^test~i', get_class_methods($test)) as $method) {
             $this->run_test_method($test, $method);
@@ -14,6 +21,7 @@ final class Runner {
             $test->setup();
         }
         $test->$method();
+        $this->reporter->report_success();
         if (is_callable([$test, 'teardown'])) {
             $test->teardown();
         }
@@ -21,11 +29,26 @@ final class Runner {
 }
 
 
+final class Reporter {
+    private $tests = 0;
+
+    public function report_success() {
+        ++$this->tests;
+    }
+
+    public function get_report() {
+        return $this->tests;
+    }
+}
+
+
 class TestRunner {
+    private $reporter;
     private $runner;
 
     public function setup() {
-        $this->runner = new Runner();
+        $this->reporter = new Reporter();
+        $this->runner = new Runner($this->reporter);
     }
 
     public function test_test_method() {
@@ -33,6 +56,7 @@ class TestRunner {
         assert('[] === $test->log');
         $this->runner->run_test_case($test);
         assert('["test"] === $test->log');
+        assert('1 === $this->reporter->get_report()');
     }
 
     public function test_setup_and_teardown() {
@@ -45,6 +69,7 @@ class TestRunner {
             'setup', 'test2', 'teardown',
         ];
         assert('$expected === $test->log');
+        assert('2 === $this->reporter->get_report()');
     }
 }
 
@@ -77,5 +102,7 @@ class FixtureTestCase {
 }
 
 
-$runner = new Runner();
+$reporter = new Reporter();
+$runner = new Runner($reporter);
 $runner->run_test_case(new TestRunner());
+echo 'Tests: ', $reporter->get_report(), "\n";
