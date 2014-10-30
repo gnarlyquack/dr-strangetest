@@ -20,8 +20,15 @@ final class Runner {
         if (is_callable([$test, 'setup'])) {
             $test->setup();
         }
-        $test->$method();
-        $this->reporter->report_success();
+
+        try {
+            $test->$method();
+            $this->reporter->report_success();
+        }
+        catch (\Exception $e) {
+            $this->reporter->report_error();
+        }
+
         if (is_callable([$test, 'teardown'])) {
             $test->teardown();
         }
@@ -30,14 +37,21 @@ final class Runner {
 
 
 final class Reporter {
-    private $tests = 0;
+    private $report = [
+        'Tests' => 0,
+        'Errors' => 0,
+    ];
 
     public function report_success() {
-        ++$this->tests;
+        ++$this->report['Tests'];
+    }
+
+    public function report_error() {
+        ++$this->report['Errors'];
     }
 
     public function get_report() {
-        return $this->tests;
+        return $this->report;
     }
 }
 
@@ -51,25 +65,42 @@ class TestRunner {
         $this->runner = new Runner($this->reporter);
     }
 
-    public function test_test_method() {
-        $test = new SimpleTestCase();
+    // helper assertions
+
+    private function assert_run($test, $expected) {
         assert('[] === $test->log');
         $this->runner->run_test_case($test);
-        assert('["test"] === $test->log');
-        assert('1 === $this->reporter->get_report()');
+        assert('$expected === $test->log');
+    }
+
+    private function assert_report($expected) {
+        assert('$expected === $this->reporter->get_report()');
+    }
+
+    // tests
+
+    public function test_run_test_method() {
+        $this->assert_run(new SimpleTestCase(), ['test']);
+        $this->assert_report(['Tests' => 1, 'Errors' => 0]);
     }
 
     public function test_setup_and_teardown() {
-        $test = new FixtureTestCase();
-        assert('[] === $test->log');
-        $this->runner->run_test_case($test);
+        $this->assert_run(
+            new FixtureTestCase(),
+            [
+                'setup', 'test1', 'teardown',
+                'setup', 'test2', 'teardown',
+            ]
+        );
+        $this->assert_report(['Tests' => 2, 'Errors' => 0]);
+    }
 
-        $expected = [
-            'setup', 'test1', 'teardown',
-            'setup', 'test2', 'teardown',
-        ];
-        assert('$expected === $test->log');
-        assert('2 === $this->reporter->get_report()');
+    public function test_exception() {
+        $this->assert_run(
+            new ExceptionTestCase(),
+            ['setup', 'test', 'teardown']
+        );
+        $this->assert_report(['Tests' => 0, 'Errors' => 1]);
     }
 }
 
@@ -101,8 +132,32 @@ class FixtureTestCase {
     }
 }
 
+class ExceptionTestCase {
+    public $log = [];
+
+    public function setup() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function teardown() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function test() {
+        $this->log[] = __FUNCTION__;
+        throw new \Exception();
+    }
+}
+
 
 $reporter = new Reporter();
 $runner = new Runner($reporter);
 $runner->run_test_case(new TestRunner());
-echo 'Tests: ', $reporter->get_report(), "\n";
+
+$totals = [];
+foreach ($reporter->get_report() as $type => $count) {
+    if ($count) {
+        $totals[] = "$type: $count";
+    }
+}
+echo implode(', ', $totals), "\n";
