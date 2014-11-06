@@ -9,6 +9,22 @@ interface IReporter {
 }
 
 
+final class ErrorHandler {
+    public function enable() {
+        error_reporting(-1);
+        set_error_handler([$this, 'handle_error'], error_reporting());
+    }
+
+    public function handle_error($errno, $errstr, $errfile, $errline) {
+        if (!(error_reporting() & $errno)) {
+            // This error code is not included in error_reporting
+            return;
+        }
+        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+    }
+}
+
+
 final class Runner {
     private $reporter;
 
@@ -147,6 +163,27 @@ class TestRunner extends TestCase implements IReporter {
             ],
         ]);
     }
+
+    public function test_error() {
+        $this->assert_run(
+            new ErrorTestCase(),
+            ['setup', 'test', 'teardown']
+        );
+        $this->assert_report([
+            'Tests' => 0,
+            'Errors' => [
+                ['easytest\\ErrorTestCase::test', 'Did I err?'],
+            ],
+        ]);
+    }
+
+    public function test_suppressed_error() {
+        $this->assert_run(
+            new SuppressedErrorTestCase(),
+            ['setup', 'test', 'teardown']
+        );
+        $this->assert_report(['Tests' => 1]);
+    }
 }
 
 class SimpleTestCase {
@@ -177,7 +214,7 @@ class FixtureTestCase {
     }
 }
 
-class ExceptionTestCase {
+abstract class BaseTestCase {
     public $log = [];
 
     public function setup() {
@@ -188,9 +225,27 @@ class ExceptionTestCase {
         $this->log[] = __FUNCTION__;
     }
 
+    public abstract function test();
+}
+
+class ExceptionTestCase extends BaseTestCase {
     public function test() {
         $this->log[] = __FUNCTION__;
         throw new \Exception('How exceptional!');
+    }
+}
+
+class ErrorTestCase extends BaseTestCase {
+    public function test() {
+        $this->log[] = __FUNCTION__;
+        trigger_error('Did I err?');
+    }
+}
+
+class SuppressedErrorTestCase extends BaseTestCase {
+    public function test() {
+        $this->log[] = __FUNCTION__;
+        @$foo['bar'];
     }
 }
 
@@ -230,6 +285,7 @@ class TestReporter extends TestCase {
 }
 
 
+(new ErrorHandler())->enable();
 $reporter = new Reporter();
 $runner = new Runner($reporter);
 $runner->run_test_case(new TestRunner());
