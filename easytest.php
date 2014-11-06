@@ -2,6 +2,19 @@
 
 namespace easytest;
 
+
+/*
+ * A Context object is used by the Discoverer to insulate itself from internal
+ * state changes when including files, since an included file has private-level
+ * access when included inside a class method.
+ *
+ * As a nice side effect, this same behavior also allows a Context object to
+ * store common state that can be shared among test cases.
+ */
+interface IContext {
+    public function include_file($file);
+}
+
 interface IReporter {
     public function report_success();
 
@@ -110,17 +123,48 @@ final class Failure extends \Exception {
 }
 
 
+final class Context implements IContext {
+    public function include_file($file) {
+        include $file;
+    }
+}
+
+
 final class Discoverer {
+    private $context;
     private $runner;
 
-    public function __construct(IRunner $runner) {
+    public function __construct(IRunner $runner, IContext $context) {
         $this->runner = $runner;
+        $this->context = $context;
     }
 
     public function discover_tests($path) {
-        require $path;
+        if (is_dir($path)) {
+            $this->discover_directory(rtrim($path, '/') . '/');
+        }
+        else {
+            $this->discover_file($path);
+        }
+    }
 
-        $tokens = token_get_all(file_get_contents($path));
+    private function discover_directory($dir) {
+        $files = glob("$dir*", GLOB_MARK | GLOB_NOSORT);
+
+        foreach (preg_grep('~/test[^/]*\\.php$~i', $files) as $file) {
+            $this->discover_file($file);
+        }
+
+        $files = preg_grep('~/test[^/]*/$~i', $files);
+        while ($dir = array_shift($files)) {
+            $this->discover_directory($dir);
+        }
+    }
+
+    private function discover_file($file) {
+        $this->context->include_file($file);
+
+        $tokens = token_get_all(file_get_contents($file));
         // Assume token 0 = '<?php' and token 1 = whitespace
         for ($i = 2, $c = count($tokens); $i < $c; ++$i) {
             if (!is_array($tokens[$i]) || T_CLASS !== $tokens[$i][0]) {
@@ -525,12 +569,14 @@ class TestExceptions {
 
 
 class TestDiscovery implements IRunner {
+    private $context;
     private $discoverer;
     private $path;
     private $log;
 
     public function setup() {
-        $this->discoverer = new Discoverer($this);
+        $this->context = new Context();
+        $this->discoverer = new Discoverer($this, $this->context);
         $this->path = __DIR__ . '/discovery_files/';
         $this->log = [];
     }
@@ -553,6 +599,22 @@ class TestDiscovery implements IRunner {
 
         $expected = ['Test', 'test2', 'Test3'];
         $actual = $this->log;
+        assert('$expected === $actual');
+    }
+
+    public function test_discover_directory() {
+        $path = $this->path . 'discover_directory';
+
+        $this->discoverer->discover_tests($path);
+
+        $expected = [
+            "$path/test.php",
+            "$path/test_dir1/test1.php",
+            "$path/test_dir1/test2.php",
+            "$path/TEST_DIR2/TEST1.PHP",
+            "$path/TEST_DIR2/TEST2.PHP",
+        ];
+        $actual = $this->context->log;
         assert('$expected === $actual');
     }
 }
