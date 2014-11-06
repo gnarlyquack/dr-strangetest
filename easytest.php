@@ -43,7 +43,7 @@ final class ErrorHandler {
         }
 
         if (!$this->assertion) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+            throw new Error($errstr, $errno, $errfile, $errline);
         }
 
         list($code, $message) = $this->assertion;
@@ -83,7 +83,27 @@ final class ErrorHandler {
     }
 }
 
-final class Failure extends \Exception {}
+final class Error extends \ErrorException {
+    public function __construct($message, $severity, $file, $line) {
+        parent::__construct($message, 0, $severity, $file, $line);
+    }
+
+    public function __toString() {
+        return sprintf(
+            "%s\nin %s on line %s\nStack trace:\n%s",
+            $this->message,
+            $this->file,
+            $this->line,
+            $this->getTraceAsString()
+        );
+    }
+}
+
+final class Failure extends \Exception {
+    public function __toString() {
+        return $this->message;
+    }
+}
 
 
 final class Runner {
@@ -443,12 +463,40 @@ EXPECTED;
 }
 
 
+class TestExceptions {
+    public function test_error_format() {
+        $file = __FILE__;
+        $line = __LINE__;
+        $message = 'An error happened';
+        $e = new Error($message, E_USER_ERROR, $file, $line);
+
+        $expected = sprintf(
+            "%s\nin %s on line %s\nStack trace:\n%s",
+            $message,
+            $file,
+            $line,
+            $e->getTraceAsString()
+        );
+        $actual = (string)$e;
+        assert('$expected === $actual');
+    }
+
+    public function test_failure_format() {
+        $expected = 'Assertion failed';
+        $f = new Failure($expected);
+        $actual = (string)$f;
+        assert('$expected === $actual');
+    }
+}
+
+
 (new ErrorHandler())->enable();
 $reporter = new Reporter();
 $runner = new Runner($reporter);
 $runner->run_test_case(new TestRunner());
 $runner->run_test_case(new TestReporter());
 $runner->run_test_case(new TestAssert());
+$runner->run_test_case(new TestExceptions());
 
 $totals = [];
 foreach ($reporter->get_report() as $type => $results) {
