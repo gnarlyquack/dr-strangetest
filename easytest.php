@@ -12,27 +12,74 @@ interface IReporter {
 
 
 final class ErrorHandler {
+    private $assertion;
+
     public function enable() {
         error_reporting(-1);
         set_error_handler([$this, 'handle_error'], error_reporting());
 
         assert_options(ASSERT_ACTIVE, 1);
-        assert_options(ASSERT_WARNING, 0);
+        assert_options(ASSERT_WARNING, 1);
         assert_options(ASSERT_BAIL, 0);
         assert_options(ASSERT_QUIET_EVAL, 0);
         assert_options(ASSERT_CALLBACK, [$this, 'handle_assertion']);
     }
 
+    /*
+     * Failed assertions are actually handled in the error handler, since it
+     * has access to the error context (i.e., the variables that were in scope
+     * when assert() was called). The assertion handler is used to save state
+     * that is not available in the error handler, namely, the raw assertion
+     * expression ($code) and the optional assertion message ($desc).
+     */
     public function handle_assertion($file, $line, $code, $desc = null) {
-        throw new Failure('Assertion failed');
+        $this->assertion = [$code, $desc];
     }
 
-    public function handle_error($errno, $errstr, $errfile, $errline) {
+    public function handle_error($errno, $errstr, $errfile, $errline, $errcontext) {
         if (!(error_reporting() & $errno)) {
             // This error code is not included in error_reporting
             return;
         }
-        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+
+        if (!$this->assertion) {
+            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+        }
+
+        list($code, $message) = $this->assertion;
+        $this->assertion = null;
+        throw new Failure($this->format_message($code, $message, $errcontext));
+    }
+
+    private function format_message($code, $message, $context) {
+        if (!$code) {
+            return $message ?: 'Assertion failed';
+        }
+
+        if (!$message) {
+            $message = "Assertion \"$code\" failed";
+        }
+        if (!$context) {
+            return $message;
+        }
+
+        foreach (token_get_all("<?php $code") as $token) {
+            if (is_array($token) && T_VARIABLE === $token[0]) {
+                // Strip the leading '$' off the variable name.
+                $variable = substr($token[1], 1);
+
+                // The "pseudo-variable" '$this' (and possibly others?) will
+                // parse as a variable but won't be in the context.
+                if (array_key_exists($variable, $context)) {
+                    $message .= sprintf(
+                        "\n\n%s:\n%s",
+                        $variable,
+                        var_export($context[$variable], true)
+                    );
+                }
+            }
+        }
+        return $message;
     }
 }
 
@@ -106,21 +153,7 @@ final class Reporter implements IReporter {
 }
 
 
-abstract class TestCase {
-    protected final function assert_identical($expected, $actual) {
-        if ($expected !== $actual) {
-            throw new \Exception(
-                sprintf(
-                    "\n\nexpected: %s\n\nactual: %s\n\n",
-                    var_export($expected, true),
-                    var_export($actual, true)
-                )
-            );
-        }
-    }
-}
-
-class TestRunner extends TestCase implements IReporter {
+class TestRunner implements IReporter {
     private $runner;
     private $report;
 
@@ -150,9 +183,11 @@ class TestRunner extends TestCase implements IReporter {
     // helper assertions
 
     private function assert_run($test, $expected) {
-        $this->assert_identical([], $test->log);
+        $actual = $test->log;
+        assert('[] === $actual');
         $this->runner->run_test_case($test);
-        $this->assert_identical($expected, $test->log);
+        $actual = $test->log;
+        assert('$expected === $actual');
     }
 
     private function assert_report($expected) {
@@ -160,7 +195,8 @@ class TestRunner extends TestCase implements IReporter {
             ['Tests' => 0, 'Errors' => [], 'Failures' => []],
             $expected
         );
-        $this->assert_identical($expected, $this->report);
+        $actual = $this->report;
+        assert('$expected === $actual');
     }
 
     // tests
@@ -297,7 +333,7 @@ class FailedTestCase extends BaseTestCase {
 }
 
 
-class TestReporter extends TestCase {
+class TestReporter {
     private $reporter;
 
     public function setup() {
@@ -311,7 +347,8 @@ class TestReporter extends TestCase {
             ['Tests' => 0, 'Errors' => [], 'Failures' => []],
             $expected
         );
-        $this->assert_identical($expected, $this->reporter->get_report());
+        $actual = $this->reporter->get_report();
+        assert('$expected === $actual');
     }
 
     // tests
@@ -340,11 +377,78 @@ class TestReporter extends TestCase {
 }
 
 
+class TestAssert {
+    public function test_failed_assertion() {
+        try {
+            assert(true == false);
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (Failure $e) {}
+
+        $actual = $e->getMessage();
+        assert('"Assertion failed" === $actual');
+    }
+
+    public function test_failed_assertion_with_code() {
+        try {
+            assert('true == false');
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (Failure $e) {}
+
+        $expected = 'Assertion "true == false" failed';
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    public function test_failed_assertion_with_message() {
+        if (version_compare(PHP_VERSION, '5.4.8') < 0) {
+            // The assert() description parameter was added in PHP 5.4.8, so
+            // skip this test if this is an earlier version of PHP.
+            return;
+        }
+
+        $expected = 'My assertion failed. Or did it?';
+        try {
+            assert('true == false', $expected);
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (Failure $e) {}
+
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    public function test_failed_assertion_with_variables() {
+        $one = true;
+        $two = false;
+        try {
+            assert('$one == $two');
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (Failure $e) {}
+
+        $expected = <<<'EXPECTED'
+Assertion "$one == $two" failed
+
+one:
+true
+
+two:
+false
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+}
+
+
 (new ErrorHandler())->enable();
 $reporter = new Reporter();
 $runner = new Runner($reporter);
 $runner->run_test_case(new TestRunner());
 $runner->run_test_case(new TestReporter());
+$runner->run_test_case(new TestAssert());
 
 $totals = [];
 foreach ($reporter->get_report() as $type => $results) {
