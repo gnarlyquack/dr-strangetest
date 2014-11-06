@@ -6,6 +6,8 @@ interface IReporter {
     public function report_success();
 
     public function report_error($source, $message);
+
+    public function report_failure($source, $message);
 }
 
 
@@ -13,6 +15,16 @@ final class ErrorHandler {
     public function enable() {
         error_reporting(-1);
         set_error_handler([$this, 'handle_error'], error_reporting());
+
+        assert_options(ASSERT_ACTIVE, 1);
+        assert_options(ASSERT_WARNING, 0);
+        assert_options(ASSERT_BAIL, 0);
+        assert_options(ASSERT_QUIET_EVAL, 0);
+        assert_options(ASSERT_CALLBACK, [$this, 'handle_assertion']);
+    }
+
+    public function handle_assertion($file, $line, $code, $desc = null) {
+        throw new Failure('Assertion failed');
     }
 
     public function handle_error($errno, $errstr, $errfile, $errline) {
@@ -23,6 +35,8 @@ final class ErrorHandler {
         throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
 }
+
+final class Failure extends \Exception {}
 
 
 final class Runner {
@@ -48,10 +62,15 @@ final class Runner {
             $this->reporter->report_success();
         }
         catch (\Exception $e) {
-            $this->reporter->report_error(
-                sprintf('%s::%s', get_class($test), $method),
-                $e
-            );
+            $source = sprintf('%s::%s', get_class($test), $method);
+            switch (get_class($e)) {
+            case 'easytest\\Failure':
+                $this->reporter->report_failure($source, $e);
+                break;
+            default:
+                $this->reporter->report_error($source, $e);
+                break;
+            }
         }
 
         if (is_callable([$test, 'teardown'])) {
@@ -65,6 +84,7 @@ final class Reporter implements IReporter {
     private $report = [
         'Tests' => 0,
         'Errors' => [],
+        'Failures' => [],
     ];
 
     public function report_success() {
@@ -73,6 +93,11 @@ final class Reporter implements IReporter {
 
     public function report_error($source, $message) {
         $this->report['Errors'][] = [$source, $message];
+    }
+
+    public function report_failure($source, $message) {
+        ++$this->report['Tests'];
+        $this->report['Failures'][] = [$source, $message];
     }
 
     public function get_report() {
@@ -104,6 +129,7 @@ class TestRunner extends TestCase implements IReporter {
         $this->report = [
             'Tests' => 0,
             'Errors' => [],
+            'Failures' => [],
         ];
     }
 
@@ -117,6 +143,10 @@ class TestRunner extends TestCase implements IReporter {
         $this->report['Errors'][] = [$source, $message->getMessage()];
     }
 
+    public function report_failure($source, $message) {
+        $this->report['Failures'][] = [$source, $message->getMessage()];
+    }
+
     // helper assertions
 
     private function assert_run($test, $expected) {
@@ -127,7 +157,7 @@ class TestRunner extends TestCase implements IReporter {
 
     private function assert_report($expected) {
         $expected = array_merge(
-            ['Tests' => 0, 'Errors' => []],
+            ['Tests' => 0, 'Errors' => [], 'Failures' => []],
             $expected
         );
         $this->assert_identical($expected, $this->report);
@@ -157,7 +187,6 @@ class TestRunner extends TestCase implements IReporter {
             ['setup', 'test', 'teardown']
         );
         $this->assert_report([
-            'Tests' => 0,
             'Errors' => [
                 ['easytest\\ExceptionTestCase::test', 'How exceptional!'],
             ],
@@ -170,7 +199,6 @@ class TestRunner extends TestCase implements IReporter {
             ['setup', 'test', 'teardown']
         );
         $this->assert_report([
-            'Tests' => 0,
             'Errors' => [
                 ['easytest\\ErrorTestCase::test', 'Did I err?'],
             ],
@@ -183,6 +211,18 @@ class TestRunner extends TestCase implements IReporter {
             ['setup', 'test', 'teardown']
         );
         $this->assert_report(['Tests' => 1]);
+    }
+
+    public function test_failure() {
+        $this->assert_run(
+            new FailedTestCase(),
+            ['setup', 'test', 'teardown']
+        );
+        $this->assert_report([
+            'Failures' => [
+                ['easytest\\FailedTestCase::test', 'Assertion failed'],
+            ],
+        ]);
     }
 }
 
@@ -249,6 +289,13 @@ class SuppressedErrorTestCase extends BaseTestCase {
     }
 }
 
+class FailedTestCase extends BaseTestCase {
+    public function test() {
+        $this->log[] = __FUNCTION__;
+        assert(true == false);
+    }
+}
+
 
 class TestReporter extends TestCase {
     private $reporter;
@@ -261,7 +308,7 @@ class TestReporter extends TestCase {
 
     private function assert_report($expected) {
         $expected = array_merge(
-            ['Tests' => 0, 'Errors' => []],
+            ['Tests' => 0, 'Errors' => [], 'Failures' => []],
             $expected
         );
         $this->assert_identical($expected, $this->reporter->get_report());
@@ -281,6 +328,14 @@ class TestReporter extends TestCase {
     public function test_report_error() {
         $this->reporter->report_error('source', 'message');
         $this->assert_report(['Errors' => [['source', 'message']]]);
+    }
+
+    public function test_report_failure() {
+        $this->reporter->report_failure('source', 'message');
+        $this->assert_report([
+            'Tests' => 1,
+            'Failures' => [['source', 'message']]
+        ]);
     }
 }
 
