@@ -10,6 +10,10 @@ interface IReporter {
     public function report_failure($source, $message);
 }
 
+interface IRunner {
+    public function run_test_case($object);
+}
+
 
 final class ErrorHandler {
     private $assertion;
@@ -106,30 +110,60 @@ final class Failure extends \Exception {
 }
 
 
-final class Runner {
+final class Discoverer {
+    private $runner;
+
+    public function __construct(IRunner $runner) {
+        $this->runner = $runner;
+    }
+
+    public function discover_tests($path) {
+        require $path;
+
+        $tokens = token_get_all(file_get_contents($path));
+        // Assume token 0 = '<?php' and token 1 = whitespace
+        for ($i = 2, $c = count($tokens); $i < $c; ++$i) {
+            if (!is_array($tokens[$i]) || T_CLASS !== $tokens[$i][0]) {
+                continue;
+            }
+            // $i = 'class' and $i+1 = whitespace
+            $i += 2;
+            while (!is_array($tokens[$i]) || T_STRING !== $tokens[$i][0]) {
+                ++$i;
+            }
+            $class = $tokens[$i][1];
+            if (0 === stripos($class, 'test')) {
+                $this->runner->run_test_case(new $class());
+            }
+        }
+    }
+}
+
+
+final class Runner implements IRunner {
     private $reporter;
 
-    public function __construct($reporter) {
+    public function __construct(IReporter $reporter) {
         $this->reporter = $reporter;
     }
 
-    public function run_test_case($test) {
-        foreach (preg_grep('~^test~i', get_class_methods($test)) as $method) {
-            $this->run_test_method($test, $method);
+    public function run_test_case($object) {
+        foreach (preg_grep('~^test~i', get_class_methods($object)) as $method) {
+            $this->run_test_method($object, $method);
         }
     }
 
-    private function run_test_method($test, $method) {
-        if (is_callable([$test, 'setup'])) {
-            $test->setup();
+    private function run_test_method($object, $method) {
+        if (is_callable([$object, 'setup'])) {
+            $object->setup();
         }
 
         try {
-            $test->$method();
+            $object->$method();
             $this->reporter->report_success();
         }
         catch (\Exception $e) {
-            $source = sprintf('%s::%s', get_class($test), $method);
+            $source = sprintf('%s::%s', get_class($object), $method);
             switch (get_class($e)) {
             case 'easytest\\Failure':
                 $this->reporter->report_failure($source, $e);
@@ -140,8 +174,8 @@ final class Runner {
             }
         }
 
-        if (is_callable([$test, 'teardown'])) {
-            $test->teardown();
+        if (is_callable([$object, 'teardown'])) {
+            $object->teardown();
         }
     }
 }
@@ -490,6 +524,40 @@ class TestExceptions {
 }
 
 
+class TestDiscovery implements IRunner {
+    private $discoverer;
+    private $path;
+    private $log;
+
+    public function setup() {
+        $this->discoverer = new Discoverer($this);
+        $this->path = __DIR__ . '/discovery_files/';
+        $this->log = [];
+    }
+
+    // implementation of runner interface
+
+    public function run_test_case($object) {
+        $this->log[] = get_class($object);
+    }
+
+    // tests
+
+    public function test_discover_file() {
+        $path = $this->path . 'MyTestFile.php';
+
+        // suppress output from the test file
+        ob_start();
+        $this->discoverer->discover_tests($path);
+        ob_end_clean();
+
+        $expected = ['Test', 'test2', 'Test3'];
+        $actual = $this->log;
+        assert('$expected === $actual');
+    }
+}
+
+
 (new ErrorHandler())->enable();
 $reporter = new Reporter();
 $runner = new Runner($reporter);
@@ -497,6 +565,7 @@ $runner->run_test_case(new TestRunner());
 $runner->run_test_case(new TestReporter());
 $runner->run_test_case(new TestAssert());
 $runner->run_test_case(new TestExceptions());
+$runner->run_test_case(new TestDiscovery());
 
 $totals = [];
 foreach ($reporter->get_report() as $type => $results) {
