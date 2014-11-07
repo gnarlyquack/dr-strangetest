@@ -139,12 +139,14 @@ final class Discoverer {
         $this->context = $context;
     }
 
-    public function discover_tests($path) {
-        if (is_dir($path)) {
-            $this->discover_directory(rtrim($path, '/') . '/');
-        }
-        else {
-            $this->discover_file($path);
+    public function discover_tests(array $paths) {
+        foreach ($paths as $path) {
+            if (is_dir($path)) {
+                $this->discover_directory(rtrim($path, '/') . '/');
+            }
+            else {
+                $this->discover_file($path);
+            }
         }
     }
 
@@ -256,7 +258,13 @@ final class Reporter implements IReporter {
 (new ErrorHandler())->enable();
 $reporter = new Reporter();
 $runner = new Discoverer(new Runner($reporter), new Context());
-$runner->discover_tests(__DIR__);
+
+$tests = array_slice($argv, 1);
+if (!$tests) {
+    $tests[] = getcwd();
+}
+$runner->discover_tests($tests);
+
 
 $totals = [];
 foreach ($reporter->get_report() as $type => $results) {

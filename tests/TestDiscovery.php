@@ -26,7 +26,7 @@ class TestDiscovery implements easytest\IRunner {
 
         // suppress output from the test file
         ob_start();
-        $this->discoverer->discover_tests($path);
+        $this->discoverer->discover_tests([$path]);
         ob_end_clean();
 
         $expected = ['Test', 'test2', 'Test3'];
@@ -37,7 +37,7 @@ class TestDiscovery implements easytest\IRunner {
     public function test_discover_directory() {
         $path = $this->path . 'discover_directory';
 
-        $this->discoverer->discover_tests($path);
+        $this->discoverer->discover_tests([$path]);
 
         $expected = [
             "$path/test.php",
