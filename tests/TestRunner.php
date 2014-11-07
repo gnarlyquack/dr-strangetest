@@ -53,12 +53,14 @@ class TestRunner implements easytest\IReporter {
         $this->assert_report(['Tests' => 1]);
     }
 
-    public function test_setup_and_teardown() {
+    public function test_fixtures() {
         $this->assert_run(
             new FixtureTestCase(),
             [
+                'setup_class',
                 'setup', 'test1', 'teardown',
                 'setup', 'test2', 'teardown',
+                'teardown_class',
             ]
         );
         $this->assert_report(['Tests' => 2]);
@@ -120,6 +122,14 @@ class SimpleTestCase {
 
 class FixtureTestCase {
     public $log = [];
+
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+    }
 
     public function setup() {
         $this->log[] = __FUNCTION__;

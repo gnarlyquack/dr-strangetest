@@ -194,8 +194,14 @@ final class Runner implements IRunner {
     }
 
     public function run_test_case($object) {
+        if (is_callable([$object, 'setup_class'])) {
+            $object->setup_class();
+        }
         foreach (preg_grep('~^test~i', get_class_methods($object)) as $method) {
             $this->run_test_method($object, $method);
+        }
+        if (is_callable([$object, 'teardown_class'])) {
+            $object->teardown_class();
         }
     }
 
