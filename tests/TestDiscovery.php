@@ -41,10 +41,16 @@ class TestDiscovery implements easytest\IRunner {
 
         $expected = [
             "$path/test.php",
+
+            "$path/test_dir1/setup.php",
             "$path/test_dir1/test1.php",
             "$path/test_dir1/test2.php",
+            "$path/test_dir1/teardown.php",
+
+            "$path/TEST_DIR2/SETUP.PHP",
             "$path/TEST_DIR2/TEST1.PHP",
             "$path/TEST_DIR2/TEST2.PHP",
+            "$path/TEST_DIR2/TEARDOWN.PHP",
         ];
         $actual = $this->context->log;
         assert('$expected === $actual');

@@ -134,6 +134,15 @@ final class Discoverer {
     private $context;
     private $runner;
 
+    private $patterns = [
+        'files' => '~/test[^/]*\\.php$~i',
+        'dirs' => '~/test[^/]*/$~i',
+        'fixtures' => [
+            'setup' => '~/setup\\.php$~i',
+            'teardown' => '~/teardown\\.php$~i',
+        ],
+    ];
+
     public function __construct(IRunner $runner, IContext $context) {
         $this->runner = $runner;
         $this->context = $context;
@@ -151,16 +160,16 @@ final class Discoverer {
     }
 
     private function discover_directory($dir) {
-        $files = glob("$dir*", GLOB_MARK | GLOB_NOSORT);
+        $paths = $this->process_directory($dir);
 
-        foreach (preg_grep('~/test[^/]*\\.php$~i', $files) as $file) {
-            $this->discover_file($file);
+        $paths['setup']();
+        foreach ($paths['files'] as $path) {
+            $this->discover_file($path);
         }
-
-        $files = preg_grep('~/test[^/]*/$~i', $files);
-        while ($dir = array_shift($files)) {
-            $this->discover_directory($dir);
+        foreach ($paths['dirs'] as $path) {
+            $this->discover_directory($path);
         }
+        $paths['teardown']();
     }
 
     private function discover_file($file) {
@@ -182,6 +191,32 @@ final class Discoverer {
                 $this->runner->run_test_case(new $class());
             }
         }
+    }
+
+    private function process_directory($path) {
+        $paths = glob("$path*", GLOB_MARK | GLOB_NOSORT);
+        $processed = [];
+
+        foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
+            $processed[$fixture] = $this->process_file($pattern, $paths);
+        }
+        $processed['files'] = preg_grep($this->patterns['files'], $paths);
+        $processed['dirs'] = preg_grep($this->patterns['dirs'], $paths);
+
+        return $processed;
+    }
+
+    private function process_file($pattern, $paths) {
+        $path = preg_grep($pattern, $paths);
+
+        if ($path) {
+            $path = current($path);
+            return function() use ($path) {
+                $this->context->include_file($path);
+            };
+        }
+
+        return function() {};
     }
 }
 
