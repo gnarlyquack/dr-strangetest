@@ -55,4 +55,40 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->context->log;
         assert('$expected === $actual');
     }
+
+    public function test_individual_paths() {
+        $root = $this->path . 'test_individual_paths';
+        $paths = array(
+            "$root/test_dir1/test2.php",
+            "$root/test_dir1/test3.php",
+            "$root/test_dir2/test_subdir",
+        );
+        $this->discoverer->discover_tests($paths);
+
+        $expected = [
+            "$root/setup.php",
+            "$root/test_dir1/setup.php",
+            "$root/test_dir1/test2.php",
+            "$root/test_dir1/teardown.php",
+            "$root/teardown.php",
+
+            "$root/setup.php",
+            "$root/test_dir1/setup.php",
+            "$root/test_dir1/test3.php",
+            "$root/test_dir1/teardown.php",
+            "$root/teardown.php",
+
+            "$root/setup.php",
+            "$root/test_dir2/setup.php",
+            "$root/test_dir2/test_subdir/setup.php",
+            "$root/test_dir2/test_subdir/test1.php",
+            "$root/test_dir2/test_subdir/test2.php",
+            "$root/test_dir2/test_subdir/teardown.php",
+            "$root/test_dir2/teardown.php",
+            "$root/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+    }
+
 }

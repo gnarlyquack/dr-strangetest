@@ -151,27 +151,105 @@ final class Discoverer {
     public function discover_tests(array $paths) {
         foreach ($paths as $path) {
             if (is_dir($path)) {
-                $this->discover_directory(rtrim($path, '/') . '/');
+                $path = rtrim($path, '/') . '/';
             }
-            else {
-                $this->discover_file($path);
-            }
+            $root = $this->determine_root($path);
+            $this->discover_directory($root, $path);
         }
     }
 
-    private function discover_directory($dir) {
-        $paths = $this->process_directory($dir);
+    /*
+     * Determine a path's root test directory.
+     *
+     * The root test directory is the highest directory that matches the test
+     * directory regular expression, or the path itself.
+     *
+     * This is done to ensure that directory fixtures are properly loaded when
+     * testing individual subpaths within a test suite; discovery will begin at
+     * the root directory and descend towards the specified path.
+     */
+    private function determine_root($path) {
+        if ('/' === substr($path, -1)) {
+            $root = $parent = $path;
+        }
+        else {
+            $root = $parent = dirname($path) . '/';
+        }
+
+        while (preg_match($this->patterns['dirs'], $parent)) {
+            $root = $parent;
+            $parent = dirname($parent) . '/';
+        }
+        return $root;
+    }
+
+    /*
+     * Discover and run tests in a directory.
+     *
+     * If $target is null, then all files and subdirectories within the
+     * directory that match the test regular expressions are discovered.
+     * Otherwise, discovery is only done for the file or directory specified in
+     * $target. Directory fixtures are discovered and run in either case.
+     */
+    private function discover_directory($dir, $target) {
+        if ($target === $dir) {
+            $target = null;
+        }
+        $paths = $this->process_directory($dir, $target);
 
         $paths['setup']();
         foreach ($paths['files'] as $path) {
             $this->discover_file($path);
         }
         foreach ($paths['dirs'] as $path) {
-            $this->discover_directory($path);
+            $this->discover_directory($path, $target);
         }
         $paths['teardown']();
     }
 
+    private function process_directory($path, $target) {
+        $paths = glob("$path*", GLOB_MARK | GLOB_NOSORT);
+        $processed = [];
+
+        foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
+            $processed[$fixture] = $this->process_file($pattern, $paths);
+        }
+
+        if (!$target) {
+            $processed['files'] = preg_grep($this->patterns['files'], $paths);
+            $processed['dirs'] = preg_grep($this->patterns['dirs'], $paths);
+            return $processed;
+        }
+
+        $i = strpos($target, '/', strlen($path));
+        if (false === $i) {
+            $processed['files'] = [$target];
+            $processed['dirs'] = [];
+        }
+        else {
+            $processed['files'] = [];
+            $processed['dirs'] = [substr($target, 0, $i + 1)];
+        }
+
+        return $processed;
+    }
+
+    private function process_file($pattern, $paths) {
+        $path = preg_grep($pattern, $paths);
+
+        if ($path) {
+            $path = current($path);
+            return function() use ($path) {
+                $this->context->include_file($path);
+            };
+        }
+
+        return function() {};
+    }
+
+    /*
+     * Discover and run tests in a file.
+     */
     private function discover_file($file) {
         $this->context->include_file($file);
 
@@ -191,32 +269,6 @@ final class Discoverer {
                 $this->runner->run_test_case(new $class());
             }
         }
-    }
-
-    private function process_directory($path) {
-        $paths = glob("$path*", GLOB_MARK | GLOB_NOSORT);
-        $processed = [];
-
-        foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
-            $processed[$fixture] = $this->process_file($pattern, $paths);
-        }
-        $processed['files'] = preg_grep($this->patterns['files'], $paths);
-        $processed['dirs'] = preg_grep($this->patterns['dirs'], $paths);
-
-        return $processed;
-    }
-
-    private function process_file($pattern, $paths) {
-        $path = preg_grep($pattern, $paths);
-
-        if ($path) {
-            $path = current($path);
-            return function() use ($path) {
-                $this->context->include_file($path);
-            };
-        }
-
-        return function() {};
     }
 }
 
