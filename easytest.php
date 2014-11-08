@@ -189,27 +189,33 @@ final class Discoverer {
 final class Runner implements IRunner {
     private $reporter;
 
+    private $patterns = [
+        'tests' => '~^test~i',
+        'fixtures' => [
+            'setup_class' => '~^setup_?class$~i',
+            'teardown_class' => '~^teardown_?class$~i',
+            'setup' => '~^setup$~i',
+            'teardown' => '~^teardown$~i',
+        ],
+    ];
+
     public function __construct(IReporter $reporter) {
         $this->reporter = $reporter;
     }
 
     public function run_test_case($object) {
-        if (is_callable([$object, 'setup_class'])) {
-            $object->setup_class();
-        }
-        foreach (preg_grep('~^test~i', get_class_methods($object)) as $method) {
+        $methods = $this->process_methods($object);
+
+        $methods['setup_class']();
+        foreach ($methods['tests'] as $method) {
+            $methods['setup']();
             $this->run_test_method($object, $method);
+            $methods['teardown']();
         }
-        if (is_callable([$object, 'teardown_class'])) {
-            $object->teardown_class();
-        }
+        $methods['teardown_class']();
     }
 
     private function run_test_method($object, $method) {
-        if (is_callable([$object, 'setup'])) {
-            $object->setup();
-        }
-
         try {
             $object->$method();
             $this->reporter->report_success();
@@ -225,10 +231,35 @@ final class Runner implements IRunner {
                 break;
             }
         }
+    }
 
-        if (is_callable([$object, 'teardown'])) {
-            $object->teardown();
+    private function process_methods($object) {
+        $methods = get_class_methods($object);
+        $processed = [];
+
+        foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
+            $processed[$fixture] = $this->process_method(
+                $pattern,
+                $methods,
+                $object
+            );
         }
+        $processed['tests'] = preg_grep($this->patterns['tests'], $methods);
+
+        return $processed;
+    }
+
+    private function process_method($pattern, $methods, $object) {
+        $method = preg_grep($pattern, $methods);
+
+        if ($method) {
+            $method = current($method);
+            return function() use ($object, $method) {
+                $object->$method();
+            };
+        }
+
+        return function() {};
     }
 }
 

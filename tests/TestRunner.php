@@ -66,6 +66,19 @@ class TestRunner implements easytest\IReporter {
         $this->assert_report(['Tests' => 2]);
     }
 
+    public function test_case_insensitivity() {
+        $this->assert_run(
+            new CapitalizedTestCase(),
+            [
+                'SetUpClass',
+                'SetUp', 'TestOne', 'TearDown',
+                'SetUp', 'TestTwo', 'TearDown',
+                'TearDownClass',
+            ]
+        );
+        $this->assert_report(['Tests' => 2]);
+    }
+
     public function test_exception() {
         $this->assert_run(
             new ExceptionTestCase(),
@@ -147,6 +160,35 @@ class FixtureTestCase {
         $this->log[] = __FUNCTION__;
     }
 }
+
+class CapitalizedTestCase {
+    public $log = [];
+
+    public function SetUpClass() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function TearDownClass() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function SetUp() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function TearDown() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function TestOne() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function TestTwo() {
+        $this->log[] = __FUNCTION__;
+    }
+}
+
 
 abstract class BaseTestCase {
     public $log = [];
