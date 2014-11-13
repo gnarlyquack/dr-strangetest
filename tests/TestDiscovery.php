@@ -1,22 +1,29 @@
 <?php
 
 class TestDiscovery implements easytest\IRunner {
+    private $reporter;
     private $context;
     private $discoverer;
+
     private $path;
-    private $log;
+    private $runner_log;
 
     public function setup() {
+        $this->reporter = new StubReporter();
         $this->context = new easytest\Context();
-        $this->discoverer = new easytest\Discoverer($this, $this->context);
+        $this->discoverer = new easytest\Discoverer(
+            $this->reporter,
+            $this,
+            $this->context
+        );
         $this->path = __DIR__ . '/discovery_files/';
-        $this->log = [];
+        $this->runner_log = [];
     }
 
     // implementation of runner interface
 
     public function run_test_case($object) {
-        $this->log[] = get_class($object);
+        $this->runner_log[] = get_class($object);
     }
 
     // tests
@@ -30,7 +37,7 @@ class TestDiscovery implements easytest\IRunner {
         ob_end_clean();
 
         $expected = ['Test', 'test2', 'Test3'];
-        $actual = $this->log;
+        $actual = $this->runner_log;
         assert('$expected === $actual');
     }
 
@@ -91,4 +98,11 @@ class TestDiscovery implements easytest\IRunner {
         assert('$expected === $actual');
     }
 
+    public function test_nonexistent_path() {
+        $path = $this->path . 'foobar.php';
+        $this->discoverer->discover_tests([$path]);
+        $this->reporter->assert_report([
+            'Errors' => [[$path, 'No such file or directory']],
+        ]);
+    }
 }

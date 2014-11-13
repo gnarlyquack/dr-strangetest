@@ -132,6 +132,7 @@ final class Context implements IContext {
 
 final class Discoverer {
     private $context;
+    private $reporter;
     private $runner;
 
     private $patterns = [
@@ -143,15 +144,26 @@ final class Discoverer {
         ],
     ];
 
-    public function __construct(IRunner $runner, IContext $context) {
+    public function __construct(
+        IReporter $reporter,
+        IRunner $runner,
+        IContext $context
+    ) {
+        $this->reporter = $reporter;
         $this->runner = $runner;
         $this->context = $context;
     }
 
     public function discover_tests(array $paths) {
         foreach ($paths as $path) {
+            $realpath = realpath($path);
+            if (!$realpath) {
+                $this->reporter->report_error($path, 'No such file or directory');
+                continue;
+            }
+
             if (is_dir($path)) {
-                $path = rtrim($path, '/') . '/';
+                $path .= '/';
             }
             $root = $this->determine_root($path);
             $this->discover_directory($root, $path);
@@ -381,7 +393,7 @@ final class Reporter implements IReporter {
 
 (new ErrorHandler())->enable();
 $reporter = new Reporter();
-$runner = new Discoverer(new Runner($reporter), new Context());
+$runner = new Discoverer($reporter, new Runner($reporter), new Context());
 
 $tests = array_slice($argv, 1);
 if (!$tests) {

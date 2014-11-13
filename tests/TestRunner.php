@@ -1,30 +1,12 @@
 <?php
 
-class TestRunner implements easytest\IReporter {
+class TestRunner {
+    private $reporter;
     private $runner;
-    private $report;
 
     public function setup() {
-        $this->runner = new easytest\Runner($this);
-        $this->report = [
-            'Tests' => 0,
-            'Errors' => [],
-            'Failures' => [],
-        ];
-    }
-
-    // implementation of reporter interface
-
-    public function report_success() {
-        ++$this->report['Tests'];
-    }
-
-    public function report_error($source, $message) {
-        $this->report['Errors'][] = [$source, $message->getMessage()];
-    }
-
-    public function report_failure($source, $message) {
-        $this->report['Failures'][] = [$source, $message->getMessage()];
+        $this->reporter = new StubReporter();
+        $this->runner = new easytest\Runner($this->reporter);
     }
 
     // helper assertions
@@ -37,20 +19,11 @@ class TestRunner implements easytest\IReporter {
         assert('$expected === $actual');
     }
 
-    private function assert_report($expected) {
-        $expected = array_merge(
-            ['Tests' => 0, 'Errors' => [], 'Failures' => []],
-            $expected
-        );
-        $actual = $this->report;
-        assert('$expected === $actual');
-    }
-
     // tests
 
     public function test_run_test_method() {
         $this->assert_run(new SimpleTestCase(), ['test']);
-        $this->assert_report(['Tests' => 1]);
+        $this->reporter->assert_report(['Tests' => 1]);
     }
 
     public function test_fixtures() {
@@ -63,7 +36,7 @@ class TestRunner implements easytest\IReporter {
                 'teardown_class',
             ]
         );
-        $this->assert_report(['Tests' => 2]);
+        $this->reporter->assert_report(['Tests' => 2]);
     }
 
     public function test_case_insensitivity() {
@@ -76,7 +49,7 @@ class TestRunner implements easytest\IReporter {
                 'TearDownClass',
             ]
         );
-        $this->assert_report(['Tests' => 2]);
+        $this->reporter->assert_report(['Tests' => 2]);
     }
 
     public function test_exception() {
@@ -84,7 +57,7 @@ class TestRunner implements easytest\IReporter {
             new ExceptionTestCase(),
             ['setup', 'test', 'teardown']
         );
-        $this->assert_report([
+        $this->reporter->assert_report([
             'Errors' => [
                 ['ExceptionTestCase::test', 'How exceptional!'],
             ],
@@ -96,7 +69,7 @@ class TestRunner implements easytest\IReporter {
             new ErrorTestCase(),
             ['setup', 'test', 'teardown']
         );
-        $this->assert_report([
+        $this->reporter->assert_report([
             'Errors' => [
                 ['ErrorTestCase::test', 'Did I err?'],
             ],
@@ -108,7 +81,7 @@ class TestRunner implements easytest\IReporter {
             new SuppressedErrorTestCase(),
             ['setup', 'test', 'teardown']
         );
-        $this->assert_report(['Tests' => 1]);
+        $this->reporter->assert_report(['Tests' => 1]);
     }
 
     public function test_failure() {
@@ -116,7 +89,7 @@ class TestRunner implements easytest\IReporter {
             new FailedTestCase(),
             ['setup', 'test', 'teardown']
         );
-        $this->assert_report([
+        $this->reporter->assert_report([
             'Failures' => [
                 ['FailedTestCase::test', 'Assertion failed'],
             ],
