@@ -55,7 +55,7 @@ class TestRunner {
     public function test_exception() {
         $this->assert_run(
             new ExceptionTestCase(),
-            ['setup', 'test', 'teardown']
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
         );
         $this->reporter->assert_report([
             'Errors' => [
@@ -67,7 +67,7 @@ class TestRunner {
     public function test_error() {
         $this->assert_run(
             new ErrorTestCase(),
-            ['setup', 'test', 'teardown']
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
         );
         $this->reporter->assert_report([
             'Errors' => [
@@ -79,7 +79,7 @@ class TestRunner {
     public function test_suppressed_error() {
         $this->assert_run(
             new SuppressedErrorTestCase(),
-            ['setup', 'test', 'teardown']
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
         );
         $this->reporter->assert_report(['Tests' => 1]);
     }
@@ -87,11 +87,60 @@ class TestRunner {
     public function test_failure() {
         $this->assert_run(
             new FailedTestCase(),
-            ['setup', 'test', 'teardown']
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
         );
         $this->reporter->assert_report([
             'Failures' => [
                 ['FailedTestCase::test', 'Assertion failed'],
+            ],
+        ]);
+    }
+
+    public function test_setup_class_error() {
+        $this->assert_run(
+            new SetupClassErrorTestCase(),
+            ['setup_class']
+        );
+        $this->reporter->assert_report([
+            'Errors' => [
+                ['SetupClassErrorTestCase::setup_class', 'An error happened'],
+            ],
+        ]);
+    }
+
+    public function test_setup_error() {
+        $this->assert_run(
+            new SetupErrorTestCase(),
+            ['setup_class', 'setup', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Errors' => [
+                ['SetupErrorTestCase::setup', 'An error happened'],
+            ],
+        ]);
+    }
+
+    public function test_teardown_error() {
+        $this->assert_run(
+            new TeardownErrorTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Errors' => [
+                ['TeardownErrorTestCase::teardown', 'An error happened'],
+            ],
+        ]);
+    }
+
+    public function test_teardown_class_error() {
+        $this->assert_run(
+            new TeardownClassErrorTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Tests' => 1,
+            'Errors' => [
+                ['TeardownClassErrorTestCase::teardown_class', 'An error happened'],
             ],
         ]);
     }
@@ -166,6 +215,14 @@ class CapitalizedTestCase {
 abstract class BaseTestCase {
     public $log = [];
 
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+    }
+
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+    }
+
     public function setup() {
         $this->log[] = __FUNCTION__;
     }
@@ -174,7 +231,9 @@ abstract class BaseTestCase {
         $this->log[] = __FUNCTION__;
     }
 
-    public abstract function test();
+    public function test() {
+        $this->log[] = __FUNCTION__;
+    }
 }
 
 class ExceptionTestCase extends BaseTestCase {
@@ -202,5 +261,33 @@ class FailedTestCase extends BaseTestCase {
     public function test() {
         $this->log[] = __FUNCTION__;
         assert(true == false);
+    }
+}
+
+class SetupClassErrorTestCase extends BaseTestCase {
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+        throw new \Exception('An error happened');
+    }
+}
+
+class SetupErrorTestCase extends BaseTestCase {
+    public function setup() {
+        $this->log[] = __FUNCTION__;
+        throw new \Exception('An error happened');
+    }
+}
+
+class TeardownErrorTestCase extends BaseTestCase {
+    public function teardown() {
+        $this->log[] = __FUNCTION__;
+        throw new \Exception('An error happened');
+    }
+}
+
+class TeardownClassErrorTestCase extends BaseTestCase {
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+        throw new \Exception('An error happened');
     }
 }

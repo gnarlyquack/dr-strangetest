@@ -331,19 +331,22 @@ final class Runner implements IRunner {
     public function run_test_case($object) {
         $methods = $this->process_methods($object);
 
-        $methods['setup_class']();
-        foreach ($methods['tests'] as $method) {
-            $methods['setup']();
-            $this->run_test_method($object, $method);
-            $methods['teardown']();
+        if ($methods['setup_class']()) {
+            foreach ($methods['tests'] as $method) {
+                if ($methods['setup']()) {
+                    $success = $this->run_test_method($object, $method);
+                    if ($methods['teardown']() && $success) {
+                        $this->reporter->report_success();
+                    }
+                }
+            }
+            $methods['teardown_class']();
         }
-        $methods['teardown_class']();
     }
 
     private function run_test_method($object, $method) {
         try {
             $object->$method();
-            $this->reporter->report_success();
         }
         catch (\Exception $e) {
             $source = sprintf('%s::%s', get_class($object), $method);
@@ -356,6 +359,7 @@ final class Runner implements IRunner {
                 break;
             }
         }
+        return !isset($e);
     }
 
     private function process_methods($object) {
@@ -380,11 +384,24 @@ final class Runner implements IRunner {
         if ($method) {
             $method = current($method);
             return function() use ($object, $method) {
-                $object->$method();
+                return $this->run_method($object, $method);
             };
         }
 
-        return function() {};
+        return function() { return true; };
+    }
+
+    private function run_method($object, $method) {
+        try {
+            $object->$method();
+        }
+        catch (\Exception $e) {
+            $this->reporter->report_error(
+                sprintf('%s::%s', get_class($object), $method),
+                $e
+            );
+        }
+        return !isset($e);
     }
 }
 
