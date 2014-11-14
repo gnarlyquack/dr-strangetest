@@ -209,14 +209,15 @@ final class Discoverer {
         }
         $paths = $this->process_directory($dir, $target);
 
-        $paths['setup']();
-        foreach ($paths['files'] as $path) {
-            $this->discover_file($path);
+        if ($paths['setup']()) {
+            foreach ($paths['files'] as $path) {
+                $this->discover_file($path);
+            }
+            foreach ($paths['dirs'] as $path) {
+                $this->discover_directory($path, $target);
+            }
+            $paths['teardown']();
         }
-        foreach ($paths['dirs'] as $path) {
-            $this->discover_directory($path, $target);
-        }
-        $paths['teardown']();
     }
 
     private function process_directory($path, $target) {
@@ -252,18 +253,20 @@ final class Discoverer {
         if ($path) {
             $path = current($path);
             return function() use ($path) {
-                $this->context->include_file($path);
+                return $this->include_file($path);
             };
         }
 
-        return function() {};
+        return function() { return true; };
     }
 
     /*
      * Discover and run tests in a file.
      */
     private function discover_file($file) {
-        $this->context->include_file($file);
+        if (!$this->include_file($file)) {
+            return;
+        }
 
         $tokens = token_get_all(file_get_contents($file));
         // Assume token 0 = '<?php' and token 1 = whitespace
@@ -281,6 +284,16 @@ final class Discoverer {
                 $this->runner->run_test_case(new $class());
             }
         }
+    }
+
+    private function include_file($file) {
+        try {
+            $this->context->include_file($file);
+        }
+        catch (\Exception $e) {
+            $this->reporter->report_error($file, $e);
+        }
+        return !isset($e);
     }
 }
 

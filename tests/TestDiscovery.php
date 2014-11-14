@@ -105,4 +105,64 @@ class TestDiscovery implements easytest\IRunner {
             'Errors' => [[$path, 'No such file or directory']],
         ]);
     }
+
+    public function test_file_error() {
+        $path = $this->path . 'file_error';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test1.php",
+            "$path/test2.php",
+            "$path/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = ['test_file_error_two'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Errors' => [["$path/test1.php", 'An error happened']]
+        ]);
+    }
+
+    public function test_setup_error() {
+        $path = $this->path . 'setup_error';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = ["$path/setup.php"];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = [];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Errors' => [["$path/setup.php", 'An error happened']]
+        ]);
+    }
+
+    public function test_teardown_error() {
+        $path = $this->path . 'teardown_error';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test.php",
+            "$path/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = ['test_teardown_error'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Errors' => [["$path/teardown.php", 'An error happened']]
+        ]);
+    }
 }
