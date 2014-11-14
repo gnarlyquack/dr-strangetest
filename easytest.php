@@ -281,7 +281,10 @@ final class Discoverer {
             }
             $class = $tokens[$i][1];
             if (0 === stripos($class, 'test')) {
-                $this->runner->run_test_case(new $class());
+                $test = $this->instantiate_test($class);
+                if ($test) {
+                    $this->runner->run_test_case($test);
+                }
             }
         }
     }
@@ -294,6 +297,16 @@ final class Discoverer {
             $this->reporter->report_error($file, $e);
         }
         return !isset($e);
+    }
+
+    private function instantiate_test($class) {
+        try {
+            return new $class();
+        }
+        catch (\Exception $e) {
+            $this->reporter->report_error($class, $e);
+        }
+        return false;
     }
 }
 

@@ -165,4 +165,26 @@ class TestDiscovery implements easytest\IRunner {
             'Errors' => [["$path/teardown.php", 'An error happened']]
         ]);
     }
+
+    public function test_instantiation_error() {
+        $path = $this->path . 'instantiation_error';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test.php",
+            "$path/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = ['test_instantiation_error_two'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Errors' => [['test_instantiation_error_one', 'An error happened']]
+        ]);
+
+    }
 }
