@@ -144,6 +144,36 @@ class TestRunner {
             ],
         ]);
     }
+
+    public function test_multiple_setup_class_fixtures() {
+        $this->assert_run(
+            new MultipleSetupClassTestCase(),
+            []
+        );
+        $this->reporter->assert_report([
+            'Errors' => [
+                [
+                    'MultipleSetupClassTestCase',
+                    "Multiple methods found:\n\tSetUpClass\n\tsetup_class"
+                ],
+            ],
+        ]);
+    }
+
+    public function test_multiple_teardown_class_fixtures() {
+        $this->assert_run(
+            new MultipleTeardownClassTestCase(),
+            []
+        );
+        $this->reporter->assert_report([
+            'Errors' => [
+                [
+                    'MultipleTeardownClassTestCase',
+                    "Multiple methods found:\n\tTearDownClass\n\tteardown_class"
+                ],
+            ],
+        ]);
+    }
 }
 
 
@@ -289,5 +319,17 @@ class TeardownClassErrorTestCase extends BaseTestCase {
     public function teardown_class() {
         $this->log[] = __FUNCTION__;
         throw new \Exception('An error happened');
+    }
+}
+
+class MultipleSetupClassTestCase extends BaseTestCase {
+    public function SetUpClass() {
+        $this->log[] = __FUNCTION__;
+    }
+}
+
+class MultipleTeardownClassTestCase extends BaseTestCase {
+    public function TearDownClass() {
+        $this->log[] = __FUNCTION__;
     }
 }

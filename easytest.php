@@ -208,6 +208,9 @@ final class Discoverer {
             $target = null;
         }
         $paths = $this->process_directory($dir, $target);
+        if (!$paths) {
+            return;
+        }
 
         if ($paths['setup']()) {
             foreach ($paths['files'] as $path) {
@@ -226,6 +229,9 @@ final class Discoverer {
 
         foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
             $processed[$fixture] = $this->process_file($pattern, $paths);
+            if (!$processed[$fixture]) {
+                return false;
+            }
         }
 
         if (!$target) {
@@ -250,14 +256,25 @@ final class Discoverer {
     private function process_file($pattern, $paths) {
         $path = preg_grep($pattern, $paths);
 
-        if ($path) {
+        switch (count($path)) {
+        case 0:
+            return function() { return true; };
+
+        case 1:
             $path = current($path);
             return function() use ($path) {
                 return $this->include_file($path);
             };
+
+        default:
+            $this->reporter->report_error(
+                dirname(current($path)),
+                "Multiple files found:\n\t" . implode("\n\t", $path)
+            );
+            return false;
         }
 
-        return function() { return true; };
+
     }
 
     /*
@@ -330,6 +347,9 @@ final class Runner implements IRunner {
 
     public function run_test_case($object) {
         $methods = $this->process_methods($object);
+        if (!$methods) {
+            return;
+        }
 
         if ($methods['setup_class']()) {
             foreach ($methods['tests'] as $method) {
@@ -372,6 +392,9 @@ final class Runner implements IRunner {
                 $methods,
                 $object
             );
+            if (!$processed[$fixture]) {
+                return false;
+            }
         }
         $processed['tests'] = preg_grep($this->patterns['tests'], $methods);
 
@@ -381,14 +404,23 @@ final class Runner implements IRunner {
     private function process_method($pattern, $methods, $object) {
         $method = preg_grep($pattern, $methods);
 
-        if ($method) {
+        switch (count($method)) {
+        case 0:
+            return function() { return true; };
+
+        case 1:
             $method = current($method);
             return function() use ($object, $method) {
                 return $this->run_method($object, $method);
             };
-        }
 
-        return function() { return true; };
+        default:
+            $this->reporter->report_error(
+                get_class($object),
+                "Multiple methods found:\n\t" . implode("\n\t", $method)
+            );
+            return false;
+        }
     }
 
     private function run_method($object, $method) {
