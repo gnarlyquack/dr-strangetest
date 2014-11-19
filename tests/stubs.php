@@ -27,6 +27,8 @@ class StubReporter implements easytest\IReporter {
         $this->report['Failures'][] = [$source, $message->getMessage()];
     }
 
+    public function render_report() {}
+
     public function assert_report($expected) {
         $expected = array_merge(
             $this->blank_report,

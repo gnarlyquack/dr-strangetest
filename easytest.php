@@ -16,6 +16,8 @@ interface IContext {
 }
 
 interface IReporter {
+    public function render_report();
+
     public function report_success();
 
     public function report_error($source, $message);
@@ -439,27 +441,39 @@ final class Runner implements IRunner {
 
 
 final class Reporter implements IReporter {
-    private $report = [
-        'Tests' => 0,
+    private $count = 0;
+    private $results = [
         'Errors' => [],
         'Failures' => [],
     ];
 
     public function report_success() {
-        ++$this->report['Tests'];
+        ++$this->count;
     }
 
     public function report_error($source, $message) {
-        $this->report['Errors'][] = [$source, $message];
+        $this->results['Errors'][] = [$source, $message];
     }
 
     public function report_failure($source, $message) {
-        ++$this->report['Tests'];
-        $this->report['Failures'][] = [$source, $message];
+        ++$this->count;
+        $this->results['Failures'][] = [$source, $message];
     }
 
-    public function get_report() {
-        return $this->report;
+    public function render_report() {
+        $totals = sprintf('Tests: %d', $this->count);
+        foreach ($this->results as $type => $results) {
+            if (!$results) {
+                continue;
+            }
+
+            $totals .= sprintf(', %s: %d', $type, count($results));
+            echo str_pad("     $type     ", 75, '=', STR_PAD_BOTH), "\n\n";
+            foreach ($results as $i => $result) {
+                printf("%d) %s\n%s\n\n\n", $i + 1, $result[0], $result[1]);
+            }
+        }
+        echo "$totals\n";
     }
 }
 
@@ -476,21 +490,4 @@ if (!$tests) {
 }
 $runner->discover_tests($tests);
 
-
-$totals = [];
-foreach ($reporter->get_report() as $type => $results) {
-    if (!$results) {
-        continue;
-    }
-    if (is_array($results)) {
-        $totals[] = sprintf('%s: %d', $type, count($results));
-        echo str_pad("     $type     ", 70, '*', STR_PAD_BOTH), "\n\n\n";
-        foreach ($results as $i => $result) {
-            printf("%d) %s\n%s\n\n\n", $i + 1, $result[0], $result[1]);
-        }
-    }
-    else {
-        $totals[] = "$type: $results";
-    }
-}
-echo implode(', ', $totals), "\n";
+$reporter->render_report();
