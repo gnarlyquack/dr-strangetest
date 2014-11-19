@@ -5,9 +5,9 @@ class TestReporter {
     private $ob_level;
 
     public function setup() {
-        $this->reporter = new easytest\Reporter();
         $this->ob_level = ob_get_level();
         ob_start();
+        $this->reporter = new easytest\Reporter('EasyTest');
     }
 
     public function teardown() {
@@ -20,6 +20,7 @@ class TestReporter {
 
     private function assert_report($expected) {
         $this->reporter->render_report();
+        $expected = "EasyTest\n\n$expected";
         $actual = ob_get_clean();
         assert('$expected === $actual');
     }

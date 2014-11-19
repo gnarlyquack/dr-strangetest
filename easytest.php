@@ -16,6 +16,8 @@ interface IContext {
 }
 
 interface IReporter {
+    public function __construct($header);
+
     public function render_report();
 
     public function report_success();
@@ -447,6 +449,10 @@ final class Reporter implements IReporter {
         'Failures' => [],
     ];
 
+    public function __construct($header) {
+        echo "$header\n\n";
+    }
+
     public function report_success() {
         ++$this->count;
         echo '.';
@@ -488,7 +494,7 @@ final class Reporter implements IReporter {
 
 
 (new ErrorHandler())->enable();
-$reporter = new Reporter();
+$reporter = new Reporter('EasyTest');
 $runner = new Discoverer($reporter, new Runner($reporter), new Context());
 
 $tests = array_slice($argv, 1);
