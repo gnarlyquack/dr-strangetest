@@ -32,12 +32,14 @@ class TestReporter {
 
     public function test_report_success() {
         $this->reporter->report_success();
-        $this->assert_report("Tests: 1\n");
+        $this->assert_report(".\n\nTests: 1\n");
     }
 
     public function test_report_error() {
         $this->reporter->report_error('source', 'message');
         $expected = <<<OUT
+E
+
 =============================     Errors     ==============================
 
 1) source
@@ -52,6 +54,8 @@ OUT;
     public function test_report_failure() {
         $this->reporter->report_failure('source', 'message');
         $expected = <<<OUT
+F
+
 ============================     Failures     =============================
 
 1) source
@@ -73,6 +77,8 @@ OUT;
         $this->reporter->report_error('error3', 'error 3');
 
         $expected = <<<OUT
+.FE.EFE
+
 =============================     Errors     ==============================
 
 1) error1

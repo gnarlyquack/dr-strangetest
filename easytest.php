@@ -449,18 +449,25 @@ final class Reporter implements IReporter {
 
     public function report_success() {
         ++$this->count;
+        echo '.';
     }
 
     public function report_error($source, $message) {
         $this->results['Errors'][] = [$source, $message];
+        echo 'E';
     }
 
     public function report_failure($source, $message) {
         ++$this->count;
         $this->results['Failures'][] = [$source, $message];
+        echo 'F';
     }
 
     public function render_report() {
+        if ($this->count || array_filter($this->results)) {
+            echo "\n\n";
+        }
+
         $totals = sprintf('Tests: %d', $this->count);
         foreach ($this->results as $type => $results) {
             if (!$results) {
