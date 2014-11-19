@@ -31,11 +31,178 @@ interface IRunner {
     public function run_test_case($object);
 }
 
+interface IVariableFormatter {
+    public function format_var(&$var);
+}
+
+
+/*
+ * Format a variable for display.
+ *
+ * This provides more readable formatting of variables than PHP's built-in
+ * variable-printing functions (print_r(), var_dump(), var_export()) and
+ * also handles recursive references.
+ */
+final class VariableFormatter implements IVariableFormatter {
+    private $sentinel;
+
+    public function __construct() {
+        $this->sentinel = ['byval' => new \stdClass(), 'byref' => null];
+    }
+
+    public function format_var(&$var) {
+        $name = is_object($var) ? get_class($var) : gettype($var);
+        $seen = ['byval' => [], 'byref' => []];
+        return $this->format($var, $name, $seen);
+    }
+
+    private function format(&$var, $name, &$seen, $indent = 0) {
+        $reference = $this->check_reference($var, $name, $seen);
+        if ($reference) {
+            return $reference;
+        }
+        if (is_scalar($var) || null === $var) {
+            return $this->format_scalar($var);
+        }
+        if (is_resource($var)) {
+            return $this->format_resource($var);
+        }
+        if (is_array($var)) {
+            return $this->format_array($var, $name, $seen, $indent);
+        }
+        return $this->format_object($var, $name, $seen, $indent);
+    }
+
+    private function format_scalar(&$var) {
+        return var_export($var, true);
+    }
+
+    private function format_resource(&$var) {
+        return sprintf(
+            '%s of type "%s"',
+            print_r($var, true),
+            get_resource_type($var)
+        );
+    }
+
+    private function format_array(&$var, $name, &$seen, $indent) {
+        $baseline = str_repeat(' ', $indent);
+        $indent += 4;
+        $padding = str_repeat(' ', $indent);
+        $out = '';
+
+        if ($var) {
+            foreach ($var as $key => &$value) {
+                $key = var_export($key, true);
+                $out .= sprintf(
+                    "\n%s%s => %s,",
+                    $padding,
+                    $key,
+                    $this->format(
+                        $value,
+                        sprintf('%s[%s]', $name, $key),
+                        $seen,
+                        $indent
+                    )
+                );
+            }
+            $out .= "\n$baseline";
+        }
+        return "array($out)";
+    }
+
+    private function format_object(&$var, $name, &$seen, $indent) {
+        $baseline = str_repeat(' ', $indent);
+        $indent += 4;
+        $padding = str_repeat(' ', $indent);
+        $out = '';
+
+        $class = get_class($var);
+        $values = (array)$var;
+        if ($values) {
+            foreach ($values as $key => &$value) {
+                /*
+                 * Object properties are cast to array keys as follows:
+                 *     public    $property -> "property"
+                 *     protected $property -> "\0*\0property"
+                 *     private   $property -> "\0class\0property"
+                 *         where "class" is the name of the class where the
+                 *         property is declared
+                 */
+                $key = explode("\0", $key);
+                $property = '$' . array_pop($key);
+                if ($key && $key[1] !== '*' && $key[1] !== $class) {
+                    $property = "$key[1]::$property";
+                }
+                $out .= sprintf(
+                    "\n%s%s = %s;",
+                    $padding,
+                    $property,
+                    $this->format(
+                        $value,
+                        sprintf('%s->%s', $name, $property),
+                        $seen,
+                        $indent
+                    )
+                );
+            }
+            $out .= "\n$baseline";
+        }
+        return "$class {{$out}}";
+    }
+
+    /*
+     * Check if $var is a reference to another value in $seen.
+     *
+     * If $var is normally pass-by-value, then it can only be an explicit
+     * reference. If it's normally pass-by-reference, then it can either be an
+     * object reference or an explicit reference. Explicit references are
+     * marked with the reference operator, i.e., '&'.
+     *
+     * Since PHP has no built-in way to determine if a variable is a reference,
+     * references are identified with a hack wherein $var is changed and $seen
+     * is checked for an equivalent change.
+     */
+    private function check_reference(&$var, $name, &$seen) {
+        if (is_scalar($var) || is_array($var) || null === $var) {
+            $copy = $var;
+            $var = $this->sentinel['byval'];
+            $reference = array_search($var, $seen['byval'], true);
+            if (false === $reference) {
+                $seen['byval'][$name] = &$var;
+            }
+            else {
+                $reference = "&$reference";
+            }
+            $var = $copy;
+        }
+        else {
+            $reference = array_search($var, $seen['byref'], true);
+            if (false === $reference) {
+                $seen['byref'][$name] = &$var;
+            }
+            else {
+                $copy = $var;
+                $var = $this->sentinel['byref'];
+                if ($var === $seen['byref'][$reference]) {
+                    $reference = "&$reference";
+                }
+                $var = $copy;
+            }
+        }
+        return $reference;
+    }
+}
+
 
 final class ErrorHandler {
+    private $formatter;
+
     private $assertion;
 
-    public function enable() {
+    public function __construct(IVariableFormatter $formatter) {
+        $this->formatter = $formatter;
+
         error_reporting(-1);
         set_error_handler([$this, 'handle_error'], error_reporting());
 
@@ -95,7 +262,7 @@ final class ErrorHandler {
                     $message .= sprintf(
                         "\n\n%s:\n%s",
                         $variable,
-                        var_export($context[$variable], true)
+                        $this->formatter->format_var($context[$variable])
                     );
                 }
             }
@@ -493,7 +660,8 @@ final class Reporter implements IReporter {
 
 
 
-(new ErrorHandler())->enable();
+new ErrorHandler(new VariableFormatter());
+
 $reporter = new Reporter('EasyTest');
 $runner = new Discoverer($reporter, new Runner($reporter), new Context());
 
