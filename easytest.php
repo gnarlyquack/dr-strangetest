@@ -15,6 +15,10 @@ interface IContext {
     public function include_file($file);
 }
 
+interface IDiff {
+    public function diff($from, $to, $from_name, $to_name);
+}
+
 interface IReporter {
     public function __construct($header);
 
@@ -33,6 +37,64 @@ interface IRunner {
 
 interface IVariableFormatter {
     public function format_var(&$var);
+}
+
+
+/*
+ * Generate a unified diff between two strings.
+ *
+ * This is a basic implementation of the longest common subsequence algorithm.
+ */
+final class Diff implements IDiff {
+    public function diff($from, $to, $from_name, $to_name) {
+        $diff = $this->diff_array(explode("\n", $from), explode("\n", $to));
+        $diff = implode("\n", $diff);
+        return "- $from_name\n+ $to_name\n\n$diff";
+    }
+
+    private function diff_array($from, $to) {
+        $flen = count($from);
+        $tlen = count($to);
+        $m = [];
+
+        for ($i = 0; $i <= $flen; ++$i) {
+            for ($j = 0; $j <= $tlen; ++$j) {
+                if (0 === $i || 0 === $j) {
+                    $m[$i][$j] = 0;
+                }
+                elseif ($from[$i-1] === $to[$j-1]) {
+                    $m[$i][$j] = $m[$i-1][$j-1] + 1;
+                }
+                else {
+                    $m[$i][$j] = max($m[$i][$j-1], $m[$i-1][$j]);
+                }
+            }
+        }
+
+        $i = $flen;
+        $j = $tlen;
+        $diff = [];
+        while ($i > 0 || $j > 0) {
+            if ($i > 0 && $j > 0 && $from[$i-1] === $to[$j-1]) {
+                --$i;
+                --$j;
+                array_unshift($diff, '  ' . $to[$j]);
+            }
+            elseif ($j > 0 && (0 === $i || $m[$i][$j-1] >= $m[$i-1][$j])) {
+                --$j;
+                array_unshift($diff, '+ ' . $to[$j]);
+            }
+            elseif ($i > 0 && (0 === $j || $m[$i][$j-1] < $m[$i-1][$j])) {
+                --$i;
+                array_unshift($diff, '- ' . $from[$i]);
+            }
+            else {
+                throw new \Exception('Reached unexpected branch');
+            }
+        }
+
+        return $diff;
+    }
 }
 
 
@@ -197,11 +259,13 @@ final class VariableFormatter implements IVariableFormatter {
 
 final class ErrorHandler {
     private $formatter;
+    private $diff;
 
     private $assertion;
 
-    public function __construct(IVariableFormatter $formatter) {
+    public function __construct(IVariableFormatter $formatter, IDiff $diff) {
         $this->formatter = $formatter;
+        $this->diff = $diff;
 
         error_reporting(-1);
         set_error_handler([$this, 'handle_error'], error_reporting());
@@ -251,6 +315,7 @@ final class ErrorHandler {
             return $message;
         }
 
+        $variables = [];
         foreach (token_get_all("<?php $code") as $token) {
             if (is_array($token) && T_VARIABLE === $token[0]) {
                 // Strip the leading '$' off the variable name.
@@ -259,13 +324,27 @@ final class ErrorHandler {
                 // The "pseudo-variable" '$this' (and possibly others?) will
                 // parse as a variable but won't be in the context.
                 if (array_key_exists($variable, $context)) {
-                    $message .= sprintf(
-                        "\n\n%s:\n%s",
-                        $variable,
-                        $this->formatter->format_var($context[$variable])
-                    );
+                    $variables[$variable]
+                        = $this->formatter->format_var($context[$variable]);
                 }
             }
+        }
+
+        if (!$variables) {
+            return $message;
+        }
+        if (2 === count($variables)) {
+            list($key1, $key2) = array_keys($variables);
+            $message .= "\n\n" . $this->diff->diff(
+                $variables[$key1],
+                $variables[$key2],
+                $key1,
+                $key2
+            );
+            return $message;
+        }
+        foreach ($variables as $key => $value) {
+            $message .= sprintf("\n\n%s:\n%s", $key, $value);
         }
         return $message;
     }
@@ -660,7 +739,7 @@ final class Reporter implements IReporter {
 
 
 
-new ErrorHandler(new VariableFormatter());
+new ErrorHandler(new VariableFormatter(), new Diff());
 
 $reporter = new Reporter('EasyTest');
 $runner = new Discoverer($reporter, new Runner($reporter), new Context());

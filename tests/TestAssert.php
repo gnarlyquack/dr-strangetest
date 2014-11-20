@@ -42,7 +42,11 @@ class TestAssert {
         assert('$expected === $actual');
     }
 
-    public function test_failed_assertion_with_variables() {
+    /*
+     * Two variables in the assertion context (which is expected to be the
+     * most common case) should produce a diff-style output.
+     */
+    public function test_failed_assertion_with_diff() {
         $one = true;
         $two = false;
         try {
@@ -54,11 +58,41 @@ class TestAssert {
         $expected = <<<'EXPECTED'
 Assertion "$one == $two" failed
 
+- one
++ two
+
+- true
++ false
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    /*
+     * Having more (or less) than two variables in the assertion context
+     * should simply output the value of each variable.
+     */
+    public function test_failed_assertion_with_variables() {
+        $one = 1;
+        $two = 2;
+        $four = 4;
+        try {
+            assert('$one + $two == $four');
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (easytest\Failure $e) {}
+
+        $expected = <<<'EXPECTED'
+Assertion "$one + $two == $four" failed
+
 one:
-true
+1
 
 two:
-false
+2
+
+four:
+4
 EXPECTED;
         $actual = $e->getMessage();
         assert('$expected === $actual');
