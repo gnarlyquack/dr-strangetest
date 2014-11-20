@@ -24,4 +24,11 @@ class TestExceptions {
         $actual = (string)$f;
         assert('$expected === $actual');
     }
+
+    public function test_skip_format() {
+        $expected = 'Test skipped';
+        $s = new easytest\Skip($expected);
+        $actual = (string)$s;
+        assert('$expected === $actual');
+    }
 }

@@ -26,9 +26,9 @@ class TestAssert {
 
     public function test_failed_assertion_with_message() {
         if (version_compare(PHP_VERSION, '5.4.8') < 0) {
-            // The assert() description parameter was added in PHP 5.4.8, so
-            // skip this test if this is an earlier version of PHP.
-            return;
+            easytest\skip(
+                "assert() description parameter wasn't added until PHP 5.4.8"
+            );
         }
 
         $expected = 'My assertion failed. Or did it?';
@@ -193,6 +193,21 @@ Assertion "$expected === $actual" failed
 +     0 => 1,
   )
 EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+}
+
+
+class TestSkip {
+    public function test_skip() {
+        $expected = 'Skip me';
+        try {
+            easytest\skip($expected);
+            throw new \Exception("skip() didn't cause a skip");
+        }
+        catch (easytest\Skip $e) {}
+
         $actual = $e->getMessage();
         assert('$expected === $actual');
     }

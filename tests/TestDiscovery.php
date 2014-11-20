@@ -185,6 +185,64 @@ class TestDiscovery implements easytest\IRunner {
         $this->reporter->assert_report([
             'Errors' => [['test_instantiation_error_one', 'An error happened']]
         ]);
+    }
 
+    public function test_skip() {
+        $path = $this->path . 'skip';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test.php",
+            "$path/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = [];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Skips' => [["$path/test.php", 'Skip me']]
+        ]);
+    }
+
+    public function test_skip_in_setup() {
+        $path = $this->path . 'skip_in_setup';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = ["$path/setup.php"];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = [];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Skips' => [["$path/setup.php", 'Skip me']]
+        ]);
+    }
+
+    public function test_skip_in_teardown() {
+        $path = $this->path . 'skip_in_teardown';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test.php",
+            "$path/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = ['test_skip_in_teardown'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Errors' => [["$path/teardown.php", 'Skip me']]
+        ]);
     }
 }

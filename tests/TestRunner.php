@@ -174,6 +174,67 @@ class TestRunner {
             ],
         ]);
     }
+
+    public function test_skip() {
+        $this->assert_run(
+            new SkipTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Skips' => [
+                ['SkipTestCase::test', 'Skip me'],
+            ],
+        ]);
+    }
+
+    public function test_skip_in_setup() {
+        $this->assert_run(
+            new SkipSetupTestCase(),
+            ['setup_class', 'setup', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Skips' => [
+                ['SkipSetupTestCase::setup', 'Skip me'],
+            ],
+        ]);
+    }
+
+    public function test_skip_in_setup_class() {
+        $this->assert_run(
+            new SkipSetupClassTestCase(),
+            ['setup_class']
+        );
+        $this->reporter->assert_report([
+            'Skips' => [
+                ['SkipSetupClassTestCase::setup_class', 'Skip me'],
+            ],
+        ]);
+    }
+
+    public function test_skip_in_teardown() {
+        $this->assert_run(
+            new SkipTeardownTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Errors' => [
+                ['SkipTeardownTestCase::teardown', 'Skip me'],
+            ],
+        ]);
+    }
+
+    public function test_skip_in_teardown_class() {
+        $this->assert_run(
+            new SkipTeardownClassTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        $this->reporter->assert_report([
+            'Tests' => 1,
+            'Errors' => [
+                ['SkipTeardownClassTestCase::teardown_class', 'Skip me'],
+            ],
+        ]);
+    }
 }
 
 
@@ -331,5 +392,40 @@ class MultipleSetupClassTestCase extends BaseTestCase {
 class MultipleTeardownClassTestCase extends BaseTestCase {
     public function TearDownClass() {
         $this->log[] = __FUNCTION__;
+    }
+}
+
+class SkipTestCase extends BaseTestCase {
+    public function test() {
+        $this->log[] = __FUNCTION__;
+        easytest\skip('Skip me');
+    }
+}
+
+class SkipSetupTestCase extends BaseTestCase {
+    public function setup() {
+        $this->log[] = __FUNCTION__;
+        easytest\skip('Skip me');
+    }
+}
+
+class SkipSetupClassTestCase extends BaseTestCase {
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+        easytest\skip('Skip me');
+    }
+}
+
+class SkipTeardownTestCase extends BaseTestCase {
+    public function teardown() {
+        $this->log[] = __FUNCTION__;
+        easytest\skip('Skip me');
+    }
+}
+
+class SkipTeardownClassTestCase extends BaseTestCase {
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+        easytest\skip('Skip me');
     }
 }

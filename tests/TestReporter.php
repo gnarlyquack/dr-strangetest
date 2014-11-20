@@ -68,17 +68,35 @@ OUT;
         $this->assert_report($expected);
     }
 
+    public function test_report_skip() {
+        $this->reporter->report_skip('source', 'message');
+        $expected = <<<OUT
+S
+
+==============================     Skips     ==============================
+
+1) source
+message
+
+
+Tests: 0, Skips: 1\n
+OUT;
+        $this->assert_report($expected);
+    }
+
     public function test_combined_report() {
         $this->reporter->report_success();
         $this->reporter->report_failure('fail1', 'failure 1');
+        $this->reporter->report_skip('skip1', 'skip 1');
         $this->reporter->report_error('error1', 'error 1');
         $this->reporter->report_success();
         $this->reporter->report_error('error2', 'error 2');
+        $this->reporter->report_skip('skip2', 'skip 2');
         $this->reporter->report_failure('fail2', 'failure 2');
         $this->reporter->report_error('error3', 'error 3');
 
         $expected = <<<OUT
-.FE.EFE
+.FSE.ESFE
 
 =============================     Errors     ==============================
 
@@ -104,7 +122,17 @@ failure 1
 failure 2
 
 
-Tests: 4, Errors: 3, Failures: 2\n
+==============================     Skips     ==============================
+
+1) skip1
+skip 1
+
+
+2) skip2
+skip 2
+
+
+Tests: 4, Errors: 3, Failures: 2, Skips: 2\n
 OUT;
         $this->assert_report($expected);
     }
