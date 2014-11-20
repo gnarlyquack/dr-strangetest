@@ -315,18 +315,28 @@ final class ErrorHandler {
             return $message;
         }
 
+        $sort = true;
         $variables = [];
         foreach (token_get_all("<?php $code") as $token) {
-            if (is_array($token) && T_VARIABLE === $token[0]) {
+            if (!is_array($token)) {
+                continue;
+            }
+            switch ($token[0]) {
+            case T_VARIABLE:
                 // Strip the leading '$' off the variable name.
                 $variable = substr($token[1], 1);
 
                 // The "pseudo-variable" '$this' (and possibly others?) will
                 // parse as a variable but won't be in the context.
                 if (array_key_exists($variable, $context)) {
-                    $variables[$variable]
-                        = $this->formatter->format_var($context[$variable]);
+                    $variables[$variable] = $context[$variable];
                 }
+                break;
+
+            case T_IS_IDENTICAL:
+                // Key order is significant, so don't sort arrays.
+                $sort = false;
+                break;
             }
         }
 
@@ -335,18 +345,48 @@ final class ErrorHandler {
         }
         if (2 === count($variables)) {
             list($key1, $key2) = array_keys($variables);
+            if ($sort) {
+                $this->sort_array($variables[$key1]);
+                $this->sort_array($variables[$key2]);
+            }
             $message .= "\n\n" . $this->diff->diff(
-                $variables[$key1],
-                $variables[$key2],
+                $this->formatter->format_var($variables[$key1]),
+                $this->formatter->format_var($variables[$key2]),
                 $key1,
                 $key2
             );
             return $message;
         }
         foreach ($variables as $key => $value) {
-            $message .= sprintf("\n\n%s:\n%s", $key, $value);
+            $message .= sprintf(
+                "\n\n%s:\n%s",
+                $key,
+                $this->formatter->format_var($value)
+            );
         }
         return $message;
+    }
+
+    private function sort_array(&$array, &$seen = []) {
+        if (!is_array($array)) {
+            return;
+        }
+
+        /* Prevent infinite recursion for arrays with recursive references. */
+        $temp = $array;
+        $array = null;
+        $sorted = in_array($array, $seen, true);
+        $array = $temp;
+        unset($temp);
+
+        if (false !== $sorted) {
+            return;
+        }
+        $seen[] = &$array;
+        ksort($array);
+        foreach ($array as &$value) {
+            $this->sort_array($value, $seen);
+        }
     }
 }
 

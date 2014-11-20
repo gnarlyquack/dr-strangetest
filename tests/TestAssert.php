@@ -97,4 +97,103 @@ EXPECTED;
         $actual = $e->getMessage();
         assert('$expected === $actual');
     }
+
+    public function test_unequal_arrays_are_sorted() {
+        $expected = [
+            1,
+            [2, 3],
+            [],
+            4,
+        ];
+        $actual = [
+            3 => 5,
+            2 => [],
+            1 => [1 => 3, 0 => 2],
+            0 => 1,
+        ];
+        /* Ensure recursion is handled */
+        $expected[] = &$expected;
+        $actual[] = &$actual;
+
+        try {
+            assert('$expected == $actual');
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (easytest\Failure $e) {}
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected == $actual" failed
+
+- expected
++ actual
+
+  array(
+      0 => 1,
+      1 => array(
+          0 => 2,
+          1 => 3,
+      ),
+      2 => array(),
+-     3 => 4,
++     3 => 5,
+      4 => array(
+          0 => 1,
+          1 => array(
+              0 => 2,
+              1 => 3,
+          ),
+          2 => array(),
+-         3 => 4,
++         3 => 5,
+          4 => &array[4],
+      ),
+  )
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    public function test_nonidentical_arrays_are_not_sorted() {
+        $expected = [
+            1,
+            [2, 3],
+            [],
+            4,
+        ];
+        $actual = [
+            3 => 4,
+            2 => [],
+            1 => [1 => 3, 0 => 2],
+            0 => 1,
+        ];
+
+        try {
+            assert('$expected === $actual');
+            throw new \Exception("Failed assertion didn't trigger an exception");
+        }
+        catch (easytest\Failure $e) {}
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected === $actual" failed
+
+- expected
++ actual
+
+  array(
+-     0 => 1,
++     3 => 4,
++     2 => array(),
+      1 => array(
+-         0 => 2,
+          1 => 3,
++         0 => 2,
+      ),
+-     2 => array(),
+-     3 => 4,
++     0 => 1,
+  )
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
 }
