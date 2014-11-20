@@ -849,6 +849,21 @@ final class Reporter implements IReporter {
 
 
 
+function assert_exception($expected, $callback, $message = null) {
+    try {
+        $callback();
+    }
+    catch (\Exception $e) {
+        if ($e instanceof $expected) {
+            return $e;
+        }
+        throw $e;
+    }
+
+    $message = $message ?: 'No exception was thrown although one was expected';
+    throw new Failure($message);
+}
+
 function skip($reason) {
     throw new Skip($reason);
 }
