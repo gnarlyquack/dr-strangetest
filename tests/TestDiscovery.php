@@ -11,6 +11,7 @@ class TestDiscovery implements easytest\IRunner {
     public function setup() {
         $this->reporter = new StubReporter();
         $this->context = new easytest\Context();
+        $this->context->log = [];
         $this->discoverer = new easytest\Discoverer(
             $this->reporter,
             $this,
@@ -267,6 +268,33 @@ class TestDiscovery implements easytest\IRunner {
         assert('$expected === $actual');
 
         $expected = ['TestLoaderOne', 'TestLoaderTwo', 'TestLoaderThree'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([]);
+    }
+
+    public function test_namespaces() {
+        $path = $this->path . 'namespaces';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/test_bracketed_namespaces.php",
+            "$path/test_simple_namespaces.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = [
+            /* Namespaced tests using bracketed syntax */
+            'ns1\\ns1\\TestNamespace',
+            'ns1\\ns2\\TestNamespace',
+            'TestNamespace',
+
+            /* Namespaced tests using "simple" syntax */
+            'ns2\\TestNamespace',
+            'ns3\\TestNamespace'
+        ];
         $actual = $this->runner_log;
         assert('$expected === $actual');
 

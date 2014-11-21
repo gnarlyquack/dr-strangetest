@@ -640,23 +640,82 @@ final class Discoverer {
             return;
         }
 
+        $ns = '';
         $tokens = token_get_all(file_get_contents($file));
-        // Assume token 0 = '<?php' and token 1 = whitespace
+        /* Assume token 0 = '<?php' and token 1 = whitespace */
         for ($i = 2, $c = count($tokens); $i < $c; ++$i) {
-            if (!is_array($tokens[$i]) || T_CLASS !== $tokens[$i][0]) {
+            if (!is_array($tokens[$i])) {
                 continue;
             }
-            // $i = 'class' and $i+1 = whitespace
-            $i += 2;
-            while (!is_array($tokens[$i]) || T_STRING !== $tokens[$i][0]) {
-                ++$i;
-            }
-            $class = $tokens[$i][1];
-            if (0 === stripos($class, 'test')) {
-                $test = $this->instantiate_test($loader, $class);
-                if ($test) {
-                    $this->runner->run_test_case($test);
+            switch ($tokens[$i][0]) {
+            case T_CLASS:
+                list($class, $i) = $this->parse_class($tokens, $i);
+                if ($class) {
+                    $test = $this->instantiate_test($loader, $ns . $class);
+                    if ($test) {
+                        $this->runner->run_test_case($test);
+                    }
                 }
+                break;
+
+            case T_NAMESPACE:
+                list($ns, $i) = $this->parse_namespace($tokens, $i, $ns);
+                break;
+            }
+        }
+    }
+
+    private function parse_class($tokens, $i) {
+        /* $i = 'class' and $i+1 = whitespace */
+        $i += 2;
+        while (!is_array($tokens[$i]) || T_STRING !== $tokens[$i][0]) {
+            ++$i;
+        }
+        $class = $tokens[$i][1];
+        if (0 === stripos($class, 'test')) {
+            return [$class, $i];
+        }
+        return [false, $i];
+    }
+
+    /*
+     * There are two options:
+     *
+     * 1) This is a namespace declaration, which takes two forms:
+     *      namespace identifier;
+     *      namespace identifier { ... }
+     *  In the second case, the identifier is optional
+     *
+     * 2) This is a use of the namespace operator, which takes the form:
+     *      namespace\identifier
+     *
+     * Consequently, if the namespace separator '\' is the first non-whitespace
+     * token found after the 'namespace' keyword, this isn't a namespace
+     * declaration. Otherwise, everything until the terminating ';' or '{'
+     * constitutes the identifier.
+     */
+    private function parse_namespace($tokens, $i, $current_ns) {
+        $ns = '';
+        while (++$i) {
+            if ($tokens[$i] === ';' || $tokens[$i] === '{') {
+                return [$ns ? "$ns\\" : '', $i];
+            }
+
+            if (!is_array($tokens[$i])) {
+                continue;
+            }
+
+            switch ($tokens[$i][0]) {
+            case T_NS_SEPARATOR:
+                if (!$ns) {
+                    return [$current_ns, $i];
+                }
+                $ns .= $tokens[$i][1];
+                break;
+
+            case T_STRING:
+                $ns .= $tokens[$i][1];
+                break;
             }
         }
     }
