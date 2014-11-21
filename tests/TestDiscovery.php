@@ -300,4 +300,26 @@ class TestDiscovery implements easytest\IRunner {
 
         $this->reporter->assert_report([]);
     }
+
+    public function test_output_buffering() {
+        $path = $this->path . 'output_buffering';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = ['test_output_buffering'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Output' => [
+                ["$path/setup.php", "$path/setup.php"],
+                ["$path/test.php", "$path/test.php"],
+                ['test_output_buffering', '__construct'],
+                ["$path/teardown.php", "$path/teardown.php"],
+            ],
+        ]);
+    }
 }

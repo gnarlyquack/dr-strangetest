@@ -115,7 +115,7 @@ class TestRunner {
         );
         $this->reporter->assert_report([
             'Errors' => [
-                ['SetupErrorTestCase::setup', 'An error happened'],
+                ['setup for SetupErrorTestCase::test', 'An error happened'],
             ],
         ]);
     }
@@ -127,7 +127,7 @@ class TestRunner {
         );
         $this->reporter->assert_report([
             'Errors' => [
-                ['TeardownErrorTestCase::teardown', 'An error happened'],
+                ['teardown for TeardownErrorTestCase::test', 'An error happened'],
             ],
         ]);
     }
@@ -194,7 +194,7 @@ class TestRunner {
         );
         $this->reporter->assert_report([
             'Skips' => [
-                ['SkipSetupTestCase::setup', 'Skip me'],
+                ['setup for SkipSetupTestCase::test', 'Skip me'],
             ],
         ]);
     }
@@ -218,7 +218,7 @@ class TestRunner {
         );
         $this->reporter->assert_report([
             'Errors' => [
-                ['SkipTeardownTestCase::teardown', 'Skip me'],
+                ['teardown for SkipTeardownTestCase::test', 'Skip me'],
             ],
         ]);
     }
@@ -232,6 +232,21 @@ class TestRunner {
             'Tests' => 1,
             'Errors' => [
                 ['SkipTeardownClassTestCase::teardown_class', 'Skip me'],
+            ],
+        ]);
+    }
+
+    public function test_output_buffering() {
+        $this->assert_run(
+            new OutputTestCase(),
+            []
+        );
+        $this->reporter->assert_report([
+            'Tests' => 1,
+            'Output' => [
+                ['OutputTestCase::setup_class', 'setup_class'],
+                ['OutputTestCase::test', "setup\ntest\nteardown"],
+                ['OutputTestCase::teardown_class', 'teardown_class'],
             ],
         ]);
     }
@@ -427,5 +442,27 @@ class SkipTeardownClassTestCase extends BaseTestCase {
     public function teardown_class() {
         $this->log[] = __FUNCTION__;
         easytest\skip('Skip me');
+    }
+}
+
+class OutputTestCase extends BaseTestCase {
+    public function setup_class() {
+        echo __FUNCTION__, "\n";
+    }
+
+    public function teardown_class() {
+        echo __FUNCTION__, "\n";
+    }
+
+    public function setup() {
+        echo __FUNCTION__, "\n";
+    }
+
+    public function teardown() {
+        echo __FUNCTION__, "\n";
+    }
+
+    public function test() {
+        echo __FUNCTION__, "\n";
     }
 }

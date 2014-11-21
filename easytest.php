@@ -31,6 +31,8 @@ interface IReporter {
     public function report_failure($source, $message);
 
     public function report_skip($source, $message);
+
+    public function buffer($source, callable $callback);
 }
 
 interface IRunner {
@@ -722,7 +724,10 @@ final class Discoverer {
 
     private function include_file($file) {
         try {
-            $this->context->include_file($file);
+            $this->reporter->buffer(
+                $file,
+                function() use ($file) { $this->context->include_file($file); }
+            );
         }
         catch (Skip $e) {
             $this->reporter->report_skip($file, $e);
@@ -735,7 +740,12 @@ final class Discoverer {
 
     private function include_setup($loader, $file) {
         try {
-            $result = $this->context->include_file($file);
+            $result = $this->reporter->buffer(
+                $file,
+                function() use ($file) {
+                    return $this->context->include_file($file);
+                }
+            );
             return is_callable($result) ? $result : $loader;
         }
         catch (Skip $e) {
@@ -749,7 +759,10 @@ final class Discoverer {
 
     private function include_teardown($file) {
         try {
-            $this->context->include_file($file);
+            $this->reporter->buffer(
+                $file,
+                function() use ($file) { $this->context->include_file($file); }
+            );
         }
         catch (\Exception $e) {
             $this->reporter->report_error($file, $e);
@@ -759,7 +772,10 @@ final class Discoverer {
 
     private function instantiate_test($loader, $class) {
         try {
-            return $loader($class);
+            return $this->reporter->buffer(
+                $class,
+                function() use ($loader, $class) { return $loader($class); }
+            );
         }
         catch (\Exception $e) {
             $this->reporter->report_error($class, $e);
@@ -777,19 +793,23 @@ final class Runner implements IRunner {
         'fixtures' => [
             'setup_class' => [
                 'regex' => '~^setup_?class$~i',
-                'action' => 'run_setup',
+                'method' => 'run_setup',
+                'buffer' => true,
             ],
             'teardown_class' => [
                 'regex' => '~^teardown_?class$~i',
-                'action' => 'run_teardown',
+                'method' => 'run_teardown',
+                'buffer' => true,
             ],
             'setup' => [
                 'regex' => '~^setup$~i',
-                'action' => 'run_setup',
+                'method' => 'run_setup',
+                'buffer' => false,
             ],
             'teardown' => [
                 'regex' => '~^teardown$~i',
-                'action' => 'run_teardown',
+                'method' => 'run_teardown',
+                'buffer' => false,
             ],
         ],
     ];
@@ -799,55 +819,48 @@ final class Runner implements IRunner {
     }
 
     public function run_test_case($object) {
-        $methods = $this->process_methods($object);
+        $class = get_class($object);
+        $methods = $this->process_methods($class, $object);
         if (!$methods) {
             return;
         }
 
-        if ($methods['setup_class']()) {
-            foreach ($methods['tests'] as $method) {
-                if ($methods['setup']()) {
-                    $success = $this->run_test_method($object, $method);
-                    if ($methods['teardown']() && $success) {
-                        $this->reporter->report_success();
-                    }
+        if ($error = $methods['setup_class']()) {
+            $this->report_errors([$error]);
+            return;
+        }
+
+        foreach ($methods['tests'] as $method) {
+            $errors = $this->reporter->buffer(
+                "$class::$method",
+                function() use ($class, $object, $methods, $method) {
+                    return $this->run_test(
+                        $class,
+                        $object,
+                        $method,
+                        $methods['setup'],
+                        $methods['teardown']
+                    );
                 }
-            }
-            $methods['teardown_class']();
+            );
+            $this->report_errors($errors);
+        }
+
+        if ($error = $methods['teardown_class']()) {
+            $this->report_errors([$error]);
         }
     }
 
-    private function run_test_method($object, $method) {
-        try {
-            $object->$method();
-        }
-        catch (\Exception $e) {
-            $source = sprintf('%s::%s', get_class($object), $method);
-            switch (get_class($e)) {
-            case 'easytest\\Failure':
-                $this->reporter->report_failure($source, $e);
-                break;
-            case 'easytest\\Skip':
-                $this->reporter->report_skip($source, $e);
-                break;
-            default:
-                $this->reporter->report_error($source, $e);
-                break;
-            }
-        }
-        return !isset($e);
-    }
-
-    private function process_methods($object) {
+    private function process_methods($class, $object) {
         $methods = get_class_methods($object);
         $processed = [];
 
-        foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
-            $processed[$fixture] = $this->process_method(
-                $pattern['regex'],
-                $pattern['action'],
+        foreach ($this->patterns['fixtures'] as $fixture => $spec) {
+            $processed[$fixture] = $this->process_fixture(
+                $class,
+                $object,
                 $methods,
-                $object
+                $spec
             );
             if (!$processed[$fixture]) {
                 return false;
@@ -858,58 +871,100 @@ final class Runner implements IRunner {
         return $processed;
     }
 
-    private function process_method($pattern, $action, $methods, $object) {
-        $method = preg_grep($pattern, $methods);
+    private function process_fixture($class, $object, $methods, $spec) {
+        $fixture = preg_grep($spec['regex'], $methods);
 
-        switch (count($method)) {
+        switch (count($fixture)) {
         case 0:
-            return function() { return true; };
+            return function() {};
 
         case 1:
-            $method = current($method);
-            return function() use ($action, $object, $method) {
-                return $this->$action($object, $method);
+            $fixture = current($fixture);
+            $method = $spec['method'];
+            $function = function($during = null)
+                        use ($class, $object, $fixture, $method)
+            {
+                return $this->$method($class, $object, $fixture, $during);
+            };
+            if (!$spec['buffer']) {
+                return $function;
+            }
+            return function() use ($class, $fixture, $function) {
+                return $this->reporter->buffer("$class::$fixture", $function);
             };
 
         default:
             $this->reporter->report_error(
-                get_class($object),
-                "Multiple methods found:\n\t" . implode("\n\t", $method)
+                $class,
+                "Multiple methods found:\n\t" . implode("\n\t", $fixture)
             );
             return false;
         }
     }
 
-    private function run_setup($object, $method) {
+    private function run_test($class, $object, $method, $setup, $teardown) {
+        $errors = [];
+        if ($error = $setup($method)) {
+            $errors[] = $error;
+            return $errors;
+        }
+        if ($error = $this->run_test_method($class, $object, $method)) {
+            $errors[] = $error;
+        }
+        if ($error = $teardown($method)) {
+            $errors[] = $error;
+        }
+        return $errors;
+    }
+
+    private function run_setup($class, $object, $method, $during = null) {
+        $source = $during ? "$method for $class::$during" : "$class::$method";
         try {
             $object->$method();
         }
         catch (Skip $e) {
-            $this->reporter->report_skip(
-                sprintf('%s::%s', get_class($object), $method),
-                $e
-            );
+            return [$source, 'report_skip', $e];
         }
         catch (\Exception $e) {
-            $this->reporter->report_error(
-                sprintf('%s::%s', get_class($object), $method),
-                $e
-            );
+            return [$source, 'report_error', $e];
         }
-        return !isset($e);
     }
 
-    private function run_teardown($object, $method) {
+    private function run_test_method($class, $object, $method) {
+        $source = "$class::$method";
+        try {
+            $object->$method();
+        }
+        catch (Failure $e) {
+            return [$source, 'report_failure', $e];
+        }
+        catch (Skip $e) {
+            return [$source, 'report_skip', $e];
+        }
+        catch (\Exception $e) {
+            return [$source, 'report_error', $e];
+        }
+    }
+
+    private function run_teardown($class, $object, $method, $during = null) {
+        $source = $during ? "$method for $class::$during" : "$class::$method";
         try {
             $object->$method();
         }
         catch (\Exception $e) {
-            $this->reporter->report_error(
-                sprintf('%s::%s', get_class($object), $method),
-                $e
-            );
+            return [$source, 'report_error', $e];
         }
-        return !isset($e);
+    }
+
+    private function report_errors($errors) {
+        if (!$errors) {
+            $this->reporter->report_success();
+            return;
+        }
+        foreach ($errors as $error) {
+            list($source, $action, $message) = $error;
+            $this->reporter->$action($source, $message);
+        }
     }
 }
 
@@ -920,6 +975,7 @@ final class Reporter implements IReporter {
         'Errors' => [],
         'Failures' => [],
         'Skips' => [],
+        'Output' => [],
     ];
 
     public function __construct($header) {
@@ -945,6 +1001,51 @@ final class Reporter implements IReporter {
     public function report_skip($source, $message) {
         $this->results['Skips'][] = [$source, $message];
         echo 'S';
+    }
+
+    public function buffer($source, callable $callback) {
+        $levels = ob_get_level();
+        ob_start();
+
+        try {
+            $result = $callback();
+        }
+        catch (\Exception $e) {}
+
+        $buffers = [];
+        while (($level = ob_get_level()) > $levels) {
+            if ($buffer = trim(ob_get_clean())) {
+                $buffers[$level - $levels] = $buffer;
+            }
+        }
+
+        switch (count($buffers)) {
+        case 0:
+            /* do nothing */
+            break;
+
+        case 1:
+            $this->results['Output'][] = [$source, current($buffers)];
+            echo 'O';
+            break;
+
+        default:
+            $output = '';
+            foreach (array_reverse($buffers, true) as $i => $buffer) {
+                $output .= sprintf(
+                    "%s\n%s\n\n",
+                    str_pad(" Buffer $i ", 35, '-', STR_PAD_BOTH),
+                    $buffer
+                );
+            }
+            $this->results['Output'][] = [$source, rtrim($output)];
+            echo 'O';
+        }
+
+        if (isset($e)) {
+            throw $e;
+        }
+        return $result;
     }
 
     public function render_report() {

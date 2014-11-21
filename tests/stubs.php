@@ -9,7 +9,8 @@ class StubReporter implements easytest\IReporter {
             'Tests' => 0,
             'Errors' => [],
             'Failures' => [],
-            'Skips' => []
+            'Skips' => [],
+            'Output' => [],
         ];
     }
 
@@ -30,6 +31,17 @@ class StubReporter implements easytest\IReporter {
 
     public function report_skip($source, $message) {
         $this->report['Skips'][] = [$source, $message->getMessage()];
+    }
+
+    public function buffer($source, callable $callback) {
+        ob_start();
+
+        $result = $callback();
+
+        if ($output = trim(ob_get_clean())) {
+            $this->report['Output'][] = [$source, $output];
+        }
+        return $result;
     }
 
     public function render_report() {}
