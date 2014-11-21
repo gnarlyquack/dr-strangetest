@@ -260,23 +260,57 @@ final class VariableFormatter implements IVariableFormatter {
 
 
 final class ErrorHandler {
+    private static $eh;
+
     private $formatter;
     private $diff;
-
     private $assertion;
 
-    public function __construct(IVariableFormatter $formatter, IDiff $diff) {
-        $this->formatter = $formatter;
-        $this->diff = $diff;
+    public static function enable(IVariableFormatter $formatter, IDiff $diff) {
+        if (isset(self::$eh)) {
+            throw new \Exception(get_class() . ' has already been enabled');
+        }
+
+        self::$eh = new ErrorHandler($formatter, $diff);
 
         error_reporting(-1);
-        set_error_handler([$this, 'handle_error'], error_reporting());
+        set_error_handler([self::$eh, 'handle_error'], error_reporting());
 
         assert_options(ASSERT_ACTIVE, 1);
         assert_options(ASSERT_WARNING, 1);
         assert_options(ASSERT_BAIL, 0);
         assert_options(ASSERT_QUIET_EVAL, 0);
-        assert_options(ASSERT_CALLBACK, [$this, 'handle_assertion']);
+        assert_options(ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
+    }
+
+    public static function assert_equal($expected, $actual, $message = null) {
+        self::assert('$expected == $actual', $expected, $actual, $message);
+    }
+
+    public static function assert_identical($expected, $actual, $message = null) {
+        self::assert('$expected === $actual', $expected, $actual, $message);
+    }
+
+    /*
+     * The $desc parameter wasn't added to assert() until PHP 5.4.8, so
+     * earlier versions need a nasty hack to inject the message.
+     */
+    private static function assert($code, $expected, $actual, $message) {
+        if (version_compare(PHP_VERSION, '5.4.8', '>=')) {
+            assert($code, $message);
+        }
+        elseif (!$message) {
+            assert($code);
+        }
+        elseif (!eval("return $code;")) {
+            self::$eh->handle_assertion(__FILE__, __LINE__, $code, $message);
+            trigger_error();
+        }
+    }
+
+    private function __construct(IVariableFormatter $formatter, IDiff $diff) {
+        $this->formatter = $formatter;
+        $this->diff = $diff;
     }
 
     /*
@@ -868,10 +902,24 @@ function skip($reason) {
     throw new Skip($reason);
 }
 
+/*
+ * assert_equal() and assert_identical() are simply proxies for static methods
+ * on the ErrorHandler. This is done to support the $message parameter in
+ * versions of PHP < 5.4.8.
+ */
+
+function assert_equal($expected, $actual, $message = null) {
+    ErrorHandler::assert_equal($expected, $actual, $message);
+}
+
+function assert_identical($expected, $actual, $message = null) {
+    ErrorHandler::assert_identical($expected, $actual, $message);
+}
 
 
 
-new ErrorHandler(new VariableFormatter(), new Diff());
+
+ErrorHandler::enable(new VariableFormatter(), new Diff());
 
 $reporter = new Reporter('EasyTest');
 $runner = new Discoverer($reporter, new Runner($reporter), new Context());

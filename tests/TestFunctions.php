@@ -1,57 +1,5 @@
 <?php
 
-class TestAssertException {
-    public function test_passes_when_exception_thrown() {
-        $result = easytest\assert_exception(
-            'Exception',
-            function() { throw new \Exception(); }
-        );
-        assert('$result instanceof \Exception');
-    }
-
-    public function test_fails_when_no_exception_thrown() {
-        try {
-            easytest\assert_exception('Exception', function() {});
-        }
-        catch (easytest\Failure $e) {}
-
-        if (!isset($e)) {
-            throw new easytest\Failure(
-                'assert_exception() did not fail when no exception was thrown'
-            );
-        }
-
-        $expected = 'No exception was thrown although one was expected';
-        $actual = $e->getMessage();
-        assert('$expected === $actual');
-    }
-
-    public function test_rethrows_unexpected_exception() {
-        try {
-            easytest\assert_exception(
-                'easytest\\Failure',
-                function() { throw new easytest\Skip(); }
-            );
-            throw new easytest\Failure(
-                'assert_exception() did not rethrow an unexpected exception'
-            );
-        }
-        catch (easytest\Skip $e) {}
-    }
-
-    public function test_failure_message() {
-        $expected = 'My custom failure message.';
-        try {
-            easytest\assert_exception('Exception', function() {}, $expected);
-        }
-        catch (easytest\Failure $e) {
-            $actual = $e->getMessage();
-            assert('$expected === $actual');
-        }
-    }
-}
-
-
 class TestAssert {
     public function test_assert() {
         $e = easytest\assert_exception(
@@ -75,7 +23,7 @@ class TestAssert {
     }
 
     public function test_assert_with_description() {
-        if (version_compare(PHP_VERSION, '5.4.8') < 0) {
+        if (version_compare(PHP_VERSION, '5.4.8', '<')) {
             easytest\skip(
                 "assert() description parameter wasn't added until PHP 5.4.8"
             );
@@ -243,6 +191,148 @@ Assertion "$expected === $actual" failed
 -     3 => 4,
 +     0 => 1,
   )
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+}
+
+
+class TestAssertException {
+    public function test_passes_when_exception_thrown() {
+        $result = easytest\assert_exception(
+            'Exception',
+            function() { throw new \Exception(); }
+        );
+        assert('$result instanceof \\Exception');
+    }
+
+    public function test_fails_when_no_exception_thrown() {
+        try {
+            easytest\assert_exception('Exception', function() {});
+        }
+        catch (easytest\Failure $e) {}
+
+        if (!isset($e)) {
+            throw new easytest\Failure(
+                'assert_exception() did not fail when no exception was thrown'
+            );
+        }
+
+        $expected = 'No exception was thrown although one was expected';
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    public function test_rethrows_unexpected_exception() {
+        try {
+            easytest\assert_exception(
+                'easytest\\Failure',
+                function() { throw new easytest\Skip(); }
+            );
+            throw new easytest\Failure(
+                'assert_exception() did not rethrow an unexpected exception'
+            );
+        }
+        catch (easytest\Skip $e) {}
+    }
+
+    public function test_failure_message() {
+        $expected = 'My custom failure message.';
+        try {
+            easytest\assert_exception('Exception', function() {}, $expected);
+        }
+        catch (easytest\Failure $e) {
+            $actual = $e->getMessage();
+            assert('$expected === $actual');
+        }
+    }
+}
+
+
+class TestAssertEqual {
+    public function test_passes() {
+        easytest\assert_equal(1, '1');
+    }
+
+    public function test_fails() {
+        $e = easytest\assert_exception(
+            'easytest\\Failure',
+            function() { easytest\assert_equal(true, false); }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected == $actual" failed
+
+- expected
++ actual
+
+- true
++ false
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    public function test_message() {
+        $e = easytest\assert_exception(
+            'easytest\\Failure',
+            function() { easytest\assert_equal(true, false, 'My message'); }
+        );
+
+        $expected = <<<'EXPECTED'
+My message
+
+- expected
++ actual
+
+- true
++ false
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+}
+
+
+class TestAssertIdentical {
+    public function test_passes() {
+        easytest\assert_identical(1, 1);
+    }
+
+    public function test_fails() {
+        $e = easytest\assert_exception(
+            'easytest\\Failure',
+            function() { easytest\assert_identical(1, '1'); }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected === $actual" failed
+
+- expected
++ actual
+
+- 1
++ '1'
+EXPECTED;
+        $actual = $e->getMessage();
+        assert('$expected === $actual');
+    }
+
+    public function test_message() {
+        $e = easytest\assert_exception(
+            'easytest\\Failure',
+            function() { easytest\assert_identical(1, '1', 'My message'); }
+        );
+
+        $expected = <<<'EXPECTED'
+My message
+
+- expected
++ actual
+
+- 1
++ '1'
 EXPECTED;
         $actual = $e->getMessage();
         assert('$expected === $actual');
