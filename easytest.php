@@ -457,7 +457,7 @@ final class Skip extends \Exception {
 
 final class Context implements IContext {
     public function include_file($file) {
-        include $file;
+        return include $file;
     }
 }
 
@@ -466,30 +466,27 @@ final class Discoverer {
     private $context;
     private $reporter;
     private $runner;
+    private $loader;
+    private $glob_sort;
 
     private $patterns = [
         'files' => '~/test[^/]*\\.php$~i',
         'dirs' => '~/test[^/]*/$~i',
-        'fixtures' => [
-            'setup' => [
-                'regex' => '~/setup\\.php$~i',
-                'action' => 'include_skippable',
-            ],
-            'teardown' => [
-                'regex' => '~/teardown\\.php$~i',
-                'action' => 'include_file',
-            ],
-        ],
+        'setup' => '~/setup\\.php$~i',
+        'teardown' => '~/teardown\\.php$~i',
     ];
 
     public function __construct(
         IReporter $reporter,
         IRunner $runner,
-        IContext $context
+        IContext $context,
+        $sort_files = false
     ) {
         $this->reporter = $reporter;
         $this->runner = $runner;
         $this->context = $context;
+        $this->glob_sort = $sort_files ? 0 : GLOB_NOSORT;
+        $this->loader = function($classname) { return new $classname(); };
     }
 
     public function discover_tests(array $paths) {
@@ -504,7 +501,7 @@ final class Discoverer {
                 $path .= '/';
             }
             $root = $this->determine_root($path);
-            $this->discover_directory($root, $path);
+            $this->discover_directory($this->loader, $root, $path);
         }
     }
 
@@ -541,39 +538,35 @@ final class Discoverer {
      * Otherwise, discovery is only done for the file or directory specified in
      * $target. Directory fixtures are discovered and run in either case.
      */
-    private function discover_directory($dir, $target) {
+    private function discover_directory($loader, $dir, $target) {
         if ($target === $dir) {
             $target = null;
         }
-        $paths = $this->process_directory($dir, $target);
+        $paths = $this->process_directory($loader, $dir, $target);
         if (!$paths) {
             return;
         }
 
-        if ($paths['setup']()) {
+        $loader = $paths['setup']();
+        if ($loader) {
             foreach ($paths['files'] as $path) {
-                $this->discover_file($path);
+                $this->discover_file($loader, $path);
             }
             foreach ($paths['dirs'] as $path) {
-                $this->discover_directory($path, $target);
+                $this->discover_directory($loader, $path, $target);
             }
             $paths['teardown']();
         }
     }
 
-    private function process_directory($path, $target) {
-        $paths = glob("$path*", GLOB_MARK | GLOB_NOSORT);
+    private function process_directory($loader, $path, $target) {
+        $paths = glob("$path*", GLOB_MARK | $this->glob_sort);
         $processed = [];
 
-        foreach ($this->patterns['fixtures'] as $fixture => $pattern) {
-            $processed[$fixture] = $this->process_file(
-                $pattern['regex'],
-                $pattern['action'],
-                $paths
-            );
-            if (!$processed[$fixture]) {
-                return false;
-            }
+        $processed['setup'] = $this->process_setup($loader, $paths);
+        $processed['teardown'] = $this->process_teardown($paths);
+        if (!$processed['setup'] || !$processed['teardown']) {
+            return false;
         }
 
         if (!$target) {
@@ -595,8 +588,30 @@ final class Discoverer {
         return $processed;
     }
 
-    private function process_file($pattern, $action, $paths) {
-        $path = preg_grep($pattern, $paths);
+    private function process_setup($loader, $paths) {
+        $path = preg_grep($this->patterns['setup'], $paths);
+
+        switch (count($path)) {
+        case 0:
+            return function() use ($loader) { return $loader; };
+
+        case 1:
+            $path = current($path);
+            return function() use ($path, $loader) {
+                return $this->include_setup($loader, $path);
+            };
+
+        default:
+            $this->reporter->report_error(
+                dirname(current($path)),
+                "Multiple files found:\n\t" . implode("\n\t", $path)
+            );
+            return false;
+        }
+    }
+
+    private function process_teardown($paths) {
+        $path = preg_grep($this->patterns['teardown'], $paths);
 
         switch (count($path)) {
         case 0:
@@ -604,8 +619,8 @@ final class Discoverer {
 
         case 1:
             $path = current($path);
-            return function() use ($action, $path) {
-                return $this->$action($path);
+            return function() use ($path) {
+                return $this->include_teardown($path);
             };
 
         default:
@@ -620,8 +635,8 @@ final class Discoverer {
     /*
      * Discover and run tests in a file.
      */
-    private function discover_file($file) {
-        if (!$this->include_skippable($file)) {
+    private function discover_file($loader, $file) {
+        if (!$this->include_file($file)) {
             return;
         }
 
@@ -638,7 +653,7 @@ final class Discoverer {
             }
             $class = $tokens[$i][1];
             if (0 === stripos($class, 'test')) {
-                $test = $this->instantiate_test($class);
+                $test = $this->instantiate_test($loader, $class);
                 if ($test) {
                     $this->runner->run_test_case($test);
                 }
@@ -647,16 +662,6 @@ final class Discoverer {
     }
 
     private function include_file($file) {
-        try {
-            $this->context->include_file($file);
-        }
-        catch (\Exception $e) {
-            $this->reporter->report_error($file, $e);
-        }
-        return !isset($e);
-    }
-
-    private function include_skippable($file) {
         try {
             $this->context->include_file($file);
         }
@@ -669,9 +674,33 @@ final class Discoverer {
         return !isset($e);
     }
 
-    private function instantiate_test($class) {
+    private function include_setup($loader, $file) {
         try {
-            return new $class();
+            $result = $this->context->include_file($file);
+            return is_callable($result) ? $result : $loader;
+        }
+        catch (Skip $e) {
+            $this->reporter->report_skip($file, $e);
+        }
+        catch (\Exception $e) {
+            $this->reporter->report_error($file, $e);
+        }
+        return false;
+    }
+
+    private function include_teardown($file) {
+        try {
+            $this->context->include_file($file);
+        }
+        catch (\Exception $e) {
+            $this->reporter->report_error($file, $e);
+        }
+        return !isset($e);
+    }
+
+    private function instantiate_test($loader, $class) {
+        try {
+            return $loader($class);
         }
         catch (\Exception $e) {
             $this->reporter->report_error($class, $e);

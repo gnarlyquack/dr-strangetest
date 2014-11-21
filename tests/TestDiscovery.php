@@ -14,7 +14,8 @@ class TestDiscovery implements easytest\IRunner {
         $this->discoverer = new easytest\Discoverer(
             $this->reporter,
             $this,
-            $this->context
+            $this->context,
+            true
         );
         $this->path = __DIR__ . '/discovery_files/';
         $this->runner_log = [];
@@ -49,15 +50,15 @@ class TestDiscovery implements easytest\IRunner {
         $expected = [
             "$path/test.php",
 
-            "$path/test_dir1/setup.php",
-            "$path/test_dir1/test1.php",
-            "$path/test_dir1/test2.php",
-            "$path/test_dir1/teardown.php",
+            "$path/TEST_DIR1/SETUP.PHP",
+            "$path/TEST_DIR1/TEST1.PHP",
+            "$path/TEST_DIR1/TEST2.PHP",
+            "$path/TEST_DIR1/TEARDOWN.PHP",
 
-            "$path/TEST_DIR2/SETUP.PHP",
-            "$path/TEST_DIR2/TEST1.PHP",
-            "$path/TEST_DIR2/TEST2.PHP",
-            "$path/TEST_DIR2/TEARDOWN.PHP",
+            "$path/test_dir2/setup.php",
+            "$path/test_dir2/test1.php",
+            "$path/test_dir2/test2.php",
+            "$path/test_dir2/teardown.php",
         ];
         $actual = $this->context->log;
         assert('$expected === $actual');
@@ -244,5 +245,31 @@ class TestDiscovery implements easytest\IRunner {
         $this->reporter->assert_report([
             'Errors' => [["$path/teardown.php", 'Skip me']]
         ]);
+    }
+
+    public function test_custom_loader() {
+        $path = $this->path . 'custom_loader';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test.php",
+            "$path/setup.php loading TestLoaderOne",
+
+            "$path/test_subdir1/setup.php",
+            "$path/test_subdir1/test.php",
+            "$path/test_subdir1/setup.php loading TestLoaderTwo",
+
+            "$path/test_subdir2/test.php",
+            "$path/setup.php loading TestLoaderThree",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = ['TestLoaderOne', 'TestLoaderTwo', 'TestLoaderThree'];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([]);
     }
 }
