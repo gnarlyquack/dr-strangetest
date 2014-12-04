@@ -464,6 +464,24 @@ final class Context implements IContext {
 }
 
 
+final class EasyTest {
+    private $reporter;
+    private $discoverer;
+    private $tests;
+
+    public function __construct($reporter, $discoverer, $tests) {
+        $this->reporter = $reporter;
+        $this->discoverer = $discoverer;
+        $this->tests = $tests;
+    }
+
+    public function run() {
+        $this->discoverer->discover_tests($this->tests);
+        $this->reporter->render_report();
+    }
+}
+
+
 final class Discoverer {
     private $context;
     private $reporter;
@@ -1096,6 +1114,29 @@ final class Reporter implements IReporter {
 }
 
 
+final class Factory {
+    public function build($argv) {
+        $tests = array_slice($argv, 1);
+        if (!$tests) {
+            $tests[] = getcwd();
+        }
+
+        ErrorHandler::enable(new VariableFormatter(), new Diff());
+
+        $reporter = new Reporter('EasyTest');
+
+        return new EasyTest(
+            $reporter,
+            new Discoverer(
+                $reporter,
+                new Runner($reporter),
+                new Context()
+            ),
+            $tests
+        );
+    }
+
+}
 
 
 function assert_exception($expected, $callback, $message = null) {
@@ -1133,16 +1174,4 @@ function assert_identical($expected, $actual, $message = null) {
 
 
 
-
-ErrorHandler::enable(new VariableFormatter(), new Diff());
-
-$reporter = new Reporter('EasyTest');
-$runner = new Discoverer($reporter, new Runner($reporter), new Context());
-
-$tests = array_slice($argv, 1);
-if (!$tests) {
-    $tests[] = getcwd();
-}
-$runner->discover_tests($tests);
-
-$reporter->render_report();
+(new Factory())->build($argv)->run();
