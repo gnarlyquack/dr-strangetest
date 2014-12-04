@@ -67,11 +67,11 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_individual_paths() {
         $root = $this->path . 'test_individual_paths';
-        $paths = array(
+        $paths = [
             "$root/test_dir1/test2.php",
             "$root/test_dir1/test3.php",
             "$root/test_dir2/test_subdir",
-        );
+        ];
         $this->discoverer->discover_tests($paths);
 
         $expected = [
