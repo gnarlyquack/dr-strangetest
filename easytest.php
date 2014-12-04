@@ -1171,7 +1171,3 @@ function assert_equal($expected, $actual, $message = null) {
 function assert_identical($expected, $actual, $message = null) {
     ErrorHandler::assert_identical($expected, $actual, $message);
 }
-
-
-
-(new Factory())->build($argv)->run();
