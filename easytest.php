@@ -970,37 +970,72 @@ final class Runner implements IRunner {
 
 
 final class Reporter implements IReporter {
-    private $count = 0;
-    private $results = [
-        'Errors' => [],
-        'Failures' => [],
-        'Skips' => [],
-        'Output' => [],
+    private $count = [
+        'Pass' => 0,
+        'Error' => 0,
+        'Failure' => 0,
+        'Output' => 0,
+        'Skip' => 0,
     ];
+    private $progress = [
+        'Pass' => '.',
+        'Error' => 'E',
+        'Failure' => 'F',
+        'Skip' => 'S',
+        'Output' => 'O',
+    ];
+    private $summary = [
+        'Error' => 'Errors',
+        'Failure' => 'Failures',
+        'Output' => 'Output',
+        'Skip' => 'Skips',
+    ];
+    private $results = [];
 
     public function __construct($header) {
         echo "$header\n\n";
     }
 
+    public function render_report() {
+        foreach ($this->results as $result) {
+            list($type, $source, $message) = $result;
+            printf(
+                "\n\n%s\n%s: %s\n%s\n%s",
+                str_repeat('=', 70),
+                strtoupper($type),
+                $source,
+                str_repeat('-', 70),
+                $message
+            );
+        }
+
+        if (!$counts = array_filter($this->count)) {
+            echo "No tests found!\n";
+            return;
+        }
+
+        echo "\n\nTests: ", $this->count['Pass'] + $this->count['Failure'];
+        unset($counts['Pass']);
+        foreach ($counts as $type => $count) {
+            printf(', %s: %d', $this->summary[$type], $count);
+        }
+        echo "\n";
+    }
+
     public function report_success() {
-        ++$this->count;
-        echo '.';
+        $this->update_report('Pass');
     }
 
     public function report_error($source, $message) {
-        $this->results['Errors'][] = [$source, $message];
-        echo 'E';
+        $this->update_report('Error', $source, $message);
     }
 
     public function report_failure($source, $message) {
-        ++$this->count;
-        $this->results['Failures'][] = [$source, $message];
-        echo 'F';
+        $this->update_report('Failure', $source, $message);
     }
 
     public function report_skip($source, $message) {
-        $this->results['Skips'][] = [$source, $message];
-        echo 'S';
+        $this->update_report('Skip', $source, $message);
     }
 
     public function buffer($source, callable $callback) {
@@ -1025,8 +1060,7 @@ final class Reporter implements IReporter {
             break;
 
         case 1:
-            $this->results['Output'][] = [$source, current($buffers)];
-            echo 'O';
+            $this->update_report('Output', $source, current($buffers));
             break;
 
         default:
@@ -1034,12 +1068,12 @@ final class Reporter implements IReporter {
             foreach (array_reverse($buffers, true) as $i => $buffer) {
                 $output .= sprintf(
                     "%s\n%s\n\n",
-                    str_pad(" Buffer $i ", 35, '-', STR_PAD_BOTH),
+                    str_pad(" Buffer $i ", 70, '~', STR_PAD_BOTH),
                     $buffer
                 );
             }
-            $this->results['Output'][] = [$source, rtrim($output)];
-            echo 'O';
+            $this->update_report('Output', $source, rtrim($output));
+            break;
         }
 
         if (isset($e)) {
@@ -1048,24 +1082,12 @@ final class Reporter implements IReporter {
         return $result;
     }
 
-    public function render_report() {
-        if ($this->count || array_filter($this->results)) {
-            echo "\n\n";
+    private function update_report($type, $source = null, $message = null) {
+        ++$this->count[$type];
+        echo $this->progress[$type];
+        if ($source && $message) {
+            $this->results[] = [$type, $source, $message];
         }
-
-        $totals = sprintf('Tests: %d', $this->count);
-        foreach ($this->results as $type => $results) {
-            if (!$results) {
-                continue;
-            }
-
-            $totals .= sprintf(', %s: %d', $type, count($results));
-            echo str_pad("     $type     ", 75, '=', STR_PAD_BOTH), "\n\n";
-            foreach ($results as $i => $result) {
-                printf("%d) %s\n%s\n\n\n", $i + 1, $result[0], $result[1]);
-            }
-        }
-        echo "$totals\n";
     }
 }
 
