@@ -275,7 +275,7 @@ final class ErrorHandler {
 
         self::$eh = new ErrorHandler($formatter, $diff);
 
-        error_reporting(-1);
+        error_reporting(E_ALL);
         set_error_handler([self::$eh, 'handle_error'], error_reporting());
 
         assert_options(ASSERT_ACTIVE, 1);
