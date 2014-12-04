@@ -1054,6 +1054,13 @@ final class Reporter implements IReporter {
             }
         }
 
+        if (!isset($e)) {
+            if ($buffers) {
+                $this->update_report('Output');
+            }
+            return $result;
+        }
+
         switch (count($buffers)) {
         case 0:
             /* do nothing */
@@ -1076,10 +1083,7 @@ final class Reporter implements IReporter {
             break;
         }
 
-        if (isset($e)) {
-            throw $e;
-        }
-        return $result;
+        throw $e;
     }
 
     private function update_report($type, $source = null, $message = null) {

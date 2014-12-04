@@ -76,9 +76,9 @@ OUT;
         $this->assert_report($expected);
     }
 
-    public function test_buffer() {
+    public function test_output_is_normally_suppressed() {
         $actual = $this->reporter->buffer(
-            'test_buffer',
+            'test_output',
             function() {
                 echo 'output';
                 return 'foo';
@@ -92,8 +92,32 @@ OUT;
         $expected = <<<OUT
 O
 
+Tests: 0, Output: 1\n
+OUT;
+        $this->assert_report($expected);
+    }
+
+    public function test_output_is_reported_on_exception() {
+        /* Exception should be re-thrown */
+        easytest\assert_exception(
+            'easytest\\Failure',
+            function () {
+                $this->reporter->buffer(
+                    'test_output',
+                    function() {
+                        echo 'output';
+                        throw new easytest\Failure();
+                    }
+                );
+            }
+        );
+
+        /* Output should be buffered and reported */
+        $expected = <<<OUT
+O
+
 ======================================================================
-OUTPUT: test_buffer
+OUTPUT: test_output
 ----------------------------------------------------------------------
 output
 
@@ -148,19 +172,56 @@ OUT;
     public function test_combined_report() {
         $this->reporter->report_success();
         $this->reporter->report_failure('fail1', 'failure 1');
-        $this->reporter->buffer('output1', function() { echo 'output 1'; });
-        $this->reporter->report_skip('skip1', 'skip 1');
         $this->reporter->report_error('error1', 'error 1');
+        $this->reporter->report_skip('skip1', 'skip 1');
+
+        $this->reporter->buffer('output1', function() { echo 'output 1'; });
         $this->reporter->report_success();
-        $this->reporter->buffer('output2', function() { echo 'output 2'; });
-        $this->reporter->report_error('error2', 'error 2');
-        $this->reporter->report_skip('skip2', 'skip 2');
-        $this->reporter->report_failure('fail2', 'failure 2');
-        $this->reporter->report_error('error3', 'error 3');
-        $this->reporter->buffer('output3', function() { echo 'output 3'; });
+
+        $e = easytest\assert_exception(
+            'easytest\\Failure',
+            function() {
+                $this->reporter->buffer(
+                    'output2',
+                    function() {
+                        echo 'output 2';
+                        throw new easytest\Failure('failure 2');
+                    }
+                );
+            }
+        );
+        $this->reporter->report_failure('fail2', $e->getMessage());
+
+        $e = easytest\assert_exception(
+            'easytest\\Error',
+            function() {
+                $this->reporter->buffer(
+                    'output3',
+                    function() {
+                        echo 'output 3';
+                        trigger_error('error 2');
+                    }
+                );
+            }
+        );
+        $this->reporter->report_error('error2', $e->getMessage());
+
+        $e = easytest\assert_exception(
+            'easytest\\Skip',
+            function() {
+                $this->reporter->buffer(
+                    'output4',
+                    function() {
+                        echo 'output 4';
+                        throw new easytest\Skip('skip 2');
+                    }
+                );
+            }
+        );
+        $this->reporter->report_skip('skip2', $e->getMessage());
 
         $expected = <<<OUT
-.FOSE.OESFEO
+.FESO.OFOEOS
 
 ======================================================================
 FAILURE: fail1
@@ -168,9 +229,9 @@ FAILURE: fail1
 failure 1
 
 ======================================================================
-OUTPUT: output1
+ERROR: error1
 ----------------------------------------------------------------------
-output 1
+error 1
 
 ======================================================================
 SKIP: skip1
@@ -178,24 +239,9 @@ SKIP: skip1
 skip 1
 
 ======================================================================
-ERROR: error1
-----------------------------------------------------------------------
-error 1
-
-======================================================================
 OUTPUT: output2
 ----------------------------------------------------------------------
 output 2
-
-======================================================================
-ERROR: error2
-----------------------------------------------------------------------
-error 2
-
-======================================================================
-SKIP: skip2
-----------------------------------------------------------------------
-skip 2
 
 ======================================================================
 FAILURE: fail2
@@ -203,16 +249,26 @@ FAILURE: fail2
 failure 2
 
 ======================================================================
-ERROR: error3
-----------------------------------------------------------------------
-error 3
-
-======================================================================
 OUTPUT: output3
 ----------------------------------------------------------------------
 output 3
 
-Tests: 4, Errors: 3, Failures: 2, Output: 3, Skips: 2\n
+======================================================================
+ERROR: error2
+----------------------------------------------------------------------
+error 2
+
+======================================================================
+OUTPUT: output4
+----------------------------------------------------------------------
+output 4
+
+======================================================================
+SKIP: skip2
+----------------------------------------------------------------------
+skip 2
+
+Tests: 4, Errors: 2, Failures: 2, Output: 4, Skips: 2\n
 OUT;
         $this->assert_report($expected);
     }
