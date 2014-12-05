@@ -1,0 +1,20 @@
+{
+    "name": "easytest/easytest",
+    "description": "Quick and painless testing for PHP",
+    "keywords": ["testing"],
+    "homepage": "https://github.com/karlnack/easytest",
+    "license": "ISC",
+    "support": {
+        "issues": "https://github.com/karlnack/easytest/issues",
+        "source": "https://github.com/karlnack/easytest"
+    },
+    "require": {
+        "php": ">= 5.4"
+    },
+    "bin": ["bin/easytest"],
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.x-dev"
+        }
+    }
+}
