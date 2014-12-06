@@ -11,4 +11,4 @@
  */
 
 require __DIR__ . '/../easytest.php';
-(new easytest\Factory())->build($argv)->run();
+exit((new easytest\Factory())->build($argv)->run());

@@ -22,22 +22,23 @@ class TestReporter {
 
     // helper assertions
 
-    private function assert_report($expected) {
-        $this->reporter->render_report();
-        $expected = "EasyTest\n\n$expected";
-        $actual = ob_get_contents();
-        assert('$expected === $actual');
+    private function assert_report($expected_output, $expected_result) {
+        $actual_result = $this->reporter->render_report();
+        assert('$expected_result === $actual_result');
+        $expected_output = "EasyTest\n\n$expected_output";
+        $actual_output = ob_get_contents();
+        assert('$expected_output === $actual_output');
     }
 
     // tests
 
     public function test_blank_report() {
-        $this->assert_report("No tests found!\n");
+        $this->assert_report("No tests found!\n", false);
     }
 
     public function test_report_success() {
         $this->reporter->report_success();
-        $this->assert_report(".\n\nTests: 1\n");
+        $this->assert_report(".\n\nTests: 1\n", true);
     }
 
     public function test_report_error() {
@@ -52,7 +53,7 @@ message
 
 Tests: 0, Errors: 1\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, false);
     }
 
     public function test_report_failure() {
@@ -67,7 +68,7 @@ message
 
 Tests: 1, Failures: 1\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, false);
     }
 
     public function test_report_skip() {
@@ -82,7 +83,7 @@ message
 
 Tests: 0, Skips: 1\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, true);
     }
 
     public function test_output_is_normally_suppressed() {
@@ -103,7 +104,7 @@ O
 
 Tests: 0, Output: 1\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, true);
     }
 
     public function test_output_is_reported_on_exception() {
@@ -132,7 +133,7 @@ output
 
 Tests: 0, Output: 1\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, true);
     }
 
     public function test_multiple_buffers() {
@@ -175,7 +176,7 @@ buffer 3 output
 
 Tests: 0, Output: 1\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, true);
     }
 
     public function test_combined_report() {
@@ -279,6 +280,6 @@ skip 2
 
 Tests: 4, Errors: 2, Failures: 2, Output: 4, Skips: 2\n
 OUT;
-        $this->assert_report($expected);
+        $this->assert_report($expected, false);
     }
 }

@@ -474,6 +474,9 @@ final class Context implements IContext {
 
 
 final class EasyTest {
+    const SUCCESS = 0;
+    const FAILURE = 1;
+
     private $reporter;
     private $discoverer;
     private $tests;
@@ -486,7 +489,7 @@ final class EasyTest {
 
     public function run() {
         $this->discoverer->discover_tests($this->tests);
-        $this->reporter->render_report();
+        return $this->reporter->render_report() ? self::SUCCESS : self::FAILURE;
     }
 }
 
@@ -1038,7 +1041,7 @@ final class Reporter implements IReporter {
 
         if (!$counts = array_filter($this->count)) {
             echo "No tests found!\n";
-            return;
+            return false;
         }
 
         echo "\n\nTests: ", $this->count['Pass'] + $this->count['Failure'];
@@ -1047,6 +1050,8 @@ final class Reporter implements IReporter {
             printf(', %s: %d', $this->summary[$type], $count);
         }
         echo "\n";
+
+        return !($this->count['Failure'] || $this->count['Error']);
     }
 
     public function report_success() {
