@@ -1,0 +1,18 @@
+0.1.0 (2014-12-10)
+==================
+
+Initial release.
+
+Added
+-----
+* Support PHP 5.4 or later.
+* Test cases are implemented as plain old PHP objects.
+* Test are automatically discovered from directories and files by naming
+  convention.
+* Make assertions with PHP's built-in assert() function.
+* Fixtures are supported at the test method, class, and directory level.
+* Non-executable tests can be skipped.
+* Custom test loaders allow instantiation of test cases with dependencies.
+* Test cases can be namespaced.
+* Output is buffered and included in the test report.
+* Installation via Composer.

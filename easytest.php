@@ -11,6 +11,8 @@
 
 namespace easytest;
 
+const VERSION = '0.1.0';
+
 
 /*
  * A Context object is used by the Discoverer to insulate itself from internal
@@ -1137,7 +1139,7 @@ final class Factory {
 
         ErrorHandler::enable(new VariableFormatter(), new Diff());
 
-        $reporter = new Reporter('EasyTest');
+        $reporter = new Reporter('EasyTest ' . VERSION);
 
         return new EasyTest(
             $reporter,
