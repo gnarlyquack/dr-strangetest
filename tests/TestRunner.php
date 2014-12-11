@@ -254,7 +254,9 @@ class TestRunner {
             'Tests' => 1,
             'Output' => [
                 ['OutputTestCase::setup_class', 'setup_class'],
-                ['OutputTestCase::test', "setup\ntest\nteardown"],
+                ['setup for OutputTestCase::test', 'setup'],
+                ['OutputTestCase::test', 'test'],
+                ['teardown for OutputTestCase::test', 'teardown'],
                 ['OutputTestCase::teardown_class', 'teardown_class'],
             ],
         ]);

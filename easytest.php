@@ -826,22 +826,18 @@ final class Runner implements IRunner {
             'setup_class' => [
                 'regex' => '~^setup_?class$~i',
                 'method' => 'run_setup',
-                'buffer' => true,
             ],
             'teardown_class' => [
                 'regex' => '~^teardown_?class$~i',
                 'method' => 'run_teardown',
-                'buffer' => true,
             ],
             'setup' => [
                 'regex' => '~^setup$~i',
                 'method' => 'run_setup',
-                'buffer' => false,
             ],
             'teardown' => [
                 'regex' => '~^teardown$~i',
                 'method' => 'run_teardown',
-                'buffer' => false,
             ],
         ],
     ];
@@ -852,34 +848,20 @@ final class Runner implements IRunner {
 
     public function run_test_case($object) {
         $class = get_class($object);
-        $methods = $this->process_methods($class, $object);
-        if (!$methods) {
+        if (!$methods = $this->process_methods($class, $object)) {
             return;
         }
 
-        if ($error = $methods['setup_class']()) {
-            $this->report_errors([$error]);
-            return;
-        }
-
-        foreach ($methods['tests'] as $method) {
-            $errors = $this->reporter->buffer(
-                "$class::$method",
-                function() use ($class, $object, $methods, $method) {
-                    return $this->run_test(
-                        $class,
-                        $object,
-                        $method,
-                        $methods['setup'],
-                        $methods['teardown']
-                    );
+        if ($methods['setup_class']()) {
+            foreach ($methods['tests'] as $method) {
+                if ($methods['setup']($method)) {
+                    $success = $this->run_test($class, $object, $method);
+                    if ($methods['teardown']($method) && $success) {
+                        $this->reporter->report_success();
+                    }
                 }
-            );
-            $this->report_errors($errors);
-        }
-
-        if ($error = $methods['teardown_class']()) {
-            $this->report_errors([$error]);
+            }
+            $methods['teardown_class']();
         }
     }
 
@@ -898,8 +880,8 @@ final class Runner implements IRunner {
                 return false;
             }
         }
-        $processed['tests'] = preg_grep($this->patterns['tests'], $methods);
 
+        $processed['tests'] = preg_grep($this->patterns['tests'], $methods);
         return $processed;
     }
 
@@ -908,21 +890,15 @@ final class Runner implements IRunner {
 
         switch (count($fixture)) {
         case 0:
-            return function() {};
+            return function() { return true; };
 
         case 1:
             $fixture = current($fixture);
             $method = $spec['method'];
-            $function = function($during = null)
-                        use ($class, $object, $fixture, $method)
+            return function($during = null)
+                   use ($method, $class, $object, $fixture)
             {
                 return $this->$method($class, $object, $fixture, $during);
-            };
-            if (!$spec['buffer']) {
-                return $function;
-            }
-            return function() use ($class, $fixture, $function) {
-                return $this->reporter->buffer("$class::$fixture", $function);
             };
 
         default:
@@ -934,69 +910,46 @@ final class Runner implements IRunner {
         }
     }
 
-    private function run_test($class, $object, $method, $setup, $teardown) {
-        $errors = [];
-        if ($error = $setup($method)) {
-            $errors[] = $error;
-            return $errors;
-        }
-        if ($error = $this->run_test_method($class, $object, $method)) {
-            $errors[] = $error;
-        }
-        if ($error = $teardown($method)) {
-            $errors[] = $error;
-        }
-        return $errors;
-    }
-
     private function run_setup($class, $object, $method, $during = null) {
         $source = $during ? "$method for $class::$during" : "$class::$method";
         try {
-            $object->$method();
+            $this->reporter->buffer($source, [$object, $method]);
         }
         catch (Skip $e) {
-            return [$source, 'report_skip', $e];
+            $this->reporter->report_skip($source, $e);
         }
         catch (\Exception $e) {
-            return [$source, 'report_error', $e];
+            $this->reporter->report_error($source, $e);
         }
+        return !isset($e);
     }
 
-    private function run_test_method($class, $object, $method) {
+    private function run_test($class, $object, $method) {
         $source = "$class::$method";
         try {
-            $object->$method();
+            $this->reporter->buffer($source, [$object, $method]);
         }
         catch (Failure $e) {
-            return [$source, 'report_failure', $e];
+            $this->reporter->report_failure($source, $e);
         }
         catch (Skip $e) {
-            return [$source, 'report_skip', $e];
+            $this->reporter->report_skip($source, $e);
         }
         catch (\Exception $e) {
-            return [$source, 'report_error', $e];
+            $this->reporter->report_error($source, $e);
         }
+        return !isset($e);
     }
 
     private function run_teardown($class, $object, $method, $during = null) {
         $source = $during ? "$method for $class::$during" : "$class::$method";
         try {
-            $object->$method();
+            $this->reporter->buffer($source, [$object, $method]);
         }
         catch (\Exception $e) {
-            return [$source, 'report_error', $e];
+            $this->reporter->report_error($source, $e);
         }
-    }
-
-    private function report_errors($errors) {
-        if (!$errors) {
-            $this->reporter->report_success();
-            return;
-        }
-        foreach ($errors as $error) {
-            list($source, $action, $message) = $error;
-            $this->reporter->$action($source, $message);
-        }
+        return !isset($e);
     }
 }
 

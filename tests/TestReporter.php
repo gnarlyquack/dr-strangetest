@@ -11,12 +11,11 @@
 
 class TestReporter {
     private $reporter;
+    private $output;
 
     public function setup() {
         $this->reporter = new easytest\Reporter('EasyTest');
-    }
-
-    public function teardown() {
+        $this->output = ob_get_contents();
         ob_clean();
     }
 
@@ -26,7 +25,8 @@ class TestReporter {
         $actual_result = $this->reporter->render_report();
         assert('$expected_result === $actual_result');
         $expected_output = "EasyTest\n\n$expected_output";
-        $actual_output = ob_get_contents();
+        $actual_output = $this->output . ob_get_contents();
+        ob_clean();
         assert('$expected_output === $actual_output');
     }
 

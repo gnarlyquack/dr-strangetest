@@ -1,3 +1,15 @@
+Unreleased
+==========
+
+Changed
+-------
+* setup(), teardown(), and test methods are now executed in separate buffers.
+
+Fixed
+-----
+* Output is reported when it occurs in conjunction with an exception.
+
+
 0.1.0 (2014-12-10)
 ==================
 
