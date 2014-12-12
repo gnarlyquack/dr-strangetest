@@ -9,4 +9,4 @@
  * except according to the terms contained in the LICENSE file.
  */
 
-require_once 'stubs.php';
+require_once __DIR__ . '/stubs.php';
