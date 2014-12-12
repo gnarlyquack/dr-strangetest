@@ -247,8 +247,8 @@ called to instantiate all test cases in that directory and any subdirectories
 own loader.
 
 The test loader is called with one argument: the name of the test case to
-instantiate. The test loader should return an instance of the test case; if
-anything else is returned, the test case is skipped.
+instantiate. The test loader should return an instance of the test case,
+otherwise an error is reported and the test case is skipped.
 
 Here's a simple example:
 

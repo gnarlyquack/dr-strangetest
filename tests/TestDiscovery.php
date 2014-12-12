@@ -283,6 +283,29 @@ class TestDiscovery implements easytest\IRunner {
         $this->reporter->assert_report([]);
     }
 
+    public function test_error_if_loader_does_not_return_an_object() {
+        $path = $this->path . 'bad_loader';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = [
+            "$path/setup.php",
+            "$path/test.php",
+            "$path/teardown.php",
+        ];
+        $actual = $this->context->log;
+        assert('$expected === $actual');
+
+        $expected = [];
+        $actual = $this->runner_log;
+        assert('$expected === $actual');
+
+        $this->reporter->assert_report([
+            'Errors' => [
+                ['TestBadLoader', 'Test loader did not return an object instance'],
+            ],
+        ]);
+    }
+
     public function test_namespaces() {
         $path = $this->path . 'namespaces';
         $this->discoverer->discover_tests([$path]);

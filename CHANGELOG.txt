@@ -4,6 +4,7 @@ Unreleased
 Changed
 -------
 * setup(), teardown(), and test methods are now executed in separate buffers.
+* Report an error if the test loader does not return an object instance.
 
 Fixed
 -----

@@ -804,14 +804,24 @@ final class Discoverer {
 
     private function instantiate_test($loader, $class) {
         try {
-            return $this->reporter->buffer(
+            $result = $this->reporter->buffer(
                 $class,
                 function() use ($loader, $class) { return $loader($class); }
             );
         }
         catch (\Exception $e) {
             $this->reporter->report_error($class, $e);
+            return false;
         }
+
+        if (is_object($result)) {
+            return $result;
+        }
+
+        $this->reporter->report_error(
+            $class,
+            'Test loader did not return an object instance'
+        );
         return false;
     }
 }
