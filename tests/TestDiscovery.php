@@ -42,10 +42,13 @@ class TestDiscovery implements easytest\IRunner {
     public function test_discover_file() {
         $path = $this->path . 'MyTestFile.php';
 
-        // suppress output from the test file
-        ob_start();
         $this->discoverer->discover_tests([$path]);
-        ob_end_clean();
+
+        $this->reporter->assert_report([
+            'Output' => [
+                [$path, "class TestTextBefore {}\n\n\nclass TestTestAfter {}"],
+            ],
+        ]);
 
         $expected = ['Test', 'test2', 'Test3'];
         $actual = $this->runner_log;

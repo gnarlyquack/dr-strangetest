@@ -13,9 +13,9 @@ class TestString {}
 STRING;
 
 class test2 {
-    public function test1() {}
-    public function test2() {}
-    public function test3() {}
+    public function testOne() {}
+    public function testTwo() {}
+    public function testThree() {}
 }
 
 class NotATest {}
