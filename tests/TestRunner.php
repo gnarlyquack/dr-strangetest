@@ -377,7 +377,7 @@ class SuppressedErrorTestCase extends BaseTestCase {
 class FailedTestCase extends BaseTestCase {
     public function test() {
         $this->log[] = __FUNCTION__;
-        assert(true == false);
+        assert(false, 'Assertion failed');
     }
 }
 

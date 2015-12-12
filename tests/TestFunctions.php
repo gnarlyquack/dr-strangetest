@@ -17,7 +17,10 @@ class TestAssert {
         );
 
         $actual = $e->getMessage();
-        assert('"Assertion failed" === $actual');
+        $expected = version_compare(PHP_VERSION, '7.0.0', '<')
+                  ? 'Assertion failed'
+                  : 'assert(true == false)';
+        assert('$expected === $actual');
     }
 
     public function test_assert_with_code() {
