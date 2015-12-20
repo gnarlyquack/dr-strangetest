@@ -1,4 +1,4 @@
-# Composer files and dependencies
+# Composer
 composer.lock
 composer.phar
 /vendor/

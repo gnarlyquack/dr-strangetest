@@ -11,6 +11,6 @@ matrix:
   allow_failures:
     - php: hhvm
 
-install: composer install
+install: composer install --no-interaction
 
 script: ./bin/easytest
