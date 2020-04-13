@@ -1,0 +1,82 @@
+TODO
+====
+
+This file lists all tasks required for the next release. Items that might be
+desirable for future releases may be listed at the bottom of the file.
+
+
+Release
+-------
+-   Fix broken tests
+
+-   Don't require Composer to be installed
+
+-   Distribute EasyTest as a single executable (Phar?)
+
+-   Add support for config files(?)
+
+-   Implement CLI argument parsing
+    -   PHP 7.1 adds $optind parameter to getopt()
+
+-   Implement option to specify a config file(?)
+
+-   Report file and line number for failed assertions
+
+-   Fix handling of empty strings in diff class
+
+-   Ensure path discovery is OS independent
+
+-   Add fail() helper function(?)
+
+-   Support PHP >= 5.3(?)
+
+-   Test discovery: For all tests, first check the reporter, then the context,
+    then the runner
+
+-   Support PHP 7's exception hierarchy
+    https://www.php.net/manual/en/language.errors.php7.php
+
+    -   Of note, parse errors now throw an exception, meaning previously-fatal
+        errors can now be handled, specifically, including files and calling
+        assert() with incorrect syntax
+
+-   Ensure soft-deprecated (i.e., no errors are thrown) names are not used for
+    classes, interfaces, or traits: resource, mixed, numeric
+
+-   Ensure anonymous classes are properly handled by the file parser
+    https://www.php.net/manual/en/language.oop5.anonymous.php
+
+-   Support PHP 7 Expectations
+    https://www.php.net/manual/en/function.assert.php#function.assert.expectations
+
+-   Ensure substr()'s return value is properly handled when $string === $start
+    https://www.php.net/manual/en/function.substr.php
+
+-   Ensure we're UTF-8 conformant
+    https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
+
+-   Ensure that an object with numeric properties is properly handled in the
+    variable formatter when it's cast to an array
+    https://www.php.net/manual/en/migration72.incompatible.php#migration72.incompatible.object-array-casts
+
+-   PHP 7.2 deprecates calling assert() with a string argument
+
+-   PHP 7.2 deprecates the $errcontext parameter of error handlers
+
+-   PHP 7.3 deprecates calling string functions with a non-string needle
+    https://www.php.net/manual/en/migration73.deprecated.php#migration73.deprecated.core.string-search
+
+-   Fully qualify all identifiers
+
+
+Future / Someday(?)
+-------------------
+-   Implement data generators/subtests
+
+-   Improve diff algorithm
+    -   "a high-performance library in multiple languages that manipulates
+        plain text"
+        https://github.com/google/diff-match-patch
+
+    -   "Utility to do an N-way diff and N-way merge, for N > 2"
+        https://github.com/Quuxplusone/difdef
