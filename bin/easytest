@@ -10,23 +10,5 @@
  * except according to the terms contained in the LICENSE file.
  */
 
-foreach (['/../../../autoload.php', '/../vendor/autoload.php'] as $file) {
-    $file = __DIR__ . $file;
-    if (file_exists($file)) {
-        require $file;
-        unset($file);
-        break;
-    }
-}
-if (isset($file)) {
-    fwrite(
-        STDERR,
-        "EasyTest is unable to find Composer's autoload.php file.\n"
-        . "Please ensure your project dependencies are properly configured\n"
-        . "using Composer (https://getcomposer.org/)\n"
-    );
-    exit(1);
-}
-
 require __DIR__ . '/../easytest.php';
-exit((new easytest\Factory())->build($argv)->run());
+exit(easytest\main($argc, $argv));

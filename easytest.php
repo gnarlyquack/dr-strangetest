@@ -1189,3 +1189,20 @@ function assert_equal($expected, $actual, $message = null) {
 function assert_identical($expected, $actual, $message = null) {
     ErrorHandler::assert_identical($expected, $actual, $message);
 }
+
+
+function main($argc, $argv) {
+    try_loading_composer();
+    return (new Factory())->build($argv)->run();
+}
+
+
+function try_loading_composer() {
+    foreach (['/../../autoload.php', '/vendor/autoload.php'] as $file) {
+        $file = __DIR__ . $file;
+        if (file_exists($file)) {
+            require $file;
+            return;
+        }
+    }
+}

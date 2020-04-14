@@ -15,6 +15,4 @@ jobs:
         - php: 5.5
           dist: trusty
 
-install: composer install --no-interaction
-
 script: ./bin/easytest
