@@ -28,14 +28,14 @@ class TestVariableFormatter {
         foreach ($tests as $test) {
             list($variable, $expected) = $test;
             $actual = $this->formatter->format_var($variable);
-            assert('$expected === $actual');
+            easytest\assert_identical($expected, $actual);
         }
     }
 
     public function test_empty_array() {
         $variable = [];
         $actual = $this->formatter->format_var($variable);
-        assert('"array()" === $actual');
+        easytest\assert_identical('array()', $actual);
     }
 
     public function test_array() {
@@ -63,15 +63,17 @@ array(
 )
 EXPECTED;
         $actual = $this->formatter->format_var($variable);
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_empty_object() {
-        $actual = $this->formatter->format_var(new stdClass());
-        assert('"stdClass {}" === $actual');
+        $variable = new stdClass();
+        $actual = $this->formatter->format_var($variable);
+        easytest\assert_identical('stdClass {}', $actual);
     }
 
     public function test_object() {
+        $variable = new ObjectFormat();
         $expected = <<<'EXPECTED'
 ObjectFormat {
     $one = 'parent public';
@@ -79,11 +81,12 @@ ObjectFormat {
     $three = 'parent private';
 }
 EXPECTED;
-        $actual = $this->formatter->format_var(new ObjectFormat());
-        assert('$expected === $actual');
+        $actual = $this->formatter->format_var($variable);
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_object_inheritance() {
+        $variable = new InheritFormat();
         $expected = <<<'EXPECTED'
 InheritFormat {
     $one = 'child public';
@@ -92,14 +95,14 @@ InheritFormat {
     ObjectFormat::$three = 'parent private';
 }
 EXPECTED;
-        $actual = $this->formatter->format_var(new InheritFormat());
-        assert('$expected === $actual');
+        $actual = $this->formatter->format_var($variable);
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_resource() {
         $variable = fopen(__FILE__, 'r');
         $resource = print_r($variable, true);
-        assert('preg_match("~^Resource id #\d+$~", $resource)');
+        assert(preg_match('~^Resource id #\\d+$~', $resource));
 
         $expected = sprintf(
             '%s of type "%s"',
@@ -107,7 +110,7 @@ EXPECTED;
             get_resource_type($variable)
         );
         $actual = $this->formatter->format_var($variable);
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_array_reference() {
@@ -145,7 +148,7 @@ array(
 )
 EXPECTED;
         $actual = $this->formatter->format_var($variable);
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_array_recursive_reference() {
@@ -157,7 +160,7 @@ array(
 )
 EXPECTED;
         $actual = $this->formatter->format_var($variable);
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_object_reference() {
@@ -185,7 +188,7 @@ array(
 )
 EXPECTED;
         $actual = $this->formatter->format_var($variable);
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_object_recursive_reference() {
@@ -207,7 +210,7 @@ ObjectFormat {
 }
 EXPECTED;
         $actual = $this->formatter->format_var($variable);
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 }
 

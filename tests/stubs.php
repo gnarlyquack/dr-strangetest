@@ -9,6 +9,12 @@
  * except according to the terms contained in the LICENSE file.
  */
 
+
+class ExpectedException extends \Exception {}
+class UnexpectedException extends \Exception {}
+
+
+
 class StubReporter implements easytest\IReporter {
     private $report;
     private $blank_report;
@@ -61,6 +67,6 @@ class StubReporter implements easytest\IReporter {
             $expected
         );
         $actual = $this->report;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 }

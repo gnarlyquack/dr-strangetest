@@ -52,7 +52,7 @@ class TestDiscovery implements easytest\IRunner {
 
         $expected = ['Test', 'test2', 'Test3'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_discover_directory() {
@@ -74,7 +74,7 @@ class TestDiscovery implements easytest\IRunner {
             "$path/test_dir2/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_individual_paths() {
@@ -109,7 +109,7 @@ class TestDiscovery implements easytest\IRunner {
             "$root/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_nonexistent_path() {
@@ -131,11 +131,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = ['test_file_error_two'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Errors' => [["$path/test1.php", 'An error happened']]
@@ -148,11 +148,11 @@ class TestDiscovery implements easytest\IRunner {
 
         $expected = ["$path/setup.php"];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = [];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Errors' => [["$path/setup.php", 'An error happened']]
@@ -169,11 +169,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = ['test_teardown_error'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Errors' => [["$path/teardown.php", 'An error happened']]
@@ -190,11 +190,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = ['test_instantiation_error_two'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Errors' => [['test_instantiation_error_one', 'An error happened']]
@@ -211,11 +211,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = [];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Skips' => [["$path/test.php", 'Skip me']]
@@ -228,11 +228,11 @@ class TestDiscovery implements easytest\IRunner {
 
         $expected = ["$path/setup.php"];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = [];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Skips' => [["$path/setup.php", 'Skip me']]
@@ -249,11 +249,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = ['test_skip_in_teardown'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Errors' => [["$path/teardown.php", 'Skip me']]
@@ -277,11 +277,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/setup.php loading TestLoaderThree",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = ['TestLoaderOne', 'TestLoaderTwo', 'TestLoaderThree'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([]);
     }
@@ -296,11 +296,11 @@ class TestDiscovery implements easytest\IRunner {
             "$path/teardown.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = [];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Errors' => [
@@ -318,7 +318,7 @@ class TestDiscovery implements easytest\IRunner {
             "$path/test_simple_namespaces.php",
         ];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = [
             /* Namespaced tests using bracketed syntax */
@@ -331,7 +331,7 @@ class TestDiscovery implements easytest\IRunner {
             'ns3\\TestNamespace'
         ];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([]);
     }
@@ -342,11 +342,11 @@ class TestDiscovery implements easytest\IRunner {
 
         $expected = [];
         $actual = $this->context->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $expected = ['test_output_buffering'];
         $actual = $this->runner_log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
 
         $this->reporter->assert_report([
             'Output' => [

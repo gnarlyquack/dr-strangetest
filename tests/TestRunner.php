@@ -22,10 +22,10 @@ class TestRunner {
 
     private function assert_run($test, $expected) {
         $actual = $test->log;
-        assert('[] === $actual');
+        easytest\assert_identical([], $actual);
         $this->runner->run_test_case($test);
         $actual = $test->log;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     // tests

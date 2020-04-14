@@ -7,8 +7,6 @@ desirable for future releases may be listed at the bottom of the file.
 
 Release
 -------
--   Fix broken tests
-
 -   Don't require Composer to be installed
 
 -   Distribute EasyTest as a single executable (Phar?)
@@ -18,7 +16,10 @@ Release
 -   Implement CLI argument parsing
     -   PHP 7.1 adds $optind parameter to getopt()
 
--   Implement option to specify a config file(?)
+-   Implement CLI options
+    -   specify a config file(?)
+    -   verbose and quiet modes
+    -   reverse report output
 
 -   Report file and line number for failed assertions
 
@@ -67,6 +68,27 @@ Release
     https://www.php.net/manual/en/migration73.deprecated.php#migration73.deprecated.core.string-search
 
 -   Fully qualify all identifiers
+
+-   Run setup and teardown in a common output buffer with their test
+
+-   Improve(?) test report(?)
+
+-   Handle conditionally-defined test cases
+
+-   assert_exception(): provide better diagnostics when an unexpected
+    exception is caught
+
+-   Rename assert_exception() to assert_throws()
+
+-   When using a message/description for an assertion, consider showing the
+    message in addition to, not in place of, the assertion expression
+
+-   test_assert.php: eliminate expect_fails() when assert_exception() support
+    PHP 7 Errors
+
+-   assert_equal() and assert_identical(): stop proxying to the error handler
+
+-   Implement assert_preg_match()(?)
 
 
 Future / Someday(?)

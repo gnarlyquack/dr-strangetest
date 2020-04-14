@@ -296,30 +296,18 @@ final class ErrorHandler {
         assert_options(ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
     }
 
+
     public static function assert_equal($expected, $actual, $message = null) {
-        self::assert('$expected == $actual', $expected, $actual, $message);
+        assert(self::$eh);
+        return self::$eh->do_assert_equal($expected, $actual, $message);
     }
+
 
     public static function assert_identical($expected, $actual, $message = null) {
-        self::assert('$expected === $actual', $expected, $actual, $message);
+        assert(self::$eh);
+        return self::$eh->do_assert_identical($expected, $actual, $message);
     }
 
-    /*
-     * The $desc parameter wasn't added to assert() until PHP 5.4.8, so
-     * earlier versions need a nasty hack to inject the message.
-     */
-    private static function assert($code, $expected, $actual, $message) {
-        if (version_compare(PHP_VERSION, '5.4.8', '>=')) {
-            assert($code, $message);
-        }
-        elseif (!$message) {
-            assert($code);
-        }
-        elseif (!eval("return $code;")) {
-            self::$eh->handle_assertion(__FILE__, __LINE__, $code, $message);
-            trigger_error();
-        }
-    }
 
     private function __construct(IVariableFormatter $formatter, IDiff $diff) {
         $this->formatter = $formatter;
@@ -334,7 +322,9 @@ final class ErrorHandler {
      * expression ($code) and the optional assertion message ($desc).
      */
     public function handle_assertion($file, $line, $code, $desc = null) {
-        $this->assertion = [$code, $desc];
+        if (!ini_get('assert.exception')) {
+            $this->assertion = [$code, $desc];
+        }
     }
 
     public function handle_error($errno, $errstr, $errfile, $errline, $errcontext) {
@@ -351,6 +341,55 @@ final class ErrorHandler {
         $this->assertion = null;
         throw new Failure($this->format_message($code, $message, $errcontext));
     }
+
+
+    private function do_assert_equal($expected, $actual, $message = null) {
+        if ($expected == $actual) {
+            return;
+        }
+
+        if (is_array($expected) && is_array($actual)) {
+            $this->sort_array($expected);
+            $this->sort_array($actual);
+        }
+        if (!isset($message)) {
+            $message = 'Assertion "$expected == $actual" failed';
+        }
+        throw new Failure(
+            sprintf(
+                "%s\n\n%s",
+                $message,
+                $this->diff->diff(
+                    $this->formatter->format_var($expected),
+                    $this->formatter->format_var($actual),
+                    'expected', 'actual'
+                )
+            )
+        );
+    }
+
+
+    private function do_assert_identical($expected, $actual, $message = null) {
+        if ($expected === $actual) {
+            return;
+        }
+
+        if (!isset($message)) {
+            $message = 'Assertion "$expected === $actual" failed';
+        }
+        throw new Failure(
+            sprintf(
+                "%s\n\n%s",
+                $message,
+                $this->diff->diff(
+                    $this->formatter->format_var($expected),
+                    $this->formatter->format_var($actual),
+                    'expected', 'actual'
+                )
+            )
+        );
+    }
+
 
     private function format_message($code, $message, $context) {
         if (!$code) {
@@ -446,7 +485,7 @@ final class Error extends \ErrorException {
 
     public function __toString() {
         return sprintf(
-            "%s\nin %s on line %s\nStack trace:\n%s",
+            "%s\nin %s on line %s\n\nStack trace:\n%s",
             $this->message,
             $this->file,
             $this->line,

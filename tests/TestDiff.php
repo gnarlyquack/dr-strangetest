@@ -26,7 +26,7 @@ class TestDiff {
 
     private function assert_diff($from, $to, $expected) {
         $actual = $this->diff->diff($from, $to, 'expected', 'actual');
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_identical_text() {

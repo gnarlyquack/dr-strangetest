@@ -17,27 +17,27 @@ class TestExceptions {
         $e = new easytest\Error($message, E_USER_ERROR, $file, $line);
 
         $expected = sprintf(
-            "%s\nin %s on line %s\nStack trace:\n%s",
+            "%s\nin %s on line %s\n\nStack trace:\n%s",
             $message,
             $file,
             $line,
             $e->getTraceAsString()
         );
         $actual = (string)$e;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_failure_format() {
         $expected = 'Assertion failed';
         $f = new easytest\Failure($expected);
         $actual = (string)$f;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_skip_format() {
         $expected = 'Test skipped';
         $s = new easytest\Skip($expected);
         $actual = (string)$s;
-        assert('$expected === $actual');
+        easytest\assert_identical($expected, $actual);
     }
 }

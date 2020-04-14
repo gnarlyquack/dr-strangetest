@@ -23,11 +23,11 @@ class TestReporter {
 
     private function assert_report($expected_output, $expected_result) {
         $actual_result = $this->reporter->render_report();
-        assert('$expected_result === $actual_result');
+        easytest\assert_identical($expected_result, $actual_result);
         $expected_output = "EasyTest\n\n$expected_output";
         $actual_output = $this->output . ob_get_contents();
         ob_clean();
-        assert('$expected_output === $actual_output');
+        easytest\assert_identical($expected_output, $actual_output);
     }
 
     // tests
@@ -96,7 +96,7 @@ OUT;
         );
 
         /* Callback result should be returned */
-        assert('"foo" === $actual');
+        easytest\assert_identical('foo', $actual);
 
         /* Output should be buffered and reported */
         $expected = <<<OUT
@@ -159,7 +159,7 @@ OUT;
 
         /* All buffers should be cleared */
         $actual_buffers = ob_get_level();
-        assert('$expected_buffers === $actual_buffers');
+        easytest\assert_identical($expected_buffers, $actual_buffers);
 
         /* Output should be reported */
         $expected = <<<OUT
