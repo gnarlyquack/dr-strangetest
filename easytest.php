@@ -62,14 +62,14 @@ interface IVariableFormatter {
  */
 final class Diff implements IDiff {
     public function diff($from, $to, $from_name, $to_name) {
-        $diff = $this->diff_array(explode("\n", $from), explode("\n", $to));
-        $diff = implode("\n", $diff);
+        $diff = $this->diff_array(\explode("\n", $from), \explode("\n", $to));
+        $diff = \implode("\n", $diff);
         return "- $from_name\n+ $to_name\n\n$diff";
     }
 
     private function diff_array($from, $to) {
-        $flen = count($from);
-        $tlen = count($to);
+        $flen = \count($from);
+        $tlen = \count($to);
         $m = [];
 
         for ($i = 0; $i <= $flen; ++$i) {
@@ -81,7 +81,7 @@ final class Diff implements IDiff {
                     $m[$i][$j] = $m[$i-1][$j-1] + 1;
                 }
                 else {
-                    $m[$i][$j] = max($m[$i][$j-1], $m[$i-1][$j]);
+                    $m[$i][$j] = \max($m[$i][$j-1], $m[$i-1][$j]);
                 }
             }
         }
@@ -93,15 +93,15 @@ final class Diff implements IDiff {
             if ($i > 0 && $j > 0 && $from[$i-1] === $to[$j-1]) {
                 --$i;
                 --$j;
-                array_unshift($diff, '  ' . $to[$j]);
+                \array_unshift($diff, '  ' . $to[$j]);
             }
             elseif ($j > 0 && (0 === $i || $m[$i][$j-1] >= $m[$i-1][$j])) {
                 --$j;
-                array_unshift($diff, '+ ' . $to[$j]);
+                \array_unshift($diff, '+ ' . $to[$j]);
             }
             elseif ($i > 0 && (0 === $j || $m[$i][$j-1] < $m[$i-1][$j])) {
                 --$i;
-                array_unshift($diff, '- ' . $from[$i]);
+                \array_unshift($diff, '- ' . $from[$i]);
             }
             else {
                 throw new \Exception('Reached unexpected branch');
@@ -128,7 +128,7 @@ final class VariableFormatter implements IVariableFormatter {
     }
 
     public function format_var(&$var) {
-        $name = is_object($var) ? get_class($var) : gettype($var);
+        $name = \is_object($var) ? \get_class($var) : \gettype($var);
         $seen = ['byval' => [], 'byref' => []];
         return $this->format($var, $name, $seen);
     }
@@ -138,46 +138,46 @@ final class VariableFormatter implements IVariableFormatter {
         if ($reference) {
             return $reference;
         }
-        if (is_scalar($var) || null === $var) {
+        if (\is_scalar($var) || null === $var) {
             return $this->format_scalar($var);
         }
-        if (is_resource($var)) {
+        if (\is_resource($var)) {
             return $this->format_resource($var);
         }
-        if (is_array($var)) {
+        if (\is_array($var)) {
             return $this->format_array($var, $name, $seen, $indent);
         }
         return $this->format_object($var, $name, $seen, $indent);
     }
 
     private function format_scalar(&$var) {
-        return var_export($var, true);
+        return \var_export($var, true);
     }
 
     private function format_resource(&$var) {
-        return sprintf(
+        return \sprintf(
             '%s of type "%s"',
-            print_r($var, true),
-            get_resource_type($var)
+            \print_r($var, true),
+            \get_resource_type($var)
         );
     }
 
     private function format_array(&$var, $name, &$seen, $indent) {
-        $baseline = str_repeat(' ', $indent);
+        $baseline = \str_repeat(' ', $indent);
         $indent += 4;
-        $padding = str_repeat(' ', $indent);
+        $padding = \str_repeat(' ', $indent);
         $out = '';
 
         if ($var) {
             foreach ($var as $key => &$value) {
-                $key = var_export($key, true);
-                $out .= sprintf(
+                $key = \var_export($key, true);
+                $out .= \sprintf(
                     "\n%s%s => %s,",
                     $padding,
                     $key,
                     $this->format(
                         $value,
-                        sprintf('%s[%s]', $name, $key),
+                        \sprintf('%s[%s]', $name, $key),
                         $seen,
                         $indent
                     )
@@ -189,12 +189,12 @@ final class VariableFormatter implements IVariableFormatter {
     }
 
     private function format_object(&$var, $name, &$seen, $indent) {
-        $baseline = str_repeat(' ', $indent);
+        $baseline = \str_repeat(' ', $indent);
         $indent += 4;
-        $padding = str_repeat(' ', $indent);
+        $padding = \str_repeat(' ', $indent);
         $out = '';
 
-        $class = get_class($var);
+        $class = \get_class($var);
         $values = (array)$var;
         if ($values) {
             foreach ($values as $key => &$value) {
@@ -206,18 +206,18 @@ final class VariableFormatter implements IVariableFormatter {
                  *         where "class" is the name of the class where the
                  *         property is declared
                  */
-                $key = explode("\0", $key);
-                $property = '$' . array_pop($key);
+                $key = \explode("\0", $key);
+                $property = '$' . \array_pop($key);
                 if ($key && $key[1] !== '*' && $key[1] !== $class) {
                     $property = "$key[1]::$property";
                 }
-                $out .= sprintf(
+                $out .= \sprintf(
                     "\n%s%s = %s;",
                     $padding,
                     $property,
                     $this->format(
                         $value,
-                        sprintf('%s->%s', $name, $property),
+                        \sprintf('%s->%s', $name, $property),
                         $seen,
                         $indent
                     )
@@ -241,10 +241,10 @@ final class VariableFormatter implements IVariableFormatter {
      * is checked for an equivalent change.
      */
     private function check_reference(&$var, $name, &$seen) {
-        if (is_scalar($var) || is_array($var) || null === $var) {
+        if (\is_scalar($var) || \is_array($var) || null === $var) {
             $copy = $var;
             $var = $this->sentinel['byval'];
-            $reference = array_search($var, $seen['byval'], true);
+            $reference = \array_search($var, $seen['byval'], true);
             if (false === $reference) {
                 $seen['byval'][$name] = &$var;
             }
@@ -254,7 +254,7 @@ final class VariableFormatter implements IVariableFormatter {
             $var = $copy;
         }
         else {
-            $reference = array_search($var, $seen['byref'], true);
+            $reference = \array_search($var, $seen['byref'], true);
             if (false === $reference) {
                 $seen['byref'][$name] = &$var;
             }
@@ -281,30 +281,30 @@ final class ErrorHandler {
 
     public static function enable(IVariableFormatter $formatter, IDiff $diff) {
         if (isset(self::$eh)) {
-            throw new \Exception(get_class() . ' has already been enabled');
+            throw new \Exception(\get_class() . ' has already been enabled');
         }
 
         self::$eh = new ErrorHandler($formatter, $diff);
 
-        error_reporting(E_ALL);
-        set_error_handler([self::$eh, 'handle_error'], error_reporting());
+        \error_reporting(E_ALL);
+        \set_error_handler([self::$eh, 'handle_error'], \error_reporting());
 
-        assert_options(ASSERT_ACTIVE, 1);
-        assert_options(ASSERT_WARNING, 1);
-        assert_options(ASSERT_BAIL, 0);
-        assert_options(ASSERT_QUIET_EVAL, 0);
-        assert_options(ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
+        \assert_options(ASSERT_ACTIVE, 1);
+        \assert_options(ASSERT_WARNING, 1);
+        \assert_options(ASSERT_BAIL, 0);
+        \assert_options(ASSERT_QUIET_EVAL, 0);
+        \assert_options(ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
     }
 
 
     public static function assert_equal($expected, $actual, $message = null) {
-        assert(self::$eh);
+        \assert(self::$eh);
         return self::$eh->do_assert_equal($expected, $actual, $message);
     }
 
 
     public static function assert_identical($expected, $actual, $message = null) {
-        assert(self::$eh);
+        \assert(self::$eh);
         return self::$eh->do_assert_identical($expected, $actual, $message);
     }
 
@@ -322,13 +322,13 @@ final class ErrorHandler {
      * expression ($code) and the optional assertion message ($desc).
      */
     public function handle_assertion($file, $line, $code, $desc = null) {
-        if (!ini_get('assert.exception')) {
+        if (!\ini_get('assert.exception')) {
             $this->assertion = [$code, $desc];
         }
     }
 
     public function handle_error($errno, $errstr, $errfile, $errline, $errcontext) {
-        if (!(error_reporting() & $errno)) {
+        if (!(\error_reporting() & $errno)) {
             // This error code is not included in error_reporting
             return;
         }
@@ -348,7 +348,7 @@ final class ErrorHandler {
             return;
         }
 
-        if (is_array($expected) && is_array($actual)) {
+        if (\is_array($expected) && \is_array($actual)) {
             $this->sort_array($expected);
             $this->sort_array($actual);
         }
@@ -356,7 +356,7 @@ final class ErrorHandler {
             $message = 'Assertion "$expected == $actual" failed';
         }
         throw new Failure(
-            sprintf(
+            \sprintf(
                 "%s\n\n%s",
                 $message,
                 $this->diff->diff(
@@ -378,7 +378,7 @@ final class ErrorHandler {
             $message = 'Assertion "$expected === $actual" failed';
         }
         throw new Failure(
-            sprintf(
+            \sprintf(
                 "%s\n\n%s",
                 $message,
                 $this->diff->diff(
@@ -405,18 +405,18 @@ final class ErrorHandler {
 
         $sort = true;
         $variables = [];
-        foreach (token_get_all("<?php $code") as $token) {
-            if (!is_array($token)) {
+        foreach (\token_get_all("<?php $code") as $token) {
+            if (!\is_array($token)) {
                 continue;
             }
             switch ($token[0]) {
             case T_VARIABLE:
                 // Strip the leading '$' off the variable name.
-                $variable = substr($token[1], 1);
+                $variable = \substr($token[1], 1);
 
                 // The "pseudo-variable" '$this' (and possibly others?) will
                 // parse as a variable but won't be in the context.
-                if (array_key_exists($variable, $context)) {
+                if (\array_key_exists($variable, $context)) {
                     $variables[$variable] = $context[$variable];
                 }
                 break;
@@ -431,8 +431,8 @@ final class ErrorHandler {
         if (!$variables) {
             return $message;
         }
-        if (2 === count($variables)) {
-            list($key1, $key2) = array_keys($variables);
+        if (2 === \count($variables)) {
+            list($key1, $key2) = \array_keys($variables);
             if ($sort) {
                 $this->sort_array($variables[$key1]);
                 $this->sort_array($variables[$key2]);
@@ -446,7 +446,7 @@ final class ErrorHandler {
             return $message;
         }
         foreach ($variables as $key => $value) {
-            $message .= sprintf(
+            $message .= \sprintf(
                 "\n\n%s:\n%s",
                 $key,
                 $this->formatter->format_var($value)
@@ -456,14 +456,14 @@ final class ErrorHandler {
     }
 
     private function sort_array(&$array, &$seen = []) {
-        if (!is_array($array)) {
+        if (!\is_array($array)) {
             return;
         }
 
         /* Prevent infinite recursion for arrays with recursive references. */
         $temp = $array;
         $array = null;
-        $sorted = in_array($array, $seen, true);
+        $sorted = \in_array($array, $seen, true);
         $array = $temp;
         unset($temp);
 
@@ -471,7 +471,7 @@ final class ErrorHandler {
             return;
         }
         $seen[] = &$array;
-        ksort($array);
+        \ksort($array);
         foreach ($array as &$value) {
             $this->sort_array($value, $seen);
         }
@@ -484,7 +484,7 @@ final class Error extends \ErrorException {
     }
 
     public function __toString() {
-        return sprintf(
+        return \sprintf(
             "%s\nin %s on line %s\n\nStack trace:\n%s",
             $this->message,
             $this->file,
@@ -564,13 +564,13 @@ final class Discoverer {
 
     public function discover_tests(array $paths) {
         foreach ($paths as $path) {
-            $realpath = realpath($path);
+            $realpath = \realpath($path);
             if (!$realpath) {
                 $this->reporter->report_error($path, 'No such file or directory');
                 continue;
             }
 
-            if (is_dir($path)) {
+            if (\is_dir($path)) {
                 $path .= '/';
             }
             $root = $this->determine_root($path);
@@ -589,16 +589,16 @@ final class Discoverer {
      * the root directory and descend towards the specified path.
      */
     private function determine_root($path) {
-        if ('/' === substr($path, -1)) {
+        if ('/' === \substr($path, -1)) {
             $root = $parent = $path;
         }
         else {
-            $root = $parent = dirname($path) . '/';
+            $root = $parent = \dirname($path) . '/';
         }
 
-        while (preg_match($this->patterns['dirs'], $parent)) {
+        while (\preg_match($this->patterns['dirs'], $parent)) {
             $root = $parent;
-            $parent = dirname($parent) . '/';
+            $parent = \dirname($parent) . '/';
         }
         return $root;
     }
@@ -633,7 +633,7 @@ final class Discoverer {
     }
 
     private function process_directory($loader, $path, $target) {
-        $paths = glob("$path*", GLOB_MARK | $this->glob_sort);
+        $paths = \glob("$path*", GLOB_MARK | $this->glob_sort);
         $processed = [];
 
         $processed['setup'] = $this->process_setup($loader, $paths);
@@ -643,63 +643,63 @@ final class Discoverer {
         }
 
         if (!$target) {
-            $processed['files'] = preg_grep($this->patterns['files'], $paths);
-            $processed['dirs'] = preg_grep($this->patterns['dirs'], $paths);
+            $processed['files'] = \preg_grep($this->patterns['files'], $paths);
+            $processed['dirs'] = \preg_grep($this->patterns['dirs'], $paths);
             return $processed;
         }
 
-        $i = strpos($target, '/', strlen($path));
+        $i = \strpos($target, '/', \strlen($path));
         if (false === $i) {
             $processed['files'] = [$target];
             $processed['dirs'] = [];
         }
         else {
             $processed['files'] = [];
-            $processed['dirs'] = [substr($target, 0, $i + 1)];
+            $processed['dirs'] = [\substr($target, 0, $i + 1)];
         }
 
         return $processed;
     }
 
     private function process_setup($loader, $paths) {
-        $path = preg_grep($this->patterns['setup'], $paths);
+        $path = \preg_grep($this->patterns['setup'], $paths);
 
-        switch (count($path)) {
+        switch (\count($path)) {
         case 0:
             return function() use ($loader) { return $loader; };
 
         case 1:
-            $path = current($path);
+            $path = \current($path);
             return function() use ($path, $loader) {
                 return $this->include_setup($loader, $path);
             };
 
         default:
             $this->reporter->report_error(
-                dirname(current($path)),
-                "Multiple files found:\n\t" . implode("\n\t", $path)
+                \dirname(\current($path)),
+                "Multiple files found:\n\t" . \implode("\n\t", $path)
             );
             return false;
         }
     }
 
     private function process_teardown($paths) {
-        $path = preg_grep($this->patterns['teardown'], $paths);
+        $path = \preg_grep($this->patterns['teardown'], $paths);
 
-        switch (count($path)) {
+        switch (\count($path)) {
         case 0:
             return function() { return true; };
 
         case 1:
-            $path = current($path);
+            $path = \current($path);
             return function() use ($path) {
                 return $this->include_teardown($path);
             };
 
         default:
             $this->reporter->report_error(
-                dirname(current($path)),
-                "Multiple files found:\n\t" . implode("\n\t", $path)
+                \dirname(\current($path)),
+                "Multiple files found:\n\t" . \implode("\n\t", $path)
             );
             return false;
         }
@@ -714,10 +714,10 @@ final class Discoverer {
         }
 
         $ns = '';
-        $tokens = token_get_all(file_get_contents($file));
+        $tokens = \token_get_all(\file_get_contents($file));
         /* Assume token 0 = '<?php' and token 1 = whitespace */
-        for ($i = 2, $c = count($tokens); $i < $c; ++$i) {
-            if (!is_array($tokens[$i])) {
+        for ($i = 2, $c = \count($tokens); $i < $c; ++$i) {
+            if (!\is_array($tokens[$i])) {
                 continue;
             }
             switch ($tokens[$i][0]) {
@@ -741,11 +741,11 @@ final class Discoverer {
     private function parse_class($tokens, $i) {
         /* $i = 'class' and $i+1 = whitespace */
         $i += 2;
-        while (!is_array($tokens[$i]) || T_STRING !== $tokens[$i][0]) {
+        while (!\is_array($tokens[$i]) || T_STRING !== $tokens[$i][0]) {
             ++$i;
         }
         $class = $tokens[$i][1];
-        if (0 === stripos($class, 'test')) {
+        if (0 === \stripos($class, 'test')) {
             return [$class, $i];
         }
         return [false, $i];
@@ -774,7 +774,7 @@ final class Discoverer {
                 return [$ns ? "$ns\\" : '', $i];
             }
 
-            if (!is_array($tokens[$i])) {
+            if (!\is_array($tokens[$i])) {
                 continue;
             }
 
@@ -817,7 +817,7 @@ final class Discoverer {
                     return $this->context->include_file($file);
                 }
             );
-            return is_callable($result) ? $result : $loader;
+            return \is_callable($result) ? $result : $loader;
         }
         catch (Skip $e) {
             $this->reporter->report_skip($file, $e);
@@ -853,7 +853,7 @@ final class Discoverer {
             return false;
         }
 
-        if (is_object($result)) {
+        if (\is_object($result)) {
             return $result;
         }
 
@@ -896,7 +896,7 @@ final class Runner implements IRunner {
     }
 
     public function run_test_case($object) {
-        $class = get_class($object);
+        $class = \get_class($object);
         if (!$methods = $this->process_methods($class, $object)) {
             return;
         }
@@ -915,7 +915,7 @@ final class Runner implements IRunner {
     }
 
     private function process_methods($class, $object) {
-        $methods = get_class_methods($object);
+        $methods = \get_class_methods($object);
         $processed = [];
 
         foreach ($this->patterns['fixtures'] as $fixture => $spec) {
@@ -930,19 +930,19 @@ final class Runner implements IRunner {
             }
         }
 
-        $processed['tests'] = preg_grep($this->patterns['tests'], $methods);
+        $processed['tests'] = \preg_grep($this->patterns['tests'], $methods);
         return $processed;
     }
 
     private function process_fixture($class, $object, $methods, $spec) {
-        $fixture = preg_grep($spec['regex'], $methods);
+        $fixture = \preg_grep($spec['regex'], $methods);
 
-        switch (count($fixture)) {
+        switch (\count($fixture)) {
         case 0:
             return function() { return true; };
 
         case 1:
-            $fixture = current($fixture);
+            $fixture = \current($fixture);
             $method = $spec['method'];
             return function($during = null)
                    use ($method, $class, $object, $fixture)
@@ -953,7 +953,7 @@ final class Runner implements IRunner {
         default:
             $this->reporter->report_error(
                 $class,
-                "Multiple methods found:\n\t" . implode("\n\t", $fixture)
+                "Multiple methods found:\n\t" . \implode("\n\t", $fixture)
             );
             return false;
         }
@@ -1033,17 +1033,17 @@ final class Reporter implements IReporter {
     public function render_report() {
         foreach ($this->results as $result) {
             list($type, $source, $message) = $result;
-            printf(
+            \printf(
                 "\n\n%s\n%s: %s\n%s\n%s",
-                str_repeat('=', 70),
-                strtoupper($type),
+                \str_repeat('=', 70),
+                \strtoupper($type),
                 $source,
-                str_repeat('-', 70),
+                \str_repeat('-', 70),
                 $message
             );
         }
 
-        if (!$counts = array_filter($this->count)) {
+        if (!$counts = \array_filter($this->count)) {
             echo "No tests found!\n";
             return false;
         }
@@ -1051,7 +1051,7 @@ final class Reporter implements IReporter {
         echo "\n\nTests: ", $this->count['Pass'] + $this->count['Failure'];
         unset($counts['Pass']);
         foreach ($counts as $type => $count) {
-            printf(', %s: %d', $this->summary[$type], $count);
+            \printf(', %s: %d', $this->summary[$type], $count);
         }
         echo "\n";
 
@@ -1075,8 +1075,8 @@ final class Reporter implements IReporter {
     }
 
     public function buffer($source, callable $callback) {
-        $levels = ob_get_level();
-        ob_start();
+        $levels = \ob_get_level();
+        \ob_start();
 
         try {
             $result = $callback();
@@ -1084,8 +1084,8 @@ final class Reporter implements IReporter {
         catch (\Exception $e) {}
 
         $buffers = [];
-        while (($level = ob_get_level()) > $levels) {
-            if ($buffer = trim(ob_get_clean())) {
+        while (($level = \ob_get_level()) > $levels) {
+            if ($buffer = \trim(\ob_get_clean())) {
                 $buffers[$level - $levels] = $buffer;
             }
         }
@@ -1097,25 +1097,25 @@ final class Reporter implements IReporter {
             return $result;
         }
 
-        switch (count($buffers)) {
+        switch (\count($buffers)) {
         case 0:
             /* do nothing */
             break;
 
         case 1:
-            $this->update_report('Output', $source, current($buffers));
+            $this->update_report('Output', $source, \current($buffers));
             break;
 
         default:
             $output = '';
-            foreach (array_reverse($buffers, true) as $i => $buffer) {
-                $output .= sprintf(
+            foreach (\array_reverse($buffers, true) as $i => $buffer) {
+                $output .= \sprintf(
                     "%s\n%s\n\n",
-                    str_pad(" Buffer $i ", 70, '~', STR_PAD_BOTH),
+                    \str_pad(" Buffer $i ", 70, '~', STR_PAD_BOTH),
                     $buffer
                 );
             }
-            $this->update_report('Output', $source, rtrim($output));
+            $this->update_report('Output', $source, \rtrim($output));
             break;
         }
 
@@ -1134,9 +1134,9 @@ final class Reporter implements IReporter {
 
 final class Factory {
     public function build($argv) {
-        $tests = array_slice($argv, 1);
+        $tests = \array_slice($argv, 1);
         if (!$tests) {
-            $tests[] = getcwd();
+            $tests[] = \getcwd();
         }
 
         ErrorHandler::enable(new VariableFormatter(), new Diff());
@@ -1192,7 +1192,7 @@ function assert_identical($expected, $actual, $message = null) {
 
 
 function main($argc, $argv) {
-    try_loading_composer();
+    namespace\try_loading_composer();
     return (new Factory())->build($argv)->run();
 }
 
@@ -1200,7 +1200,7 @@ function main($argc, $argv) {
 function try_loading_composer() {
     foreach (['/../../autoload.php', '/vendor/autoload.php'] as $file) {
         $file = __DIR__ . $file;
-        if (file_exists($file)) {
+        if (\file_exists($file)) {
             require $file;
             return;
         }

@@ -56,8 +56,6 @@ Release
 
 -   PHP 7.2 deprecates the $errcontext parameter of error handlers
 
--   Fully qualify all identifiers
-
 -   Run setup and teardown in a common output buffer with their test
 
 -   Improve(?) test report(?)
