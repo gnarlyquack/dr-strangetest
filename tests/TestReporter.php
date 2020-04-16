@@ -14,7 +14,7 @@ class TestReporter {
     private $output;
 
     public function setup() {
-        $this->reporter = new easytest\Reporter('EasyTest');
+        $this->reporter = new easytest\Reporter('EasyTest', true);
         $this->output = ob_get_contents();
         ob_clean();
     }
@@ -38,7 +38,7 @@ class TestReporter {
 
     public function test_report_success() {
         $this->reporter->report_success();
-        $this->assert_report(".\n\nTests: 1\n", true);
+        $this->assert_report(".\n\n\nTests: 1\n", true);
     }
 
     public function test_report_error() {
@@ -50,6 +50,7 @@ E
 ERROR: source
 ----------------------------------------------------------------------
 message
+
 
 Tests: 0, Errors: 1\n
 OUT;
@@ -66,12 +67,32 @@ FAILURE: source
 ----------------------------------------------------------------------
 message
 
+
 Tests: 1, Failures: 1\n
 OUT;
         $this->assert_report($expected, false);
     }
 
-    public function test_report_skip() {
+
+    public function test_suppresses_skips_in_quiet_mode() {
+        $this->reporter->report_skip('source', 'message');
+        $expected = <<<OUT
+S
+
+
+This report omitted skipped tests.
+To view, rerun easytest with the --verbose option.
+
+Tests: 0, Skips: 1\n
+OUT;
+        $this->assert_report($expected, true);
+    }
+
+
+    public function test_reports_skips_in_verbose_mode() {
+        $this->reporter = new easytest\Reporter('EasyTest', false);
+        ob_clean();
+
         $this->reporter->report_skip('source', 'message');
         $expected = <<<OUT
 S
@@ -81,12 +102,14 @@ SKIP: source
 ----------------------------------------------------------------------
 message
 
+
 Tests: 0, Skips: 1\n
 OUT;
         $this->assert_report($expected, true);
     }
 
-    public function test_output_is_normally_suppressed() {
+
+    public function test_suppresses_output_in_quiet_mode() {
         $actual = $this->reporter->buffer(
             'test_output',
             function() {
@@ -102,12 +125,17 @@ OUT;
         $expected = <<<OUT
 O
 
+
+This report omitted output.
+To view, rerun easytest with the --verbose option.
+
 Tests: 0, Output: 1\n
 OUT;
         $this->assert_report($expected, true);
     }
 
-    public function test_output_is_reported_on_exception() {
+
+    public function test_reports_output_during_exception() {
         /* Exception should be re-thrown */
         easytest\assert_exception(
             'easytest\\Failure',
@@ -130,6 +158,38 @@ O
 OUTPUT: test_output
 ----------------------------------------------------------------------
 output
+
+
+Tests: 0, Output: 1\n
+OUT;
+        $this->assert_report($expected, true);
+    }
+
+
+    public function test_reports_output_in_verbose_mode() {
+        $this->reporter = new easytest\Reporter('EasyTest', false);
+        ob_clean();
+
+        $actual = $this->reporter->buffer(
+            'test_output',
+            function() {
+                echo 'output';
+                return 'foo';
+            }
+        );
+
+        /* Callback result should be returned */
+        easytest\assert_identical('foo', $actual);
+
+        /* Output should be buffered and reported */
+        $expected = <<<OUT
+O
+
+======================================================================
+OUTPUT: test_output
+----------------------------------------------------------------------
+output
+
 
 Tests: 0, Output: 1\n
 OUT;
@@ -174,12 +234,116 @@ buffer 1 output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Buffer 3 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 buffer 3 output
 
+
 Tests: 0, Output: 1\n
 OUT;
         $this->assert_report($expected, true);
     }
 
-    public function test_combined_report() {
+
+    public function test_combined_report_in_quiet_mode() {
+        $this->reporter->report_success();
+        $this->reporter->report_failure('fail1', 'failure 1');
+        $this->reporter->report_error('error1', 'error 1');
+        $this->reporter->report_skip('skip1', 'skip 1');
+
+        $this->reporter->buffer('output1', function() { echo 'output 1'; });
+        $this->reporter->report_success();
+
+        $e = easytest\assert_exception(
+            'easytest\\Failure',
+            function() {
+                $this->reporter->buffer(
+                    'output2',
+                    function() {
+                        echo 'output 2';
+                        throw new easytest\Failure('failure 2');
+                    }
+                );
+            }
+        );
+        $this->reporter->report_failure('fail2', $e->getMessage());
+
+        $e = easytest\assert_exception(
+            'easytest\\Error',
+            function() {
+                $this->reporter->buffer(
+                    'output3',
+                    function() {
+                        echo 'output 3';
+                        trigger_error('error 2');
+                    }
+                );
+            }
+        );
+        $this->reporter->report_error('error2', $e->getMessage());
+
+        $e = easytest\assert_exception(
+            'easytest\\Skip',
+            function() {
+                $this->reporter->buffer(
+                    'output4',
+                    function() {
+                        echo 'output 4';
+                        throw new easytest\Skip('skip 2');
+                    }
+                );
+            }
+        );
+        $this->reporter->report_skip('skip2', $e->getMessage());
+
+        $expected = <<<OUT
+.FESO.OFOEOS
+
+======================================================================
+FAILURE: fail1
+----------------------------------------------------------------------
+failure 1
+
+======================================================================
+ERROR: error1
+----------------------------------------------------------------------
+error 1
+
+======================================================================
+OUTPUT: output2
+----------------------------------------------------------------------
+output 2
+
+======================================================================
+FAILURE: fail2
+----------------------------------------------------------------------
+failure 2
+
+======================================================================
+OUTPUT: output3
+----------------------------------------------------------------------
+output 3
+
+======================================================================
+ERROR: error2
+----------------------------------------------------------------------
+error 2
+
+======================================================================
+OUTPUT: output4
+----------------------------------------------------------------------
+output 4
+
+
+This report omitted output and skipped tests.
+To view, rerun easytest with the --verbose option.
+
+Tests: 4, Errors: 2, Failures: 2, Output: 4, Skips: 2\n
+OUT;
+        $this->assert_report($expected, false);
+    }
+
+
+    public function test_combined_report_in_verbose_mode() {
+        $this->reporter = new easytest\Reporter('EasyTest', false);
+        ob_clean();
+
         $this->reporter->report_success();
         $this->reporter->report_failure('fail1', 'failure 1');
         $this->reporter->report_error('error1', 'error 1');
@@ -249,6 +413,11 @@ SKIP: skip1
 skip 1
 
 ======================================================================
+OUTPUT: output1
+----------------------------------------------------------------------
+output 1
+
+======================================================================
 OUTPUT: output2
 ----------------------------------------------------------------------
 output 2
@@ -277,6 +446,7 @@ output 4
 SKIP: skip2
 ----------------------------------------------------------------------
 skip 2
+
 
 Tests: 4, Errors: 2, Failures: 2, Output: 4, Skips: 2\n
 OUT;

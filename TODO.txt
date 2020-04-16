@@ -19,7 +19,6 @@ Release
 
 -   Implement CLI options
     -   specify a config file(?)
-    -   verbose and quiet modes
     -   reverse report output
     -   version
     -   help
@@ -89,6 +88,13 @@ Release
 -   Eliminate Factory class
 
 -   Update license headers
+
+-   Separate logging and reporting
+
+-   diff: Limit number of lines that are reported before and after the
+    differing portion of text
+
+-   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
 
 Future / Someday(?)

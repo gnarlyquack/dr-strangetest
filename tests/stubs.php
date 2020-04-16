@@ -19,7 +19,7 @@ class StubReporter implements easytest\IReporter {
     private $report;
     private $blank_report;
 
-    public function __construct($header = null) {
+    public function __construct($header = null, $quiet=null) {
         $this->report = $this->blank_report = [
             'Tests' => 0,
             'Errors' => [],

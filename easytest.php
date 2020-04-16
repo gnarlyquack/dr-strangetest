@@ -31,7 +31,7 @@ interface IDiff {
 }
 
 interface IReporter {
-    public function __construct($header);
+    public function __construct($header, $quiet);
 
     public function render_report();
 
@@ -1026,13 +1026,21 @@ final class Reporter implements IReporter {
     ];
     private $results = [];
 
-    public function __construct($header) {
+    private $quiet;
+
+
+    public function __construct($header, $quiet) {
+        $this->quiet = $quiet;
         echo "$header\n\n";
     }
 
     public function render_report() {
+        $output = 0;
         foreach ($this->results as $result) {
             list($type, $source, $message) = $result;
+            if ('Output' === $type) {
+                ++$output;
+            }
             \printf(
                 "\n\n%s\n%s: %s\n%s\n%s",
                 \str_repeat('=', 70),
@@ -1048,7 +1056,25 @@ final class Reporter implements IReporter {
             return false;
         }
 
-        echo "\n\nTests: ", $this->count['Pass'] + $this->count['Failure'];
+        echo "\n\n\n";
+
+        if ($this->quiet) {
+            $suppressed = [];
+            if ($output !== $this->count['Output']) {
+                $suppressed[] = 'output';
+            }
+            if ($this->count['Skip']) {
+                $suppressed[] = 'skipped tests';
+            }
+            if ($suppressed) {
+                \printf(
+                    "This report omitted %s.\nTo view, rerun easytest with the --verbose option.\n\n",
+                    \implode(' and ', $suppressed)
+                );
+            }
+        }
+
+        echo "Tests: ", $this->count['Pass'] + $this->count['Failure'];
         unset($counts['Pass']);
         foreach ($counts as $type => $count) {
             \printf(', %s: %d', $this->summary[$type], $count);
@@ -1071,6 +1097,10 @@ final class Reporter implements IReporter {
     }
 
     public function report_skip($source, $message) {
+        if ($this->quiet) {
+            $source = null;
+            $message = null;
+        }
         $this->update_report('Skip', $source, $message);
     }
 
@@ -1090,7 +1120,7 @@ final class Reporter implements IReporter {
             }
         }
 
-        if (!isset($e)) {
+        if ($this->quiet && !isset($e)) {
             if ($buffers) {
                 $this->update_report('Output');
             }
@@ -1119,7 +1149,12 @@ final class Reporter implements IReporter {
             break;
         }
 
-        throw $e;
+        if (isset($e)) {
+            throw $e;
+        }
+        else {
+            return $result;
+        }
     }
 
     private function update_report($type, $source = null, $message = null) {
@@ -1141,7 +1176,7 @@ final class Factory {
 
         ErrorHandler::enable(new VariableFormatter(), new Diff());
 
-        $reporter = new Reporter('EasyTest ' . VERSION);
+        $reporter = new Reporter('EasyTest ' . VERSION, $options['quiet']);
 
         return new EasyTest(
             $reporter,
@@ -1209,7 +1244,7 @@ function _try_loading_composer() {
 
 
 function _parse_arguments($argc, $argv) {
-    $opts = [];
+    $opts = ['quiet' => true];
     $args = \array_slice($argv, 1);
 
     while ($args) {
@@ -1246,9 +1281,14 @@ function _parse_short_option($args, $opts) {
 
 function _parse_option($opt, $args, $opts) {
     switch ($opt) {
+        case 'q':
+        case 'quiet':
+            $opts['quiet'] = true;
+            break;
+
         case 'v':
         case 'verbose':
-            $opts['verbose'] = true;
+            $opts['quiet'] = false;
             break;
     }
 
