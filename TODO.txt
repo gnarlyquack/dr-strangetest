@@ -11,13 +11,18 @@ Release
 
 -   Add support for config files(?)
 
--   Implement CLI argument parsing
-    -   PHP 7.1 adds $optind parameter to getopt()
+-   Finish implementing CLI argument parsing
+    -   Combined short options
+    -   Options with arguments
+    -   '-' ends option parsing and is included with any remaining arguments
+    -   '--' ends option parsing and is excluded from any remaining arguments
 
 -   Implement CLI options
     -   specify a config file(?)
     -   verbose and quiet modes
     -   reverse report output
+    -   version
+    -   help
 
 -   Report file and line number for failed assertions
 
@@ -80,6 +85,10 @@ Release
 -   Test installing and running via Composer/Packagist
 
 -   Show how long test runs take
+
+-   Eliminate Factory class
+
+-   Update license headers
 
 
 Future / Someday(?)

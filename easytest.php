@@ -1133,8 +1133,8 @@ final class Reporter implements IReporter {
 
 
 final class Factory {
-    public function build($argv) {
-        $tests = \array_slice($argv, 1);
+    public function build($argc, $argv) {
+        list($options, $tests) = _parse_arguments($argc, $argv);
         if (!$tests) {
             $tests[] = \getcwd();
         }
@@ -1192,12 +1192,12 @@ function assert_identical($expected, $actual, $message = null) {
 
 
 function main($argc, $argv) {
-    namespace\try_loading_composer();
-    return (new Factory())->build($argv)->run();
+    namespace\_try_loading_composer();
+    return (new Factory())->build($argc, $argv)->run();
 }
 
 
-function try_loading_composer() {
+function _try_loading_composer() {
     foreach (['/../../autoload.php', '/vendor/autoload.php'] as $file) {
         $file = __DIR__ . $file;
         if (\file_exists($file)) {
@@ -1205,4 +1205,52 @@ function try_loading_composer() {
             return;
         }
     }
+}
+
+
+function _parse_arguments($argc, $argv) {
+    $opts = [];
+    $args = \array_slice($argv, 1);
+
+    while ($args) {
+        $arg = $args[0];
+
+        if ('--' === \substr($arg, 0, 2)) {
+            list($opts, $args) = namespace\_parse_long_option($args, $opts);
+        }
+        elseif ('-' === \substr($arg, 0, 1)) {
+            list($opts, $args) = namespace\_parse_short_option($args, $opts);
+        }
+        else {
+            break;
+        }
+    }
+
+    return [$opts, $args];
+}
+
+
+function _parse_long_option($args, $opts) {
+    $opt = \array_shift($args);
+    $opt = \substr($opt, 2);
+    return namespace\_parse_option($opt, $args, $opts);
+}
+
+
+function _parse_short_option($args, $opts) {
+    $opt = \array_shift($args);
+    $opt = \substr($opt, 1);
+    return namespace\_parse_option($opt, $args, $opts);
+}
+
+
+function _parse_option($opt, $args, $opts) {
+    switch ($opt) {
+        case 'v':
+        case 'verbose':
+            $opts['verbose'] = true;
+            break;
+    }
+
+    return [$opts, $args];
 }
