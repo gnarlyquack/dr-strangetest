@@ -85,8 +85,6 @@ Release
 
 -   Eliminate Factory class
 
--   Update license headers
-
 -   Separate logging and reporting
 
 -   diff: Limit number of lines that are reported before and after the
