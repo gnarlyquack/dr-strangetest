@@ -15,4 +15,4 @@ jobs:
         - php: 5.5
           dist: trusty
 
-script: ./bin/easytest
+script: ./bin/easytest --verbose
