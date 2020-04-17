@@ -23,8 +23,6 @@ Release
     -   version
     -   help
 
--   Report file and line number for failed assertions
-
 -   Fix handling of empty strings in diff class
 
 -   Ensure path discovery is OS independent
@@ -95,6 +93,16 @@ Release
     differing portion of text
 
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
+
+-   Failure::__toString: bulletproof the check on 'run_test'
+    If we execute a passed-in callable that generates a failure (see
+    assert_exception), and the callable is a function with an identifier
+    (i.e., not an anonymous function), it seems we could potentially call any
+    function within easytest and match on it, which could cause us to break
+    out of trace generation too early. So we need to match on something that
+    we would never expect to execute as part of a test.
+
+-   Show file and line number for skips
 
 
 Future / Someday(?)

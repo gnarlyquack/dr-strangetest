@@ -495,8 +495,86 @@ final class Error extends \ErrorException {
 }
 
 final class Failure extends \Exception {
+    private $string;
+    private $trace;
+    private $trace_count;
+    private $trace_start;
+
+    public function __construct($message = '') {
+        parent::__construct($message);
+
+        // Find the call site that's outside of easytest
+        // #BC(5.3): Check format of $option parameter for debug_backtrace()
+        $trace = \version_compare(PHP_VERSION, '5.3.6', '<')
+               ? \debug_backtrace(false)
+               : \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        for($i = 0, $c = \count($trace); $i < $c; ++$i) {
+            // Apparently there's no file if we were thrown from the error
+            // handler
+            if (isset($trace[$i]['file'])
+                && __FILE__ !== $trace[$i]['file'])
+            {
+                break;
+            }
+        }
+        $this->file = $trace[$i]['file'];
+        $this->line = $trace[$i]['line'];
+        $this->trace = $trace;
+        $this->trace_count = $c;
+        // Advance the trace index ($i) so we can build a backtrace from the
+        // call site in __toString()
+        $this->trace_start = ++$i;
+    }
+
+
     public function __toString() {
-        return $this->message;
+        if (!$this->string) {
+            $string = [];
+
+            $string[] = \sprintf(
+                "%s\n\nin %s on line %s",
+                $this->message ?: \sprintf('%s thrown', __CLASS__),
+                $this->file,
+                $this->line
+            );
+
+            // Create a backtrace excluding calls made within easytest
+            $tracestring = [];
+            for(;
+                $this->trace_start < $this->trace_count;
+                ++$this->trace_start)
+            {
+                $trace = $this->trace[$this->trace_start];
+                if (__FILE__ === $trace['file']) {
+                    if ('run_test' === $trace['function']) {
+                        break;
+                    }
+                    continue;
+                }
+
+                $callee = $trace['function'];
+                if (isset($trace['class'])) {
+                    $callee = \sprintf(
+                        '%s%s%s',
+                        $trace['class'], $trace['type'], $callee
+                    );
+                }
+
+                $tracestring[] = \sprintf('%s(%d): %s()',
+                    $trace['file'],
+                    $trace['line'],
+                    $callee
+                );
+            }
+
+            if ($tracestring) {
+                $string[] = \implode("\n", $tracestring);
+            }
+
+            $this->string = \implode("\n\nCalled from:\n", $string);
+        }
+
+        return $this->string;
     }
 }
 

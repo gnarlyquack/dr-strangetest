@@ -10,10 +10,11 @@
  */
 
 class TestExceptions {
+
     public function test_error_format() {
+        $message = 'An error happened';
         $file = __FILE__;
         $line = __LINE__;
-        $message = 'An error happened';
         $e = new easytest\Error($message, E_USER_ERROR, $file, $line);
 
         $expected = sprintf(
@@ -27,12 +28,65 @@ class TestExceptions {
         easytest\assert_identical($expected, $actual);
     }
 
+
     public function test_failure_format() {
-        $expected = 'Assertion failed';
-        $f = new easytest\Failure($expected);
-        $actual = (string)$f;
-        easytest\assert_identical($expected, $actual);
+        $message = 'Assertion failed';
+        $file = __FILE__;
+        $line = __LINE__ + 1;
+        $actual = new easytest\Failure($message);
+
+        $expected = <<<MSG
+Assertion failed
+
+in $file on line $line
+MSG;
+        easytest\assert_identical($expected, "$actual");
     }
+
+
+    public function test_failure_format_with_trace() {
+        $file = __FILE__;
+        $class = __CLASS__;
+        $lines = [__LINE__ + 1];
+        $actual = $this->helper_one($lines);
+        $expected = <<<MSG
+easytest\\Failure thrown
+
+in $file on line $lines[4]
+
+Called from:
+$file($lines[3]): easytest\\assert_exception()
+$file($lines[2]): ${class}->fail()
+$file($lines[1]): ${class}->helper_two()
+$file($lines[0]): ${class}->helper_one()
+MSG;
+        easytest\assert_identical($expected, "$actual");
+    }
+
+    private function helper_one(&$lines) {
+        $lines[] = __LINE__ + 1;
+        return $this->helper_two($lines);
+    }
+
+    private function helper_two(&$lines) {
+        $lines[] = __LINE__ + 1;
+        return $this->fail($lines);
+    }
+
+    private function fail(&$lines) {
+        // #BC(5.6): Adjust the reported line on which a function is called
+        $lines[] = version_compare(PHP_VERSION, '7.0', '<')
+                 ? __LINE__ + 8
+                 : __LINE__ + 6;
+        return easytest\assert_exception(
+            'easytest\\Failure',
+            function() use (&$lines) {
+                $lines[] = __LINE__ + 1;
+                throw new easytest\Failure();
+            }
+        );
+    }
+
 
     public function test_skip_format() {
         $expected = 'Test skipped';
