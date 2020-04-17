@@ -81,7 +81,7 @@ class TestAssertString {
 
     public function setup_class() {
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
-            easytest\skip('PHP 7.2 deprecates calling assert() with a string');
+            easytest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
     }
 
@@ -274,7 +274,7 @@ class TestExpectString {
             easytest\skip('Skipping tests of PHP 7 expectations');
         }
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
-            easytest\skip('PHP 7.2 deprecates calling assert() with a string');
+            easytest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
     }
 
