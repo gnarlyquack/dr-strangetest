@@ -282,14 +282,14 @@ final class ErrorHandler {
 
         self::$eh = new ErrorHandler($formatter, $diff);
 
-        \error_reporting(E_ALL);
+        \error_reporting(\E_ALL);
         \set_error_handler([self::$eh, 'handle_error'], \error_reporting());
 
-        \assert_options(ASSERT_ACTIVE, 1);
-        \assert_options(ASSERT_WARNING, 1);
-        \assert_options(ASSERT_BAIL, 0);
-        \assert_options(ASSERT_QUIET_EVAL, 0);
-        \assert_options(ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
+        \assert_options(\ASSERT_ACTIVE, 1);
+        \assert_options(\ASSERT_WARNING, 1);
+        \assert_options(\ASSERT_BAIL, 0);
+        \assert_options(\ASSERT_QUIET_EVAL, 0);
+        \assert_options(\ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
     }
 
 
@@ -503,9 +503,9 @@ final class Skip extends \Exception {
 function _find_client_call_site() {
     // Find the first call in a backtrace that's outside of easytest
     // #BC(5.3): Check format of $option parameter for debug_backtrace()
-    $trace = \version_compare(PHP_VERSION, '5.3.6', '<')
+    $trace = \version_compare(\PHP_VERSION, '5.3.6', '<')
            ? \debug_backtrace(false)
-           : \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+           : \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     for($i = 0, $c = \count($trace); $i < $c; ++$i) {
         // Apparently there's no file if we were thrown from the error
         // handler
@@ -616,7 +616,7 @@ final class Discoverer {
         $this->reporter = $reporter;
         $this->runner = $runner;
         $this->context = $context;
-        $this->glob_sort = $sort_files ? 0 : GLOB_NOSORT;
+        $this->glob_sort = $sort_files ? 0 : \GLOB_NOSORT;
         $this->loader = function($classname) { return new $classname(); };
     }
 
@@ -691,7 +691,7 @@ final class Discoverer {
     }
 
     private function process_directory($loader, $path, $target) {
-        $paths = \glob("$path*", GLOB_MARK | $this->glob_sort);
+        $paths = \glob("$path*", \GLOB_MARK | $this->glob_sort);
         $processed = [];
 
         $processed['setup'] = $this->process_setup($loader, $paths);
@@ -779,7 +779,7 @@ final class Discoverer {
                 continue;
             }
             switch ($tokens[$i][0]) {
-            case T_CLASS:
+            case \T_CLASS:
                 list($class, $i) = $this->parse_class($tokens, $i);
                 if ($class) {
                     $test = $this->instantiate_test($loader, $ns . $class);
@@ -789,7 +789,7 @@ final class Discoverer {
                 }
                 break;
 
-            case T_NAMESPACE:
+            case \T_NAMESPACE:
                 list($ns, $i) = $this->parse_namespace($tokens, $i, $ns);
                 break;
             }
@@ -799,7 +799,7 @@ final class Discoverer {
     private function parse_class($tokens, $i) {
         /* $i = 'class' and $i+1 = whitespace */
         $i += 2;
-        while (!\is_array($tokens[$i]) || T_STRING !== $tokens[$i][0]) {
+        while (!\is_array($tokens[$i]) || \T_STRING !== $tokens[$i][0]) {
             ++$i;
         }
         $class = $tokens[$i][1];
@@ -837,14 +837,14 @@ final class Discoverer {
             }
 
             switch ($tokens[$i][0]) {
-            case T_NS_SEPARATOR:
+            case \T_NS_SEPARATOR:
                 if (!$ns) {
                     return [$current_ns, $i];
                 }
                 $ns .= $tokens[$i][1];
                 break;
 
-            case T_STRING:
+            case \T_STRING:
                 $ns .= $tokens[$i][1];
                 break;
             }
@@ -1234,7 +1234,7 @@ final class Reporter implements IReporter {
             foreach (\array_reverse($buffers, true) as $i => $buffer) {
                 $output .= \sprintf(
                     "%s\n%s\n\n",
-                    \str_pad(" Buffer $i ", 70, '~', STR_PAD_BOTH),
+                    \str_pad(" Buffer $i ", 70, '~', \STR_PAD_BOTH),
                     $buffer
                 );
             }
@@ -1269,7 +1269,7 @@ final class Factory {
 
         ErrorHandler::enable(new VariableFormatter(), new Diff());
 
-        $reporter = new Reporter('EasyTest ' . VERSION, $options['quiet']);
+        $reporter = new Reporter('EasyTest ' . namespace\VERSION, $options['quiet']);
 
         return new EasyTest(
             $reporter,
