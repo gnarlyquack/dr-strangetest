@@ -5,19 +5,8 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-
-// Each test case in this file only uses assertion functions that been tested
-// earlier in the file. Assuming all earlier tests have passed, then presumably
-// we can safely use those successfully-tested functions to run later tests.
-
-
 class TestAssertIdentical {
-
-    public function test_passes() {
-        easytest\assert_identical(1, 1);
-    }
-
-
+    // helper assertions
     private function assert_identical($expected, $actual) {
         if ($expected === $actual) {
             return;
@@ -38,6 +27,13 @@ MSG;
     }
 
 
+    // tests
+
+    public function test_passes() {
+        easytest\assert_identical(1, 1);
+    }
+
+
     public function test_shows_reason_for_failure() {
         // NOTE: Test of equal arrays in different key order to ensure 1) this
         // fails, and 2) they're not sorted when displayed
@@ -54,7 +50,6 @@ MSG;
                 1 => [1 => 3, 0 => 2],
                 0 => 1,
             ];
-
             easytest\assert_identical($array1, $array2);
         }
         catch (easytest\Failure $actual) {}
@@ -94,6 +89,10 @@ EXPECTED;
         }
         catch (easytest\Failure $actual) {}
 
+        if (!isset($actual)) {
+            throw new easytest\Failure('Did not fail on non-identical values');
+        }
+
         $expected = <<<EXPECTED
 $message
 
@@ -110,7 +109,6 @@ EXPECTED;
 
 
 class TestAssertException {
-
     public function test_returns_expected_exception() {
         $expected = new ExpectedException();
         $actual = easytest\assert_exception(
@@ -121,7 +119,7 @@ class TestAssertException {
     }
 
 
-    public function test_fails_when_no_exception_thrown() {
+    public function test_fails_when_no_exception_is_thrown() {
         try {
             easytest\assert_exception('Exception', function() {});
         }
@@ -140,7 +138,6 @@ class TestAssertException {
 
     public function test_rethrows_unexpected_exception() {
         $expected = new UnexpectedException();
-
         try {
             easytest\assert_exception(
                 'ExpectedException',
@@ -168,6 +165,10 @@ class TestAssertException {
         }
         catch (easytest\Failure $actual) {}
 
+        if (!isset($actual)) {
+            throw new easytest\Failure('Did not fail when no exception was thrown');
+        }
+
         easytest\assert_identical($expected, $actual->getMessage());
     }
 }
@@ -191,7 +192,6 @@ class TestAssertEqual {
             1 => [1 => 3, 0 => 2],
             0 => 1,
         ];
-
         easytest\assert_equal($array1, $array2);
     }
 
@@ -273,20 +273,6 @@ $message
 - true
 + false
 EXPECTED;
-
-        easytest\assert_identical($expected, $actual->getMessage());
-    }
-}
-
-
-class TestSkip {
-
-    public function test_throws_skip_exception() {
-        $expected = 'Skip me';
-        $actual = easytest\assert_exception(
-            'easytest\\Skip',
-            function() use ($expected) { easytest\skip($expected); }
-        );
 
         easytest\assert_identical($expected, $actual->getMessage());
     }

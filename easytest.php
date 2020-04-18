@@ -494,7 +494,7 @@ final class Failure extends \Exception {
     private $string;
     private $trace;
 
-    public function __construct($message = '') {
+    public function __construct($message) {
         parent::__construct($message);
         list($this->file, $this->line, $this->trace)
             = namespace\_find_client_call_site();

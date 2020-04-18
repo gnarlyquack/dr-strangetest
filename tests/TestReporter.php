@@ -140,7 +140,7 @@ OUT;
                     'test_output',
                     function() {
                         echo 'output';
-                        throw new easytest\Failure();
+                        easytest\fail('F');
                     }
                 );
             }
@@ -207,7 +207,7 @@ OUT;
                         // no output in buffer 2
                         ob_start();
                         echo 'buffer 3 output';
-                        throw new easytest\Failure();
+                        easytest\fail('F');
                     }
                 );
             }
@@ -253,7 +253,7 @@ OUT;
                     'output2',
                     function() {
                         echo 'output 2';
-                        throw new easytest\Failure('failure 2');
+                        easytest\fail('failure 2');
                     }
                 );
             }
@@ -281,7 +281,7 @@ OUT;
                     'output4',
                     function() {
                         echo 'output 4';
-                        throw new easytest\Skip('skip 2');
+                        easytest\skip('skip 2');
                     }
                 );
             }
@@ -355,7 +355,7 @@ OUT;
                     'output2',
                     function() {
                         echo 'output 2';
-                        throw new easytest\Failure('failure 2');
+                        easytest\fail('failure 2');
                     }
                 );
             }
@@ -383,7 +383,7 @@ OUT;
                     'output4',
                     function() {
                         echo 'output 4';
-                        throw new easytest\Skip('skip 2');
+                        easytest\skip('skip 2');
                     }
                 );
             }

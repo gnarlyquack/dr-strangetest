@@ -98,8 +98,6 @@ Release
     out of trace generation too early. So we need to match on something that
     we would never expect to execute as part of a test.
 
--   Only throw exceptions using API functions (except when testing said API)
-
 
 Future / Someday(?)
 -------------------

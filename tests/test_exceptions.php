@@ -6,30 +6,33 @@
 // LICENSE.txt file.
 
 class TestExceptions {
-    public function test_error_format() {
+    public function test_error_throws_error_exception() {
         $message = 'An error happened';
         $file = __FILE__;
-        $line = __LINE__;
-        $e = new easytest\Error($message, E_USER_ERROR, $file, $line);
+        try {
+            $line = __LINE__ + 1;
+            trigger_error($message);
+        }
+        catch (easytest\Error $actual) {}
+
+        if (!isset($actual)) {
+            throw new easytest\Failure('Error exception wasn\'t thrown');
+        }
 
         $expected = sprintf(
             "%s\nin %s on line %s\n\nStack trace:\n%s",
             $message,
             $file,
             $line,
-            $e->getTraceAsString()
+            $actual->getTraceAsString()
         );
-        $actual = (string)$e;
-        easytest\assert_identical($expected, $actual);
+        easytest\assert_identical($expected, "$actual");
     }
 
 
     public function test_fail_throws_failure_exception() {
         $message = 'Fail! :-(';
         $file = __FILE__;
-        $line = __LINE__ + 1;
-        $actual = new easytest\Failure($message);
-
         try {
             $line = __LINE__ + 1;
             easytest\fail($message);
@@ -49,7 +52,7 @@ MSG;
     }
 
 
-    public function test_fail_shows_call_tracd() {
+    public function test_fail_shows_call_trace() {
         $message = 'Fail! :-(';
         $file = __FILE__;
         $class = __CLASS__;
@@ -94,7 +97,7 @@ MSG;
     }
 
 
-    public function test_skip_format() {
+    public function test_skip_throws_skip_exception() {
         $message = 'Test skipped';
         $file = __FILE__;
         try {
@@ -104,7 +107,7 @@ MSG;
         catch (easytest\Skip $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('easytest\\skip() didn\'t throw Skip exception');
+            throw new easytest\Failure('Skip exception not thrown');
         }
 
         $expected = <<<MSG
