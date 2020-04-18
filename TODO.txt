@@ -32,13 +32,6 @@ Release
 -   Test discovery: For all tests, first check the reporter, then the context,
     then the runner
 
--   Support PHP 7's exception hierarchy
-    https://www.php.net/manual/en/language.errors.php7.php
-
-    -   Of note, parse errors now throw an exception, meaning previously-fatal
-        errors can now be handled, specifically, including files and calling
-        assert() with incorrect syntax
-
 -   Ensure anonymous classes are properly handled by the file parser
     https://www.php.net/manual/en/language.oop5.anonymous.php
 
@@ -51,10 +44,6 @@ Release
 -   Ensure that an object with numeric properties is properly handled in the
     variable formatter when it's cast to an array
     https://www.php.net/manual/en/migration72.incompatible.php#migration72.incompatible.object-array-casts
-
--   PHP 7.2 deprecates calling assert() with a string argument
-
--   PHP 7.2 deprecates the $errcontext parameter of error handlers
 
 -   Run setup and teardown in a common output buffer with their test
 
@@ -69,9 +58,6 @@ Release
 
 -   When using a message/description for an assertion, consider showing the
     message in addition to, not in place of, the assertion expression
-
--   test_assert.php: eliminate expect_fails() when assert_exception() support
-    PHP 7 Errors
 
 -   assert_equal() and assert_identical(): stop proxying to the error handler
 

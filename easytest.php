@@ -323,7 +323,7 @@ final class ErrorHandler {
         }
     }
 
-    public function handle_error($errno, $errstr, $errfile, $errline, $errcontext) {
+    public function handle_error($errno, $errstr, $errfile, $errline) {
         if (!(\error_reporting() & $errno)) {
             // This error code is not included in error_reporting
             return;
@@ -335,7 +335,11 @@ final class ErrorHandler {
 
         list($code, $message) = $this->assertion;
         $this->assertion = null;
-        throw new Failure($this->format_message($code, $message, $errcontext));
+
+        if (!$message) {
+            $message = $code ? "assert($code) failed" : $errstr;
+        }
+        throw new Failure($message);
     }
 
 
@@ -386,71 +390,6 @@ final class ErrorHandler {
         );
     }
 
-
-    private function format_message($code, $message, $context) {
-        if (!$code) {
-            return $message ?: 'Assertion failed';
-        }
-
-        if (!$message) {
-            $message = "Assertion \"$code\" failed";
-        }
-        if (!$context) {
-            return $message;
-        }
-
-        $sort = true;
-        $variables = [];
-        foreach (\token_get_all("<?php $code") as $token) {
-            if (!\is_array($token)) {
-                continue;
-            }
-            switch ($token[0]) {
-            case T_VARIABLE:
-                // Strip the leading '$' off the variable name.
-                $variable = \substr($token[1], 1);
-
-                // The "pseudo-variable" '$this' (and possibly others?) will
-                // parse as a variable but won't be in the context.
-                if (\array_key_exists($variable, $context)) {
-                    $variables[$variable] = $context[$variable];
-                }
-                break;
-
-            case T_IS_IDENTICAL:
-                // Key order is significant, so don't sort arrays.
-                $sort = false;
-                break;
-            }
-        }
-
-        if (!$variables) {
-            return $message;
-        }
-        if (2 === \count($variables)) {
-            list($key1, $key2) = \array_keys($variables);
-            if ($sort) {
-                $this->sort_array($variables[$key1]);
-                $this->sort_array($variables[$key2]);
-            }
-            $message .= "\n\n" . $this->diff->diff(
-                $this->formatter->format_var($variables[$key1]),
-                $this->formatter->format_var($variables[$key2]),
-                $key1,
-                $key2
-            );
-            return $message;
-        }
-        foreach ($variables as $key => $value) {
-            $message .= \sprintf(
-                "\n\n%s:\n%s",
-                $key,
-                $this->formatter->format_var($value)
-            );
-        }
-        return $message;
-    }
-
     private function sort_array(&$array, &$seen = []) {
         if (!\is_array($array)) {
             return;
@@ -490,28 +429,51 @@ final class Error extends \ErrorException {
     }
 }
 
-final class Failure extends \Exception {
-    private $string;
-    private $trace;
+// #BC(5.6): Extend Failure from Exception instead of AssertionError
+if (\version_compare(\PHP_VERSION, '7.0', '<')) {
+    final class Failure extends \Exception {
+        private $string;
+        private $trace;
 
-    public function __construct($message) {
-        parent::__construct($message);
-        list($this->file, $this->line, $this->trace)
-            = namespace\_find_client_call_site();
-    }
-
-
-    public function __toString() {
-        if (!$this->string) {
-            $this->string = namespace\_format_exception_string(
-                "%s\n\nin %s on line %s",
-                $this->message ?: \sprintf('%s thrown', __CLASS__),
-                $this->file,
-                $this->line,
-                $this->trace
-            );
+        public function __construct($message) {
+            parent::__construct($message);
+            list($this->file, $this->line, $this->trace)
+                = namespace\_find_client_call_site();
         }
-        return $this->string;
+
+
+        public function __toString() {
+            if (!$this->string) {
+                $this->string = namespace\_format_exception_string(
+                    "%s\n\nin %s on line %s",
+                    $this->message, $this->file, $this->line, $this->trace
+                );
+            }
+            return $this->string;
+        }
+    }
+}
+else {
+    final class Failure extends \AssertionError {
+        private $string;
+        private $trace;
+
+        public function __construct($message) {
+            parent::__construct($message);
+            list($this->file, $this->line, $this->trace)
+                = namespace\_find_client_call_site();
+        }
+
+
+        public function __toString() {
+            if (!$this->string) {
+                $this->string = namespace\_format_exception_string(
+                    "%s\n\nin %s on line %s",
+                    $this->message, $this->file, $this->line, $this->trace
+                );
+            }
+            return $this->string;
+        }
     }
 }
 
@@ -899,6 +861,10 @@ final class Discoverer {
         catch (Skip $e) {
             $this->reporter->report_skip($file, $e);
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($file, $e);
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($file, $e);
         }
@@ -918,6 +884,10 @@ final class Discoverer {
         catch (Skip $e) {
             $this->reporter->report_skip($file, $e);
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($file, $e);
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($file, $e);
         }
@@ -931,6 +901,10 @@ final class Discoverer {
                 function() use ($file) { $this->context->include_file($file); }
             );
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($file, $e);
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($file, $e);
         }
@@ -944,6 +918,11 @@ final class Discoverer {
                 function() use ($loader, $class) { return $loader($class); }
             );
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($class, $e);
+            return false;
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($class, $e);
             return false;
@@ -1063,6 +1042,10 @@ final class Runner implements IRunner {
         catch (Skip $e) {
             $this->reporter->report_skip($source, $e);
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($source, $e);
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($source, $e);
         }
@@ -1074,12 +1057,20 @@ final class Runner implements IRunner {
         try {
             $this->reporter->buffer($source, [$object, $method]);
         }
+        catch (\AssertionError $e) {
+            $this->reporter->report_failure($source, $e);
+        }
+        // #BC(5.6): Catch Failure, which extends from AssertionError
         catch (Failure $e) {
             $this->reporter->report_failure($source, $e);
         }
         catch (Skip $e) {
             $this->reporter->report_skip($source, $e);
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($source, $e);
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($source, $e);
         }
@@ -1091,6 +1082,10 @@ final class Runner implements IRunner {
         try {
             $this->reporter->buffer($source, [$object, $method]);
         }
+        catch (\Throwable $e) {
+            $this->reporter->report_error($source, $e);
+        }
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->reporter->report_error($source, $e);
         }
@@ -1207,6 +1202,8 @@ final class Reporter implements IReporter {
         try {
             $result = $callback();
         }
+        catch (\Throwable $e) {}
+        // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {}
 
         $buffers = [];
@@ -1292,15 +1289,21 @@ function assert_exception($expected, $callback, $message = null) {
     try {
         $callback();
     }
-    catch (\Exception $e) {
-        if ($e instanceof $expected) {
-            return $e;
-        }
-        throw $e;
+    catch (\Throwable $e) {}
+    // #BC(5.6): Catch Exception, which implements Throwable
+    catch (\Exception $e) {}
+
+    if (!isset($e)) {
+        throw new Failure(
+            $message ?: 'No exception was thrown although one was expected'
+        );
     }
 
-    $message = $message ?: 'No exception was thrown although one was expected';
-    throw new Failure($message);
+    if ($e instanceof $expected) {
+        return $e;
+    }
+
+    throw $e;
 }
 
 function skip($reason) {

@@ -5,19 +5,6 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-function expect_fails($assert) {
-    try {
-        $assert();
-    }
-    catch (AssertionError $f) {}
-
-    if (!isset($f)) {
-        throw new easytest\Failure('assertion did not fail');
-    }
-    return $f;
-}
-
-
 class TestAssertExpression {
 
     public function test_uses_default_description() {
@@ -32,7 +19,7 @@ class TestAssertExpression {
 
         // #BC(5.6): Check format of default assert description
         $expected = version_compare(PHP_VERSION, '7.0.0', '<')
-                  ? 'Assertion failed'
+                  ? 'assert(): Assertion failed'
                   : 'assert($true == $false)';
         easytest\assert_identical($expected, $f->getMessage());
     }
@@ -89,8 +76,15 @@ class TestAssertString {
     public function test_uses_assert_expression_as_default_message() {
         $f = easytest\assert_exception(
             'easytest\\Failure',
-            function() { assert('true == false'); });
-        easytest\assert_identical('Assertion "true == false" failed', $f->getMessage());
+            function() {
+                $true = 1;
+                $false = 0;
+                assert('$true == $false');
+            }
+        );
+
+        $expected = 'assert($true == $false) failed';
+        easytest\assert_identical($expected, $f->getMessage());
     }
 
 
@@ -128,64 +122,6 @@ class TestAssertString {
 
         easytest\assert_identical("$expected", $f->getMessage());
     }
-
-
-    /*
-     * Having more (or less) than two variables in the assertion context
-     * should output the value of each variable.
-     */
-    public function test_parses_variable_values() {
-        $f = easytest\assert_exception(
-            'easytest\\Failure',
-            function() {
-                $one = 1;
-                $two = 2;
-                $four = 4;
-                assert('$one + $two == $four');
-            }
-        );
-
-        $expected = <<<'EXPECTED'
-Assertion "$one + $two == $four" failed
-
-one:
-1
-
-two:
-2
-
-four:
-4
-EXPECTED;
-        easytest\assert_identical($expected, $f->getMessage());
-    }
-
-
-    /*
-     * Two variables in the assertion context (which is expected to be the
-     * most common case) should produce a diff-style output.
-     */
-    public function test_shows_diff_for_two_variables() {
-        $f = easytest\assert_exception(
-            'easytest\\Failure',
-            function() {
-                $one = true;
-                $two = false;
-                assert('$one == $two');
-            }
-        );
-
-        $expected = <<<'EXPECTED'
-Assertion "$one == $two" failed
-
-- one
-+ two
-
-- true
-+ false
-EXPECTED;
-        easytest\assert_identical($expected, $f->getMessage());
-    }
 }
 
 
@@ -215,7 +151,8 @@ class TestExpectExpression {
 
 
     public function test_uses_default_description() {
-        $f = expect_fails(
+        $f = easytest\assert_exception(
+            'AssertionError',
             function() {
                 $true = 1;
                 $false = 0;
@@ -229,7 +166,8 @@ class TestExpectExpression {
 
     public function test_uses_provided_description() {
         $expected = 'My assertion failed. Or did it?';
-        $f = expect_fails(
+        $f = easytest\assert_exception(
+            'AssertionError',
             function() use ($expected) { assert(true == false, $expected); }
         );
 
@@ -249,7 +187,10 @@ class TestExpectExpression {
 
 
     public function test_does_not_throw_old_assertion() {
-        expect_fails(function() { assert(true == false); });
+        easytest\assert_exception(
+            'AssertionError',
+            function() { assert(true == false); }
+        );
         try {
             trigger_error('This should be an error');
         }
@@ -266,7 +207,6 @@ class TestExpectExpression {
 class TestExpectString {
 
     private $assert_exception;
-
 
     // #BC(5.6): Check if PHP 7 expectations are supported
     public function setup_class() {
@@ -291,7 +231,8 @@ class TestExpectString {
 
 
     public function test_has_no_default_message() {
-        $f = expect_fails(
+        $f = easytest\assert_exception(
+            'AssertionError',
             function() {
                 $one = true;
                 $two = false;
@@ -304,7 +245,8 @@ class TestExpectString {
 
     public function test_uses_provided_description() {
         $expected = 'My assertion failed. Or did it?';
-        $f = expect_fails(
+        $f = easytest\assert_exception(
+            'AssertionError',
             function() use ($expected) { assert('true == false', $expected); }
         );
 
