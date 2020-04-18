@@ -32,7 +32,7 @@ class TestExceptions {
         $actual = new easytest\Failure($message);
 
         $expected = <<<MSG
-Assertion failed
+$message
 
 in $file on line $line
 MSG;
@@ -85,9 +85,22 @@ MSG;
 
 
     public function test_skip_format() {
-        $expected = 'Test skipped';
-        $s = new easytest\Skip($expected);
-        $actual = (string)$s;
-        easytest\assert_identical($expected, $actual);
+        $message = 'Test skipped';
+        $file = __FILE__;
+        try {
+            $line = __LINE__ + 1;
+            easytest\skip($message);
+        }
+        catch (easytest\Skip $actual) {}
+
+        if (!isset($actual)) {
+            throw new easytest\Failure('easytest\\skip() didn\'t throw Skip exception');
+        }
+
+        $expected = <<<MSG
+$message
+in $file on line $line
+MSG;
+        easytest\assert_identical($expected, "$actual");
     }
 }

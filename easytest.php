@@ -493,91 +493,113 @@ final class Error extends \ErrorException {
 final class Failure extends \Exception {
     private $string;
     private $trace;
-    private $trace_count;
-    private $trace_start;
 
     public function __construct($message = '') {
         parent::__construct($message);
-
-        // Find the call site that's outside of easytest
-        // #BC(5.3): Check format of $option parameter for debug_backtrace()
-        $trace = \version_compare(PHP_VERSION, '5.3.6', '<')
-               ? \debug_backtrace(false)
-               : \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        for($i = 0, $c = \count($trace); $i < $c; ++$i) {
-            // Apparently there's no file if we were thrown from the error
-            // handler
-            if (isset($trace[$i]['file'])
-                && __FILE__ !== $trace[$i]['file'])
-            {
-                break;
-            }
-        }
-        $this->file = $trace[$i]['file'];
-        $this->line = $trace[$i]['line'];
-        $this->trace = $trace;
-        $this->trace_count = $c;
-        // Advance the trace index ($i) so we can build a backtrace from the
-        // call site in __toString()
-        $this->trace_start = ++$i;
+        list($this->file, $this->line, $this->trace)
+            = namespace\_find_client_call_site();
     }
 
 
     public function __toString() {
         if (!$this->string) {
-            $string = [];
-
-            $string[] = \sprintf(
+            $this->string = namespace\_format_exception_string(
                 "%s\n\nin %s on line %s",
                 $this->message ?: \sprintf('%s thrown', __CLASS__),
                 $this->file,
-                $this->line
+                $this->line,
+                $this->trace
             );
-
-            // Create a backtrace excluding calls made within easytest
-            $tracestring = [];
-            for(;
-                $this->trace_start < $this->trace_count;
-                ++$this->trace_start)
-            {
-                $trace = $this->trace[$this->trace_start];
-                if (__FILE__ === $trace['file']) {
-                    if ('run_test' === $trace['function']) {
-                        break;
-                    }
-                    continue;
-                }
-
-                $callee = $trace['function'];
-                if (isset($trace['class'])) {
-                    $callee = \sprintf(
-                        '%s%s%s',
-                        $trace['class'], $trace['type'], $callee
-                    );
-                }
-
-                $tracestring[] = \sprintf('%s(%d): %s()',
-                    $trace['file'],
-                    $trace['line'],
-                    $callee
-                );
-            }
-
-            if ($tracestring) {
-                $string[] = \implode("\n", $tracestring);
-            }
-
-            $this->string = \implode("\n\nCalled from:\n", $string);
         }
-
         return $this->string;
     }
 }
 
 final class Skip extends \Exception {
-    public function __toString() {
-        return $this->message;
+    private $string;
+    private $trace;
+
+    public function __construct($message) {
+        parent::__construct($message);
+        list($this->file, $this->line, $this->trace)
+            = namespace\_find_client_call_site();
     }
+
+
+    public function __toString() {
+        if (!$this->string) {
+            $this->string = namespace\_format_exception_string(
+                "%s\nin %s on line %s",
+                $this->message, $this->file, $this->line, $this->trace
+            );
+        }
+        return $this->string;
+    }
+}
+
+
+function _find_client_call_site() {
+    // Find the first call in a backtrace that's outside of easytest
+    // #BC(5.3): Check format of $option parameter for debug_backtrace()
+    $trace = \version_compare(PHP_VERSION, '5.3.6', '<')
+           ? \debug_backtrace(false)
+           : \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+    for($i = 0, $c = \count($trace); $i < $c; ++$i) {
+        // Apparently there's no file if we were thrown from the error
+        // handler
+        if (isset($trace[$i]['file'])
+            && __FILE__ !== $trace[$i]['file'])
+        {
+            break;
+        }
+    }
+
+    return [
+        $trace[$i]['file'],
+        $trace[$i]['line'],
+        // Advance the trace index ($i) so the trace array provides a backtrace
+        // from the call site
+        \array_slice($trace, $i + 1),
+    ];
+}
+
+
+function _format_exception_string($format, $message, $file, $line, $trace) {
+    $string = \sprintf($format, $message, $file, $line);
+
+    // Create a backtrace excluding calls made within easytest
+    $buffer = [];
+    for($i = 0, $c = \count($trace); $i < $c; ++$i) {
+        $line = $trace[$i];
+        if (__FILE__ === $line['file']) {
+            if ('run_test' === $line['function']) {
+                break;
+            }
+            continue;
+        }
+
+        $callee = $line['function'];
+        if (isset($line['class'])) {
+            $callee = \sprintf(
+                '%s%s%s',
+                $line['class'], $line['type'], $callee
+            );
+        }
+
+        $buffer[] = \sprintf('%s(%d): %s()',
+            $line['file'],
+            $line['line'],
+            $callee
+        );
+    }
+    if ($buffer) {
+        $string = \sprintf(
+            "%s\n\nCalled from:\n%s",
+            $string, \implode("\n", $buffer)
+        );
+    }
+
+    return $string;
 }
 
 
