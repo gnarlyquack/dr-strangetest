@@ -6,7 +6,6 @@
 // LICENSE.txt file.
 
 class TestExceptions {
-
     public function test_error_format() {
         $message = 'An error happened';
         $file = __FILE__;
@@ -25,11 +24,21 @@ class TestExceptions {
     }
 
 
-    public function test_failure_format() {
-        $message = 'Assertion failed';
+    public function test_fail_throws_failure_exception() {
+        $message = 'Fail! :-(';
         $file = __FILE__;
         $line = __LINE__ + 1;
         $actual = new easytest\Failure($message);
+
+        try {
+            $line = __LINE__ + 1;
+            easytest\fail($message);
+        }
+        catch (easytest\Failure $actual) {}
+
+        if (!isset($actual)) {
+            throw new easytest\Failure('Failure exception wasn\'t thrown');
+        }
 
         $expected = <<<MSG
 $message
@@ -40,13 +49,14 @@ MSG;
     }
 
 
-    public function test_failure_format_with_trace() {
+    public function test_fail_shows_call_tracd() {
+        $message = 'Fail! :-(';
         $file = __FILE__;
         $class = __CLASS__;
         $lines = [__LINE__ + 1];
-        $actual = $this->helper_one($lines);
+        $actual = $this->helper_one($message, $lines);
         $expected = <<<MSG
-easytest\\Failure thrown
+$message
 
 in $file on line $lines[4]
 
@@ -59,26 +69,26 @@ MSG;
         easytest\assert_identical($expected, "$actual");
     }
 
-    private function helper_one(&$lines) {
+    private function helper_one($message, &$lines) {
         $lines[] = __LINE__ + 1;
-        return $this->helper_two($lines);
+        return $this->helper_two($message, $lines);
     }
 
-    private function helper_two(&$lines) {
+    private function helper_two($message, &$lines) {
         $lines[] = __LINE__ + 1;
-        return $this->fail($lines);
+        return $this->fail($message, $lines);
     }
 
-    private function fail(&$lines) {
+    private function fail($message, &$lines) {
         // #BC(5.6): Adjust the reported line on which a function is called
         $lines[] = version_compare(PHP_VERSION, '7.0', '<')
                  ? __LINE__ + 8
                  : __LINE__ + 6;
         return easytest\assert_exception(
             'easytest\\Failure',
-            function() use (&$lines) {
+            function() use ($message, &$lines) {
                 $lines[] = __LINE__ + 1;
-                throw new easytest\Failure();
+                easytest\fail($message);
             }
         );
     }

@@ -27,8 +27,6 @@ Release
 
 -   Ensure path discovery is OS independent
 
--   Add fail() helper function(?)
-
 -   Support PHP >= 5.3(?)
 
 -   Test discovery: For all tests, first check the reporter, then the context,

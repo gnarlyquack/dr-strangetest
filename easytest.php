@@ -1307,6 +1307,11 @@ function skip($reason) {
     throw new Skip($reason);
 }
 
+
+function fail($reason) {
+    throw new Failure($reason);
+}
+
 /*
  * assert_equal() and assert_identical() are simply proxies for static methods
  * on the ErrorHandler. This is done to support the $message parameter in
