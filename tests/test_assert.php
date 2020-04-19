@@ -7,6 +7,27 @@
 
 class TestAssertExpression {
 
+    private $assert_exception;
+
+
+    public function setup_class() {
+        // #BC(5.6): Check if PHP 7 expectations are supported
+        if (version_compare(PHP_VERSION, '7.0', '>=')) {
+            $this->assert_exception = ini_get('assert.exception');
+            ini_set('assert.exception', false);
+        }
+    }
+
+
+    public function teardown_class() {
+        // #BC(5.6): Check if PHP 7 expectations are supported
+        if (version_compare(PHP_VERSION, '7.0', '>=')) {
+            ini_set('assert.exception', $this->assert_exception);
+        }
+    }
+
+
+
     public function test_uses_default_description() {
         $f = easytest\assert_exception(
             'easytest\\Failure',
@@ -18,7 +39,7 @@ class TestAssertExpression {
         );
 
         // #BC(5.6): Check format of default assert description
-        $expected = version_compare(PHP_VERSION, '7.0.0', '<')
+        $expected = version_compare(PHP_VERSION, '7.0', '<')
                   ? 'assert(): Assertion failed'
                   : 'assert($true == $false)';
         easytest\assert_identical($expected, $f->getMessage());
@@ -66,11 +87,28 @@ class TestAssertExpression {
 // #BC(7.1): Test assert() with a string expression
 class TestAssertString {
 
+    private $assert_exception;
+
+
     public function setup_class() {
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
             easytest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
+        // #BC(5.6): Check if PHP 7 expectations are supported
+        if (version_compare(PHP_VERSION, '7.0', '>=')) {
+            $this->assert_exception = ini_get('assert.exception');
+            ini_set('assert.exception', false);
+        }
     }
+
+
+    public function teardown_class() {
+        // #BC(5.6): Check if PHP 7 expectations are supported
+        if (version_compare(PHP_VERSION, '7.0', '>=')) {
+            ini_set('assert.exception', $this->assert_exception);
+        }
+    }
+
 
 
     public function test_uses_assert_expression_as_default_message() {
@@ -131,23 +169,20 @@ class TestExpectExpression {
     private $assert_exception;
 
 
-    // #BC(5.6): Check if PHP 7 expectations are supported
     public function setup_class() {
+        // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
             easytest\skip('Skipping tests of PHP 7 expectations');
         }
-    }
-
-
-    public function setup() {
         $this->assert_exception = ini_get('assert.exception');
         ini_set('assert.exception', true);
     }
 
 
-    public function teardown() {
+    public function teardown_class() {
         ini_set('assert.exception', $this->assert_exception);
     }
+
 
 
     public function test_uses_default_description() {
@@ -208,26 +243,24 @@ class TestExpectString {
 
     private $assert_exception;
 
-    // #BC(5.6): Check if PHP 7 expectations are supported
+
     public function setup_class() {
-        if (version_compare(PHP_VERSION, '7.0', '<')) {
-            easytest\skip('Skipping tests of PHP 7 expectations');
-        }
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
             easytest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
-    }
-
-
-    public function setup() {
+        // #BC(5.6): Check if PHP 7 expectations are supported
+        if (version_compare(PHP_VERSION, '7.0', '<')) {
+            easytest\skip('Skipping tests of PHP 7 expectations');
+        }
         $this->assert_exception = ini_get('assert.exception');
         ini_set('assert.exception', true);
     }
 
 
-    public function teardown() {
+    public function teardown_class() {
         ini_set('assert.exception', $this->assert_exception);
     }
+
 
 
     public function test_has_no_default_message() {

@@ -282,9 +282,29 @@ final class ErrorHandler {
 
         self::$eh = new ErrorHandler($formatter, $diff);
 
-        \error_reporting(\E_ALL);
+        // #BC(5.3): Include E_STRICT in error_reporting()
+        \error_reporting(\E_ALL | \E_STRICT);
         \set_error_handler([self::$eh, 'handle_error'], \error_reporting());
 
+        // #BC(5.6): Check if PHP 7 assertion options are supported
+        if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
+            if (-1 === \ini_get('zend.assertions')) {
+                \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
+                exit(EasyTest::FAILURE);
+            }
+            \ini_set('zend.assertions', 1);
+
+            // #BC(7.1): Check whether or not to enable assert.exception
+            // With PHP 7.2 deprecating calling assert() with a string
+            // assertion, there doesn't seem to be  any reason to keep assert's
+            // legacy behavior enabled
+            if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
+                \ini_set('assert.exception', 1);
+            }
+        }
+        // Although the documentation discourages using these configuration
+        // directives for PHP 7-only code, we want to ensure that assert() is
+        // in a known configured state regardless of the environment
         \assert_options(\ASSERT_ACTIVE, 1);
         \assert_options(\ASSERT_WARNING, 1);
         \assert_options(\ASSERT_BAIL, 0);

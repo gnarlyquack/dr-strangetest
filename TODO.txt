@@ -35,9 +35,6 @@ Release
 -   Ensure anonymous classes are properly handled by the file parser
     https://www.php.net/manual/en/language.oop5.anonymous.php
 
--   Support PHP 7 Expectations
-    https://www.php.net/manual/en/function.assert.php#function.assert.expectations
-
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
@@ -84,6 +81,11 @@ Release
     out of trace generation too early. So we need to match on something that
     we would never expect to execute as part of a test.
 
+-   Make diff output more compact?
+    Instead of showing "- expected" and "+ actual" as prefixes to the diff,
+    maybe include them as part of the diff, e.g.: "- $expected = x" and
+    "+ $actual = y", where 'x' and 'y' is the first line of the diff
+
 
 Future / Someday(?)
 -------------------
@@ -96,3 +98,7 @@ Future / Someday(?)
 
     -   "Utility to do an N-way diff and N-way merge, for N > 2"
         https://github.com/Quuxplusone/difdef
+
+-   Support calling assert() with arbitrary exceptions in PHP >= 7? It's not
+    entirely clear what this would even entail: perhaps allow for outputting
+    custom types of errors/failures?
