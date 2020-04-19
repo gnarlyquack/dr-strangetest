@@ -130,7 +130,7 @@ Testing Exceptions
 
 The following function can be used to check if an exception is thrown:
 
-easytest\assert_exception( string $exception, callable $func [, string $msg] )
+easytest\assert_throws( string $exception, callable $func [, string $msg] )
     * Pass if invoking $func() throws an exception that is an instance of
       $exception. The exception is returned to allow for additional testing.
     * Fail if invoking $func() does not throw an exception.

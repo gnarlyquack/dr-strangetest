@@ -1305,7 +1305,7 @@ final class Factory {
 }
 
 
-function assert_exception($expected, $callback, $message = null) {
+function assert_throws($expected, $callback, $message = null) {
     try {
         $callback();
     }

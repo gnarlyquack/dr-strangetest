@@ -29,7 +29,7 @@ class TestAssertExpression {
 
 
     public function test_uses_default_description() {
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'easytest\\Failure',
             function() {
                 $true = 1;
@@ -55,7 +55,7 @@ class TestAssertExpression {
         }
 
         $expected = 'My assertion failed. Or did it?';
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'easytest\\Failure',
             function() use ($expected) { assert(true == false, $expected); }
         );
@@ -73,7 +73,7 @@ class TestAssertExpression {
         }
 
         $expected = new ExpectedException();
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'easytest\\Failure',
             function() use ($expected) { assert(true == false, $expected); }
         );
@@ -112,7 +112,7 @@ class TestAssertString {
 
 
     public function test_uses_assert_expression_as_default_message() {
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'easytest\\Failure',
             function() {
                 $true = 1;
@@ -135,7 +135,7 @@ class TestAssertString {
         }
 
         $expected = 'My assertion failed. Or did it?';
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'easytest\\Failure',
             function() use ($expected) { assert('true == false', $expected); }
         );
@@ -153,7 +153,7 @@ class TestAssertString {
         }
 
         $expected = new ExpectedException();
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'easytest\\Failure',
             function() use ($expected) { assert('true == false', $expected); }
         );
@@ -186,7 +186,7 @@ class TestExpectExpression {
 
 
     public function test_uses_default_description() {
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'AssertionError',
             function() {
                 $true = 1;
@@ -201,7 +201,7 @@ class TestExpectExpression {
 
     public function test_uses_provided_description() {
         $expected = 'My assertion failed. Or did it?';
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'AssertionError',
             function() use ($expected) { assert(true == false, $expected); }
         );
@@ -222,7 +222,7 @@ class TestExpectExpression {
 
 
     public function test_does_not_throw_old_assertion() {
-        easytest\assert_exception(
+        easytest\assert_throws(
             'AssertionError',
             function() { assert(true == false); }
         );
@@ -264,7 +264,7 @@ class TestExpectString {
 
 
     public function test_has_no_default_message() {
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'AssertionError',
             function() {
                 $one = true;
@@ -278,7 +278,7 @@ class TestExpectString {
 
     public function test_uses_provided_description() {
         $expected = 'My assertion failed. Or did it?';
-        $f = easytest\assert_exception(
+        $f = easytest\assert_throws(
             'AssertionError',
             function() use ($expected) { assert('true == false', $expected); }
         );

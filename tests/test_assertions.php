@@ -111,7 +111,7 @@ EXPECTED;
 class TestAssertException {
     public function test_returns_expected_exception() {
         $expected = new ExpectedException();
-        $actual = easytest\assert_exception(
+        $actual = easytest\assert_throws(
             'ExpectedException',
             function() use ($expected) { throw $expected; }
         );
@@ -121,7 +121,7 @@ class TestAssertException {
 
     public function test_fails_when_no_exception_is_thrown() {
         try {
-            easytest\assert_exception('Exception', function() {});
+            easytest\assert_throws('Exception', function() {});
         }
         catch (easytest\Failure $actual) {}
 
@@ -139,7 +139,7 @@ class TestAssertException {
     public function test_rethrows_unexpected_exception() {
         $expected = new UnexpectedException();
         try {
-            easytest\assert_exception(
+            easytest\assert_throws(
                 'ExpectedException',
                 function() use ($expected) { throw $expected; }
             );
@@ -157,7 +157,7 @@ class TestAssertException {
     public function test_uses_provided_message() {
         $expected = 'My custom failure message.';
         try {
-            easytest\assert_exception(
+            easytest\assert_throws(
                 'ExpectedException',
                 function() {},
                 $expected
@@ -197,7 +197,7 @@ class TestAssertEqual {
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_exception(
+        $actual = easytest\assert_throws(
             'easytest\\Failure',
             function() {
                 // NOTE: Test of unequal arrays with elements in different key
@@ -257,7 +257,7 @@ EXPECTED;
 
     public function test_uses_provided_message() {
         $message = 'Fail! :-(';
-        $actual = easytest\assert_exception(
+        $actual = easytest\assert_throws(
             'easytest\\Failure',
             function() use ($message) {
                 easytest\assert_equal(true, false, $message);

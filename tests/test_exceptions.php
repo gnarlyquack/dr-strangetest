@@ -64,7 +64,7 @@ $message
 in $file on line $lines[4]
 
 Called from:
-$file($lines[3]): easytest\\assert_exception()
+$file($lines[3]): easytest\\assert_throws()
 $file($lines[2]): ${class}->fail()
 $file($lines[1]): ${class}->helper_two()
 $file($lines[0]): ${class}->helper_one()
@@ -87,7 +87,7 @@ MSG;
         $lines[] = version_compare(PHP_VERSION, '7.0', '<')
                  ? __LINE__ + 8
                  : __LINE__ + 6;
-        return easytest\assert_exception(
+        return easytest\assert_throws(
             'easytest\\Failure',
             function() use ($message, &$lines) {
                 $lines[] = __LINE__ + 1;

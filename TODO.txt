@@ -48,10 +48,8 @@ Release
 
 -   Handle conditionally-defined test cases
 
--   assert_exception(): provide better diagnostics when an unexpected
+-   assert_throws(): provide better diagnostics when an unexpected
     exception is caught
-
--   Rename assert_exception() to assert_throws()
 
 -   When using a message/description for an assertion, consider showing the
     message in addition to, not in place of, the assertion expression
@@ -75,7 +73,7 @@ Release
 
 -   Failure::__toString: bulletproof the check on 'run_test'
     If we execute a passed-in callable that generates a failure (see
-    assert_exception), and the callable is a function with an identifier
+    assert_throws), and the callable is a function with an identifier
     (i.e., not an anonymous function), it seems we could potentially call any
     function within easytest and match on it, which could cause us to break
     out of trace generation too early. So we need to match on something that

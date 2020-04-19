@@ -133,7 +133,7 @@ OUT;
 
     public function test_reports_output_during_exception() {
         /* Exception should be re-thrown */
-        easytest\assert_exception(
+        easytest\assert_throws(
             'easytest\\Failure',
             function () {
                 $this->reporter->buffer(
@@ -196,7 +196,7 @@ OUT;
         $expected_buffers = ob_get_level();
 
         /* Exception should be re-thrown */
-        easytest\assert_exception(
+        easytest\assert_throws(
             'easytest\\Failure',
             function () {
                 $this->reporter->buffer(
@@ -246,7 +246,7 @@ OUT;
         $this->reporter->buffer('output1', function() { echo 'output 1'; });
         $this->reporter->report_success();
 
-        $e = easytest\assert_exception(
+        $e = easytest\assert_throws(
             'easytest\\Failure',
             function() {
                 $this->reporter->buffer(
@@ -260,7 +260,7 @@ OUT;
         );
         $this->reporter->report_failure('fail2', $e->getMessage());
 
-        $e = easytest\assert_exception(
+        $e = easytest\assert_throws(
             'easytest\\Error',
             function() {
                 $this->reporter->buffer(
@@ -274,7 +274,7 @@ OUT;
         );
         $this->reporter->report_error('error2', $e->getMessage());
 
-        $e = easytest\assert_exception(
+        $e = easytest\assert_throws(
             'easytest\\Skip',
             function() {
                 $this->reporter->buffer(
@@ -348,7 +348,7 @@ OUT;
         $this->reporter->buffer('output1', function() { echo 'output 1'; });
         $this->reporter->report_success();
 
-        $e = easytest\assert_exception(
+        $e = easytest\assert_throws(
             'easytest\\Failure',
             function() {
                 $this->reporter->buffer(
@@ -362,7 +362,7 @@ OUT;
         );
         $this->reporter->report_failure('fail2', $e->getMessage());
 
-        $e = easytest\assert_exception(
+        $e = easytest\assert_throws(
             'easytest\\Error',
             function() {
                 $this->reporter->buffer(
@@ -376,7 +376,7 @@ OUT;
         );
         $this->reporter->report_error('error2', $e->getMessage());
 
-        $e = easytest\assert_exception(
+        $e = easytest\assert_throws(
             'easytest\\Skip',
             function() {
                 $this->reporter->buffer(
