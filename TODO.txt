@@ -71,18 +71,30 @@ Release
 
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
--   Failure::__toString: bulletproof the check on 'run_test'
-    If we execute a passed-in callable that generates a failure (see
-    assert_throws), and the callable is a function with an identifier
-    (i.e., not an anonymous function), it seems we could potentially call any
-    function within easytest and match on it, which could cause us to break
-    out of trace generation too early. So we need to match on something that
-    we would never expect to execute as part of a test.
+-   _format_exception_string: bulletproof the check to filter out calls within
+    Easytest
+
+    -   If we execute a passed-in callable that generates a failure (see
+        assert_throws), and the callable is a function with an identifier
+        (i.e., not an anonymous function), it seems we could potentially call
+        any function within easytest and match on it, which could cause us to
+        break out of trace generation too early. So we need to match on
+        something that we would never expect to execute as part of a test (or
+        a fixture, see below).
+
+    -   Stop showing call traces within EasyTest when skip is called in a
+        class-level (or higher) fixture (perhaps just don't generate a call
+        trace for skips at all?)
 
 -   Make diff output more compact?
     Instead of showing "- expected" and "+ actual" as prefixes to the diff,
     maybe include them as part of the diff, e.g.: "- $expected = x" and
     "+ $actual = y", where 'x' and 'y' is the first line of the diff
+
+-   When trying to load Composer, only check the path(s) the autoloader would
+    be if EasyTest had been installed via Composer(?). I.e., since EasyTest
+    itself doesn't require Composer, we (might) never want/need to try loading
+    Composer from our own source tree.
 
 
 Future / Someday(?)

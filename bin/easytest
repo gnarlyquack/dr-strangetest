@@ -6,5 +6,5 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-require __DIR__ . '/../easytest.php';
+require __DIR__ . '/../src/easytest/main.php';
 exit(easytest\main($argc, $argv));

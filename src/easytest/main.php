@@ -433,156 +433,6 @@ final class ErrorHandler {
     }
 }
 
-final class Error extends \ErrorException {
-    public function __construct($message, $severity, $file, $line) {
-        parent::__construct($message, 0, $severity, $file, $line);
-    }
-
-    public function __toString() {
-        return \sprintf(
-            "%s\nin %s on line %s\n\nStack trace:\n%s",
-            $this->message,
-            $this->file,
-            $this->line,
-            $this->getTraceAsString()
-        );
-    }
-}
-
-// #BC(5.6): Extend Failure from Exception instead of AssertionError
-if (\version_compare(\PHP_VERSION, '7.0', '<')) {
-    final class Failure extends \Exception {
-        private $string;
-        private $trace;
-
-        public function __construct($message) {
-            parent::__construct($message);
-            list($this->file, $this->line, $this->trace)
-                = namespace\_find_client_call_site();
-        }
-
-
-        public function __toString() {
-            if (!$this->string) {
-                $this->string = namespace\_format_exception_string(
-                    "%s\n\nin %s on line %s",
-                    $this->message, $this->file, $this->line, $this->trace
-                );
-            }
-            return $this->string;
-        }
-    }
-}
-else {
-    final class Failure extends \AssertionError {
-        private $string;
-        private $trace;
-
-        public function __construct($message) {
-            parent::__construct($message);
-            list($this->file, $this->line, $this->trace)
-                = namespace\_find_client_call_site();
-        }
-
-
-        public function __toString() {
-            if (!$this->string) {
-                $this->string = namespace\_format_exception_string(
-                    "%s\n\nin %s on line %s",
-                    $this->message, $this->file, $this->line, $this->trace
-                );
-            }
-            return $this->string;
-        }
-    }
-}
-
-final class Skip extends \Exception {
-    private $string;
-    private $trace;
-
-    public function __construct($message) {
-        parent::__construct($message);
-        list($this->file, $this->line, $this->trace)
-            = namespace\_find_client_call_site();
-    }
-
-
-    public function __toString() {
-        if (!$this->string) {
-            $this->string = namespace\_format_exception_string(
-                "%s\nin %s on line %s",
-                $this->message, $this->file, $this->line, $this->trace
-            );
-        }
-        return $this->string;
-    }
-}
-
-
-function _find_client_call_site() {
-    // Find the first call in a backtrace that's outside of easytest
-    // #BC(5.3): Check format of $option parameter for debug_backtrace()
-    $trace = \version_compare(\PHP_VERSION, '5.3.6', '<')
-           ? \debug_backtrace(false)
-           : \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    for($i = 0, $c = \count($trace); $i < $c; ++$i) {
-        // Apparently there's no file if we were thrown from the error
-        // handler
-        if (isset($trace[$i]['file'])
-            && __FILE__ !== $trace[$i]['file'])
-        {
-            break;
-        }
-    }
-
-    return [
-        $trace[$i]['file'],
-        $trace[$i]['line'],
-        // Advance the trace index ($i) so the trace array provides a backtrace
-        // from the call site
-        \array_slice($trace, $i + 1),
-    ];
-}
-
-
-function _format_exception_string($format, $message, $file, $line, $trace) {
-    $string = \sprintf($format, $message, $file, $line);
-
-    // Create a backtrace excluding calls made within easytest
-    $buffer = [];
-    for($i = 0, $c = \count($trace); $i < $c; ++$i) {
-        $line = $trace[$i];
-        if (__FILE__ === $line['file']) {
-            if ('run_test' === $line['function']) {
-                break;
-            }
-            continue;
-        }
-
-        $callee = $line['function'];
-        if (isset($line['class'])) {
-            $callee = \sprintf(
-                '%s%s%s',
-                $line['class'], $line['type'], $callee
-            );
-        }
-
-        $buffer[] = \sprintf('%s(%d): %s()',
-            $line['file'],
-            $line['line'],
-            $callee
-        );
-    }
-    if ($buffer) {
-        $string = \sprintf(
-            "%s\n\nCalled from:\n%s",
-            $string, \implode("\n", $buffer)
-        );
-    }
-
-    return $string;
-}
 
 
 final class Context implements IContext {
@@ -1114,170 +964,6 @@ final class Runner implements IRunner {
 }
 
 
-final class Reporter implements IReporter {
-    private $count = [
-        'Pass' => 0,
-        'Error' => 0,
-        'Failure' => 0,
-        'Output' => 0,
-        'Skip' => 0,
-    ];
-    private $progress = [
-        'Pass' => '.',
-        'Error' => 'E',
-        'Failure' => 'F',
-        'Skip' => 'S',
-        'Output' => 'O',
-    ];
-    private $summary = [
-        'Error' => 'Errors',
-        'Failure' => 'Failures',
-        'Output' => 'Output',
-        'Skip' => 'Skips',
-    ];
-    private $results = [];
-
-    private $quiet;
-
-
-    public function __construct($header, $quiet) {
-        $this->quiet = $quiet;
-        echo "$header\n\n";
-    }
-
-    public function render_report() {
-        $output = 0;
-        foreach ($this->results as $result) {
-            list($type, $source, $message) = $result;
-            if ('Output' === $type) {
-                ++$output;
-            }
-            \printf(
-                "\n\n%s\n%s: %s\n%s\n%s",
-                \str_repeat('=', 70),
-                \strtoupper($type),
-                $source,
-                \str_repeat('-', 70),
-                $message
-            );
-        }
-
-        if (!$counts = \array_filter($this->count)) {
-            echo "No tests found!\n";
-            return false;
-        }
-
-        echo "\n\n\n";
-
-        if ($this->quiet) {
-            $suppressed = [];
-            if ($output !== $this->count['Output']) {
-                $suppressed[] = 'output';
-            }
-            if ($this->count['Skip']) {
-                $suppressed[] = 'skipped tests';
-            }
-            if ($suppressed) {
-                \printf(
-                    "This report omitted %s.\nTo view, rerun easytest with the --verbose option.\n\n",
-                    \implode(' and ', $suppressed)
-                );
-            }
-        }
-
-        echo "Tests: ", $this->count['Pass'] + $this->count['Failure'];
-        unset($counts['Pass']);
-        foreach ($counts as $type => $count) {
-            \printf(', %s: %d', $this->summary[$type], $count);
-        }
-        echo "\n";
-
-        return !($this->count['Failure'] || $this->count['Error']);
-    }
-
-    public function report_success() {
-        $this->update_report('Pass');
-    }
-
-    public function report_error($source, $message) {
-        $this->update_report('Error', $source, $message);
-    }
-
-    public function report_failure($source, $message) {
-        $this->update_report('Failure', $source, $message);
-    }
-
-    public function report_skip($source, $message) {
-        if ($this->quiet) {
-            $source = null;
-            $message = null;
-        }
-        $this->update_report('Skip', $source, $message);
-    }
-
-    public function buffer($source, callable $callback) {
-        $levels = \ob_get_level();
-        \ob_start();
-
-        try {
-            $result = $callback();
-        }
-        catch (\Throwable $e) {}
-        // #BC(5.6): Catch Exception, which implements Throwable
-        catch (\Exception $e) {}
-
-        $buffers = [];
-        while (($level = \ob_get_level()) > $levels) {
-            if ($buffer = \trim(\ob_get_clean())) {
-                $buffers[$level - $levels] = $buffer;
-            }
-        }
-
-        if ($this->quiet && !isset($e)) {
-            if ($buffers) {
-                $this->update_report('Output');
-            }
-            return $result;
-        }
-
-        switch (\count($buffers)) {
-        case 0:
-            /* do nothing */
-            break;
-
-        case 1:
-            $this->update_report('Output', $source, \current($buffers));
-            break;
-
-        default:
-            $output = '';
-            foreach (\array_reverse($buffers, true) as $i => $buffer) {
-                $output .= \sprintf(
-                    "%s\n%s\n\n",
-                    \str_pad(" Buffer $i ", 70, '~', \STR_PAD_BOTH),
-                    $buffer
-                );
-            }
-            $this->update_report('Output', $source, \rtrim($output));
-            break;
-        }
-
-        if (isset($e)) {
-            throw $e;
-        }
-        else {
-            return $result;
-        }
-    }
-
-    private function update_report($type, $source = null, $message = null) {
-        ++$this->count[$type];
-        echo $this->progress[$type];
-        if ($source && $message) {
-            $this->results[] = [$type, $source, $message];
-        }
-    }
-}
 
 
 final class Factory {
@@ -1305,64 +991,31 @@ final class Factory {
 }
 
 
-function assert_throws($expected, $callback, $message = null) {
-    try {
-        $callback();
-    }
-    catch (\Throwable $e) {}
-    // #BC(5.6): Catch Exception, which implements Throwable
-    catch (\Exception $e) {}
-
-    if (!isset($e)) {
-        throw new Failure(
-            $message ?: 'No exception was thrown although one was expected'
-        );
-    }
-
-    if ($e instanceof $expected) {
-        return $e;
-    }
-
-    throw $e;
-}
-
-function skip($reason) {
-    throw new Skip($reason);
-}
-
-
-function fail($reason) {
-    throw new Failure($reason);
-}
-
-/*
- * assert_equal() and assert_identical() are simply proxies for static methods
- * on the ErrorHandler. This is done to support the $message parameter in
- * versions of PHP < 5.4.8.
- */
-
-function assert_equal($expected, $actual, $message = null) {
-    ErrorHandler::assert_equal($expected, $actual, $message);
-}
-
-function assert_identical($expected, $actual, $message = null) {
-    ErrorHandler::assert_identical($expected, $actual, $message);
-}
 
 
 function main($argc, $argv) {
     namespace\_try_loading_composer();
+    namespace\_load_easytest();
     return (new Factory())->build($argc, $argv)->run();
 }
 
 
 function _try_loading_composer() {
-    foreach (['/../../autoload.php', '/vendor/autoload.php'] as $file) {
+    $files = ['/../../../../autoload.php', '/../../vendor/autoload.php'];
+    foreach ($files as $file) {
         $file = __DIR__ . $file;
         if (\file_exists($file)) {
             require $file;
             return;
         }
+    }
+}
+
+
+function _load_easytest() {
+    $files = ['assertions', 'exceptions', 'reporter'];
+    foreach ($files as $file) {
+        require __DIR__ . "/{$file}.php";
     }
 }
 
