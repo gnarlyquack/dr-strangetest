@@ -9,6 +9,15 @@ namespace easytest;
 
 const VERSION = '0.2.2';
 
+const EXIT_SUCCESS = 0;
+const EXIT_FAILURE = 1;
+
+const LOG_EVENT_PASS   = 1;
+const LOG_EVENT_FAIL   = 2;
+const LOG_EVENT_ERROR  = 3;
+const LOG_EVENT_SKIP   = 4;
+const LOG_EVENT_OUTPUT = 5;
+
 
 /*
  * A Context object is used by the Discoverer to insulate itself from internal
@@ -26,20 +35,33 @@ interface IDiff {
     public function diff($from, $to, $from_name, $to_name);
 }
 
-interface IReporter {
-    public function __construct($header, $quiet);
 
-    public function render_report();
+interface Log {
+    public function pass_count();
 
-    public function report_success();
+    public function failure_count();
 
-    public function report_error($source, $message);
+    public function error_count();
 
-    public function report_failure($source, $message);
+    public function skip_count();
 
-    public function report_skip($source, $message);
+    public function output_count();
 
-    public function buffer($source, callable $callback);
+    public function get_events();
+}
+
+interface Logger {
+    public function log_pass();
+
+    public function log_failure($source, $reason);
+
+    public function log_error($source, $reason);
+
+    public function log_skip($source, $reason);
+
+    public function log_output($source, $reason, $during_error);
+
+    public function get_log();
 }
 
 interface IRunner {
@@ -442,30 +464,11 @@ final class Context implements IContext {
 }
 
 
-final class EasyTest {
-    const SUCCESS = 0;
-    const FAILURE = 1;
-
-    private $reporter;
-    private $discoverer;
-    private $tests;
-
-    public function __construct($reporter, $discoverer, $tests) {
-        $this->reporter = $reporter;
-        $this->discoverer = $discoverer;
-        $this->tests = $tests;
-    }
-
-    public function run() {
-        $this->discoverer->discover_tests($this->tests);
-        return $this->reporter->render_report() ? self::SUCCESS : self::FAILURE;
-    }
-}
 
 
 final class Discoverer {
     private $context;
-    private $reporter;
+    private $logger;
     private $runner;
     private $loader;
     private $glob_sort;
@@ -478,12 +481,12 @@ final class Discoverer {
     ];
 
     public function __construct(
-        IReporter $reporter,
+        BufferingLogger $logger,
         IRunner $runner,
         IContext $context,
         $sort_files = false
     ) {
-        $this->reporter = $reporter;
+        $this->logger = $logger;
         $this->runner = $runner;
         $this->context = $context;
         $this->glob_sort = $sort_files ? 0 : \GLOB_NOSORT;
@@ -494,7 +497,7 @@ final class Discoverer {
         foreach ($paths as $path) {
             $realpath = \realpath($path);
             if (!$realpath) {
-                $this->reporter->report_error($path, 'No such file or directory');
+                $this->logger->log_error($path, 'No such file or directory');
                 continue;
             }
 
@@ -603,7 +606,7 @@ final class Discoverer {
             };
 
         default:
-            $this->reporter->report_error(
+            $this->logger->log_error(
                 \dirname(\current($path)),
                 "Multiple files found:\n\t" . \implode("\n\t", $path)
             );
@@ -625,7 +628,7 @@ final class Discoverer {
             };
 
         default:
-            $this->reporter->report_error(
+            $this->logger->log_error(
                 \dirname(\current($path)),
                 "Multiple files found:\n\t" . \implode("\n\t", $path)
             );
@@ -723,78 +726,90 @@ final class Discoverer {
 
     private function include_file($file) {
         try {
-            $this->reporter->buffer(
+            // #BC(5.3): Explicitly pass $context into anonymous function
+            $context = $this->context;
+            $this->logger->buffer(
                 $file,
-                function() use ($file) { $this->context->include_file($file); }
+                function() use ($context, $file) {
+                    $context->include_file($file);
+                }
             );
+            return true;
         }
         catch (Skip $e) {
-            $this->reporter->report_skip($file, $e);
+            $this->logger->log_skip($file, $e);
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($file, $e);
+            $this->logger->log_error($file, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($file, $e);
+            $this->logger->log_error($file, $e);
         }
-        return !isset($e);
+        return false;
     }
 
     private function include_setup($loader, $file) {
         try {
-            $result = $this->reporter->buffer(
+            // #BC(5.3): Explicitly pass $context into anonymous function
+            $context = $this->context;
+            $result = $this->logger->buffer(
                 $file,
-                function() use ($file) {
-                    return $this->context->include_file($file);
+                function() use ($context, $file) {
+                    return $context->include_file($file);
                 }
             );
             return \is_callable($result) ? $result : $loader;
         }
         catch (Skip $e) {
-            $this->reporter->report_skip($file, $e);
+            $this->logger->log_skip($file, $e);
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($file, $e);
+            $this->logger->log_error($file, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($file, $e);
+            $this->logger->log_error($file, $e);
         }
         return false;
     }
 
     private function include_teardown($file) {
         try {
-            $this->reporter->buffer(
+            // #BC(5.3): Explicitly pass $context into anonymous function
+            $context = $this->context;
+            $this->logger->buffer(
                 $file,
-                function() use ($file) { $this->context->include_file($file); }
+                function() use ($context, $file) {
+                    $context->include_file($file);
+                }
             );
+            return true;
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($file, $e);
+            $this->logger->log_error($file, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($file, $e);
+            $this->logger->log_error($file, $e);
         }
-        return !isset($e);
+        return false;
     }
 
     private function instantiate_test($loader, $class) {
         try {
-            $result = $this->reporter->buffer(
+            $result = $this->logger->buffer(
                 $class,
                 function() use ($loader, $class) { return $loader($class); }
             );
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($class, $e);
+            $this->logger->log_error($class, $e);
             return false;
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($class, $e);
+            $this->logger->log_error($class, $e);
             return false;
         }
 
@@ -802,7 +817,7 @@ final class Discoverer {
             return $result;
         }
 
-        $this->reporter->report_error(
+        $this->logger->log_error(
             $class,
             'Test loader did not return an object instance'
         );
@@ -812,7 +827,7 @@ final class Discoverer {
 
 
 final class Runner implements IRunner {
-    private $reporter;
+    private $logger;
 
     private $patterns = [
         'tests' => '~^test~i',
@@ -836,8 +851,8 @@ final class Runner implements IRunner {
         ],
     ];
 
-    public function __construct(IReporter $reporter) {
-        $this->reporter = $reporter;
+    public function __construct(BufferingLogger $logger) {
+        $this->logger = $logger;
     }
 
     public function run_test_case($object) {
@@ -851,7 +866,7 @@ final class Runner implements IRunner {
                 if ($methods['setup']($method)) {
                     $success = $this->run_test($class, $object, $method);
                     if ($methods['teardown']($method) && $success) {
-                        $this->reporter->report_success();
+                        $this->logger->log_pass();
                     }
                 }
             }
@@ -896,7 +911,7 @@ final class Runner implements IRunner {
             };
 
         default:
-            $this->reporter->report_error(
+            $this->logger->log_error(
                 $class,
                 "Multiple methods found:\n\t" . \implode("\n\t", $fixture)
             );
@@ -907,96 +922,95 @@ final class Runner implements IRunner {
     private function run_setup($class, $object, $method, $during = null) {
         $source = $during ? "$method for $class::$during" : "$class::$method";
         try {
-            $this->reporter->buffer($source, [$object, $method]);
+            $this->logger->buffer($source, [$object, $method]);
+            return true;
         }
         catch (Skip $e) {
-            $this->reporter->report_skip($source, $e);
+            $this->logger->log_skip($source, $e);
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($source, $e);
+            $this->logger->log_error($source, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($source, $e);
+            $this->logger->log_error($source, $e);
         }
-        return !isset($e);
+        return false;
     }
 
     private function run_test($class, $object, $method) {
         $source = "$class::$method";
         try {
-            $this->reporter->buffer($source, [$object, $method]);
+            $this->logger->buffer($source, [$object, $method]);
+            return true;
         }
         catch (\AssertionError $e) {
-            $this->reporter->report_failure($source, $e);
+            $this->logger->log_failure($source, $e);
         }
         // #BC(5.6): Catch Failure, which extends from AssertionError
         catch (Failure $e) {
-            $this->reporter->report_failure($source, $e);
+            $this->logger->log_failure($source, $e);
         }
         catch (Skip $e) {
-            $this->reporter->report_skip($source, $e);
+            $this->logger->log_skip($source, $e);
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($source, $e);
+            $this->logger->log_error($source, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($source, $e);
+            $this->logger->log_error($source, $e);
         }
-        return !isset($e);
+        return false;
     }
 
     private function run_teardown($class, $object, $method, $during = null) {
         $source = $during ? "$method for $class::$during" : "$class::$method";
         try {
-            $this->reporter->buffer($source, [$object, $method]);
+            $this->logger->buffer($source, [$object, $method]);
+            return true;
         }
         catch (\Throwable $e) {
-            $this->reporter->report_error($source, $e);
+            $this->logger->log_error($source, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->reporter->report_error($source, $e);
+            $this->logger->log_error($source, $e);
         }
-        return !isset($e);
+        return false;
     }
 }
-
-
-
-
-final class Factory {
-    public function build($argc, $argv) {
-        list($options, $tests) = _parse_arguments($argc, $argv);
-        if (!$tests) {
-            $tests[] = \getcwd();
-        }
-
-        ErrorHandler::enable(new VariableFormatter(), new Diff());
-
-        $reporter = new Reporter('EasyTest ' . namespace\VERSION, $options['quiet']);
-
-        return new EasyTest(
-            $reporter,
-            new Discoverer(
-                $reporter,
-                new Runner($reporter),
-                new Context()
-            ),
-            $tests
-        );
-    }
-
-}
-
 
 
 
 function main($argc, $argv) {
     namespace\_try_loading_composer();
     namespace\_load_easytest();
-    return (new Factory())->build($argc, $argv)->run();
+
+    list($options, $tests) = namespace\_parse_arguments($argc, $argv);
+    if (!$tests) {
+        $tests[] = \getcwd();
+    }
+
+    ErrorHandler::enable(new VariableFormatter(), new Diff());
+
+    $logger = new BufferingLogger(
+        new LiveUpdatingLogger(
+            new BasicLogger($options['verbose'])
+        )
+    );
+    $app = new Discoverer($logger, new Runner($logger), new Context());
+
+    namespace\output_header('EasyTest ' . namespace\VERSION);
+    $app->discover_tests($tests);
+
+    $log = $logger->get_log();
+    namespace\output_log($log);
+    exit(
+        $log->failure_count() || $log->error_count()
+        ? namespace\EXIT_FAILURE
+        : namespace\EXIT_SUCCESS
+    );
 }
 
 
@@ -1013,7 +1027,7 @@ function _try_loading_composer() {
 
 
 function _load_easytest() {
-    $files = ['assertions', 'exceptions', 'reporter'];
+    $files = ['assertions', 'exceptions', 'log', 'output'];
     foreach ($files as $file) {
         require __DIR__ . "/{$file}.php";
     }
@@ -1021,7 +1035,7 @@ function _load_easytest() {
 
 
 function _parse_arguments($argc, $argv) {
-    $opts = ['quiet' => true];
+    $opts = ['verbose' => false];
     $args = \array_slice($argv, 1);
 
     while ($args) {
@@ -1060,12 +1074,12 @@ function _parse_option($opt, $args, $opts) {
     switch ($opt) {
         case 'q':
         case 'quiet':
-            $opts['quiet'] = true;
+            $opts['verbose'] = false;
             break;
 
         case 'v':
         case 'verbose':
-            $opts['quiet'] = false;
+            $opts['verbose'] = true;
             break;
     }
 

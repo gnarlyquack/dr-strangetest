@@ -28,6 +28,8 @@ Release
 -   Ensure path discovery is OS independent
 
 -   Support PHP >= 5.3(?)
+    -   Short array syntax ([]) isn't supported
+    -   Closures don't have access to $this
 
 -   Test discovery: For all tests, first check the reporter, then the context,
     then the runner
@@ -62,10 +64,6 @@ Release
 
 -   Show how long test runs take
 
--   Eliminate Factory class
-
--   Separate logging and reporting
-
 -   diff: Limit number of lines that are reported before and after the
     differing portion of text
 
@@ -95,6 +93,12 @@ Release
     be if EasyTest had been installed via Composer(?). I.e., since EasyTest
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
+
+-   Ensure that files are only ever included once. Right now, if EasyTest
+    walks through a directory multiple times, fixture files are included every
+    time the directory is walked. This could also happen with test files if,
+    for example, a user (mistakenly?) specifies the same file twice on the
+    command line
 
 
 Future / Someday(?)

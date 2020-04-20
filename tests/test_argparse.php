@@ -13,7 +13,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            ['quiet' => true],
+            ['verbose' => false],
             $opts,
             'Options weren\'t parsed');
         easytest\assert_identical([], $args, 'Arguments weren\'t parsed');
@@ -26,7 +26,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            ['quiet' => true],
+            ['verbose' => false],
             $opts,
             'Options weren\'t parsed');
         easytest\assert_identical(
@@ -43,7 +43,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            ['quiet' => false],
+            ['verbose' => true],
             $opts,
             'Options weren\'t parsed');
         easytest\assert_identical([], $args, 'Arguments weren\'t parsed');
@@ -56,7 +56,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            ['quiet' => false],
+            ['verbose' => true],
             $opts,
             'Options weren\'t parsed');
         easytest\assert_identical([], $args, 'Arguments weren\'t parsed');

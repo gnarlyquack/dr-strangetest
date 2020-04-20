@@ -13,8 +13,19 @@ class TestDiscovery implements easytest\IRunner {
     private $path;
     private $runner_log;
 
+    private $blank_report = [
+        easytest\LOG_EVENT_PASS => 0,
+        easytest\LOG_EVENT_FAIL => 0,
+        easytest\LOG_EVENT_ERROR => 0,
+        easytest\LOG_EVENT_SKIP => 0,
+        easytest\LOG_EVENT_OUTPUT => 0,
+        'events' => [],
+    ];
+
     public function setup() {
-        $this->reporter = new StubReporter();
+        $this->reporter = new easytest\BufferingLogger(
+            new easytest\BasicLogger(true)
+        );
         $this->context = new easytest\Context();
         $this->context->log = [];
         $this->discoverer = new easytest\Discoverer(
@@ -33,6 +44,54 @@ class TestDiscovery implements easytest\IRunner {
         $this->runner_log[] = get_class($object);
     }
 
+
+    // helper assertions
+
+    private function assert_report($report) {
+        $expected = $this->blank_report;
+        foreach ($report as $i => $entry) {
+            $expected[$i] = $entry;
+        }
+
+        $log = $this->reporter->get_log();
+        $actual = [
+            easytest\LOG_EVENT_PASS => $log->pass_count(),
+            easytest\LOG_EVENT_FAIL => $log->failure_count(),
+            easytest\LOG_EVENT_ERROR => $log->error_count(),
+            easytest\LOG_EVENT_SKIP => $log->skip_count(),
+            easytest\LOG_EVENT_OUTPUT => $log->output_count(),
+            'events' => $log->get_events(),
+        ];
+        for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
+            list($type, $source, $reason) = $actual['events'][$i];
+            switch ($type) {
+                case easytest\LOG_EVENT_ERROR:
+                    if ($reason instanceof Throwable
+                        || $reason instanceof Exception)
+                    {
+                        $reason = $reason->getMessage();
+                        $actual['events'][$i][2] = $reason;
+                    }
+                    break;
+
+                case easytest\LOG_EVENT_FAIL:
+                    if ($reason instanceof AssertionError
+                        || $reason instanceof easytest\Failure)
+                    {
+                        $reason = $reason->getMessage();
+                        $actual['events'][$i][2] = $reason;
+                    }
+                    break;
+
+                case easytest\LOG_EVENT_SKIP:
+                    $actual['events'][$i][2] = $reason->getMessage();
+                    break;
+            }
+        }
+
+        easytest\assert_identical($expected, $actual);
+    }
+
     // tests
 
     public function test_discover_file() {
@@ -40,9 +99,14 @@ class TestDiscovery implements easytest\IRunner {
 
         $this->discoverer->discover_tests([$path]);
 
-        $this->reporter->assert_report([
-            'Output' => [
-                [$path, "class TestTextBefore {}\n\n\nclass TestTestAfter {}"],
+        $this->assert_report([
+            easytest\LOG_EVENT_OUTPUT => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    $path,
+                    "class TestTextBefore {}\n\n\nclass TestTestAfter {}"
+                ],
             ],
         ]);
 
@@ -111,8 +175,15 @@ class TestDiscovery implements easytest\IRunner {
     public function test_nonexistent_path() {
         $path = $this->path . 'foobar.php';
         $this->discoverer->discover_tests([$path]);
-        $this->reporter->assert_report([
-            'Errors' => [[$path, 'No such file or directory']],
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    $path,
+                    'No such file or directory'
+                ]
+            ],
         ]);
     }
 
@@ -133,8 +204,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Errors' => [["$path/test1.php", 'An error happened']]
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/test1.php",
+                    'An error happened'
+                ]
+            ]
         ]);
     }
 
@@ -150,8 +228,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Errors' => [["$path/setup.php", 'An error happened']]
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/setup.php",
+                    'An error happened'
+                ]
+            ]
         ]);
     }
 
@@ -171,8 +256,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Errors' => [["$path/teardown.php", 'An error happened']]
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/teardown.php",
+                    'An error happened'
+                ]
+            ]
         ]);
     }
 
@@ -192,8 +284,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Errors' => [['test_instantiation_error_one', 'An error happened']]
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'test_instantiation_error_one',
+                    'An error happened'
+                ]
+            ]
         ]);
     }
 
@@ -213,8 +312,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Skips' => [["$path/test.php", 'Skip me']]
+        $this->assert_report([
+            easytest\LOG_EVENT_SKIP => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_SKIP,
+                    "$path/test.php",
+                    'Skip me'
+                ]
+            ]
         ]);
     }
 
@@ -230,8 +336,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Skips' => [["$path/setup.php", 'Skip me']]
+        $this->assert_report([
+            easytest\LOG_EVENT_SKIP => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_SKIP,
+                    "$path/setup.php",
+                    'Skip me'
+                ]
+            ]
         ]);
     }
 
@@ -251,8 +364,15 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Errors' => [["$path/teardown.php", 'Skip me']]
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/teardown.php",
+                    'Skip me'
+                ]
+            ]
         ]);
     }
 
@@ -279,7 +399,7 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([]);
+        $this->assert_report([]);
     }
 
     public function test_error_if_loader_does_not_return_an_object() {
@@ -298,9 +418,14 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Errors' => [
-                ['TestBadLoader', 'Test loader did not return an object instance'],
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'TestBadLoader',
+                    'Test loader did not return an object instance'
+                ],
             ],
         ]);
     }
@@ -329,7 +454,7 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([]);
+        $this->assert_report([]);
     }
 
     public function test_output_buffering() {
@@ -344,12 +469,29 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
 
-        $this->reporter->assert_report([
-            'Output' => [
-                ["$path/setup.php", "$path/setup.php"],
-                ["$path/test.php", "$path/test.php"],
-                ['test_output_buffering', '__construct'],
-                ["$path/teardown.php", "$path/teardown.php"],
+        $this->assert_report([
+            easytest\LOG_EVENT_OUTPUT => 4,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    "$path/setup.php",
+                    "$path/setup.php"
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    "$path/test.php",
+                    "$path/test.php"
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'test_output_buffering',
+                    '__construct'
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    "$path/teardown.php",
+                    "$path/teardown.php"
+                ],
             ],
         ]);
     }

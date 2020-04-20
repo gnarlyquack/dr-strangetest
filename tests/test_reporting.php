@@ -6,41 +6,41 @@
 // LICENSE.txt file.
 
 class TestReporter {
-    private $reporter;
+    private $logger;
     private $output;
 
     public function setup() {
-        $this->reporter = new easytest\Reporter('EasyTest', true);
+        $this->logger = new easytest\BufferingLogger(
+            new easytest\BasicLogger(false)
+        );
         $this->output = ob_get_contents();
         ob_clean();
     }
 
     // helper assertions
 
-    private function assert_report($expected_output, $expected_result) {
-        $actual_result = $this->reporter->render_report();
-        easytest\assert_identical($expected_result, $actual_result);
-        $expected_output = "EasyTest\n\n$expected_output";
-        $actual_output = $this->output . ob_get_contents();
+    private function assert_output($expected) {
+        easytest\output_log($this->logger->get_log());
+        $actual = $this->output . ob_get_contents();
         ob_clean();
-        easytest\assert_identical($expected_output, $actual_output);
+        easytest\assert_identical($expected, $actual);
     }
 
     // tests
 
     public function test_blank_report() {
-        $this->assert_report("No tests found!\n", false);
+        $this->assert_output("No tests found!\n", false);
     }
 
     public function test_report_success() {
-        $this->reporter->report_success();
-        $this->assert_report(".\n\n\nTests: 1\n", true);
+        $this->logger->log_pass();
+        $this->assert_output("\n\n\nPassed: 1\n", true);
     }
 
     public function test_report_error() {
-        $this->reporter->report_error('source', 'message');
+        $this->logger->log_error('source', 'message');
         $expected = <<<OUT
-E
+
 
 ======================================================================
 ERROR: source
@@ -48,65 +48,67 @@ ERROR: source
 message
 
 
-Tests: 0, Errors: 1\n
+Errors: 1\n
 OUT;
-        $this->assert_report($expected, false);
+        $this->assert_output($expected, false);
     }
 
     public function test_report_failure() {
-        $this->reporter->report_failure('source', 'message');
+        $this->logger->log_failure('source', 'message');
         $expected = <<<OUT
-F
+
 
 ======================================================================
-FAILURE: source
+FAILED: source
 ----------------------------------------------------------------------
 message
 
 
-Tests: 1, Failures: 1\n
+Failed: 1\n
 OUT;
-        $this->assert_report($expected, false);
+        $this->assert_output($expected, false);
     }
 
 
     public function test_suppresses_skips_in_quiet_mode() {
-        $this->reporter->report_skip('source', 'message');
+        $this->logger->log_skip('source', 'message');
         $expected = <<<OUT
-S
+
 
 
 This report omitted skipped tests.
 To view, rerun easytest with the --verbose option.
 
-Tests: 0, Skips: 1\n
+Skipped: 1\n
 OUT;
-        $this->assert_report($expected, true);
+        $this->assert_output($expected, true);
     }
 
 
     public function test_reports_skips_in_verbose_mode() {
-        $this->reporter = new easytest\Reporter('EasyTest', false);
+        $this->logger = new easytest\BufferingLogger(
+            new easytest\BasicLogger(true)
+        );
         ob_clean();
 
-        $this->reporter->report_skip('source', 'message');
+        $this->logger->log_skip('source', 'message');
         $expected = <<<OUT
-S
+
 
 ======================================================================
-SKIP: source
+SKIPPED: source
 ----------------------------------------------------------------------
 message
 
 
-Tests: 0, Skips: 1\n
+Skipped: 1\n
 OUT;
-        $this->assert_report($expected, true);
+        $this->assert_output($expected, true);
     }
 
 
     public function test_suppresses_output_in_quiet_mode() {
-        $actual = $this->reporter->buffer(
+        $actual = $this->logger->buffer(
             'test_output',
             function() {
                 echo 'output';
@@ -119,15 +121,15 @@ OUT;
 
         /* Output should be buffered and reported */
         $expected = <<<OUT
-O
+
 
 
 This report omitted output.
 To view, rerun easytest with the --verbose option.
 
-Tests: 0, Output: 1\n
+Output: 1\n
 OUT;
-        $this->assert_report($expected, true);
+        $this->assert_output($expected, true);
     }
 
 
@@ -136,7 +138,7 @@ OUT;
         easytest\assert_throws(
             'easytest\\Failure',
             function () {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'test_output',
                     function() {
                         echo 'output';
@@ -148,7 +150,7 @@ OUT;
 
         /* Output should be buffered and reported */
         $expected = <<<OUT
-O
+
 
 ======================================================================
 OUTPUT: test_output
@@ -156,17 +158,19 @@ OUTPUT: test_output
 output
 
 
-Tests: 0, Output: 1\n
+Output: 1\n
 OUT;
-        $this->assert_report($expected, true);
+        $this->assert_output($expected, true);
     }
 
 
     public function test_reports_output_in_verbose_mode() {
-        $this->reporter = new easytest\Reporter('EasyTest', false);
+        $this->logger = new easytest\BufferingLogger(
+            new easytest\BasicLogger(true)
+        );
         ob_clean();
 
-        $actual = $this->reporter->buffer(
+        $actual = $this->logger->buffer(
             'test_output',
             function() {
                 echo 'output';
@@ -179,7 +183,7 @@ OUT;
 
         /* Output should be buffered and reported */
         $expected = <<<OUT
-O
+
 
 ======================================================================
 OUTPUT: test_output
@@ -187,9 +191,9 @@ OUTPUT: test_output
 output
 
 
-Tests: 0, Output: 1\n
+Output: 1\n
 OUT;
-        $this->assert_report($expected, true);
+        $this->assert_output($expected, true);
     }
 
     public function test_multiple_buffers() {
@@ -199,7 +203,7 @@ OUT;
         easytest\assert_throws(
             'easytest\\Failure',
             function () {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'test_multiple_buffers',
                     function() {
                         echo 'buffer 1 output';
@@ -219,37 +223,36 @@ OUT;
 
         /* Output should be reported */
         $expected = <<<OUT
-O
+
 
 ======================================================================
 OUTPUT: test_multiple_buffers
 ----------------------------------------------------------------------
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Buffer 1 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 buffer 1 output
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Buffer 3 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 buffer 3 output
 
 
-Tests: 0, Output: 1\n
+Output: 1\n
 OUT;
-        $this->assert_report($expected, true);
+        $this->assert_output($expected, true);
     }
 
 
     public function test_combined_report_in_quiet_mode() {
-        $this->reporter->report_success();
-        $this->reporter->report_failure('fail1', 'failure 1');
-        $this->reporter->report_error('error1', 'error 1');
-        $this->reporter->report_skip('skip1', 'skip 1');
+        $this->logger->log_pass();
+        $this->logger->log_failure('fail1', 'failure 1');
+        $this->logger->log_error('error1', 'error 1');
+        $this->logger->log_skip('skip1', 'skip 1');
 
-        $this->reporter->buffer('output1', function() { echo 'output 1'; });
-        $this->reporter->report_success();
+        $this->logger->buffer('output1', function() { echo 'output 1'; });
+        $this->logger->log_pass();
 
         $e = easytest\assert_throws(
             'easytest\\Failure',
             function() {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'output2',
                     function() {
                         echo 'output 2';
@@ -258,12 +261,12 @@ OUT;
                 );
             }
         );
-        $this->reporter->report_failure('fail2', $e->getMessage());
+        $this->logger->log_failure('fail2', $e->getMessage());
 
         $e = easytest\assert_throws(
             'easytest\\Error',
             function() {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'output3',
                     function() {
                         echo 'output 3';
@@ -272,12 +275,12 @@ OUT;
                 );
             }
         );
-        $this->reporter->report_error('error2', $e->getMessage());
+        $this->logger->log_error('error2', $e->getMessage());
 
         $e = easytest\assert_throws(
             'easytest\\Skip',
             function() {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'output4',
                     function() {
                         echo 'output 4';
@@ -286,13 +289,13 @@ OUT;
                 );
             }
         );
-        $this->reporter->report_skip('skip2', $e->getMessage());
+        $this->logger->log_skip('skip2', $e->getMessage());
 
         $expected = <<<OUT
-.FESO.OFOEOS
+
 
 ======================================================================
-FAILURE: fail1
+FAILED: fail1
 ----------------------------------------------------------------------
 failure 1
 
@@ -307,7 +310,7 @@ OUTPUT: output2
 output 2
 
 ======================================================================
-FAILURE: fail2
+FAILED: fail2
 ----------------------------------------------------------------------
 failure 2
 
@@ -330,28 +333,30 @@ output 4
 This report omitted output and skipped tests.
 To view, rerun easytest with the --verbose option.
 
-Tests: 4, Errors: 2, Failures: 2, Output: 4, Skips: 2\n
+Passed: 2, Failed: 2, Errors: 2, Skipped: 2, Output: 4\n
 OUT;
-        $this->assert_report($expected, false);
+        $this->assert_output($expected, false);
     }
 
 
     public function test_combined_report_in_verbose_mode() {
-        $this->reporter = new easytest\Reporter('EasyTest', false);
+        $this->logger = new easytest\BufferingLogger(
+            new easytest\BasicLogger(true)
+        );
         ob_clean();
 
-        $this->reporter->report_success();
-        $this->reporter->report_failure('fail1', 'failure 1');
-        $this->reporter->report_error('error1', 'error 1');
-        $this->reporter->report_skip('skip1', 'skip 1');
+        $this->logger->log_pass();
+        $this->logger->log_failure('fail1', 'failure 1');
+        $this->logger->log_error('error1', 'error 1');
+        $this->logger->log_skip('skip1', 'skip 1');
 
-        $this->reporter->buffer('output1', function() { echo 'output 1'; });
-        $this->reporter->report_success();
+        $this->logger->buffer('output1', function() { echo 'output 1'; });
+        $this->logger->log_pass();
 
         $e = easytest\assert_throws(
             'easytest\\Failure',
             function() {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'output2',
                     function() {
                         echo 'output 2';
@@ -360,12 +365,12 @@ OUT;
                 );
             }
         );
-        $this->reporter->report_failure('fail2', $e->getMessage());
+        $this->logger->log_failure('fail2', $e->getMessage());
 
         $e = easytest\assert_throws(
             'easytest\\Error',
             function() {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'output3',
                     function() {
                         echo 'output 3';
@@ -374,12 +379,12 @@ OUT;
                 );
             }
         );
-        $this->reporter->report_error('error2', $e->getMessage());
+        $this->logger->log_error('error2', $e->getMessage());
 
         $e = easytest\assert_throws(
             'easytest\\Skip',
             function() {
-                $this->reporter->buffer(
+                $this->logger->buffer(
                     'output4',
                     function() {
                         echo 'output 4';
@@ -388,13 +393,13 @@ OUT;
                 );
             }
         );
-        $this->reporter->report_skip('skip2', $e->getMessage());
+        $this->logger->log_skip('skip2', $e->getMessage());
 
         $expected = <<<OUT
-.FESO.OFOEOS
+
 
 ======================================================================
-FAILURE: fail1
+FAILED: fail1
 ----------------------------------------------------------------------
 failure 1
 
@@ -404,7 +409,7 @@ ERROR: error1
 error 1
 
 ======================================================================
-SKIP: skip1
+SKIPPED: skip1
 ----------------------------------------------------------------------
 skip 1
 
@@ -419,7 +424,7 @@ OUTPUT: output2
 output 2
 
 ======================================================================
-FAILURE: fail2
+FAILED: fail2
 ----------------------------------------------------------------------
 failure 2
 
@@ -439,13 +444,13 @@ OUTPUT: output4
 output 4
 
 ======================================================================
-SKIP: skip2
+SKIPPED: skip2
 ----------------------------------------------------------------------
 skip 2
 
 
-Tests: 4, Errors: 2, Failures: 2, Output: 4, Skips: 2\n
+Passed: 2, Failed: 2, Errors: 2, Skipped: 2, Output: 4\n
 OUT;
-        $this->assert_report($expected, false);
+        $this->assert_output($expected);
     }
 }
