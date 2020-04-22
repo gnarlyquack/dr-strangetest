@@ -513,4 +513,22 @@ class TestDiscovery implements easytest\IRunner {
         $actual = $this->runner_log;
         easytest\assert_identical($expected, $actual);
     }
+
+
+    public function test_does_not_find_conditionally_nondeclared_tests() {
+        $path = $this->path . 'conditional_declaration';
+        $this->discoverer->discover_tests([$path]);
+
+        $this->assert_report([]);
+
+        $expected = [
+            'conditional\\TestA' => true,
+            'conditional\\TestB' => true,
+        ];
+        foreach ($this->runner_log as $test) {
+            assert(isset($expected[$test]), "Loaded unexpected test: $test");
+            unset($expected[$test]);
+        }
+        easytest\assert_identical([], $expected);
+    }
 }

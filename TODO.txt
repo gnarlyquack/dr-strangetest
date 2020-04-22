@@ -43,8 +43,6 @@ Release
 
 -   Improve(?) test report(?)
 
--   Handle conditionally-defined test cases
-
 -   assert_throws(): provide better diagnostics when an unexpected
     exception is caught
 
@@ -53,7 +51,9 @@ Release
 
 -   assert_equal() and assert_identical(): stop proxying to the error handler
 
--   Implement assert_preg_match()(?)
+-   Implement additional assertions?
+    -   assert_preg_match
+    -   assert_isset
 
 -   Test installing and running via Composer/Packagist
 

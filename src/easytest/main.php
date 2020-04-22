@@ -470,6 +470,11 @@ final class Context implements IContext {
 }
 
 
+final class State {
+    public $seen = [];
+}
+
+
 
 
 final class Discoverer {
@@ -478,6 +483,7 @@ final class Discoverer {
     private $runner;
     private $loader;
     private $glob_sort;
+    private $state;
 
     private $patterns = [
         'files' => '~/test[^/]*\\.php$~i',
@@ -497,6 +503,7 @@ final class Discoverer {
         $this->context = $context;
         $this->glob_sort = $sort_files ? 0 : \GLOB_NOSORT;
         $this->loader = function($classname) { return new $classname(); };
+        $this->state = new State();
     }
 
     public function discover_tests(array $paths) {
@@ -671,11 +678,16 @@ final class Discoverer {
                 list($class, $i) = $this->parse_class($tokens, $i);
                 if ($class) {
                     $classname = "$ns$class";
-                    $this->logger->start_buffering($classname);
-                    $test = $this->instantiate_test($loader, $classname);
-                    $this->logger->end_buffering();
-                    if ($test) {
-                        $this->runner->run_test_case($test);
+                    if (!isset($this->state->seen[$classname])
+                        && \class_exists($classname))
+                    {
+                        $this->state->seen[$classname] = true;
+                        $this->logger->start_buffering($classname);
+                        $test = $this->instantiate_test($loader, $classname);
+                        $this->logger->end_buffering();
+                        if ($test) {
+                            $this->runner->run_test_case($test);
+                        }
                     }
                 }
                 break;
