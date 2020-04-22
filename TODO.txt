@@ -37,10 +37,6 @@ Release
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
--   Ensure that an object with numeric properties is properly handled in the
-    variable formatter when it's cast to an array
-    https://www.php.net/manual/en/migration72.incompatible.php#migration72.incompatible.object-array-casts
-
 -   Improve(?) test report(?)
 
 -   assert_throws(): provide better diagnostics when an unexpected

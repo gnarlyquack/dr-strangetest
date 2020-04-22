@@ -208,6 +208,20 @@ EXPECTED;
         $actual = $this->formatter->format_var($variable);
         easytest\assert_identical($expected, $actual);
     }
+
+
+    function test_formats_integer_object_properties() {
+        $variable = new IntegerProperties();
+
+        $expected = <<<'EXPECTED'
+IntegerProperties {
+    $0 = 'zero';
+    $1 = 'one';
+}
+EXPECTED;
+        $actual = $this->formatter->format_var($variable);
+        easytest\assert_identical($expected, $actual);
+    }
 }
 
 
@@ -221,4 +235,11 @@ class InheritFormat extends ObjectFormat {
     public $one = 'child public';
     protected $two = 'child protected';
     private $three = 'child private';
+}
+
+class IntegerProperties {
+    public function __construct() {
+        $this->{0} = 'zero';
+        $this->{1} = 'one';
+    }
 }
