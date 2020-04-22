@@ -105,7 +105,7 @@ class TestDiscovery implements easytest\IRunner {
                 [
                     easytest\LOG_EVENT_OUTPUT,
                     $path,
-                    "class TestTextBefore {}\n\n\nclass TestTestAfter {}"
+                    "'class TestTextBefore {}\n\n\nclass TestTestAfter {}\n'"
                 ],
             ],
         ]);
@@ -475,22 +475,22 @@ class TestDiscovery implements easytest\IRunner {
                 [
                     easytest\LOG_EVENT_OUTPUT,
                     "$path/setup.php",
-                    "$path/setup.php"
+                    "'$path/setup.php'"
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
                     "$path/test.php",
-                    "$path/test.php"
+                    "'$path/test.php'"
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
                     'test_output_buffering',
-                    '__construct'
+                    '\'__construct\''
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
                     "$path/teardown.php",
-                    "$path/teardown.php"
+                    "'$path/teardown.php'"
                 ],
             ],
         ]);

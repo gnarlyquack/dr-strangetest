@@ -162,8 +162,8 @@ final class BufferingLogger implements Logger {
 
 
     public function log_pass() {
-        if ($this->buffering) {
-            $this->queued[] = [$this->logger, 'log_pass'];
+        if ($this->buffer) {
+            $this->queued[] = [namespace\LOG_EVENT_PASS, null];
         }
         else
         {
@@ -173,12 +173,9 @@ final class BufferingLogger implements Logger {
 
 
     public function log_failure($source, $reason) {
-        if ($this->buffering) {
-            // #BC(5.3): Explicitly pass $logger into anonymous function
-            $logger = $this->logger;
-            $this->queued[] = function() use ($logger, $source, $reason) {
-                $logger->log_failure($source, $reason);
-            };
+        if ($this->buffer) {
+            $this->queued[] = [namespace\LOG_EVENT_FAIL, [$source, $reason]];
+            $this->buffer_error = true;
         }
         else
         {
@@ -188,12 +185,9 @@ final class BufferingLogger implements Logger {
 
 
     public function log_error($source, $reason) {
-        if ($this->buffering) {
-            // #BC(5.3): Explicitly pass $logger into anonymous function
-            $logger = $this->logger;
-            $this->queued[] = function() use ($logger, $source, $reason) {
-                $logger->log_error($source, $reason);
-            };
+        if ($this->buffer) {
+            $this->queued[] = [namespace\LOG_EVENT_ERROR, [$source, $reason]];
+            $this->buffer_error = true;
         }
         else
         {
@@ -203,12 +197,8 @@ final class BufferingLogger implements Logger {
 
 
     public function log_skip($source, $reason) {
-        if ($this->buffering) {
-            // #BC(5.3): Explicitly pass $logger into anonymous function
-            $logger = $this->logger;
-            $this->queued[] = function() use ($logger, $source, $reason) {
-                $logger->log_skip($source, $reason);
-            };
+        if ($this->buffer) {
+            $this->queued[] = [namespace\LOG_EVENT_SKIP, [$source, $reason]];
         }
         else
         {
@@ -217,18 +207,13 @@ final class BufferingLogger implements Logger {
     }
 
 
-    public function log_output($source, $reason, $during_error) {
-        if ($this->buffering) {
-            // #BC(5.3): Explicitly pass $logger into anonymous function
-            $logger = $this->logger;
-            $this->queued[]
-                = function() use ($logger, $source, $reason, $during_error) {
-                    $logger->log_output($source, $reason, $during_error);
-                };
+    public function log_output($source, $output, $during_error) {
+        if ($this->buffer) {
+            $this->queued[] = [namespace\LOG_EVENT_OUTPUT, [$source, $output]];
         }
         else
         {
-            $this->logger->log_output($source, $reason, $during_error);
+            $this->logger->log_output($source, $output, $during_error);
         }
     }
 
@@ -238,54 +223,135 @@ final class BufferingLogger implements Logger {
     }
 
 
-    public function buffer($source, $callable) {
-        $this->buffering = true;
-
-        $levels = \ob_get_level();
-        \ob_start();
-
-        try {
-            $result = $callable();
+    public function start_buffering($source) {
+        if ($this->buffer) {
+            // switch to buffering a new source
+            $this->reset_buffer();
         }
-        catch (\Throwable $e) {}
-        // #BC(5.6): Catch Exception, which implements Throwable
-        catch (\Exception $e) {}
-
-        $buffers = [];
-        for ($level = \ob_get_level();
-             $level > $levels;
-             $level = \ob_get_level())
-        {
-            $buffer = \trim(\ob_get_clean());
-            if (\strlen($buffer)) {
-                $buffers[] = $buffer;
-            }
+        else {
+            \ob_start();
+            $this->ob_level_current = $this->ob_level_start = \ob_get_level();
         }
 
-        $this->buffering = false;
-        if ($this->queued) {
-            foreach ($this->queued as $log) {
-                $log();
-            }
-            $this->queued = [];
-        }
-
-        if ($buffers) {
-            // Since output buffers stack, the first buffer read is the last
-            // buffer that was written. To output them in chronological order,
-            // we reverse the order of the buffers
-            $output = \implode("\n\n\n", \array_reverse($buffers));
-            $this->logger->log_output($source, $output, isset($e));
-        }
-
-        if (isset($e)) {
-            throw $e;
-        }
-        return $result;
+        $this->buffer = $source;
     }
 
 
+    public function end_buffering() {
+        $source = $this->buffer;
+        $buffers = [];
+        for ($level = \ob_get_level();
+             $level > $this->ob_level_start;
+             --$level)
+        {
+            $message = "An output buffer was started but never deleted.";
+            $output = \ob_get_clean();
+            if (\strlen($output)) {
+                $message = \sprintf(
+                    "%s\nBuffer contents were: %s",
+                    $message, \var_export($output, true)
+                );
+            }
+            else {
+                $message = "$message\nThe buffer was empty.";
+            }
+            $this->log_error($source, $message);
+        }
+
+        $output = \ob_get_clean();
+        if (\strlen($output)) {
+            $this->log_output(
+                $source,
+                \var_export($output, true),
+                $this->buffer_error
+            );
+        }
+
+        $this->buffer = null;
+        $buffer_error = $this->buffer_error;
+        $this->buffer_error = false;
+        if ($this->queued) {
+            foreach ($this->queued as $event) {
+                list($type, $data) = $event;
+                switch ($type) {
+                    case namespace\LOG_EVENT_PASS:
+                        $this->log_pass();
+                        break;
+
+                    case namespace\LOG_EVENT_FAIL:
+                        list($source, $reason) = $data;
+                        $this->log_failure($source, $reason);
+                        break;
+
+                    case namespace\LOG_EVENT_ERROR:
+                        list($source, $reason) = $data;
+                        $this->log_error($source, $reason);
+                        break;
+
+                    case namespace\LOG_EVENT_SKIP:
+                        list($source, $reason) = $data;
+                        $this->log_skip($source, $reason);
+                        break;
+
+                    case namespace\LOG_EVENT_OUTPUT:
+                        list($source, $reason) = $data;
+                        $this->log_output($source, $reason, $buffer_error);
+                        break;
+                }
+            }
+            $this->queued = [];
+        }
+    }
+
+
+    private function reset_buffer() {
+        $level = \ob_get_level();
+        assert($level >= $this->ob_level_start);
+
+        $buffers = [];
+        if ($level > $this->ob_level_start) {
+            // Somebody else is doing their own output buffering, so we don't
+            // want to mess it with. If their buffering started before we last
+            // reset our own buffer then we don't need to do anything. But if
+            // their buffering started after we last reset our own buffer, then
+            // we want to pop off the other buffer(s), handle our own, and then
+            // put the other buffer(s) back.
+            if ($this->ob_level_current > $this->ob_level_start) {
+                return;
+            }
+
+            $this->ob_level_current = $level;
+            while ($level-- > $this->ob_level_start) {
+                $buffers[] = \ob_get_clean();
+            }
+        }
+
+        $output = \ob_get_contents();
+        \ob_clean();
+        if (\strlen($output)) {
+            $this->log_output(
+                $this->buffer,
+                \var_export($output, true),
+                $this->buffer_error
+            );
+        }
+
+        while ($buffers) {
+            // Output buffers stack, so the first buffer we read was the last
+            // buffer that was written. To restore them in the correct order,
+            // we output them in reverse order from which we read them
+            $buffer = \array_pop($buffers);
+            \ob_start();
+            echo $buffer;
+        }
+        assert( $this->ob_level_current === \ob_get_level());
+    }
+
+
+    private $buffer;
     private $queued = [];
-    private $buffering = false;
+    private $ob_level_current;
+    private $ob_level_start;
+    private $buffer_error = false;
     private $logger;
 }

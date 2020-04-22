@@ -19,7 +19,7 @@ class TestRunner {
 
     public function setup() {
         $this->logger = new easytest\BufferingLogger(
-            new easytest\BasicLogger(true)
+            new easytest\BasicLogger(false)
         );
         $this->runner = new easytest\Runner($this->logger);
     }
@@ -251,7 +251,7 @@ class TestRunner {
                 [
                     easytest\LOG_EVENT_ERROR,
                     'MultipleSetupClassTestCase',
-                    "Multiple methods found:\n\tSetUpClass\n\tsetup_class"
+                    "Multiple fixtures found:\n\tSetUpClass\n\tsetup_class"
                 ],
             ],
         ]);
@@ -268,7 +268,7 @@ class TestRunner {
                 [
                     easytest\LOG_EVENT_ERROR,
                     'MultipleTeardownClassTestCase',
-                    "Multiple methods found:\n\tTearDownClass\n\tteardown_class"
+                    "Multiple fixtures found:\n\tTearDownClass\n\tteardown_class"
                 ],
             ],
         ]);
@@ -279,12 +279,7 @@ class TestRunner {
             new SkipTestCase(),
             ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
         );
-        $this->assert_report([
-            easytest\LOG_EVENT_SKIP => 1,
-            'events' => [
-                [easytest\LOG_EVENT_SKIP, 'SkipTestCase::test', 'Skip me'],
-            ],
-        ]);
+        $this->assert_report([easytest\LOG_EVENT_SKIP => 1]);
     }
 
     public function test_skip_in_setup() {
@@ -292,16 +287,7 @@ class TestRunner {
             new SkipSetupTestCase(),
             ['setup_class', 'setup', 'teardown_class']
         );
-        $this->assert_report([
-            easytest\LOG_EVENT_SKIP => 1,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_SKIP,
-                    'setup for SkipSetupTestCase::test',
-                    'Skip me'
-                ],
-            ],
-        ]);
+        $this->assert_report([easytest\LOG_EVENT_SKIP => 1]);
     }
 
     public function test_skip_in_setup_class() {
@@ -309,16 +295,7 @@ class TestRunner {
             new SkipSetupClassTestCase(),
             ['setup_class']
         );
-        $this->assert_report([
-            easytest\LOG_EVENT_SKIP => 1,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_SKIP,
-                    'SkipSetupClassTestCase::setup_class',
-                    'Skip me'
-                ],
-            ],
-        ]);
+        $this->assert_report([easytest\LOG_EVENT_SKIP => 1]);
     }
 
     public function test_skip_in_teardown() {
@@ -356,41 +333,141 @@ class TestRunner {
         ]);
     }
 
-    public function test_output_buffering() {
+
+    public function test_logs_output_and_displays_it_on_error() {
         $this->assert_run(
             new OutputTestCase(),
-            []
+            [
+                'setup_class',
+                'setup', 'test_pass', 'teardown',
+                'setup', 'test_fail', 'teardown',
+                'setup', 'test_error', 'teardown',
+                'setup', 'test_skip', 'teardown',
+                'teardown_class'
+            ]
         );
         $this->assert_report([
             easytest\LOG_EVENT_PASS => 1,
-            easytest\LOG_EVENT_OUTPUT => 5,
+            easytest\LOG_EVENT_FAIL => 1,
+            easytest\LOG_EVENT_ERROR => 1,
+            easytest\LOG_EVENT_SKIP => 1,
+            easytest\LOG_EVENT_OUTPUT => 10,
             'events' => [
                 [
                     easytest\LOG_EVENT_OUTPUT,
-                    'OutputTestCase::setup_class',
-                    'setup_class'
+                    'setup for OutputTestCase::test_fail',
+                    "'setup output that should be seen'",
+                ],
+                [
+                    easytest\LOG_EVENT_FAIL,
+                    'OutputTestCase::test_fail',
+                    'Assertion failed'
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
-                    'setup for OutputTestCase::test',
-                    'setup'
+                    'teardown for OutputTestCase::test_fail',
+                    "'teardown output that should be seen'",
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
-                    'OutputTestCase::test',
-                    'test'
+                    'setup for OutputTestCase::test_error',
+                    "'setup output that should be seen'",
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'OutputTestCase::test_error',
+                    'Did I err?',
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
-                    'teardown for OutputTestCase::test',
-                    'teardown'
+                    'teardown for OutputTestCase::test_error',
+                    "'teardown output that should be seen'",
+                ],
+            ]
+        ]);
+    }
+
+
+    public function test_allows_our_own_output_buffering() {
+        $this->assert_run(
+            new OutputBufferingTestCase(),
+            [
+                'setup_class',
+                'setup', 'test_skip', 'teardown',
+                'setup', 'test_error', 'teardown',
+                'setup', 'test_fail', 'teardown',
+                'setup', 'test_pass', 'teardown',
+                'teardown_class'
+            ]
+        );
+        $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
+            easytest\LOG_EVENT_FAIL => 1,
+            easytest\LOG_EVENT_ERROR => 1,
+            easytest\LOG_EVENT_SKIP => 1,
+            easytest\LOG_EVENT_OUTPUT => 10,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup for OutputBufferingTestCase::test_error',
+                    "'setup output that should be seen'",
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'OutputBufferingTestCase::test_error',
+                    'Did I err?',
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,
-                    'OutputTestCase::teardown_class',
-                    'teardown_class'
+                    'teardown for OutputBufferingTestCase::test_error',
+                    "'teardown output that should be seen'",
                 ],
-            ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup for OutputBufferingTestCase::test_fail',
+                    "'setup output that should be seen'",
+                ],
+                [
+                    easytest\LOG_EVENT_FAIL,
+                    'OutputBufferingTestCase::test_fail',
+                    'Assertion failed'
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'teardown for OutputBufferingTestCase::test_fail',
+                    "'teardown output that should be seen'",
+                ],
+            ]
+        ]);
+    }
+
+
+    public function test_reports_errors_for_undeleted_output_buffers() {
+        $this->assert_run(
+            new UndeletedOutputBufferTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        // Note that since the test itself didn't fail, we log a pass, but we
+        // also get errors due to dangling output buffers.  This seems
+        // desirable: errors associated with buffering will get logged and
+        // cause the test suite in general to fail (so hopefully people will
+        // clean up their tests), but do not otherwise impede testing.
+        $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
+            easytest\LOG_EVENT_ERROR => 2,
+            easytest\LOG_EVENT_OUTPUT => 2,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'teardown for UndeletedOutputBufferTestCase::test',
+                    "An output buffer was started but never deleted.\nBuffer contents were: 'test output'",
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'teardown for UndeletedOutputBufferTestCase::test',
+                    "An output buffer was started but never deleted.\nThe buffer was empty.",
+                ],
+            ]
         ]);
     }
 }
@@ -588,24 +665,133 @@ class SkipTeardownClassTestCase extends BaseTestCase {
     }
 }
 
-class OutputTestCase extends BaseTestCase {
+class OutputTestCase {
+    public $log = [];
+
     public function setup_class() {
-        echo __FUNCTION__, "\n";
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
     }
 
     public function teardown_class() {
-        echo __FUNCTION__, "\n";
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
     }
 
     public function setup() {
-        echo __FUNCTION__, "\n";
+        $this->log[] = __FUNCTION__;
+        echo 'setup output that should be seen';
+        ob_start();
+        echo 'setup output that should not be seen';
     }
 
     public function teardown() {
-        echo __FUNCTION__, "\n";
+        $this->log[] = __FUNCTION__;
+        echo 'teardown output that should not be seen';
+        ob_end_clean();
+        echo 'teardown output that should be seen';
+    }
+
+    public function test_pass() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+    }
+
+    public function test_fail() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        assert(false, 'Assertion failed');
+    }
+
+    public function test_error() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        trigger_error('Did I err?');
+    }
+
+    public function test_skip() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        easytest\skip('Skip me');
+    }
+}
+
+class OutputBufferingTestCase {
+    public $log = [];
+
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+    }
+
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+    }
+
+    public function setup() {
+        $this->log[] = __FUNCTION__;
+        echo 'setup output that should be seen';
+        ob_start();
+        echo 'setup output that should not be seen';
+    }
+
+    public function teardown() {
+        $this->log[] = __FUNCTION__;
+        echo 'teardown output that should not be seen';
+        ob_end_clean();
+        echo 'teardown output that should be seen';
+    }
+
+    public function test_skip() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        easytest\skip('Skip me');
+    }
+
+    public function test_error() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        trigger_error('Did I err?');
+    }
+
+    public function test_fail() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        assert(false, 'Assertion failed');
+    }
+
+    public function test_pass() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+    }
+}
+
+class UndeletedOutputBufferTestCase {
+    public $log = [];
+
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+    }
+
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+    }
+
+    public function setup() {
+        $this->log[] = __FUNCTION__;
+        ob_start();
+    }
+
+    public function teardown() {
+        $this->log[] = __FUNCTION__;
     }
 
     public function test() {
-        echo __FUNCTION__, "\n";
+        $this->log[] = __FUNCTION__;
+        ob_start();
+        echo 'test output';
     }
 }

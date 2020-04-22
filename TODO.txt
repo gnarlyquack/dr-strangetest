@@ -44,8 +44,6 @@ Release
     variable formatter when it's cast to an array
     https://www.php.net/manual/en/migration72.incompatible.php#migration72.incompatible.object-array-casts
 
--   Run setup and teardown in a common output buffer with their test
-
 -   Improve(?) test report(?)
 
 -   Handle conditionally-defined test cases
@@ -62,7 +60,7 @@ Release
 
 -   Test installing and running via Composer/Packagist
 
--   Show how long test runs take
+-   Report how long test runs take
 
 -   diff: Limit number of lines that are reported before and after the
     differing portion of text
@@ -99,6 +97,18 @@ Release
     time the directory is walked. This could also happen with test files if,
     for example, a user (mistakenly?) specifies the same file twice on the
     command line
+
+-   Do we only want to skip teardown if we skipped setup? I.e., should we
+    teardown after an error in setup? It seems like this is the only way to
+    clean up potentially-dangling resources.
+
+-   How should we handle the potential deletion of our output buffer by the
+    user? Certainly this would seem to be a possibility.
+
+-   When processing test case methods, report all errors. Right now we report
+    the first error and then bail.
+
+    -   Also see how we're handling this when processing directories and files
 
 
 Future / Someday(?)

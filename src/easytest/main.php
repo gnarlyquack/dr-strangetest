@@ -18,6 +18,12 @@ const LOG_EVENT_ERROR  = 3;
 const LOG_EVENT_SKIP   = 4;
 const LOG_EVENT_OUTPUT = 5;
 
+const PATTERN_TEST           = '~^test~i';
+const PATTERN_SETUP_CLASS    = '~^setup_?class$~i';
+const PATTERN_TEARDOWN_CLASS = '~^teardown_?class$~i';
+const PATTERN_SETUP          = '~^setup$~i';
+const PATTERN_TEARDOWN       = '~^teardown$~i';
+
 
 /*
  * A Context object is used by the Discoverer to insulate itself from internal
@@ -602,7 +608,10 @@ final class Discoverer {
         case 1:
             $path = \current($path);
             return function() use ($path, $loader) {
-                return $this->include_setup($loader, $path);
+                $this->logger->start_buffering($path);
+                $succeeded = $this->include_setup($loader, $path);
+                $this->logger->end_buffering();
+                return $succeeded;
             };
 
         default:
@@ -624,7 +633,10 @@ final class Discoverer {
         case 1:
             $path = \current($path);
             return function() use ($path) {
-                return $this->include_teardown($path);
+                $this->logger->start_buffering($path);
+                $succeeded = $this->include_teardown($path);
+                $this->logger->end_buffering();
+                return $succeeded;
             };
 
         default:
@@ -640,7 +652,10 @@ final class Discoverer {
      * Discover and run tests in a file.
      */
     private function discover_file($loader, $file) {
-        if (!$this->include_file($file)) {
+        $this->logger->start_buffering($file);
+        $succeeded = $this->include_file($file);
+        $this->logger->end_buffering();
+        if (!$succeeded) {
             return;
         }
 
@@ -655,7 +670,10 @@ final class Discoverer {
             case \T_CLASS:
                 list($class, $i) = $this->parse_class($tokens, $i);
                 if ($class) {
-                    $test = $this->instantiate_test($loader, $ns . $class);
+                    $classname = "$ns$class";
+                    $this->logger->start_buffering($classname);
+                    $test = $this->instantiate_test($loader, $classname);
+                    $this->logger->end_buffering();
                     if ($test) {
                         $this->runner->run_test_case($test);
                     }
@@ -726,14 +744,7 @@ final class Discoverer {
 
     private function include_file($file) {
         try {
-            // #BC(5.3): Explicitly pass $context into anonymous function
-            $context = $this->context;
-            $this->logger->buffer(
-                $file,
-                function() use ($context, $file) {
-                    $context->include_file($file);
-                }
-            );
+            $this->context->include_file($file);
             return true;
         }
         catch (Skip $e) {
@@ -751,14 +762,7 @@ final class Discoverer {
 
     private function include_setup($loader, $file) {
         try {
-            // #BC(5.3): Explicitly pass $context into anonymous function
-            $context = $this->context;
-            $result = $this->logger->buffer(
-                $file,
-                function() use ($context, $file) {
-                    return $context->include_file($file);
-                }
-            );
+            $result = $this->context->include_file($file);
             return \is_callable($result) ? $result : $loader;
         }
         catch (Skip $e) {
@@ -776,14 +780,7 @@ final class Discoverer {
 
     private function include_teardown($file) {
         try {
-            // #BC(5.3): Explicitly pass $context into anonymous function
-            $context = $this->context;
-            $this->logger->buffer(
-                $file,
-                function() use ($context, $file) {
-                    $context->include_file($file);
-                }
-            );
+            $this->context->include_file($file);
             return true;
         }
         catch (\Throwable $e) {
@@ -798,10 +795,7 @@ final class Discoverer {
 
     private function instantiate_test($loader, $class) {
         try {
-            $result = $this->logger->buffer(
-                $class,
-                function() use ($loader, $class) { return $loader($class); }
-            );
+            $result = $loader($class);
         }
         catch (\Throwable $e) {
             $this->logger->log_error($class, $e);
@@ -829,27 +823,6 @@ final class Discoverer {
 final class Runner implements IRunner {
     private $logger;
 
-    private $patterns = [
-        'tests' => '~^test~i',
-        'fixtures' => [
-            'setup_class' => [
-                'regex' => '~^setup_?class$~i',
-                'method' => 'run_setup',
-            ],
-            'teardown_class' => [
-                'regex' => '~^teardown_?class$~i',
-                'method' => 'run_teardown',
-            ],
-            'setup' => [
-                'regex' => '~^setup$~i',
-                'method' => 'run_setup',
-            ],
-            'teardown' => [
-                'regex' => '~^teardown$~i',
-                'method' => 'run_teardown',
-            ],
-        ],
-    ];
 
     public function __construct(BufferingLogger $logger) {
         $this->logger = $logger;
@@ -857,72 +830,104 @@ final class Runner implements IRunner {
 
     public function run_test_case($object) {
         $class = \get_class($object);
-        if (!$methods = $this->process_methods($class, $object)) {
+        $methods = $this->process_methods($class, $object);
+        if (!$methods) {
             return;
         }
 
-        if ($methods['setup_class']()) {
-            foreach ($methods['tests'] as $method) {
-                if ($methods['setup']($method)) {
-                    $success = $this->run_test($class, $object, $method);
-                    if ($methods['teardown']($method) && $success) {
-                        $this->logger->log_pass();
-                    }
-                }
+        list($setup_class, $teardown_class, $setup, $teardown, $tests)
+            = $methods;
+
+        if ($setup_class) {
+            $source = "$class::$setup_class";
+            $this->logger->start_buffering($source);
+            $succeeded = $this->run_setup($source, $object, $setup_class);
+            $this->logger->end_buffering();
+            if (!$succeeded) {
+                return;
             }
-            $methods['teardown_class']();
+        }
+
+        foreach ($tests as $test) {
+            $this->run_test($class, $object, $test, $setup, $teardown);
+        }
+
+        if ($teardown_class) {
+            $source = "$class::$teardown_class";
+            $this->logger->start_buffering($source);
+            $this->run_teardown($source, $object, $teardown_class);
+            $this->logger->end_buffering();
         }
     }
 
     private function process_methods($class, $object) {
         $methods = \get_class_methods($object);
-        $processed = [];
 
-        foreach ($this->patterns['fixtures'] as $fixture => $spec) {
-            $processed[$fixture] = $this->process_fixture(
-                $class,
-                $object,
-                $methods,
-                $spec
-            );
-            if (!$processed[$fixture]) {
-                return false;
+        $setup_class =  namespace\_find_fixture(
+            $this->logger, $class, $methods, namespace\PATTERN_SETUP_CLASS);
+        if (false === $setup_class) {
+            return false;
+        }
+
+        $teardown_class = namespace\_find_fixture(
+            $this->logger, $class, $methods, namespace\PATTERN_TEARDOWN_CLASS);
+        if (false === $teardown_class) {
+            return false;
+        }
+
+        $setup = namespace\_find_fixture(
+            $this->logger, $class, $methods, namespace\PATTERN_SETUP);
+        if (false === $setup) {
+            return false;
+        }
+
+        $teardown = namespace\_find_fixture(
+            $this->logger, $class, $methods, namespace\PATTERN_TEARDOWN);
+        if (false === $teardown) {
+            return false;
+        }
+
+        $tests = \preg_grep(namespace\PATTERN_TEST, $methods);
+        if (!$tests) {
+            return false;
+        }
+
+        return [$setup_class, $teardown_class, $setup, $teardown, $tests];
+    }
+
+
+    private function run_test($class, $object, $test, $setup, $teardown) {
+        $passed = true;
+
+        if ($setup) {
+            $source = "$setup for $class::$test";
+            $this->logger->start_buffering($source);
+            $passed = $this->run_setup($source, $object, $setup);
+        }
+
+        if ($passed) {
+            $source = "$class::$test";
+            $this->logger->start_buffering($source);
+            $passed = $this->run_test_method($source, $object, $test);
+
+            if ($teardown) {
+                $source = "$teardown for $class::$test";
+                $this->logger->start_buffering($source);
+                $passed = $this->run_teardown($source, $object, $teardown)
+                        && $passed;
             }
         }
 
-        $processed['tests'] = \preg_grep($this->patterns['tests'], $methods);
-        return $processed;
-    }
-
-    private function process_fixture($class, $object, $methods, $spec) {
-        $fixture = \preg_grep($spec['regex'], $methods);
-
-        switch (\count($fixture)) {
-        case 0:
-            return function() { return true; };
-
-        case 1:
-            $fixture = \current($fixture);
-            $method = $spec['method'];
-            return function($during = null)
-                   use ($method, $class, $object, $fixture)
-            {
-                return $this->$method($class, $object, $fixture, $during);
-            };
-
-        default:
-            $this->logger->log_error(
-                $class,
-                "Multiple methods found:\n\t" . \implode("\n\t", $fixture)
-            );
-            return false;
+        $this->logger->end_buffering();
+        if ($passed) {
+            $this->logger->log_pass();
         }
     }
 
-    private function run_setup($class, $object, $method, $during = null) {
-        $source = $during ? "$method for $class::$during" : "$class::$method";
+
+    private function run_setup($source, $object, $method) {
         try {
-            $this->logger->buffer($source, [$object, $method]);
+            $object->$method();
             return true;
         }
         catch (Skip $e) {
@@ -938,10 +943,9 @@ final class Runner implements IRunner {
         return false;
     }
 
-    private function run_test($class, $object, $method) {
-        $source = "$class::$method";
+    private function run_test_method($source, $object, $method) {
         try {
-            $this->logger->buffer($source, [$object, $method]);
+            $object->$method();
             return true;
         }
         catch (\AssertionError $e) {
@@ -964,10 +968,9 @@ final class Runner implements IRunner {
         return false;
     }
 
-    private function run_teardown($class, $object, $method, $during = null) {
-        $source = $during ? "$method for $class::$during" : "$class::$method";
+    private function run_teardown($source, $object, $method) {
         try {
-            $this->logger->buffer($source, [$object, $method]);
+            $object->$method();
             return true;
         }
         catch (\Throwable $e) {
@@ -980,6 +983,30 @@ final class Runner implements IRunner {
         return false;
     }
 }
+
+
+function _find_fixture($logger, $class, $methods, $pattern) {
+    $found = \preg_grep($pattern, $methods);
+    $count = \count($found);
+
+    if (0 === $count) {
+        return null;
+    }
+
+    if (1 === $count) {
+        return \current($found);
+    }
+
+    $logger->log_error(
+        $class,
+        \sprintf(
+            "Multiple fixtures found:\n\t%s",
+            \implode("\n\t", $found)
+        )
+    );
+    return false;
+}
+
 
 
 
