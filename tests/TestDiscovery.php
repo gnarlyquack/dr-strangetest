@@ -495,4 +495,22 @@ class TestDiscovery implements easytest\IRunner {
             ],
         ]);
     }
+
+
+    public function test_does_not_discover_anonymous_classes() {
+        // #BC(5.6): Check if anonymous classes are supported
+        if (version_compare(PHP_VERSION, '7.0', '<')) {
+            easytest\skip('PHP 7 introduced anonymous classes');
+        }
+
+        $path = $this->path . 'AnonymousClass.php';
+
+        $this->discoverer->discover_tests([$path]);
+
+        $this->assert_report([]);
+
+        $expected = ['TestAnonymousClass'];
+        $actual = $this->runner_log;
+        easytest\assert_identical($expected, $actual);
+    }
 }

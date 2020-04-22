@@ -694,7 +694,21 @@ final class Discoverer {
             ++$i;
         }
         $class = $tokens[$i][1];
-        if (0 === \stripos($class, 'test')) {
+
+        // advance token index to the end of the class definition
+        while ('{' !== $tokens[++$i]);
+        $scope = 1;
+        while ($scope) {
+            $token = $tokens[++$i];
+            if ('{' === $token) {
+                ++$scope;
+            }
+            elseif ('}' === $token) {
+                --$scope;
+            }
+        }
+
+        if (0 === \substr_compare($class, 'test', 0, 4, true)) {
             return [$class, $i];
         }
         return [false, $i];
