@@ -472,6 +472,7 @@ final class Context implements IContext {
 
 final class State {
     public $seen = [];
+    public $files = [];
 }
 
 
@@ -648,6 +649,10 @@ final class Discoverer {
     }
 
     private function parse_setup($file) {
+        if (isset($this->state->files[$file])) {
+            return $this->state->files[$file];
+        }
+
         $this->logger->start_buffering($file);
         $succeeded = $this->include_file($file);
         $this->logger->end_buffering();
@@ -733,12 +738,15 @@ final class Discoverer {
         }
 
         if ($error) {
-            return false;
+            $this->state->files[$file] = false;
         }
-        return [
-            \current($functions['setup']),
-            \current($functions['teardown'])
-        ];
+        else {
+            $this->state->files[$file] = [
+                \current($functions['setup']),
+                \current($functions['teardown'])
+            ];
+        }
+        return $this->state->files[$file];
     }
 
 
@@ -746,6 +754,12 @@ final class Discoverer {
      * Discover and run tests in a file.
      */
     private function discover_file($loader, $file) {
+        if (isset($this->state->files[$file])) {
+            $this->logger->log_skip($file, 'File has already been tested!');
+            return;
+        }
+        $this->state->files[$file] = true;
+
         $this->logger->start_buffering($file);
         $succeeded = $this->include_file($file);
         $this->logger->end_buffering();

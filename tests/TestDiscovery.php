@@ -138,7 +138,6 @@ class TestDiscovery implements easytest\IRunner {
     }
 
     public function test_individual_paths() {
-        easytest\skip("I'll only work once files are only ever included once");
         $root = $this->path . 'test_individual_paths';
         $paths = [
             "$root/test_dir1/test2.php",
@@ -148,7 +147,7 @@ class TestDiscovery implements easytest\IRunner {
         $this->discoverer->discover_tests($paths);
 
         $this->assert_report([
-            easytest\LOG_EVENT_OUTPUT => 1,
+            easytest\LOG_EVENT_OUTPUT => 18,
             'events' => [
                 [
                     easytest\LOG_EVENT_OUTPUT,
@@ -169,6 +168,73 @@ class TestDiscovery implements easytest\IRunner {
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown_directory_individual_paths_dir1',
                     "'teardown_directory_individual_paths_dir1'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'teardown_directory_individual_paths',
+                    "'teardown_directory_individual_paths'",
+                ],
+
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup_directory_individual_paths',
+                    "'setup_directory_individual_paths'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup_directory_individual_paths_dir1',
+                    "'setup_directory_individual_paths_dir1'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    "$root/test_dir1/test3.php",
+                    "'$root/test_dir1/test3.php'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'teardown_directory_individual_paths_dir1',
+                    "'teardown_directory_individual_paths_dir1'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'teardown_directory_individual_paths',
+                    "'teardown_directory_individual_paths'",
+                ],
+
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup_directory_individual_paths',
+                    "'setup_directory_individual_paths'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup_directory_individual_paths_dir2',
+                    "'setup_directory_individual_paths_dir2'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'setup_directory_individual_paths_dir2_subdir',
+                    "'setup_directory_individual_paths_dir2_subdir'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    "$root/test_dir2/test_subdir/test1.php",
+                    "'$root/test_dir2/test_subdir/test1.php'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    "$root/test_dir2/test_subdir/test2.php",
+                    "'$root/test_dir2/test_subdir/test2.php'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'teardown_directory_individual_paths_dir2_subdir',
+                    "'teardown_directory_individual_paths_dir2_subdir'",
+                ],
+                [
+                    easytest\LOG_EVENT_OUTPUT,
+                    'teardown_directory_individual_paths_dir2',
+                    "'teardown_directory_individual_paths_dir2'",
                 ],
                 [
                     easytest\LOG_EVENT_OUTPUT,

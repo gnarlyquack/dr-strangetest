@@ -85,12 +85,6 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   Ensure that files are only ever included once. Right now, if EasyTest
-    walks through a directory multiple times, fixture files are included every
-    time the directory is walked. This could also happen with test files if,
-    for example, a user (mistakenly?) specifies the same file twice on the
-    command line
-
 -   Do we only want to skip teardown if we skipped setup? I.e., should we
     teardown after an error in setup? It seems like this is the only way to
     clean up potentially-dangling resources.
@@ -105,8 +99,6 @@ Release
 
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
-
--   Fix TestDiscovery::test_individual_paths
 
 -   Fix TestDiscovery tests so that they don't depend on the order in which
     tests are run
@@ -133,3 +125,5 @@ Future / Someday(?)
 -   Support calling assert() with arbitrary exceptions in PHP >= 7? It's not
     entirely clear what this would even entail: perhaps allow for outputting
     custom types of errors/failures?
+
+-   Cache results of directory (and file?) discovery
