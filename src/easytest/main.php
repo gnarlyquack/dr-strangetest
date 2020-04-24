@@ -476,6 +476,19 @@ final class State {
 }
 
 
+final class ArgList {
+    private $args;
+
+    public function __construct($arg) {
+        $this->args = \func_get_args();
+    }
+
+    public function args() {
+        return $this->args;
+    }
+}
+
+
 
 
 final class Discoverer {
@@ -519,7 +532,7 @@ final class Discoverer {
                 $path .= '/';
             }
             $root = $this->determine_root($path);
-            $this->discover_directory($this->loader, $root, $path);
+            $this->discover_directory(null, $root, $path);
         }
     }
 
@@ -556,7 +569,7 @@ final class Discoverer {
      * Otherwise, discovery is only done for the file or directory specified in
      * $target. Directory fixtures are discovered and run in either case.
      */
-    private function discover_directory($loader, $dir, $target) {
+    private function discover_directory($args, $dir, $target) {
         if ($target === $dir) {
             $target = null;
         }
@@ -568,22 +581,23 @@ final class Discoverer {
         list($setup, $teardown, $files, $directories) = $processed;
         if ($setup) {
             $this->logger->start_buffering($setup);
-            $loader = $this->run_setup($loader, $setup);
+            list($succeeded, $args) = $this->run_setup($setup, $args);
             $this->logger->end_buffering();
+            if (!$succeeded) {
+                return;
+            }
         }
 
-        if ($loader) {
-            foreach ($files as $file) {
-                $this->discover_file($loader, $file);
-            }
-            foreach ($directories as $directory) {
-                $this->discover_directory($loader, $directory, $target);
-            }
-            if ($teardown) {
-                $this->logger->start_buffering($teardown);
-                $this->run_teardown($teardown);
-                $this->logger->end_buffering();
-            }
+        foreach ($files as $file) {
+            $this->discover_file($args, $file);
+        }
+        foreach ($directories as $directory) {
+            $this->discover_directory($args, $directory, $target);
+        }
+        if ($teardown) {
+            $this->logger->start_buffering($teardown);
+            $this->run_teardown($teardown, $args);
+            $this->logger->end_buffering();
         }
     }
 
@@ -753,7 +767,7 @@ final class Discoverer {
     /*
      * Discover and run tests in a file.
      */
-    private function discover_file($loader, $file) {
+    private function discover_file($args, $file) {
         if (isset($this->state->files[$file])) {
             $this->logger->log_skip($file, 'File has already been tested!');
             return;
@@ -784,7 +798,7 @@ final class Discoverer {
                     {
                         $this->state->seen[$classname] = true;
                         $this->logger->start_buffering($classname);
-                        $test = $this->instantiate_test($loader, $classname);
+                        $test = $this->instantiate_test($args, $classname);
                         $this->logger->end_buffering();
                         if ($test) {
                             $this->runner->run_test_case($test);
@@ -887,10 +901,16 @@ final class Discoverer {
         return false;
     }
 
-    private function run_setup($loader, $callable) {
+    private function run_setup($callable, $args) {
         try {
-            $result = $callable();
-            return \is_callable($result) ? $result : $loader;
+            if ($args) {
+                // #BC(5.5): Use proxy function for argument unpacking
+                $result = namespace\_unpack_function($callable, $args->args());
+            }
+            else {
+                $result = $callable();
+            }
+            return [true, $result ? $result : $args];
         }
         catch (Skip $e) {
             $this->logger->log_skip($callable, $e);
@@ -902,12 +922,18 @@ final class Discoverer {
         catch (\Exception $e) {
             $this->logger->log_error($callable, $e);
         }
-        return false;
+        return [false, null];
     }
 
-    private function run_teardown($callable) {
+    private function run_teardown($callable, $args) {
         try {
-            $callable();
+            if ($args) {
+                // #BC(5.5): Use proxy function for argument unpacking
+                namespace\_unpack_function($callable, $args->args());
+            }
+            else {
+                $callable();
+            }
             return true;
         }
         catch (\Throwable $e) {
@@ -920,28 +946,23 @@ final class Discoverer {
         return false;
     }
 
-    private function instantiate_test($loader, $class) {
+    private function instantiate_test($args, $class) {
         try {
-            $result = $loader($class);
+            if ($args) {
+                // #BC(5.5): Use proxy function for argument unpacking
+                return namespace\_unpack_construct($class, $args->args());
+            }
+            else {
+                return new $class();
+            }
         }
         catch (\Throwable $e) {
             $this->logger->log_error($class, $e);
-            return false;
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
             $this->logger->log_error($class, $e);
-            return false;
         }
-
-        if (\is_object($result)) {
-            return $result;
-        }
-
-        $this->logger->log_error(
-            $class,
-            'Test loader did not return an object instance'
-        );
         return false;
     }
 }
@@ -1182,6 +1203,18 @@ function _try_loading_composer() {
 
 function _load_easytest() {
     $files = ['assertions', 'exceptions', 'log', 'output'];
+    // #BC(5.5): Implement proxy functions for argument unpacking
+    // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
+    // versions, so we need to include version-dependent proxy functions to do
+    // the unpacking for us. When support for PHP < 5.6 is dropped, this can
+    // all be eliminated and we can just use the argument unpacking syntax
+    // directly at the call site.
+    if (\version_compare(\PHP_VERSION, '5.6', '<')) {
+        $files[] = 'unpack5.5';
+    }
+    else {
+        $files[] = 'unpack';
+    }
     foreach ($files as $file) {
         require __DIR__ . "/{$file}.php";
     }

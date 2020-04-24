@@ -66,6 +66,7 @@ class TestDiscovery implements easytest\IRunner {
             list($type, $source, $reason) = $actual['events'][$i];
             switch ($type) {
                 case easytest\LOG_EVENT_ERROR:
+                    // #BC(5.6) Check if $reason is instanceof Exception
                     if ($reason instanceof Throwable
                         || $reason instanceof Exception)
                     {
@@ -75,6 +76,7 @@ class TestDiscovery implements easytest\IRunner {
                     break;
 
                 case easytest\LOG_EVENT_FAIL:
+                    // #BC(5.6) Check if $reason is instanceof Failure
                     if ($reason instanceof AssertionError
                         || $reason instanceof easytest\Failure)
                     {
@@ -342,36 +344,6 @@ class TestDiscovery implements easytest\IRunner {
         ]);
     }
 
-    public function test_instantiation_error() {
-        $path = $this->path . 'instantiation_error';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = ['test_instantiation_error_two'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
-
-        $this->assert_report([
-            easytest\LOG_EVENT_ERROR => 1,
-            easytest\LOG_EVENT_OUTPUT => 2,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_instantiation_error',
-                    "'setup_directory_instantiation_error'",
-                ],
-                [
-                    easytest\LOG_EVENT_ERROR,
-                    'test_instantiation_error_one',
-                    'An error happened'
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_instantiation_error',
-                    "'teardown_directory_instantiation_error'",
-                ],
-            ]
-        ]);
-    }
 
     public function test_skip() {
         $path = $this->path . 'skip';
@@ -460,90 +432,69 @@ class TestDiscovery implements easytest\IRunner {
         ]);
     }
 
-    public function test_custom_loader() {
-        $path = $this->path . 'custom_loader';
-        $this->discoverer->discover_tests([$path]);
 
-        $expected = [
-            easytest\LOG_EVENT_OUTPUT => 8,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$path/setup.php",
-                    "'$path/setup.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$path/test.php",
-                    "'$path/test.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'TestLoaderOne',
-                    "'$path/setup.php loading TestLoaderOne'",
-                ],
-
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$path/test_subdir1/setup.php",
-                    "'$path/test_subdir1/setup.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$path/test_subdir1/test.php",
-                    "'$path/test_subdir1/test.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'TestLoaderTwo',
-                    "'$path/test_subdir1/setup.php loading TestLoaderTwo'",
-                ],
-
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$path/test_subdir2/test.php",
-                    "'$path/test_subdir2/test.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'TestLoaderThree',
-                    "'$path/setup.php loading TestLoaderThree'",
-                ],
-            ]
-        ];
-        $this->assert_report($expected);
-
-        $expected = ['TestLoaderOne', 'TestLoaderTwo', 'TestLoaderThree'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
-
-    }
-
-    public function test_error_if_loader_does_not_return_an_object() {
-        $path = $this->path . 'bad_loader';
+    public function test_passes_arguments_to_tests_and_subdirectories() {
+        $this->discoverer = new easytest\Discoverer(
+            $this->logger,
+            new easytest\Runner($this->logger),
+            $this->context,
+            true
+        );
+        $path = $this->path . 'argument_passing';
         $this->discoverer->discover_tests([$path]);
 
         $this->assert_report([
-            easytest\LOG_EVENT_ERROR => 1,
-            easytest\LOG_EVENT_OUTPUT => 2,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_bad_loader',
-                    "'setup_directory_bad_loader'",
-                ],
-                [
-                    easytest\LOG_EVENT_ERROR,
-                    'TestBadLoader',
-                    'Test loader did not return an object instance'
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_bad_loader',
-                    "'teardown_directory_bad_loader'",
-                ],
-            ],
+            easytest\LOG_EVENT_PASS => 3,
         ]);
+    }
+
+
+    public function test_errors_on_insufficient_arguments() {
+        $path = $this->path . 'insufficient_arguments';
+        $this->discoverer->discover_tests([$path]);
+
+        $expected = $this->blank_report;
+        $expected[easytest\LOG_EVENT_ERROR] = 1;
+        $expected[easytest\LOG_EVENT_OUTPUT] = 1;
+        $expected['events'] = [
+            [
+                easytest\LOG_EVENT_ERROR,
+                'TestInsufficientArguments',
+                // #BC(7.0): Check for different error message
+                version_compare(PHP_VERSION, '7.1', '<')
+                    ? 'Missing argument 2 for TestInsufficientArguments::__construct()'
+                    : 'Too few arguments to function TestInsufficientArguments::__construct()',
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'teardown_directory_insufficient_arguments',
+                "'teardown_directory_insufficient_arguments'",
+            ],
+        ];
+
+        $log = $this->logger->get_log();
+        $actual = [
+            easytest\LOG_EVENT_PASS => $log->pass_count(),
+            easytest\LOG_EVENT_FAIL => $log->failure_count(),
+            easytest\LOG_EVENT_ERROR => $log->error_count(),
+            easytest\LOG_EVENT_SKIP => $log->skip_count(),
+            easytest\LOG_EVENT_OUTPUT => $log->output_count(),
+            'events' => $log->get_events(),
+        ];
+        for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
+            list($type, $source, $reason) = $actual['events'][$i];
+            // #BC(5.6) Check if $reason is instanceof Exception
+            if ($reason instanceof Throwable
+                || $reason instanceof Exception) {
+                $actual['events'][$i][2] = substr(
+                    $reason->getMessage(), 0,
+                    // #BC(7.0): Check for different error message
+                    version_compare(PHP_VERSION, '7.1', '<') ? 63 : 70
+                );
+            }
+        }
+
+        easytest\assert_identical($expected, $actual);
     }
 
     public function test_namespaces() {

@@ -103,8 +103,6 @@ Release
 -   Fix TestDiscovery tests so that they don't depend on the order in which
     tests are run
 
--   Fix passing state to test subdirectories
-
 -   Add additional verbosity level? The bulk of our discovery tests works by
     generating output and then checking for it in the test log, which seems a
     little janky
