@@ -37,11 +37,6 @@ interface IContext {
     public function include_file($file);
 }
 
-interface IDiff {
-    public function diff($from, $to, $from_name, $to_name);
-}
-
-
 interface Log {
     public function pass_count();
 
@@ -74,300 +69,16 @@ interface IRunner {
     public function run_test_case($object);
 }
 
-interface IVariableFormatter {
-    public function format_var(&$var);
-}
 
-
-/*
- * Generate a unified diff between two strings.
- *
- * This is a basic implementation of the longest common subsequence algorithm.
- */
-final class Diff implements IDiff {
-    public function diff($from, $to, $from_name, $to_name) {
-        $diff = $this->diff_array(\explode("\n", $from), \explode("\n", $to));
-        $diff = \implode("\n", $diff);
-        return "- $from_name\n+ $to_name\n\n$diff";
-    }
-
-    private function diff_array($from, $to) {
-        $flen = \count($from);
-        $tlen = \count($to);
-        $m = [];
-
-        for ($i = 0; $i <= $flen; ++$i) {
-            for ($j = 0; $j <= $tlen; ++$j) {
-                if (0 === $i || 0 === $j) {
-                    $m[$i][$j] = 0;
-                }
-                elseif ($from[$i-1] === $to[$j-1]) {
-                    $m[$i][$j] = $m[$i-1][$j-1] + 1;
-                }
-                else {
-                    $m[$i][$j] = \max($m[$i][$j-1], $m[$i-1][$j]);
-                }
-            }
-        }
-
-        $i = $flen;
-        $j = $tlen;
-        $diff = [];
-        while ($i > 0 || $j > 0) {
-            if ($i > 0 && $j > 0 && $from[$i-1] === $to[$j-1]) {
-                --$i;
-                --$j;
-                \array_unshift($diff, '  ' . $to[$j]);
-            }
-            elseif ($j > 0 && (0 === $i || $m[$i][$j-1] >= $m[$i-1][$j])) {
-                --$j;
-                \array_unshift($diff, '+ ' . $to[$j]);
-            }
-            elseif ($i > 0 && (0 === $j || $m[$i][$j-1] < $m[$i-1][$j])) {
-                --$i;
-                \array_unshift($diff, '- ' . $from[$i]);
-            }
-            else {
-                throw new \Exception('Reached unexpected branch');
-            }
-        }
-
-        return $diff;
-    }
-}
-
-
-/*
- * Format a variable for display.
- *
- * This provides more readable formatting of variables than PHP's built-in
- * variable-printing functions (print_r(), var_dump(), var_export()) and
- * also handles recursive references.
- */
-final class VariableFormatter implements IVariableFormatter {
-    private $sentinel;
-
-    public function __construct() {
-        $this->sentinel = ['byval' => new \stdClass(), 'byref' => null];
-    }
-
-    public function format_var(&$var) {
-        $name = \is_object($var) ? \get_class($var) : \gettype($var);
-        $seen = ['byval' => [], 'byref' => []];
-        return $this->format($var, $name, $seen);
-    }
-
-    private function format(&$var, $name, &$seen, $indent = 0) {
-        $reference = $this->check_reference($var, $name, $seen);
-        if ($reference) {
-            return $reference;
-        }
-        if (\is_scalar($var) || null === $var) {
-            return $this->format_scalar($var);
-        }
-        if (\is_resource($var)) {
-            return $this->format_resource($var);
-        }
-        if (\is_array($var)) {
-            return $this->format_array($var, $name, $seen, $indent);
-        }
-        return $this->format_object($var, $name, $seen, $indent);
-    }
-
-    private function format_scalar(&$var) {
-        return \var_export($var, true);
-    }
-
-    private function format_resource(&$var) {
-        return \sprintf(
-            '%s of type "%s"',
-            \print_r($var, true),
-            \get_resource_type($var)
-        );
-    }
-
-    private function format_array(&$var, $name, &$seen, $indent) {
-        $baseline = \str_repeat(' ', $indent);
-        $indent += 4;
-        $padding = \str_repeat(' ', $indent);
-        $out = '';
-
-        if ($var) {
-            foreach ($var as $key => &$value) {
-                $key = \var_export($key, true);
-                $out .= \sprintf(
-                    "\n%s%s => %s,",
-                    $padding,
-                    $key,
-                    $this->format(
-                        $value,
-                        \sprintf('%s[%s]', $name, $key),
-                        $seen,
-                        $indent
-                    )
-                );
-            }
-            $out .= "\n$baseline";
-        }
-        return "array($out)";
-    }
-
-    private function format_object(&$var, $name, &$seen, $indent) {
-        $baseline = \str_repeat(' ', $indent);
-        $indent += 4;
-        $padding = \str_repeat(' ', $indent);
-        $out = '';
-
-        $class = \get_class($var);
-        $values = (array)$var;
-        if ($values) {
-            foreach ($values as $key => &$value) {
-                /*
-                 * Object properties are cast to array keys as follows:
-                 *     public    $property -> "property"
-                 *     protected $property -> "\0*\0property"
-                 *     private   $property -> "\0class\0property"
-                 *         where "class" is the name of the class where the
-                 *         property is declared
-                 */
-                $key = \explode("\0", $key);
-                $property = '$' . \array_pop($key);
-                if ($key && $key[1] !== '*' && $key[1] !== $class) {
-                    $property = "$key[1]::$property";
-                }
-                $out .= \sprintf(
-                    "\n%s%s = %s;",
-                    $padding,
-                    $property,
-                    $this->format(
-                        $value,
-                        \sprintf('%s->%s', $name, $property),
-                        $seen,
-                        $indent
-                    )
-                );
-            }
-            $out .= "\n$baseline";
-        }
-        return "$class {{$out}}";
-    }
-
-    /*
-     * Check if $var is a reference to another value in $seen.
-     *
-     * If $var is normally pass-by-value, then it can only be an explicit
-     * reference. If it's normally pass-by-reference, then it can either be an
-     * object reference or an explicit reference. Explicit references are
-     * marked with the reference operator, i.e., '&'.
-     *
-     * Since PHP has no built-in way to determine if a variable is a reference,
-     * references are identified with a hack wherein $var is changed and $seen
-     * is checked for an equivalent change.
-     */
-    private function check_reference(&$var, $name, &$seen) {
-        if (\is_scalar($var) || \is_array($var) || null === $var) {
-            $copy = $var;
-            $var = $this->sentinel['byval'];
-            $reference = \array_search($var, $seen['byval'], true);
-            if (false === $reference) {
-                $seen['byval'][$name] = &$var;
-            }
-            else {
-                $reference = "&$reference";
-            }
-            $var = $copy;
-        }
-        else {
-            $reference = \array_search($var, $seen['byref'], true);
-            if (false === $reference) {
-                $seen['byref'][$name] = &$var;
-            }
-            else {
-                $copy = $var;
-                $var = $this->sentinel['byref'];
-                if ($var === $seen['byref'][$reference]) {
-                    $reference = "&$reference";
-                }
-                $var = $copy;
-            }
-        }
-        return $reference;
-    }
-}
 
 
 final class ErrorHandler {
-    private static $eh;
-
-    private $formatter;
-    private $diff;
-    private $assertion;
-
-    public static function enable(IVariableFormatter $formatter, IDiff $diff) {
-        if (isset(self::$eh)) {
-            throw new \Exception(\get_class() . ' has already been enabled');
-        }
-
-        self::$eh = new ErrorHandler($formatter, $diff);
-
-        // #BC(5.3): Include E_STRICT in error_reporting()
-        \error_reporting(\E_ALL | \E_STRICT);
-        \set_error_handler([self::$eh, 'handle_error'], \error_reporting());
-
-        // #BC(5.6): Check if PHP 7 assertion options are supported
-        if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
-            if (-1 === \ini_get('zend.assertions')) {
-                \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
-                exit(EasyTest::FAILURE);
-            }
-            \ini_set('zend.assertions', 1);
-
-            // #BC(7.1): Check whether or not to enable assert.exception
-            // With PHP 7.2 deprecating calling assert() with a string
-            // assertion, there doesn't seem to be  any reason to keep assert's
-            // legacy behavior enabled
-            if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
-                \ini_set('assert.exception', 1);
-            }
-        }
-        // Although the documentation discourages using these configuration
-        // directives for PHP 7-only code, we want to ensure that assert() is
-        // in a known configured state regardless of the environment
-        \assert_options(\ASSERT_ACTIVE, 1);
-        \assert_options(\ASSERT_WARNING, 1);
-        \assert_options(\ASSERT_BAIL, 0);
-        \assert_options(\ASSERT_QUIET_EVAL, 0);
-        \assert_options(\ASSERT_CALLBACK, [self::$eh, 'handle_assertion']);
-    }
-
-
-    public static function assert_equal($expected, $actual, $message = null) {
-        \assert(self::$eh);
-        return self::$eh->do_assert_equal($expected, $actual, $message);
-    }
-
-
-    public static function assert_identical($expected, $actual, $message = null) {
-        \assert(self::$eh);
-        return self::$eh->do_assert_identical($expected, $actual, $message);
-    }
-
-
-    private function __construct(IVariableFormatter $formatter, IDiff $diff) {
-        $this->formatter = $formatter;
-        $this->diff = $diff;
-    }
-
-    /*
-     * Failed assertions are actually handled in the error handler, since it
-     * has access to the error context (i.e., the variables that were in scope
-     * when assert() was called). The assertion handler is used to save state
-     * that is not available in the error handler, namely, the raw assertion
-     * expression ($code) and the optional assertion message ($desc).
-     */
     public function handle_assertion($file, $line, $code, $desc = null) {
         if (!\ini_get('assert.exception')) {
-            $this->assertion = [$code, $desc];
+            if (!$desc) {
+                $desc = $code ? "assert($code) failed" : 'assert() failed';
+            }
+            throw new Failure($desc);
         }
     }
 
@@ -376,88 +87,7 @@ final class ErrorHandler {
             // This error code is not included in error_reporting
             return;
         }
-
-        if (!$this->assertion) {
-            throw new Error($errstr, $errno, $errfile, $errline);
-        }
-
-        list($code, $message) = $this->assertion;
-        $this->assertion = null;
-
-        if (!$message) {
-            $message = $code ? "assert($code) failed" : $errstr;
-        }
-        throw new Failure($message);
-    }
-
-
-    private function do_assert_equal($expected, $actual, $message = null) {
-        if ($expected == $actual) {
-            return;
-        }
-
-        if (\is_array($expected) && \is_array($actual)) {
-            $this->sort_array($expected);
-            $this->sort_array($actual);
-        }
-        if (!isset($message)) {
-            $message = 'Assertion "$expected == $actual" failed';
-        }
-        throw new Failure(
-            \sprintf(
-                "%s\n\n%s",
-                $message,
-                $this->diff->diff(
-                    $this->formatter->format_var($expected),
-                    $this->formatter->format_var($actual),
-                    'expected', 'actual'
-                )
-            )
-        );
-    }
-
-
-    private function do_assert_identical($expected, $actual, $message = null) {
-        if ($expected === $actual) {
-            return;
-        }
-
-        if (!isset($message)) {
-            $message = 'Assertion "$expected === $actual" failed';
-        }
-        throw new Failure(
-            \sprintf(
-                "%s\n\n%s",
-                $message,
-                $this->diff->diff(
-                    $this->formatter->format_var($expected),
-                    $this->formatter->format_var($actual),
-                    'expected', 'actual'
-                )
-            )
-        );
-    }
-
-    private function sort_array(&$array, &$seen = []) {
-        if (!\is_array($array)) {
-            return;
-        }
-
-        /* Prevent infinite recursion for arrays with recursive references. */
-        $temp = $array;
-        $array = null;
-        $sorted = \in_array($array, $seen, true);
-        $array = $temp;
-        unset($temp);
-
-        if (false !== $sorted) {
-            return;
-        }
-        $seen[] = &$array;
-        \ksort($array);
-        foreach ($array as &$value) {
-            $this->sort_array($value, $seen);
-        }
+        throw new Error($errstr, $errno, $errfile, $errline);
     }
 }
 
@@ -1159,6 +789,7 @@ function _find_fixture($logger, $class, $methods, $pattern) {
 
 
 function main($argc, $argv) {
+    namespace\_enable_error_handling();
     namespace\_try_loading_composer();
     namespace\_load_easytest();
 
@@ -1166,8 +797,6 @@ function main($argc, $argv) {
     if (!$tests) {
         $tests[] = \getcwd();
     }
-
-    ErrorHandler::enable(new VariableFormatter(), new Diff());
 
     $logger = new BufferingLogger(
         new LiveUpdatingLogger(
@@ -1202,7 +831,7 @@ function _try_loading_composer() {
 
 
 function _load_easytest() {
-    $files = ['assertions', 'exceptions', 'log', 'output'];
+    $files = ['assertions', 'exceptions', 'log', 'output', 'util'];
     // #BC(5.5): Implement proxy functions for argument unpacking
     // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
     // versions, so we need to include version-dependent proxy functions to do
@@ -1218,6 +847,40 @@ function _load_easytest() {
     foreach ($files as $file) {
         require __DIR__ . "/{$file}.php";
     }
+}
+
+
+function _enable_error_handling() {
+    $eh = new ErrorHandler();
+
+    // #BC(5.3): Include E_STRICT in error_reporting()
+    \error_reporting(\E_ALL | \E_STRICT);
+    \set_error_handler([$eh, 'handle_error'], \error_reporting());
+
+    // #BC(5.6): Check if PHP 7 assertion options are supported
+    if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
+        if (-1 === \ini_get('zend.assertions')) {
+            \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
+            exit(namespace\EXIT_FAILURE);
+        }
+        \ini_set('zend.assertions', 1);
+
+        // #BC(7.1): Check whether or not to enable assert.exception
+        // With PHP 7.2 deprecating calling assert() with a string
+        // assertion, there doesn't seem to be  any reason to keep assert's
+        // legacy behavior enabled
+        if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
+            \ini_set('assert.exception', 1);
+        }
+    }
+    // Although the documentation discourages using these configuration
+    // directives for PHP 7-only code, we want to ensure that assert() is
+    // in a known configured state regardless of the environment
+    \assert_options(\ASSERT_ACTIVE, 1);
+    \assert_options(\ASSERT_WARNING, 0);
+    \assert_options(\ASSERT_BAIL, 0);
+    \assert_options(\ASSERT_QUIET_EVAL, 0);
+    \assert_options(\ASSERT_CALLBACK, [$eh, 'handle_assertion']);
 }
 
 

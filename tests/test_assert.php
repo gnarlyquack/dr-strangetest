@@ -40,7 +40,7 @@ class TestAssertExpression {
 
         // #BC(5.6): Check format of default assert description
         $expected = version_compare(PHP_VERSION, '7.0', '<')
-                  ? 'assert(): Assertion failed'
+                  ? 'assert() failed'
                   : 'assert($true == $false)';
         easytest\assert_identical($expected, $f->getMessage());
     }

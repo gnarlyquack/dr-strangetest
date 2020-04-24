@@ -6,24 +6,19 @@
 // LICENSE.txt file.
 
 class TestDiff {
-    private $diff;
-
-    /*
-     * This is used to ensure that text editors don't trim trailing whitespace
-     * from the expected output strings in the tests
-     */
+    // This is used to ensure that text editors don't trim trailing whitespace
+    // from the expected output strings in the tests
     private $ws = '';
 
-    public function setup() {
-        $this->diff = new easytest\Diff();
-    }
 
     // helper assertions
 
     private function assert_diff($from, $to, $expected) {
-        $actual = $this->diff->diff($from, $to, 'expected', 'actual');
+        $actual = easytest\diff($from, $to, 'expected', 'actual');
         easytest\assert_identical($expected, $actual);
     }
+
+    // tests
 
     public function test_identical_text() {
         $from = $to = <<<TEXT
@@ -45,13 +40,12 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
-    /*
-     * The expected outcome of the next two tests is probably somewhat
-     * unexpected, as an empty string is shown as being either added or
-     * substracted. However, these two cases would need to be specifically
-     * handled, and given the expected usage of comparing differing variable
-     * values, will most likely not be encountered in practice.
-     */
+
+    // The expected outcome of the next two tests is probably somewhat
+    // unexpected, as an empty string is shown as being either added or
+    // substracted. However, these two cases would need to be specifically
+    // handled, and given the expected usage of comparing differing variable
+    // values, will most likely not be encountered in practice.
 
     public function test_add_text() {
         $from = '';
@@ -75,6 +69,7 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
+
     public function test_remove_text() {
         $from = <<<TO
 This is the first line.
@@ -96,6 +91,7 @@ EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
     }
+
 
     public function test_add_beginning() {
         $from = <<<FROM
@@ -127,6 +123,7 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
+
     public function test_remove_beginning() {
         $from = <<<FROM
 This is an extra line.
@@ -156,6 +153,7 @@ EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
     }
+
 
     public function test_add_ending() {
         $from = <<<FROM
@@ -187,6 +185,7 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
+
     public function test_remove_ending() {
         $from = <<<FROM
 This is the first line.
@@ -216,6 +215,7 @@ EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
     }
+
 
     public function test_add_middle() {
         $from = <<<FROM
@@ -247,6 +247,7 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
+
     public function test_remove_middle() {
         $from = <<<FROM
 This is the first line.
@@ -277,10 +278,9 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
-    /*
-     * The next two tests test multiple changes between two strings, and were
-     * taken from examples used in several Wikipedia articles on the topic.
-     */
+
+    // The next two tests test multiple changes between two strings, and were
+    // taken from examples used in several Wikipedia articles on the topic.
 
     public function test_changes1() {
         $from = <<<FROM
@@ -317,6 +317,7 @@ EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
     }
+
 
     public function test_changes2() {
         $from = <<<FROM
@@ -420,12 +421,11 @@ EXPECTED;
         $this->assert_diff($from, $to, $expected);
     }
 
-    /*
-     * The next two tests are simply repeats of the previous two but with the
-     * strings repeated. Although seemingly redundant, initial implementation
-     * efforts saw the previous two tests pass while the next two failed,
-     * so it would seem to be worthwhile to keep them.
-     */
+
+    // The next two tests are simply repeats of the previous two but with the
+    // strings repeated. Although seemingly redundant, initial implementation
+    // efforts saw the previous two tests pass while the next two failed,
+    // so it would seem to be worthwhile to keep them.
 
     public function test_changes3() {
         $from = <<<FROM
@@ -484,6 +484,7 @@ EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
     }
+
 
     public function test_changes4() {
         $from = <<<FROM

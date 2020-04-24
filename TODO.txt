@@ -9,8 +9,6 @@ Release
 -------
 -   Distribute EasyTest as a single executable (Phar?)
 
--   Add support for config files(?)
-
 -   Finish implementing CLI argument parsing
     -   Combined short options
     -   Options with arguments
@@ -18,8 +16,6 @@ Release
     -   '--' ends option parsing and is excluded from any remaining arguments
 
 -   Implement CLI options
-    -   specify a config file(?)
-    -   reverse report output
     -   version
     -   help
 
@@ -45,8 +41,6 @@ Release
 -   When using a message/description for an assertion, consider showing the
     message in addition to, not in place of, the assertion expression
 
--   assert_equal() and assert_identical(): stop proxying to the error handler
-
 -   Implement additional assertions?
     -   assert_preg_match
     -   assert_isset
@@ -54,11 +48,6 @@ Release
 -   Test installing and running via Composer/Packagist
 
 -   Report how long test runs take
-
--   diff: Limit number of lines that are reported before and after the
-    differing portion of text
-
--   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
 -   _format_exception_string: bulletproof the check to filter out calls within
     Easytest
@@ -100,6 +89,15 @@ Release
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
 
+
+Future
+------
+-   Add support for config files(?)
+
+-   Implement CLI options(?)
+    -   specify a config file
+    -   reverse report output
+
 -   Fix TestDiscovery tests so that they don't depend on the order in which
     tests are run
 
@@ -107,9 +105,16 @@ Release
     generating output and then checking for it in the test log, which seems a
     little janky
 
+-   Cache results of directory (and file?) discovery
 
-Future / Someday(?)
--------------------
+-   diff: Limit number of lines that are reported before and after the
+    differing portion of text
+
+-   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
+
+
+Wishlist / Someday(?)
+---------------------
 -   Implement data generators/subtests
 
 -   Improve diff algorithm
@@ -123,5 +128,3 @@ Future / Someday(?)
 -   Support calling assert() with arbitrary exceptions in PHP >= 7? It's not
     entirely clear what this would even entail: perhaps allow for outputting
     custom types of errors/failures?
-
--   Cache results of directory (and file?) discovery

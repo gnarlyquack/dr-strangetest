@@ -39,10 +39,48 @@ function assert_throws($expected, $callback, $message = null) {
  */
 
 function assert_equal($expected, $actual, $message = null) {
-    ErrorHandler::assert_equal($expected, $actual, $message);
+    if ($expected == $actual) {
+        return;
+    }
+
+    if (\is_array($expected) && \is_array($actual)) {
+        namespace\ksort_recursive($expected);
+        namespace\ksort_recursive($actual);
+    }
+    if (!isset($message)) {
+        $message = 'Assertion "$expected == $actual" failed';
+    }
+    throw new Failure(
+        \sprintf(
+            "%s\n\n%s",
+            $message,
+            namespace\diff(
+                namespace\format_variable($expected),
+                namespace\format_variable($actual),
+                'expected', 'actual'
+            )
+        )
+    );
 }
 
 
 function assert_identical($expected, $actual, $message = null) {
-    ErrorHandler::assert_identical($expected, $actual, $message);
+    if ($expected === $actual) {
+        return;
+    }
+
+    if (!isset($message)) {
+        $message = 'Assertion "$expected === $actual" failed';
+    }
+    throw new Failure(
+        \sprintf(
+            "%s\n\n%s",
+            $message,
+            namespace\diff(
+                namespace\format_variable($expected),
+                namespace\format_variable($actual),
+                'expected', 'actual'
+            )
+        )
+    );
 }
