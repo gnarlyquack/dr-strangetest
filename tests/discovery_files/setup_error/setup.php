@@ -1,4 +1,9 @@
 <?php
 
-$this->log[] = __FILE__;
-throw new Exception('An error happened');
+function setup_directory_setup_error() {
+    throw new Exception('An error happened');
+}
+
+function teardown_directory_setup_error() {
+    echo __FUNCTION__;
+}

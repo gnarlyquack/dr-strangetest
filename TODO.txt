@@ -103,6 +103,20 @@ Release
 
     -   Also see how we're handling this when processing directories and files
 
+-   Rename setup/teardown_class, since these methods are actually operating on
+    instantiated class instances
+
+-   Fix TestDiscovery::test_individual_paths
+
+-   Fix TestDiscovery tests so that they don't depend on the order in which
+    tests are run
+
+-   Fix passing state to test subdirectories
+
+-   Add additional verbosity level? The bulk of our discovery tests works by
+    generating output and then checking for it in the test log, which seems a
+    little janky
+
 
 Future / Someday(?)
 -------------------

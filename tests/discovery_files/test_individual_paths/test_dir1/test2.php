@@ -1,3 +1,3 @@
 <?php
 
-$this->log[] = __FILE__;
+echo __FILE__;

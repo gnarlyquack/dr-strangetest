@@ -559,101 +559,188 @@ final class Discoverer {
         if ($target === $dir) {
             $target = null;
         }
-        $paths = $this->process_directory($loader, $dir, $target);
-        if (!$paths) {
+        $processed = $this->process_directory($dir, $target);
+        if (!$processed) {
             return;
         }
 
-        $loader = $paths['setup']();
+        list($setup, $teardown, $files, $directories) = $processed;
+        if ($setup) {
+            $this->logger->start_buffering($setup);
+            $loader = $this->run_setup($loader, $setup);
+            $this->logger->end_buffering();
+        }
+
         if ($loader) {
-            foreach ($paths['files'] as $path) {
-                $this->discover_file($loader, $path);
+            foreach ($files as $file) {
+                $this->discover_file($loader, $file);
             }
-            foreach ($paths['dirs'] as $path) {
-                $this->discover_directory($loader, $path, $target);
+            foreach ($directories as $directory) {
+                $this->discover_directory($loader, $directory, $target);
             }
-            $paths['teardown']();
-        }
-    }
-
-    private function process_directory($loader, $path, $target) {
-        $paths = \glob("$path*", \GLOB_MARK | $this->glob_sort);
-        $processed = [];
-
-        $processed['setup'] = $this->process_setup($loader, $paths);
-        $processed['teardown'] = $this->process_teardown($paths);
-        if (!$processed['setup'] || !$processed['teardown']) {
-            return false;
-        }
-
-        if (!$target) {
-            $processed['files'] = \preg_grep($this->patterns['files'], $paths);
-            $processed['dirs'] = \preg_grep($this->patterns['dirs'], $paths);
-            return $processed;
-        }
-
-        $i = \strpos($target, '/', \strlen($path));
-        if (false === $i) {
-            $processed['files'] = [$target];
-            $processed['dirs'] = [];
-        }
-        else {
-            $processed['files'] = [];
-            $processed['dirs'] = [\substr($target, 0, $i + 1)];
-        }
-
-        return $processed;
-    }
-
-    private function process_setup($loader, $paths) {
-        $path = \preg_grep($this->patterns['setup'], $paths);
-
-        switch (\count($path)) {
-        case 0:
-            return function() use ($loader) { return $loader; };
-
-        case 1:
-            $path = \current($path);
-            return function() use ($path, $loader) {
-                $this->logger->start_buffering($path);
-                $succeeded = $this->include_setup($loader, $path);
+            if ($teardown) {
+                $this->logger->start_buffering($teardown);
+                $this->run_teardown($teardown);
                 $this->logger->end_buffering();
-                return $succeeded;
-            };
+            }
+        }
+    }
 
-        default:
+    private function process_directory($path, $target) {
+        $error = false;
+        $setup = [];
+        $files = [];
+        $directories = [];
+
+        foreach (\scandir($path) as $basename) {
+            $filepath = "$path$basename";
+            if (0 === \strcasecmp($basename, 'setup.php')) {
+                if ($setup) {
+                    $error = true;
+                }
+                $setup[] = $filepath;
+                continue;
+            }
+            if ($error || $target) {
+                continue;
+            }
+            if (0 === \substr_compare($basename, 'test', 0, 4, true)) {
+                if (\is_dir($filepath)) {
+                    $directories[] = "$filepath/";
+                }
+                elseif (0 === \substr_compare($basename, '.php', -4, 4, true)) {
+                    $files[] = $filepath;
+                }
+            }
+        }
+
+        if ($error) {
             $this->logger->log_error(
-                \dirname(\current($path)),
-                "Multiple files found:\n\t" . \implode("\n\t", $path)
+                $path,
+                \sprintf(
+                    "Multiple setup files found:\n\t%s",
+                    \implode("\n\t", $setup)
+                )
             );
             return false;
         }
+
+        $teardown = null;
+        if ($setup) {
+            $result = $this->parse_setup($setup[0]);
+            if (!$result) {
+                return false;
+            }
+            list($setup, $teardown) = $result;
+        }
+
+        if ($target) {
+            $i = \strpos($target, '/', \strlen($path));
+            if (false === $i) {
+                $files[] = $target;
+            }
+            else {
+                $directories[] = \substr($target, 0, $i + 1);
+            }
+        }
+
+        return [$setup, $teardown, $files, $directories];
     }
 
-    private function process_teardown($paths) {
-        $path = \preg_grep($this->patterns['teardown'], $paths);
-
-        switch (\count($path)) {
-        case 0:
-            return function() { return true; };
-
-        case 1:
-            $path = \current($path);
-            return function() use ($path) {
-                $this->logger->start_buffering($path);
-                $succeeded = $this->include_teardown($path);
-                $this->logger->end_buffering();
-                return $succeeded;
-            };
-
-        default:
-            $this->logger->log_error(
-                \dirname(\current($path)),
-                "Multiple files found:\n\t" . \implode("\n\t", $path)
-            );
+    private function parse_setup($file) {
+        $this->logger->start_buffering($file);
+        $succeeded = $this->include_file($file);
+        $this->logger->end_buffering();
+        if (!$succeeded) {
             return false;
         }
+
+        $ns = '';
+        $functions = [
+            'setup' => [],
+            'teardown' => [],
+        ];
+        $tokens = \token_get_all(\file_get_contents($file));
+        /* Assume token 0 = '<?php' and token 1 = whitespace */
+        for ($i = 2, $c = \count($tokens); $i < $c; ++$i) {
+            if (!\is_array($tokens[$i])) {
+                continue;
+            }
+            switch ($tokens[$i][0]) {
+            case \T_FUNCTION:
+                $function = null;
+                /* $i = 'function' and $i+1 = whitespace */
+                $i += 2;
+                while (true) {
+                    if ('{' === $tokens[$i]) {
+                        break;
+                    }
+                    if (\is_array($tokens[$i])
+                        && \T_STRING === $tokens[$i][0])
+                    {
+                        $function = $tokens[$i][1];
+                        break;
+                    }
+                    ++$i;
+                }
+
+                // advance token index to the end of the function definition
+                while ('{' !== $tokens[$i++]);
+                $scope = 1;
+                while ($scope) {
+                    $token = $tokens[$i++];
+                    if ('{' === $token) {
+                        ++$scope;
+                    }
+                    elseif ('}' === $token) {
+                        --$scope;
+                    }
+                }
+
+                if ($function
+                    && \preg_match('~^(teardown|setup)_?directory~i', $function, $matches)) {
+                    $function = "$ns$function";
+                    $functions[\strtolower($matches[1])][] = $function;
+                }
+                break;
+
+            case \T_NAMESPACE:
+                list($ns, $i) = $this->parse_namespace($tokens, $i, $ns);
+                break;
+            }
+        }
+
+        $error = false;
+        if (\count($functions['setup']) > 1) {
+            $this->logger->log_error(
+                $file,
+                \sprintf(
+                    "Multiple fictures found:\n\t%s",
+                    \implode("\n\t", $functions['setup'])
+                )
+            );
+            $error = true;
+        }
+        if (\count($functions['teardown']) > 1) {
+            $this->logger->log_error(
+                $file,
+                \sprintf(
+                    "Multiple fictures found:\n\t%s",
+                    \implode("\n\t", $functions['teardown'])
+                )
+            );
+            $error = true;
+        }
+
+        if ($error) {
+            return false;
+        }
+        return [
+            \current($functions['setup']),
+            \current($functions['teardown'])
+        ];
     }
+
 
     /*
      * Discover and run tests in a file.
@@ -786,35 +873,35 @@ final class Discoverer {
         return false;
     }
 
-    private function include_setup($loader, $file) {
+    private function run_setup($loader, $callable) {
         try {
-            $result = $this->context->include_file($file);
+            $result = $callable();
             return \is_callable($result) ? $result : $loader;
         }
         catch (Skip $e) {
-            $this->logger->log_skip($file, $e);
+            $this->logger->log_skip($callable, $e);
         }
         catch (\Throwable $e) {
-            $this->logger->log_error($file, $e);
+            $this->logger->log_error($callable, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->logger->log_error($file, $e);
+            $this->logger->log_error($callable, $e);
         }
         return false;
     }
 
-    private function include_teardown($file) {
+    private function run_teardown($callable) {
         try {
-            $this->context->include_file($file);
+            $callable();
             return true;
         }
         catch (\Throwable $e) {
-            $this->logger->log_error($file, $e);
+            $this->logger->log_error($callable, $e);
         }
         // #BC(5.6): Catch Exception, which implements Throwable
         catch (\Exception $e) {
-            $this->logger->log_error($file, $e);
+            $this->logger->log_error($callable, $e);
         }
         return false;
     }
