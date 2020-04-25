@@ -78,10 +78,11 @@ Release
 -   How should we handle the potential deletion of our output buffer by the
     user? Certainly this would seem to be a possibility.
 
--   When processing test case methods, report all errors. Right now we report
-    the first error and then bail.
-
-    -   Also see how we're handling this when processing directories and files
+-   Ensure all errors are reported during discovery. Right now, we typically
+    report the first error and then bail. The following cases need to be
+    handled:
+    -   Processing object methods
+    -   Parsing a directory's setup.php
 
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
@@ -97,12 +98,11 @@ Future
     -   specify a config file
     -   reverse report output
 
--   Fix TestDiscovery tests so that they don't depend on the order in which
-    tests are run
-
 -   Add additional verbosity level? The bulk of our discovery tests works by
     generating output and then checking for it in the test log, which seems a
     little janky
+    -   Actually we probably want to implement additional debugging logging
+        events that we can then inspect with a debugging logger
 
 -   Cache results of directory (and file?) discovery
 
@@ -111,9 +111,30 @@ Future
 
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
+-   Niggles to test/check:
 
-Wishlist / Someday(?)
----------------------
+    -   What happens if we try to tokenize an empty file?
+
+    -   Do we properly handle directories whose name matches against file name
+        patterns?
+
+    -   Do we properly handle traversing towards a target that may have a
+        potentially ambiguous directory name in the path? E.g., the target is
+        in "tests/test_foobar/test_target.php" and the test suite also has the
+        directory "tests/test_foo" (which may or may not also include a file
+        "test_target.php")
+
+-   Only determine the test root once. Currently, we determine a new root for
+    every provided path, which means we could run potentially try to run tests
+    from completely unrelated test suites. This could be problematic, e.g., we
+    could have name collisions between the test suites.
+
+    -   Fixing this introduces a new niggle: handling an individual path
+        that falls outside of the determined root
+
+
+Wishlist / Someday
+------------------
 -   Implement data generators/subtests
 
 -   Improve diff algorithm

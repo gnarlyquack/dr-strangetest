@@ -1,10 +1,10 @@
 <?php
 
 function SetupDirectoryTEST1() {
-    echo __FUNCTION__;
+    echo __DIR__;
 }
 
 
 function TearDownDirectoryTEST1() {
-    echo __FUNCTION__;
+    echo __DIR__;
 }

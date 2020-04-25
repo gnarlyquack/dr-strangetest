@@ -31,7 +31,7 @@ function discover_tests(BufferingLogger $logger, array $paths) {
             $path .= '/';
         }
         $root = namespace\_determine_root($path);
-        namespace\_discover_directory($state, $logger, $root, $path, null);
+        namespace\_discover_directory($state, $logger, $root, null, $path);
     }
 }
 
@@ -66,7 +66,7 @@ function _determine_root($path) {
 // that match the test regular expressions are discovered.  Otherwise,
 // discovery is only done for the file or directory specified in $target.
 // Directory fixtures are discovered and run in either case.
-function _discover_directory(State $state, BufferingLogger $logger, $dir, $target, $args) {
+function _discover_directory(State $state, BufferingLogger $logger, $dir, $args, $target = null) {
     if ($target === $dir) {
         $target = null;
     }
@@ -75,7 +75,7 @@ function _discover_directory(State $state, BufferingLogger $logger, $dir, $targe
         return;
     }
 
-    list($setup, $teardown, $files, $directories) = $processed;
+    list($setup, $teardown, $tests) = $processed;
     if ($setup) {
         $logger->start_buffering($setup);
         list($succeeded, $args) = namespace\_run_setup($logger, $setup, $setup, $args);
@@ -85,12 +85,10 @@ function _discover_directory(State $state, BufferingLogger $logger, $dir, $targe
         }
     }
 
-    foreach ($files as $file) {
-        namespace\_discover_file($state, $logger, $file, $args);
+    foreach ($tests as $test => $run) {
+        $run($state, $logger, $test, $args, $target);
     }
-    foreach ($directories as $directory) {
-        namespace\_discover_directory($state, $logger, $directory, $target, $args);
-    }
+
     if ($teardown) {
         $logger->start_buffering($teardown);
         namespace\_run_teardown($logger, $teardown, $teardown, $args);
@@ -101,29 +99,60 @@ function _discover_directory(State $state, BufferingLogger $logger, $dir, $targe
 
 function _process_directory(State $state, BufferingLogger $logger, $path, $target) {
     $error = false;
+    $target_found = false;
     $setup = [];
-    $files = [];
-    $directories = [];
+    $tests = [];
 
-    foreach (\scandir($path) as $basename) {
-        $filepath = "$path$basename";
-        if (0 === \strcasecmp($basename, 'setup.php')) {
-            if ($setup) {
-                $error = true;
+    foreach (new \DirectoryIterator($path) as $file) {
+        $basename = $file->getBasename();
+        $pathname = $file->getPathname();
+        $type = $file->getType();
+
+        if ('file' === $type) {
+            if (0 === \strcasecmp($basename, 'setup.php')) {
+                if ($setup) {
+                    // Note the error but continue iterating so we can identify
+                    // all errors
+                    $error = true;
+                }
+                $setup[] = $pathname;
+                continue;
             }
-            $setup[] = $filepath;
+            if ($error || $target_found) {
+                continue;
+            }
+            if (0 === \substr_compare($basename, 'test', 0, 4, true)
+                && 0 === \strcasecmp($file->getExtension(), 'php'))
+            {
+                if (!$target || $target === $pathname) {
+                    $tests[$pathname] = 'easytest\\_discover_file';
+                    if ($target) {
+                        $target_found = true;
+                    }
+                }
+            }
             continue;
         }
-        if ($error || $target) {
+
+        if ($error || $target_found) {
             continue;
         }
-        if (0 === \substr_compare($basename, 'test', 0, 4, true)) {
-            if (\is_dir($filepath)) {
-                $directories[] = "$filepath/";
+
+        if ('dir' === $type) {
+            // Ensure directory names end with a directory separator to ensure
+            // we can only match against full directory names
+            $pathname .= \DIRECTORY_SEPARATOR;
+            if (0 === \substr_compare($basename, 'test', 0, 4, true)) {
+                if (!$target
+                    || 0 === \substr_compare($target, $pathname, 0, \strlen($pathname)))
+                {
+                    $tests[$pathname] = 'easytest\\_discover_directory';
+                    if ($target) {
+                        $target_found = true;
+                    }
+                }
             }
-            elseif (0 === \substr_compare($basename, '.php', -4, 4, true)) {
-                $files[] = $filepath;
-            }
+            continue;
         }
     }
 
@@ -138,7 +167,6 @@ function _process_directory(State $state, BufferingLogger $logger, $path, $targe
         return false;
     }
 
-    $teardown = null;
     if ($setup) {
         $result = namespace\_parse_setup($state, $logger, $setup[0]);
         if (!$result) {
@@ -146,18 +174,12 @@ function _process_directory(State $state, BufferingLogger $logger, $path, $targe
         }
         list($setup, $teardown) = $result;
     }
-
-    if ($target) {
-        $i = \strpos($target, '/', \strlen($path));
-        if (false === $i) {
-            $files[] = $target;
-        }
-        else {
-            $directories[] = \substr($target, 0, $i + 1);
-        }
+    else {
+        $setup = null;
+        $teardown = null;
     }
 
-    return [$setup, $teardown, $files, $directories];
+    return [$setup, $teardown, $tests];
 }
 
 

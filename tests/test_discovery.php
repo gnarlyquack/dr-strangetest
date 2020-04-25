@@ -9,7 +9,7 @@ class TestDiscovery {
     private $logger;
     private $path;
 
-    private $blank_report = [
+    private $blank_log = [
         easytest\LOG_EVENT_PASS => 0,
         easytest\LOG_EVENT_FAIL => 0,
         easytest\LOG_EVENT_ERROR => 0,
@@ -28,8 +28,111 @@ class TestDiscovery {
 
     // helper assertions
 
+    private function assert_counts(array $counts, easytest\Log $log) {
+        $expected = $this->blank_log;
+        unset($expected['events']);
+        foreach ($counts as $i => $count) {
+            $expected[$i] = $count;
+        }
+
+        $actual = [
+            easytest\LOG_EVENT_PASS => $log->pass_count(),
+            easytest\LOG_EVENT_FAIL => $log->failure_count(),
+            easytest\LOG_EVENT_ERROR => $log->error_count(),
+            easytest\LOG_EVENT_SKIP => $log->skip_count(),
+            easytest\LOG_EVENT_OUTPUT => $log->output_count(),
+        ];
+        easytest\assert_identical(
+            $expected, $actual,
+            sprintf("Unexpected events:\n%s", print_r($log->get_events(), true))
+        );
+    }
+
+    private function assert_run($directories, $events, $root = null) {
+        $current = null;
+        $directory = null;
+        if ($root) {
+            $directory = &$directories[$root];
+            $current = $root;
+        }
+
+        foreach ($events as $event) {
+            list($type, $source, $reason) = $event;
+            if (preg_match('~^setup_?directory~i', $source)) {
+                $new = trim($reason, "\\'");
+                if ($current && !isset($directory['dirs'][$new])) {
+                    $message = <<<MESSAGE
+Wanted to descend into a child directory that either doesn't exist or has no tests.
+current: $current
+child:   $new
+MESSAGE;
+                    easytest\fail($message);
+                }
+                $directory = &$directories[$new];
+                $current = $new;
+                if (!$root) {
+                    $root = $new;
+                }
+                ++$directory['setup'];
+            }
+
+            elseif (preg_match('~^teardown_?directory~i', $source)) {
+                $new = $directory['parent'];
+                if ($current !== $root && !isset($directories[$new])) {
+                    $message = <<<MESSAGE
+Wanted to ascend into an invalid parent directory.
+current: $current
+parent:  $new
+MESSAGE;
+                    easytest\fail($message);
+                }
+                ++$directory['teardown'];
+                $directory = &$directories[$new];
+                if (!($directories[$current]['dirs'] || $directories[$current]['tests'])) {
+                    unset($directory['dirs'][$current]);
+                }
+                $current = $new;
+            }
+
+            else {
+                if (isset($directory['tests'][$source])) {
+                    unset($directory['tests'][$source]);
+                }
+                else {
+                    $message = <<<MESSAGE
+Wanted to run a non-existent test
+current directory: $current
+test:  $new
+available tests:
+    %s
+MESSAGE;
+                    $message = sprintf(
+                        $message,
+                        implode("\n    ", array_keys($directory['tests']))
+                    );
+                    easytest\fail($message);
+                }
+            }
+        }
+
+        foreach ($directories as $path => $directory) {
+            easytest\assert_identical(
+                $directory['setup'], $directory['teardown'],
+                "fixtures were run an unequal amount of times in\n$path"
+            );
+            easytest\assert_identical(
+                [], $directory['dirs'],
+                "not all tests in subdirectories were run in\n$path"
+            );
+            easytest\assert_identical(
+                [], $directory['tests'],
+                "not all tests were run in\n$path"
+            );
+        }
+    }
+
     private function assert_report($report) {
-        $expected = $this->blank_report;
+        $expected = $this->blank_log;
         foreach ($report as $i => $entry) {
             $expected[$i] = $entry;
         }
@@ -75,10 +178,11 @@ class TestDiscovery {
         easytest\assert_identical($expected, $actual);
     }
 
+
     // tests
 
     public function test_discover_file() {
-        $path = $this->path . 'MyTestFile.php';
+        $path = $this->path . 'TestMyFile.php';
         easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
@@ -99,21 +203,44 @@ class TestDiscovery {
 
         easytest\discover_tests($this->logger,[$path]);
 
+        $log = $this->logger->get_log();
+        $this->assert_counts([easytest\LOG_EVENT_OUTPUT => 9], $log);
+
         $expected = [
-            [easytest\LOG_EVENT_OUTPUT, "$path/test.php", "'$path/test.php'"],
+            $path => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => null,
+                'dirs' => [
+                    "$path/TEST_DIR1" => true,
+                    "$path/test_dir2" => true,
+                ],
+                'tests' => ["$path/test.php" => true],
+            ],
 
-            [easytest\LOG_EVENT_OUTPUT, "SetupDirectoryTEST1", "'SetupDirectoryTEST1'"],
-            [easytest\LOG_EVENT_OUTPUT, "$path/TEST_DIR1/TEST1.PHP", "'$path/TEST_DIR1/TEST1.PHP'"],
-            [easytest\LOG_EVENT_OUTPUT, "$path/TEST_DIR1/TEST2.PHP", "'$path/TEST_DIR1/TEST2.PHP'"],
-            [easytest\LOG_EVENT_OUTPUT, "TearDownDirectoryTEST1", "'TearDownDirectoryTEST1'"],
+            "$path/TEST_DIR1" => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => $path,
+                'dirs' => [],
+                'tests' => [
+                    "$path/TEST_DIR1/TEST1.PHP" => true,
+                    "$path/TEST_DIR1/TEST2.PHP" => true,
+                ],
+            ],
 
-            [easytest\LOG_EVENT_OUTPUT, "setup_directory_test2", "'setup_directory_test2'"],
-            [easytest\LOG_EVENT_OUTPUT, "$path/test_dir2/test1.php", "'$path/test_dir2/test1.php'"],
-            [easytest\LOG_EVENT_OUTPUT, "$path/test_dir2/test2.php", "'$path/test_dir2/test2.php'"],
-            [easytest\LOG_EVENT_OUTPUT, "teardown_directory_test2", "'teardown_directory_test2'"],
+            "$path/test_dir2" => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => $path,
+                'dirs' => [],
+                'tests' => [
+                    "$path/test_dir2/test1.php" => true,
+                    "$path/test_dir2/test2.php" => true,
+                ],
+            ],
         ];
-        $actual = $this->logger->get_log();
-        easytest\assert_identical($expected, $actual->get_events());
+        $this->assert_run($expected, $log->get_events(), $path);
     }
 
     public function test_individual_paths() {
@@ -125,103 +252,57 @@ class TestDiscovery {
         ];
         easytest\discover_tests($this->logger,$paths);
 
-        $this->assert_report([
-            easytest\LOG_EVENT_OUTPUT => 18,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths',
-                    "'setup_directory_individual_paths'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths_dir1',
-                    "'setup_directory_individual_paths_dir1'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$root/test_dir1/test2.php",
-                    "'$root/test_dir1/test2.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths_dir1',
-                    "'teardown_directory_individual_paths_dir1'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths',
-                    "'teardown_directory_individual_paths'",
-                ],
+        $log = $this->logger->get_log();
+        // Because EasyTest (currently) ascends back up $root after finishing
+        // each individual path, we'll have more output than if EasyTest
+        // traversed directly to the next individual path
+        $this->assert_counts([easytest\LOG_EVENT_OUTPUT => 18], $log);
 
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths',
-                    "'setup_directory_individual_paths'",
+        $expected = [
+            $root => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => null,
+                'dirs' => [
+                    "$root/test_dir1" => true,
+                    "$root/test_dir2" => true,
                 ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths_dir1',
-                    "'setup_directory_individual_paths_dir1'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$root/test_dir1/test3.php",
-                    "'$root/test_dir1/test3.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths_dir1',
-                    "'teardown_directory_individual_paths_dir1'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths',
-                    "'teardown_directory_individual_paths'",
-                ],
+                'tests' => [],
+            ],
 
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths',
-                    "'setup_directory_individual_paths'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths_dir2',
-                    "'setup_directory_individual_paths_dir2'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_individual_paths_dir2_subdir',
-                    "'setup_directory_individual_paths_dir2_subdir'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$root/test_dir2/test_subdir/test1.php",
-                    "'$root/test_dir2/test_subdir/test1.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$root/test_dir2/test_subdir/test2.php",
-                    "'$root/test_dir2/test_subdir/test2.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths_dir2_subdir',
-                    "'teardown_directory_individual_paths_dir2_subdir'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths_dir2',
-                    "'teardown_directory_individual_paths_dir2'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_individual_paths',
-                    "'teardown_directory_individual_paths'",
+            "$root/test_dir1" => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => $root,
+                'dirs' => [],
+                'tests' => [
+                    "$root/test_dir1/test2.php" => true,
+                    "$root/test_dir1/test3.php" => true,
                 ],
             ],
-        ]);
+
+            "$root/test_dir2" => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => $root,
+                'dirs' => [
+                    "$root/test_dir2/test_subdir" => true,
+                ],
+                'tests' => [],
+            ],
+
+            "$root/test_dir2/test_subdir" => [
+                'setup' => 0,
+                'teardown' => 0,
+                'parent' => "$root/test_dir2",
+                'dirs' => [],
+                'tests' => [
+                    "$root/test_dir2/test_subdir/test1.php" => true,
+                    "$root/test_dir2/test_subdir/test2.php" => true,
+                ],
+            ],
+        ];
+        $this->assert_run($expected, $log->get_events());
     }
 
     public function test_nonexistent_path() {
@@ -392,7 +473,7 @@ class TestDiscovery {
         $path = $this->path . 'insufficient_arguments';
         easytest\discover_tests($this->logger,[$path]);
 
-        $expected = $this->blank_report;
+        $expected = $this->blank_log;
         $expected[easytest\LOG_EVENT_ERROR] = 1;
         $expected[easytest\LOG_EVENT_OUTPUT] = 1;
         $expected['events'] = [
@@ -482,7 +563,7 @@ class TestDiscovery {
             easytest\skip('PHP 7 introduced anonymous classes');
         }
 
-        $path = $this->path . 'AnonymousClass.php';
+        $path = $this->path . 'TestAnonymousClass.php';
         easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([easytest\LOG_EVENT_PASS => 1]);
