@@ -1,5 +1,5 @@
 <?php
 
-$this->log[] = __FILE__;
-
-class test_skip_in_setup {}
+class test_skip_in_setup {
+    public function test() {}
+}

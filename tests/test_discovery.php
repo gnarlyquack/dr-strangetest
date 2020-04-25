@@ -5,13 +5,9 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-class TestDiscovery implements easytest\IRunner {
+class TestDiscovery {
     private $logger;
-    private $context;
-    private $discoverer;
-
     private $path;
-    private $runner_log;
 
     private $blank_report = [
         easytest\LOG_EVENT_PASS => 0,
@@ -26,22 +22,7 @@ class TestDiscovery implements easytest\IRunner {
         $this->logger = new easytest\BufferingLogger(
             new easytest\BasicLogger(true)
         );
-        $this->context = new easytest\Context();
-        $this->context->log = [];
-        $this->discoverer = new easytest\Discoverer(
-            $this->logger,
-            $this,
-            $this->context,
-            true
-        );
         $this->path = __DIR__ . '/discovery_files/';
-        $this->runner_log = [];
-    }
-
-    // implementation of runner interface
-
-    public function run_test_case($object) {
-        $this->runner_log[] = get_class($object);
     }
 
 
@@ -98,10 +79,10 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_discover_file() {
         $path = $this->path . 'MyTestFile.php';
-
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
+            easytest\LOG_EVENT_PASS => 5,
             easytest\LOG_EVENT_OUTPUT => 1,
             'events' => [
                 [
@@ -111,16 +92,12 @@ class TestDiscovery implements easytest\IRunner {
                 ],
             ],
         ]);
-
-        $expected = ['Test', 'test2', 'Test3'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
     }
 
     public function test_discover_directory() {
         $path = $this->path . 'discover_directory';
 
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
 
         $expected = [
             [easytest\LOG_EVENT_OUTPUT, "$path/test.php", "'$path/test.php'"],
@@ -146,7 +123,7 @@ class TestDiscovery implements easytest\IRunner {
             "$root/test_dir1/test3.php",
             "$root/test_dir2/test_subdir",
         ];
-        $this->discoverer->discover_tests($paths);
+        easytest\discover_tests($this->logger,$paths);
 
         $this->assert_report([
             easytest\LOG_EVENT_OUTPUT => 18,
@@ -249,7 +226,7 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_nonexistent_path() {
         $path = $this->path . 'foobar.php';
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
         $this->assert_report([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
@@ -264,13 +241,10 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_file_error() {
         $path = $this->path . 'file_error';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = ['test_file_error_two'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
             easytest\LOG_EVENT_OUTPUT => 2,
             'events' => [
@@ -295,11 +269,7 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_setup_error() {
         $path = $this->path . 'setup_error';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = [];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
             easytest\LOG_EVENT_ERROR => 1,
@@ -315,13 +285,10 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_teardown_error() {
         $path = $this->path . 'teardown_error';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = ['test_teardown_error'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
             easytest\LOG_EVENT_OUTPUT => 2,
             'events' => [
@@ -347,11 +314,7 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_skip() {
         $path = $this->path . 'skip';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = [];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
             easytest\LOG_EVENT_SKIP => 1,
@@ -383,15 +346,7 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_skip_in_setup() {
         $path = $this->path . 'skip_in_setup';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = ["$path/setup.php"];
-        $actual = $this->context->log;
-        easytest\assert_identical($expected, $actual);
-
-        $expected = [];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
             easytest\LOG_EVENT_SKIP => 1,
@@ -407,20 +362,10 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_skip_in_teardown() {
         $path = $this->path . 'skip_in_teardown';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = [
-            "$path/setup.php",
-            "$path/test.php",
-        ];
-        $actual = $this->context->log;
-        easytest\assert_identical($expected, $actual);
-
-        $expected = ['test_skip_in_teardown'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -434,14 +379,8 @@ class TestDiscovery implements easytest\IRunner {
 
 
     public function test_passes_arguments_to_tests_and_subdirectories() {
-        $this->discoverer = new easytest\Discoverer(
-            $this->logger,
-            new easytest\Runner($this->logger),
-            $this->context,
-            true
-        );
         $path = $this->path . 'argument_passing';
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
             easytest\LOG_EVENT_PASS => 3,
@@ -451,7 +390,7 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_errors_on_insufficient_arguments() {
         $path = $this->path . 'insufficient_arguments';
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
 
         $expected = $this->blank_report;
         $expected[easytest\LOG_EVENT_ERROR] = 1;
@@ -460,7 +399,7 @@ class TestDiscovery implements easytest\IRunner {
             [
                 easytest\LOG_EVENT_ERROR,
                 'TestInsufficientArguments',
-                // #BC(7.0): Check for different error message
+                // #BC(7.0): Check format of expected error message
                 version_compare(PHP_VERSION, '7.1', '<')
                     ? 'Missing argument 2 for TestInsufficientArguments::__construct()'
                     : 'Too few arguments to function TestInsufficientArguments::__construct()',
@@ -488,7 +427,7 @@ class TestDiscovery implements easytest\IRunner {
                 || $reason instanceof Exception) {
                 $actual['events'][$i][2] = substr(
                     $reason->getMessage(), 0,
-                    // #BC(7.0): Check for different error message
+                    // #BC(7.0): Check format of expected error message
                     version_compare(PHP_VERSION, '7.1', '<') ? 63 : 70
                 );
             }
@@ -499,44 +438,17 @@ class TestDiscovery implements easytest\IRunner {
 
     public function test_namespaces() {
         $path = $this->path . 'namespaces';
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
 
-        $expected = [
-            "$path/test_bracketed_namespaces.php",
-            "$path/test_simple_namespaces.php",
-        ];
-        $actual = $this->context->log;
-        easytest\assert_identical($expected, $actual);
-
-        $expected = [
-            /* Namespaced tests using bracketed syntax */
-            'ns1\\ns1\\TestNamespace',
-            'ns1\\ns2\\TestNamespace',
-            'TestNamespace',
-
-            /* Namespaced tests using "simple" syntax */
-            'ns2\\TestNamespace',
-            'ns3\\TestNamespace'
-        ];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
-
-        $this->assert_report([]);
+        $this->assert_report([easytest\LOG_EVENT_PASS => 5]);
     }
 
     public function test_output_buffering() {
         $path = $this->path . 'output_buffering';
-        $this->discoverer->discover_tests([$path]);
-
-        $expected = [];
-        $actual = $this->context->log;
-        easytest\assert_identical($expected, $actual);
-
-        $expected = ['test_output_buffering'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
+        easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_OUTPUT => 4,
             'events' => [
                 [
@@ -571,31 +483,17 @@ class TestDiscovery implements easytest\IRunner {
         }
 
         $path = $this->path . 'AnonymousClass.php';
+        easytest\discover_tests($this->logger,[$path]);
 
-        $this->discoverer->discover_tests([$path]);
+        $this->assert_report([easytest\LOG_EVENT_PASS => 1]);
 
-        $this->assert_report([]);
-
-        $expected = ['TestAnonymousClass'];
-        $actual = $this->runner_log;
-        easytest\assert_identical($expected, $actual);
     }
 
 
     public function test_does_not_find_conditionally_nondeclared_tests() {
         $path = $this->path . 'conditional_declaration';
-        $this->discoverer->discover_tests([$path]);
+        easytest\discover_tests($this->logger,[$path]);
 
-        $this->assert_report([]);
-
-        $expected = [
-            'conditional\\TestA' => true,
-            'conditional\\TestB' => true,
-        ];
-        foreach ($this->runner_log as $test) {
-            assert(isset($expected[$test]), "Loaded unexpected test: $test");
-            unset($expected[$test]);
-        }
-        easytest\assert_identical([], $expected);
+        $this->assert_report([easytest\LOG_EVENT_PASS => 2]);
     }
 }

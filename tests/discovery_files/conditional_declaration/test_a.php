@@ -4,28 +4,30 @@ namespace conditional;
 
 if (true) {
 
-    class TestA {}
+    class TestA {
+        public function test() {}
+    }
 
 }
 elseif (false) {
 
     class TestA {
         public function __construct() {
-            assert(false, 'I should not have been discovered!');
+            trigger_error('I should not have been discovered!');
         }
     }
 
 
     class TestB {
         public function __construct() {
-            assert(false, 'I should not have been discovered!');
+            trigger_error('I should not have been discovered!');
         }
     }
 
 
     class TestC {
         public function __construct() {
-            assert(false, 'I should not have been discovered!');
+            trigger_error('I should not have been discovered!');
         }
     }
 

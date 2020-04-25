@@ -1,5 +1,5 @@
 <?php
 
-$this->log[] = __FILE__;
-
-class test_skip_in_teardown {}
+class test_skip_in_teardown {
+    public function test() {}
+}

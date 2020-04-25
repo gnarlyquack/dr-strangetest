@@ -15,7 +15,7 @@ function assert_throws($expected, $callback, $message = null) {
         $callback();
     }
     catch (\Throwable $e) {}
-    // #BC(5.6): Catch Exception, which implements Throwable
+    // #BC(5.6): Catch Exception
     catch (\Exception $e) {}
 
     if (!isset($e)) {

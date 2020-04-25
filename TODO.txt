@@ -27,9 +27,6 @@ Release
     -   Short array syntax ([]) isn't supported
     -   Closures don't have access to $this
 
--   Test discovery: For all tests, first check the reporter, then the context,
-    then the runner
-
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
@@ -88,6 +85,8 @@ Release
 
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
+
+-   Provide args() helper function for returning an ArgList(?)
 
 
 Future

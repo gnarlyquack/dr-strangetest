@@ -48,7 +48,7 @@ final class Error extends \ErrorException {
 
 
 
-// #BC(5.6): Extend Failure from Exception instead of AssertionError
+// #BC(5.6): Extend Failure from Exception
 if (\version_compare(\PHP_VERSION, '7.0', '<')) {
 
     final class Failure extends \Exception {
@@ -131,7 +131,7 @@ final class Skip extends \Exception {
 
 function _find_client_call_site() {
     // Find the first call in a backtrace that's outside of easytest
-    // #BC(5.3): Check format of $option parameter for debug_backtrace()
+    // #BC(5.3): Pass false for debug_backtrace() $option parameter
     $trace = \version_compare(\PHP_VERSION, '5.3.6', '<')
            ? \debug_backtrace(false)
            : \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
@@ -163,7 +163,7 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
     for($i = 0, $c = \count($trace); $i < $c; ++$i) {
         $line = $trace[$i];
         if (__DIR__ === \dirname($line['file'])) {
-            if ('run_test' === $line['function']) {
+            if ('easytest\\_run_test' === $line['function']) {
                 break;
             }
             continue;

@@ -2,9 +2,9 @@
 
 namespace ns1\ns1 {
 
-$this->log[] = __FILE__;
-
-class TestNamespace {}
+class TestNamespace {
+    public function test() {}
+}
 
 /* ensure the namespace operator isn't confused for a namespace declaration */
 const FOO = 'foo';
@@ -18,7 +18,9 @@ namespace
     ns2 // sub namespace
 {
 
-class TestNamespace {}
+class TestNamespace {
+    public function test() {}
+}
 
 const FOO = 'foo';
 namespace\FOO;
@@ -27,7 +29,9 @@ namespace\FOO;
 
 namespace { // global namespace
 
-class TestNamespace {}
+class TestNamespace {
+    public function test() {}
+}
 
 const FOO = 'foo';
 namespace\FOO;

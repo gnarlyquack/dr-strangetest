@@ -21,7 +21,6 @@ class TestRunner {
         $this->logger = new easytest\BufferingLogger(
             new easytest\BasicLogger(false)
         );
-        $this->runner = new easytest\Runner($this->logger);
     }
 
     // helper assertions
@@ -29,7 +28,7 @@ class TestRunner {
     private function assert_run($test, $expected) {
         $actual = $test->log;
         easytest\assert_identical([], $actual);
-        $this->runner->run_test_case($test);
+        easytest\_run_test_case($this->logger, $test);
         $actual = $test->log;
         easytest\assert_identical($expected, $actual);
     }

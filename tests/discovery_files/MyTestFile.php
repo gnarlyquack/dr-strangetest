@@ -7,7 +7,9 @@ class TestComment {}
 */
 
 
-class Test {}
+class Test {
+    function /* My test method! */ test_me() {}
+}
 
 
 <<<STRING
@@ -27,7 +29,11 @@ class NotATest {}
 
 class // valid tokens between the 'class' keyword and the test name
       /* should be handled correctly */
-Test3 {}
+TestThree {
+    private function test1() {}
+    public function test2() {}
+    protected function test3() {}
+}
 
 
 ?>
