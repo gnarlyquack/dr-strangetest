@@ -15,8 +15,13 @@ class TestArgParse {
         easytest\assert_identical(
             ['verbose' => false],
             $opts,
-            'Options weren\'t parsed');
-        easytest\assert_identical([], $args, 'Arguments weren\'t parsed');
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            [],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
     }
 
 
@@ -28,11 +33,12 @@ class TestArgParse {
         easytest\assert_identical(
             ['verbose' => false],
             $opts,
-            'Options weren\'t parsed');
+            "Options weren't parsed correctly"
+        );
         easytest\assert_identical(
             ['one', 'two'],
             $args,
-            'Arguments weren\'t parsed'
+            "Arguments weren't parsed correctly"
         );
     }
 
@@ -45,8 +51,13 @@ class TestArgParse {
         easytest\assert_identical(
             ['verbose' => true],
             $opts,
-            'Options weren\'t parsed');
-        easytest\assert_identical([], $args, 'Arguments weren\'t parsed');
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            [],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
     }
 
 
@@ -58,7 +69,84 @@ class TestArgParse {
         easytest\assert_identical(
             ['verbose' => true],
             $opts,
-            'Options weren\'t parsed');
-        easytest\assert_identical([], $args, 'Arguments weren\'t parsed');
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            [],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
+    }
+
+
+    public function test_parses_multiple_short_options() {
+        // argv[0] is always the current executable name
+        $argv = ['foo', '-vqv'];
+        list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
+
+        easytest\assert_identical(
+            ['verbose' => true],
+            $opts,
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            [],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
+    }
+
+
+    public function test_ends_parsing_on_first_argument() {
+        // argv[0] is always the current executable name
+        $argv = ['foo', 'bar', '--verbose'];
+        list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
+
+        easytest\assert_identical(
+            ['verbose' => false],
+            $opts,
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            ['bar', '--verbose'],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
+    }
+
+
+    public function test_treats_single_dash_as_an_argument() {
+        // argv[0] is always the current executable name
+        $argv = ['foo', '-', '--verbose'];
+        list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
+
+        easytest\assert_identical(
+            ['verbose' => false],
+            $opts,
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            ['-', '--verbose'],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
+    }
+
+
+    public function test_ends_parsing_on_double_dash() {
+        // argv[0] is always the current executable name
+        $argv = ['foo', '--', '--verbose'];
+        list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
+
+        easytest\assert_identical(
+            ['verbose' => false],
+            $opts,
+            "Options weren't parsed correctly"
+        );
+        easytest\assert_identical(
+            ['--verbose'],
+            $args,
+            "Arguments weren't parsed correctly"
+        );
     }
 }

@@ -8,8 +8,13 @@
 namespace easytest;
 
 
-function output_header($header) {
-    echo "$header\n\n";
+function output($text) {
+    echo "$text\n";
+}
+
+
+function output_header($text) {
+    echo "$text\n\n";
 }
 
 

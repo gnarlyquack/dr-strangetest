@@ -9,23 +9,6 @@ Release
 -------
 -   Distribute EasyTest as a single executable (Phar?)
 
--   Finish implementing CLI argument parsing
-    -   Combined short options
-    -   Options with arguments
-    -   '-' ends option parsing and is included with any remaining arguments
-    -   '--' ends option parsing and is excluded from any remaining arguments
-
--   Implement CLI options
-    -   version
-    -   help
-
--   Support PHP >= 5.3(?)
-    -   Short array syntax ([]) isn't supported
-    -   Closures don't have access to $this
-
--   Ensure we're UTF-8 conformant
-    https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
-
 -   Improve(?) test report(?)
 
 -   assert_throws(): provide better diagnostics when an unexpected
@@ -88,7 +71,7 @@ Future
 ------
 -   Add support for config files(?)
 
--   Implement CLI options(?)
+-   Implement additional CLI options(?)
     -   specify a config file
     -   reverse report output
 
@@ -127,6 +110,13 @@ Future
         that falls outside of the determined root
 
 -   Compress the token-processing loops in _parse_setup and _discover_file?
+
+-   Support PHP >= 5.3(?)
+    -   Short array syntax ([]) isn't supported
+    -   Closures don't have access to $this
+
+-   Ensure we're UTF-8 conformant
+    https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
 
 Wishlist / Someday

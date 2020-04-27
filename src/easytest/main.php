@@ -7,7 +7,8 @@
 
 namespace easytest;
 
-const VERSION = '0.2.2';
+const PROGRAM_NAME    = 'EasyTest';
+const PROGRAM_VERSION = '0.2.2';
 
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
@@ -109,7 +110,7 @@ function main($argc, $argv) {
         )
     );
 
-    namespace\output_header('EasyTest ' . namespace\VERSION);
+    namespace\output_header(namespace\_get_version());
     namespace\discover_tests($logger, $tests);
 
     $log = $logger->get_log();
@@ -120,6 +121,39 @@ function main($argc, $argv) {
         ? namespace\EXIT_FAILURE
         : namespace\EXIT_SUCCESS
     );
+}
+
+
+function _enable_error_handling() {
+    $eh = new ErrorHandler();
+
+    // #BC(5.3): Include E_STRICT in error_reporting()
+    \error_reporting(\E_ALL | \E_STRICT);
+    \set_error_handler([$eh, 'handle_error'], \error_reporting());
+
+    // #BC(5.6): Check if PHP 7 assertion options are supported
+    if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
+        if ('-1' === \ini_get('zend.assertions')) {
+            \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
+            exit(namespace\EXIT_FAILURE);
+        }
+        \ini_set('zend.assertions', 1);
+
+        // #BC(7.1): Check whether or not to enable assert.exception
+        // Since PHP 7.2 deprecates calling assert() with a string assertion,
+        // there seems to be no reason to keep assert's legacy behavior enabled
+        if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
+            \ini_set('assert.exception', 1);
+        }
+    }
+    // Although the documentation discourages using these configuration
+    // directives for PHP 7-only code (which, admittedly, we're not), we want
+    // to ensure that assert() is always in a known configuration
+    \assert_options(\ASSERT_ACTIVE, 1);
+    \assert_options(\ASSERT_WARNING, 0); // Default is 1
+    \assert_options(\ASSERT_BAIL, 0);
+    \assert_options(\ASSERT_QUIET_EVAL, 0);
+    \assert_options(\ASSERT_CALLBACK, [$eh, 'handle_assertion']);
 }
 
 
@@ -158,39 +192,6 @@ function _load_easytest() {
 }
 
 
-function _enable_error_handling() {
-    $eh = new ErrorHandler();
-
-    // #BC(5.3): Include E_STRICT in error_reporting()
-    \error_reporting(\E_ALL | \E_STRICT);
-    \set_error_handler([$eh, 'handle_error'], \error_reporting());
-
-    // #BC(5.6): Check if PHP 7 assertion options are supported
-    if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
-        if ('-1' === \ini_get('zend.assertions')) {
-            \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
-            exit(namespace\EXIT_FAILURE);
-        }
-        \ini_set('zend.assertions', 1);
-
-        // #BC(7.1): Check whether or not to enable assert.exception
-        // Since PHP 7.2 deprecates calling assert() with a string assertion,
-        // there seems to be no reason to keep assert's legacy behavior enabled
-        if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
-            \ini_set('assert.exception', 1);
-        }
-    }
-    // Although the documentation discourages using these configuration
-    // directives for PHP 7-only code (which, admittedly, we're not), we want
-    // to ensure that assert() is always in a known configuration
-    \assert_options(\ASSERT_ACTIVE, 1);
-    \assert_options(\ASSERT_WARNING, 0);
-    \assert_options(\ASSERT_BAIL, 0);
-    \assert_options(\ASSERT_QUIET_EVAL, 0);
-    \assert_options(\ASSERT_CALLBACK, [$eh, 'handle_assertion']);
-}
-
-
 function _parse_arguments($argc, $argv) {
     $opts = ['verbose' => false];
     $args = \array_slice($argv, 1);
@@ -199,9 +200,16 @@ function _parse_arguments($argc, $argv) {
         $arg = $args[0];
 
         if ('--' === \substr($arg, 0, 2)) {
+            if ('--' === $arg) {
+                \array_shift($args);
+                break;
+            }
             list($opts, $args) = namespace\_parse_long_option($args, $opts);
         }
         elseif ('-' === \substr($arg, 0, 1)) {
+            if ('-' === $arg) {
+                break;
+            }
             list($opts, $args) = namespace\_parse_short_option($args, $opts);
         }
         else {
@@ -215,15 +223,28 @@ function _parse_arguments($argc, $argv) {
 
 function _parse_long_option($args, $opts) {
     $opt = \array_shift($args);
+    // Remove the leading dashes
     $opt = \substr($opt, 2);
     return namespace\_parse_option($opt, $args, $opts);
 }
 
 
 function _parse_short_option($args, $opts) {
-    $opt = \array_shift($args);
-    $opt = \substr($opt, 1);
-    return namespace\_parse_option($opt, $args, $opts);
+    // Remove the leading dash, but don't remove the option from $args in
+    // case the option is concatenated with a value or other short options
+    $args[0] = \substr($args[0], 1);
+    $nargs = \count($args);
+
+    while ($nargs === \count($args)) {
+        $opt = \substr($args[0], 0, 1);
+        $args[0] = \substr($args[0], 1);
+        // #BC(5.6): Loose comparison in case substr() returned false
+        if ('' == $args[0]) {
+            \array_shift($args);
+        }
+        list($opts, $args) = namespace\_parse_option($opt, $args, $opts);
+    }
+    return [$opts, $args];
 }
 
 
@@ -238,7 +259,55 @@ function _parse_option($opt, $args, $opts) {
         case 'verbose':
             $opts['verbose'] = true;
             break;
+
+        case 'version':
+            namespace\output(namespace\_get_version());
+            exit(namespace\EXIT_SUCCESS);
+            break;
+
+        case 'help':
+            namespace\output(namespace\_get_help());
+            exit(namespace\EXIT_SUCCESS);
+            break;
     }
 
     return [$opts, $args];
+}
+
+
+function _get_version() {
+    return \sprintf(
+        '%s %s',
+        namespace\PROGRAM_NAME,
+        namespace\PROGRAM_VERSION
+    );
+}
+
+
+function _get_help() {
+    return <<<'HELP'
+Usage: easytest [OPTION]... [PATH]...
+
+Search for and run tests located in PATHs, which may be a list of directories
+and/or files. If omitted, the current directory is searched by default.
+
+
+Supported options:
+
+  --help
+    Show this help and exit.
+
+  -q, --quiet
+    Omit reporting skipped tests and output, unless the output occurred in
+    conjunction with an error or failed test. This is the default, and is
+    provided to disable verbose reporting.
+
+  -v, --verbose
+    Include skipped tests and all output in reporting.
+
+  --version
+    Show the version information and exit
+
+Please report bugs to: https://github.com/gnarlyquack/easytest/issues
+HELP;
 }
