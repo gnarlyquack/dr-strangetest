@@ -103,9 +103,6 @@ function main($argc, $argv) {
     namespace\_load_easytest();
 
     list($options, $tests) = namespace\_parse_arguments($argc, $argv);
-    if (!$tests) {
-        $tests[] = \getcwd();
-    }
     $logger = new BufferingLogger(
         new LiveUpdatingLogger(
             new BasicLogger($options['verbose'])
@@ -127,9 +124,12 @@ function main($argc, $argv) {
 
 
 function _try_loading_composer() {
-    $files = ['/../../../../autoload.php', '/../../vendor/autoload.php'];
+    $files = [
+        '%1$s%2$s..%2$s..%2$s..%2$s..%2$sautoload.php',
+        '%1$s%2$s..%2$s..%2$svendor%2$sautoload.php',
+    ];
     foreach ($files as $file) {
-        $file = __DIR__ . $file;
+        $file = \sprintf($file, __DIR__, \DIRECTORY_SEPARATOR);
         if (\file_exists($file)) {
             require $file;
             return;
@@ -153,7 +153,7 @@ function _load_easytest() {
         $files[] = 'unpack';
     }
     foreach ($files as $file) {
-        require __DIR__ . "/{$file}.php";
+        require \sprintf('%s%s%s.php', __DIR__, \DIRECTORY_SEPARATOR, $file);
     }
 }
 

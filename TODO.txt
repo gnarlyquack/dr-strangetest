@@ -19,8 +19,6 @@ Release
     -   version
     -   help
 
--   Ensure path discovery is OS independent
-
 -   Support PHP >= 5.3(?)
     -   Short array syntax ([]) isn't supported
     -   Closures don't have access to $this

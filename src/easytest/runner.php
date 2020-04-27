@@ -11,7 +11,6 @@ namespace easytest;
 const ERROR_SETUP    = 0x01;
 const ERROR_TEARDOWN = 0x02;
 
-const PATTERN_DIR            = '~/test[^/]*/$~i';
 const PATTERN_TEST           = '~^test~i';
 const PATTERN_SETUP_CLASS    = '~^setup_?class$~i';
 const PATTERN_TEARDOWN_CLASS = '~^teardown_?class$~i';
@@ -23,6 +22,9 @@ const REGEX_DIR_FIXTURE = '~^(setup|teardown)_?directory~i';
 
 function discover_tests(BufferingLogger $logger, array $paths) {
     $state = new State();
+    if (!$paths) {
+        $paths[] = \getcwd();
+    }
     foreach ($paths as $path) {
         $realpath = \realpath($path);
         if (!$realpath) {
@@ -31,7 +33,7 @@ function discover_tests(BufferingLogger $logger, array $paths) {
         }
 
         if (\is_dir($path)) {
-            $path .= '/';
+            $path .= \DIRECTORY_SEPARATOR;
         }
         $root = namespace\_determine_root($path);
         namespace\_discover_directory($state, $logger, $root, null, $path);
@@ -39,37 +41,37 @@ function discover_tests(BufferingLogger $logger, array $paths) {
 }
 
 
-// Determine a path's root test directory.
-//
-// The root test directory is the highest directory that matches the test
-// directory regular expression, or the path itself.
-//
-// This is done to ensure that directory fixtures are properly loaded when
-// testing individual subpaths within a test suite; discovery will begin at
-// the root directory and descend towards the specified path.
 function _determine_root($path) {
-    if ('/' === \substr($path, -1)) {
-        $root = $parent = $path;
+    // Determine a path's root test directory
+    //
+    // The root test directory is the highest directory above $path whose
+    // case-insensitive name begins with 'test' or, if $path is a directory,
+    // $path itself or, if $path is file, the dirname of $path. This is done to
+    // ensure that directory fixtures are properly discovered when testing
+    // individual subpaths within a test suite; discovery will begin at the
+    // root directory and descend towards the specified path.
+    if (\is_dir($path)) {
+        $root = $parent = \rtrim($path, \DIRECTORY_SEPARATOR);
     }
     else {
-        $root = $parent = \dirname($path) . '/';
+        $root = $parent = \dirname($path);
     }
 
-    while (\preg_match(namespace\PATTERN_DIR, $parent)) {
+    while (0 === \substr_compare(\basename($parent), 'test', 0, 4, true)) {
         $root = $parent;
-        $parent = \dirname($parent) . '/';
+        $parent = \dirname($parent);
     }
-    return $root;
+    return $root . \DIRECTORY_SEPARATOR;
 }
 
 
-// Discover and run tests in a directory.
-//
-// If $target is null, then all files and subdirectories within the directory
-// that match the test regular expressions are discovered.  Otherwise,
-// discovery is only done for the file or directory specified in $target.
-// Directory fixtures are discovered and run in either case.
 function _discover_directory(State $state, BufferingLogger $logger, $dir, $args, $target = null) {
+    // Discover and run tests in a directory
+    //
+    // If $target is null, then all files and subdirectories within the
+    // directory whose case-insensitive name begins with 'test' is discovered.
+    // Otherwise, discovery is only done for the file or directory specified in
+    // $target. Directory fixtures are discovered and run in either case.
     if ($target === $dir) {
         $target = null;
     }
@@ -142,10 +144,10 @@ function _process_directory(State $state, BufferingLogger $logger, $path, $targe
         }
 
         if ('dir' === $type) {
-            // Ensure directory names end with a directory separator to ensure
-            // we can only match against full directory names
-            $pathname .= \DIRECTORY_SEPARATOR;
             if (0 === \substr_compare($basename, 'test', 0, 4, true)) {
+                // Ensure directory names end with a directory separator to
+                // ensure we can only match against full directory names
+                $pathname .= \DIRECTORY_SEPARATOR;
                 if (!$target
                     || 0 === \substr_compare($target, $pathname, 0, \strlen($pathname)))
                 {
