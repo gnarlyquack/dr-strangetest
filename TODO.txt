@@ -19,8 +19,6 @@ Release
     -   version
     -   help
 
--   Fix handling of empty strings in diff class
-
 -   Ensure path discovery is OS independent
 
 -   Support PHP >= 5.3(?)

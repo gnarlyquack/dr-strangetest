@@ -13,7 +13,10 @@ namespace easytest;
 // This is a basic implementation of the longest common subsequence algorithm.
 
 function diff($from, $to, $from_name, $to_name) {
-    $diff = namespace\_diff_array(\explode("\n", $from), \explode("\n", $to));
+    $diff = namespace\_diff_array(
+        '' === $from ? [] : \explode("\n", $from),
+        '' === $to   ? [] : \explode("\n", $to)
+    );
     $diff = \implode("\n", $diff);
     return "- $from_name\n+ $to_name\n\n$diff";
 }

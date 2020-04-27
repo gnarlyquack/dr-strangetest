@@ -41,12 +41,6 @@ EXPECTED;
     }
 
 
-    // The expected outcome of the next two tests is probably somewhat
-    // unexpected, as an empty string is shown as being either added or
-    // substracted. However, these two cases would need to be specifically
-    // handled, and given the expected usage of comparing differing variable
-    // values, will most likely not be encountered in practice.
-
     public function test_add_text() {
         $from = '';
         $to = <<<TO
@@ -59,7 +53,6 @@ TO;
 - expected
 + actual
 
-- $this->ws
 + This is the first line.
 + This is the second line.
 + This is the third line.
@@ -86,7 +79,6 @@ TO;
 - This is the second line.
 - This is the third line.
 - This is the fourth line.
-+ $this->ws
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
