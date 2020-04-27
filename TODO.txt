@@ -132,6 +132,8 @@ Future
     -   Fixing this introduces a new niggle: handling an individual path
         that falls outside of the determined root
 
+-   Compress the token-processing loops in _parse_setup and _discover_file?
+
 
 Wishlist / Someday
 ------------------

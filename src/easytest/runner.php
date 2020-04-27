@@ -7,15 +7,18 @@
 
 namespace easytest;
 
-const PATTERN_FILE           = '~/test[^/]*\\.php$~i';
+
+const ERROR_SETUP    = 0x01;
+const ERROR_TEARDOWN = 0x02;
+
 const PATTERN_DIR            = '~/test[^/]*/$~i';
-const PATTERN_SETUP_DIR      = '~/setup\\.php$~i';
-const PATTERN_DIR_FIXTURE    = '~^(setup|teardown)_?directory~i';
 const PATTERN_TEST           = '~^test~i';
 const PATTERN_SETUP_CLASS    = '~^setup_?class$~i';
 const PATTERN_TEARDOWN_CLASS = '~^teardown_?class$~i';
 const PATTERN_SETUP          = '~^setup$~i';
 const PATTERN_TEARDOWN       = '~^teardown$~i';
+
+const REGEX_DIR_FIXTURE = '~^(setup|teardown)_?directory~i';
 
 
 function discover_tests(BufferingLogger $logger, array $paths) {
@@ -52,7 +55,7 @@ function _determine_root($path) {
         $root = $parent = \dirname($path) . '/';
     }
 
-    while (\preg_match(PATTERN_DIR, $parent)) {
+    while (\preg_match(namespace\PATTERN_DIR, $parent)) {
         $root = $parent;
         $parent = \dirname($parent) . '/';
     }
@@ -188,59 +191,40 @@ function _parse_setup(State $state, BufferingLogger $logger, $file) {
         return $state->files[$file];
     }
 
-    $logger->start_buffering($file);
-    $succeeded = namespace\_include_file($logger, $file);
-    $logger->end_buffering();
-    if (!$succeeded) {
+    $tokens = namespace\_tokenize_file($logger, $file);
+    if (!$tokens) {
         return false;
     }
 
+    $error = 0;
     $ns = '';
-    $functions = [
-        'setup' => [],
-        'teardown' => [],
-    ];
-    $tokens = \token_get_all(\file_get_contents($file));
-    /* Assume token 0 = '<?php' and token 1 = whitespace */
-    for ($i = 2, $c = \count($tokens); $i < $c; ++$i) {
+    $setup = [];
+    $teardown = [];
+    for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
         if (!\is_array($tokens[$i])) {
             continue;
         }
         switch ($tokens[$i][0]) {
         case \T_FUNCTION:
-            $function = null;
-            /* $i = 'function' and $i+1 = whitespace */
-            $i += 2;
-            while (true) {
-                if ('{' === $tokens[$i]) {
-                    break;
-                }
-                if (\is_array($tokens[$i])
-                    && \T_STRING === $tokens[$i][0])
-                {
-                    $function = $tokens[$i][1];
-                    break;
-                }
-                ++$i;
+            list($function, $i) = namespace\_parse_identifier($tokens, $i);
+            if (!isset($function)) {
+                break;
             }
 
-            // advance token index to the end of the function definition
-            while ('{' !== $tokens[$i++]);
-            $scope = 1;
-            while ($scope) {
-                $token = $tokens[$i++];
-                if ('{' === $token) {
-                    ++$scope;
-                }
-                elseif ('}' === $token) {
-                    --$scope;
-                }
-            }
-
-            if ($function
-                && \preg_match(PATTERN_DIR_FIXTURE, $function, $matches)) {
+            if (\preg_match(namespace\REGEX_DIR_FIXTURE, $function, $matches)) {
                 $function = "$ns$function";
-                $functions[\strtolower($matches[1])][] = $function;
+                if ('setup' === \strtolower($matches[1])) {
+                    if ($setup) {
+                        $error |= ERROR_SETUP;
+                    }
+                    $setup[] = $function;
+                }
+                else {
+                    if ($teardown) {
+                        $error |= ERROR_TEARDOWN;
+                    }
+                    $teardown[] = $function;
+                }
             }
             break;
 
@@ -250,37 +234,34 @@ function _parse_setup(State $state, BufferingLogger $logger, $file) {
         }
     }
 
-    $error = false;
-    if (\count($functions['setup']) > 1) {
-        $logger->log_error(
-            $file,
-            \sprintf(
-                "Multiple fictures found:\n\t%s",
-                \implode("\n\t", $functions['setup'])
-            )
-        );
-        $error = true;
-    }
-    if (\count($functions['teardown']) > 1) {
-        $logger->log_error(
-            $file,
-            \sprintf(
-                "Multiple fictures found:\n\t%s",
-                \implode("\n\t", $functions['teardown'])
-            )
-        );
-        $error = true;
-    }
-
     if ($error) {
+        if ($error & ERROR_SETUP) {
+            $logger->log_error(
+                $file,
+                \sprintf(
+                    "Multiple setup directory fixtures found:\n\t%s",
+                    \implode("\n\t", $setup)
+                )
+            );
+        }
+        if ($error & ERROR_TEARDOWN) {
+            $logger->log_error(
+                $file,
+                \sprintf(
+                    "Multiple teardown directory fixtures found:\n\t%s",
+                    \implode("\n\t", $teardown)
+                )
+            );
+        }
         $state->files[$file] = false;
     }
     else {
         $state->files[$file] = [
-            \current($functions['setup']),
-            \current($functions['teardown'])
+            $setup ? $setup[0] : null,
+            $teardown ? $teardown[0] : null
         ];
     }
+
     return $state->files[$file];
 }
 
@@ -295,35 +276,35 @@ function _discover_file(State $state, BufferingLogger $logger, $file, $args) {
     }
     $state->files[$file] = true;
 
-    $logger->start_buffering($file);
-    $succeeded = namespace\_include_file($logger, $file);
-    $logger->end_buffering();
-    if (!$succeeded) {
+    $tokens = namespace\_tokenize_file($logger, $file);
+    if (!$tokens) {
         return;
     }
 
     $ns = '';
-    $tokens = \token_get_all(\file_get_contents($file));
-    /* Assume token 0 = '<?php' and token 1 = whitespace */
-    for ($i = 2, $c = \count($tokens); $i < $c; ++$i) {
+    for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
         if (!\is_array($tokens[$i])) {
             continue;
         }
         switch ($tokens[$i][0]) {
         case \T_CLASS:
-            list($class, $i) = namespace\_parse_class($tokens, $i);
-            if ($class) {
-                $classname = "$ns$class";
-                if (!isset($state->seen[$classname])
-                    && \class_exists($classname))
-                {
-                    $state->seen[$classname] = true;
-                    $logger->start_buffering($classname);
-                    $test = namespace\_instantiate_test($logger, $classname, $args);
-                    $logger->end_buffering();
-                    if ($test) {
-                        namespace\_run_test_case($logger, $test);
-                    }
+            list($class, $i) = namespace\_parse_identifier($tokens, $i);
+            if (!isset($class)) {
+                break;
+            }
+
+            if (0 !== \substr_compare($class, 'test', 0, 4, true)) {
+                break;
+            }
+
+            $class = "$ns$class";
+            if (!isset($state->seen[$class]) && \class_exists($class)) {
+                $state->seen[$class] = true;
+                $logger->start_buffering($class);
+                $test = namespace\_instantiate_test($logger, $class, $args);
+                $logger->end_buffering();
+                if ($test) {
+                    namespace\_run_test_case($logger, $test);
                 }
             }
             break;
@@ -336,31 +317,66 @@ function _discover_file(State $state, BufferingLogger $logger, $file, $args) {
 }
 
 
-function _parse_class($tokens, $i) {
-    /* $i = 'class' and $i+1 = whitespace */
-    $i += 2;
-    while (!\is_array($tokens[$i]) || \T_STRING !== $tokens[$i][0]) {
-        ++$i;
-    }
-    $class = $tokens[$i][1];
-
-    // advance token index to the end of the class definition
-    while ('{' !== $tokens[++$i]);
-    $scope = 1;
-    while ($scope) {
-        $token = $tokens[++$i];
-        if ('{' === $token) {
-            ++$scope;
-        }
-        elseif ('}' === $token) {
-            --$scope;
-        }
+function _tokenize_file(BufferingLogger $logger, $filename) {
+    $logger->start_buffering($filename);
+    $succeeded = namespace\_include_file($logger, $filename);
+    $logger->end_buffering();
+    if (!$succeeded) {
+        return;
     }
 
-    if (0 === \substr_compare($class, 'test', 0, 4, true)) {
-        return [$class, $i];
+    try {
+        $code = \file_get_contents($filename);
     }
-    return [false, $i];
+    catch (\Throwable $e) {
+        $logger->log_error($filename, $e);
+        return false;
+    }
+    // #(BC 5.6): Catch Exception
+    catch (\Exception $e) {
+        $logger->log_error($filename, $e);
+        return false;
+    }
+    if (false === $code) {
+        $logger->log_error($filename, "Failed to read file (no error was thrown)");
+        return false;
+    }
+
+    return \token_get_all($code);
+}
+
+
+function _parse_identifier($tokens, $i) {
+        $identifier = null;
+        // $i = keyword identifying the type of identifer ('class', 'function',
+        // etc.) and $i+1 = whitespace
+        $i += 2;
+        while (true) {
+            $token = $tokens[$i];
+            if ('{' === $token) {
+                break;
+            }
+            ++$i;
+            if (\is_array($token) && \T_STRING === $token[0]) {
+                $identifier = $token[1];
+                break;
+            }
+        }
+
+        // advance token index to the end of the definition
+        while ('{' !== $tokens[$i++]);
+        $scope = 1;
+        while ($scope) {
+            $token = $tokens[$i++];
+            if ('{' === $token) {
+                ++$scope;
+            }
+            elseif ('}' === $token) {
+                --$scope;
+            }
+        }
+
+        return [$identifier, $i];
 }
 
 
