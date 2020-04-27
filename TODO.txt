@@ -87,8 +87,6 @@ Release
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
 
--   Provide args() helper function for returning an ArgList(?)
-
 
 Future
 ------

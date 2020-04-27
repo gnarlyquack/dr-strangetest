@@ -90,6 +90,11 @@ final class ArgList {
     }
 }
 
+function args($arg) {
+    // #BC(5.5): Use proxy function for argument unpacking
+    return namespace\_unpack_construct('easytest\\ArgList', \func_get_args());
+}
+
 
 
 function main($argc, $argv) {
