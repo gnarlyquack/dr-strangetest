@@ -7,10 +7,6 @@ desirable for future releases may be listed at the bottom of the file.
 
 Release
 -------
--   Implement additional assertions?
-    -   assert_preg_match
-    -   assert_isset
-
 -   Test installing and running via Composer/Packagist
 
 -   Report how long test runs take
@@ -55,6 +51,10 @@ Release
 
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
+
+-   Treat any exception that is thrown during file inclusion as an error
+
+-   Review test suite
 
 
 Future
@@ -109,6 +109,10 @@ Future
 
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
+
+-   Implement additional assertions? Currently EasyTest's test suite only
+    uses/needs the assertions already provided by the framework, but
+    presumably other assertions would be useful in other contexts
 
 
 Wishlist / Someday

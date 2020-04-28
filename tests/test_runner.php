@@ -585,7 +585,7 @@ class SuppressedErrorTestCase extends BaseTestCase {
 class FailedTestCase extends BaseTestCase {
     public function test() {
         $this->log[] = __FUNCTION__;
-        assert(false, 'Assertion failed');
+        easytest\fail('Assertion failed');
     }
 }
 
@@ -699,7 +699,7 @@ class OutputTestCase {
     public function test_fail() {
         $this->log[] = __FUNCTION__;
         echo __FUNCTION__;
-        assert(false, 'Assertion failed');
+        easytest\fail('Assertion failed');
     }
 
     public function test_error() {
@@ -757,7 +757,7 @@ class OutputBufferingTestCase {
     public function test_fail() {
         $this->log[] = __FUNCTION__;
         echo __FUNCTION__;
-        assert(false, 'Assertion failed');
+        easytest\fail('Assertion failed');
     }
 
     public function test_pass() {
