@@ -447,15 +447,19 @@ class TestRunner {
             ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
         );
         // Note that since the test itself didn't fail, we log a pass, but we
-        // also get errors due to dangling output buffers.  This seems
+        // also get errors due to dangling output buffers. This seems
         // desirable: errors associated with buffering will get logged and
         // cause the test suite in general to fail (so hopefully people will
         // clean up their tests), but do not otherwise impede testing.
         $this->assert_report([
             easytest\LOG_EVENT_PASS => 1,
-            easytest\LOG_EVENT_ERROR => 2,
-            easytest\LOG_EVENT_OUTPUT => 2,
+            easytest\LOG_EVENT_ERROR => 4,
             'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'UndeletedOutputBufferTestCase::setup_class',
+                    "An output buffer was started but never deleted.\nBuffer contents were: 'setup_class'",
+                ],
                 [
                     easytest\LOG_EVENT_ERROR,
                     'teardown for UndeletedOutputBufferTestCase::test',
@@ -464,10 +468,62 @@ class TestRunner {
                 [
                     easytest\LOG_EVENT_ERROR,
                     'teardown for UndeletedOutputBufferTestCase::test',
-                    "An output buffer was started but never deleted.\nThe buffer was empty.",
+                    "An output buffer was started but never deleted.\nBuffer contents were: ''",
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'UndeletedOutputBufferTestCase::teardown_class',
+                    "An output buffer was started but never deleted.\nBuffer contents were: 'teardown_class'",
                 ],
             ]
         ]);
+    }
+
+
+    public function test_reports_error_for_deleting_easytest_output_buffers() {
+        $this->assert_run(
+            new DeletingOutputBufferTestCase(),
+            ['setup_class', 'setup', 'test', 'teardown', 'teardown_class']
+        );
+        // Note that since the test itself didn't fail, we log a pass, but we
+        // also get errors due to deleting EasyTest's output buffers. This
+        // seems desirable: errors associated with buffering will get logged
+        // and cause the test suite in general to fail (so hopefully people
+        // will clean up their tests), but do not otherwise impede testing.
+        $message = "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.";
+        $this->assert_report([
+            easytest\LOG_EVENT_PASS => 1,
+            easytest\LOG_EVENT_ERROR => 5,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'DeletingOutputBufferTestCase::setup_class',
+                    $message,
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'setup for DeletingOutputBufferTestCase::test',
+                    $message,
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'DeletingOutputBufferTestCase::test',
+                    $message,
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'teardown for DeletingOutputBufferTestCase::test',
+                    $message,
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'DeletingOutputBufferTestCase::teardown_class',
+                    $message,
+                ],
+            ]
+        ]);
+
+        easytest\assert_identical('', \ob_get_contents());
     }
 }
 
@@ -771,11 +827,13 @@ class UndeletedOutputBufferTestCase {
 
     public function setup_class() {
         $this->log[] = __FUNCTION__;
+        ob_start();
         echo __FUNCTION__;
     }
 
     public function teardown_class() {
         $this->log[] = __FUNCTION__;
+        ob_start();
         echo __FUNCTION__;
     }
 
@@ -792,5 +850,39 @@ class UndeletedOutputBufferTestCase {
         $this->log[] = __FUNCTION__;
         ob_start();
         echo 'test output';
+    }
+}
+
+class DeletingOutputBufferTestCase {
+    public $log = [];
+
+    public function setup_class() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        ob_end_clean();
+    }
+
+    public function teardown_class() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        ob_end_clean();
+    }
+
+    public function setup() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        ob_end_clean();
+    }
+
+    public function teardown() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        ob_end_clean();
+    }
+
+    public function test() {
+        $this->log[] = __FUNCTION__;
+        echo __FUNCTION__;
+        ob_end_clean();
     }
 }

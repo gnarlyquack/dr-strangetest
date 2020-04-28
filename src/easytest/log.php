@@ -244,27 +244,30 @@ final class BufferingLogger implements Logger {
              $level > $this->ob_level_start;
              --$level)
         {
-            $message = "An output buffer was started but never deleted.";
-            $output = \ob_get_clean();
-            if (\strlen($output)) {
-                $message = \sprintf(
-                    "%s\nBuffer contents were: %s",
-                    $message, \var_export($output, true)
-                );
-            }
-            else {
-                $message = "$message\nThe buffer was empty.";
-            }
-            $this->log_error($source, $message);
+            $this->log_error(
+                $source,
+                \sprintf(
+                    "An output buffer was started but never deleted.\nBuffer contents were: %s",
+                    \var_export(\ob_get_clean(), true)
+                )
+            );
         }
 
-        $output = \ob_get_clean();
-        if (\strlen($output)) {
-            $this->log_output(
-                $source,
-                \var_export($output, true),
-                $this->buffer_error
+        if ($level < $this->ob_level_start) {
+            $this->log_error(
+                $this->buffer,
+                "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
             );
+        }
+        else {
+            $output = \ob_get_clean();
+            if (\strlen($output)) {
+                $this->log_output(
+                    $source,
+                    \var_export($output, true),
+                    $this->buffer_error
+                );
+            }
         }
 
         $this->buffer = null;
@@ -306,7 +309,16 @@ final class BufferingLogger implements Logger {
 
     private function reset_buffer() {
         $level = \ob_get_level();
-        assert($level >= $this->ob_level_start);
+
+        if ($level < $this->ob_level_start) {
+            $this->log_error(
+                $this->buffer,
+                "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
+            );
+            \ob_start();
+            $this->ob_level_start = $this->ob_level_current = \ob_get_level();
+            return;
+        }
 
         $buffers = [];
         if ($level > $this->ob_level_start) {
@@ -344,7 +356,7 @@ final class BufferingLogger implements Logger {
             \ob_start();
             echo $buffer;
         }
-        assert( $this->ob_level_current === \ob_get_level());
+        assert($this->ob_level_current === \ob_get_level());
     }
 
 

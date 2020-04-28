@@ -14,13 +14,6 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   Do we only want to skip teardown if we skipped setup? I.e., should we
-    teardown after an error in setup? It seems like this is the only way to
-    clean up potentially-dangling resources.
-
--   How should we handle the potential deletion of our output buffer by the
-    user? Certainly this would seem to be a possibility.
-
 -   Ensure all errors are reported during discovery. Right now, we typically
     report the first error and then bail. The following cases need to be
     handled:
