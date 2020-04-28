@@ -20,7 +20,7 @@ function assert_throws($expected, $callback, $message = null) {
 
     if (!isset($e)) {
         throw new Failure(
-            $message ?: 'No exception was thrown although one was expected'
+            $message ?: "Expected to catch $expected but no exception was thrown"
         );
     }
 
@@ -28,7 +28,11 @@ function assert_throws($expected, $callback, $message = null) {
         return $e;
     }
 
-    throw $e;
+    $message = \sprintf(
+        'Expected to catch %s but instead caught %s',
+        $expected, \get_class($e)
+    );
+    throw new \Exception($message, 0, $e);
 }
 
 

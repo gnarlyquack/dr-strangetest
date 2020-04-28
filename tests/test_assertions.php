@@ -108,7 +108,7 @@ EXPECTED;
 
 
 
-class TestAssertException {
+class TestAssertThrows {
     public function test_returns_expected_exception() {
         $expected = new ExpectedException();
         $actual = easytest\assert_throws(
@@ -121,7 +121,7 @@ class TestAssertException {
 
     public function test_fails_when_no_exception_is_thrown() {
         try {
-            easytest\assert_throws('Exception', function() {});
+            easytest\assert_throws('ExpectedException', function() {});
         }
         catch (easytest\Failure $actual) {}
 
@@ -130,7 +130,7 @@ class TestAssertException {
         }
 
         easytest\assert_identical(
-            'No exception was thrown although one was expected',
+            'Expected to catch ExpectedException but no exception was thrown',
             $actual->getMessage()
         );
     }
@@ -144,13 +144,17 @@ class TestAssertException {
                 function() use ($expected) { throw $expected; }
             );
         }
-        catch (UnexpectedException $actual) {}
+        catch (\Exception $actual) {}
 
         if (!isset($actual)) {
             throw new easytest\Failure('Did not rethrow an unexpected exception');
         }
 
-        easytest\assert_identical($expected, $actual);
+        easytest\assert_identical(
+            "Expected to catch ExpectedException but instead caught UnexpectedException",
+            $actual->getMessage()
+        );
+        easytest\assert_identical($expected, $actual->getPrevious());
     }
 
 

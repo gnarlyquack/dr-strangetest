@@ -7,9 +7,6 @@ desirable for future releases may be listed at the bottom of the file.
 
 Release
 -------
--   assert_throws(): provide better diagnostics when an unexpected
-    exception is caught
-
 -   When using a message/description for an assertion, consider showing the
     message in addition to, not in place of, the assertion expression
 
