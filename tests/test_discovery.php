@@ -320,19 +320,41 @@ MESSAGE;
         ]);
     }
 
-    public function test_file_error() {
-        $path = $this->path . 'file_error';
+
+    public function test_handles_error_in_directory_setup_file() {
+        $path = $this->path . 'directory_setup_error';
         easytest\discover_tests($this->logger,[$path]);
 
+        // Note that any exception thrown while including a file, including a
+        // skip, is reported as an error
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 1,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/setup.php",
+                    'Skip me'
+                ]
+            ]
+        ]);
+    }
+
+
+    public function test_handles_error_in_test_file() {
+        $path = $this->path . 'test_file_error';
+        easytest\discover_tests($this->logger,[$path]);
+
+        // Note that any exception thrown while including a file, including a
+        // skip, is reported as an error
         $this->assert_report([
             easytest\LOG_EVENT_PASS => 1,
-            easytest\LOG_EVENT_ERROR => 1,
+            easytest\LOG_EVENT_ERROR => 2,
             easytest\LOG_EVENT_OUTPUT => 2,
             'events' => [
                 [
                     easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_file_error',
-                    "'setup_directory_file_error'",
+                    'setup_directory_test_file_error',
+                    "'setup_directory_test_file_error'",
                 ],
                 [
                     easytest\LOG_EVENT_ERROR,
@@ -340,9 +362,14 @@ MESSAGE;
                     'An error happened'
                 ],
                 [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/test3.php",
+                    'Skip me',
+                ],
+                [
                     easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_file_error',
-                    "'teardown_directory_file_error'",
+                    'teardown_directory_test_file_error',
+                    "'teardown_directory_test_file_error'",
                 ],
             ]
         ]);
@@ -388,55 +415,6 @@ MESSAGE;
                     'teardown_directory_teardown_error',
                     "'teardown_directory_teardown_error'",
                 ],
-            ]
-        ]);
-    }
-
-
-    public function test_skip() {
-        $path = $this->path . 'skip';
-        easytest\discover_tests($this->logger,[$path]);
-
-        $this->assert_report([
-            easytest\LOG_EVENT_SKIP => 1,
-            easytest\LOG_EVENT_OUTPUT => 3,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'setup_directory_skip',
-                    "'setup_directory_skip'",
-                ],
-                [
-                    easytest\LOG_EVENT_SKIP,
-                    "$path/test.php",
-                    'Skip me'
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    "$path/test.php",
-                    "'$path/test.php'",
-                ],
-                [
-                    easytest\LOG_EVENT_OUTPUT,
-                    'teardown_directory_skip',
-                    "'teardown_directory_skip'",
-                ],
-            ]
-        ]);
-    }
-
-    public function test_skip_in_setup() {
-        $path = $this->path . 'skip_in_setup';
-        easytest\discover_tests($this->logger,[$path]);
-
-        $this->assert_report([
-            easytest\LOG_EVENT_SKIP => 1,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_SKIP,
-                    "$path/setup.php",
-                    'Skip me'
-                ]
             ]
         ]);
     }

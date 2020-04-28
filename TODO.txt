@@ -14,8 +14,6 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   Treat any exception that is thrown during file inclusion as an error
-
 -   Review test suite
 
 

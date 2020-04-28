@@ -420,9 +420,6 @@ function _include_file(BufferingLogger $logger, $file) {
         namespace\_guard_include($file);
         return true;
     }
-    catch (Skip $e) {
-        $logger->log_skip($file, $e);
-    }
     catch (\Throwable $e) {
         $logger->log_error($file, $e);
     }
