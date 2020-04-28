@@ -163,7 +163,15 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
     for($i = 0, $c = \count($trace); $i < $c; ++$i) {
         $line = $trace[$i];
         if (__DIR__ === \dirname($line['file'])) {
-            if ('easytest\\_run_test' === $line['function']) {
+            // We don't want to walk the entire call stack, because easytest's
+            // entry point is probably outside the easytest directory, and we
+            // don't want to erroneously show that as a client call. We need a
+            // checkpoint so, once we hit it, we know we can't be in client
+            // code anymore. It seems "discover_tests" is the lowest we can set
+            // that checkpoint, as clients can throw exceptions in a variety of
+            // places (e.g., setup fixtures) all of which are subsumed by
+            // discover_tests
+            if ('easytest\\discover_tests' === $line['function']) {
                 break;
             }
             continue;
