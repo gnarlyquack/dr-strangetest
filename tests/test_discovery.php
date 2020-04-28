@@ -441,6 +441,7 @@ MESSAGE;
         ]);
     }
 
+
     public function test_skip_in_teardown() {
         $path = $this->path . 'skip_in_teardown';
         easytest\discover_tests($this->logger,[$path]);
@@ -576,5 +577,27 @@ MESSAGE;
         easytest\discover_tests($this->logger,[$path]);
 
         $this->assert_report([easytest\LOG_EVENT_PASS => 2]);
+    }
+
+
+    public function test_reports_error_for_multiple_directory_fixtures() {
+        $path = $this->path . 'multiple_fixtures';
+        easytest\discover_tests($this->logger,[$path]);
+
+        $this->assert_report([
+            easytest\LOG_EVENT_ERROR => 2,
+            'events' => [
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/setup.php",
+                    "Multiple setup fixtures found:\n\tsetup_directory_multiple_fixtures\n\tSetupDirectoryMultipleFixtures",
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    "$path/setup.php",
+                    "Multiple teardown fixtures found:\n\tteardown_directory_multiple_fixtures\n\tTeardownDirectoryMultipleFixtures",
+                ],
+            ]
+        ]);
     }
 }

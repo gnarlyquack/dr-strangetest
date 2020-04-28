@@ -14,12 +14,6 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   Ensure all errors are reported during discovery. Right now, we typically
-    report the first error and then bail. The following cases need to be
-    handled:
-    -   Processing object methods
-    -   Parsing a directory's setup.php
-
 -   Rename setup/teardown_class, since these methods are actually operating on
     instantiated class instances
 

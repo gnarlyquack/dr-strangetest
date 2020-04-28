@@ -28,7 +28,7 @@ class TestRunner {
     private function assert_run($test, $expected) {
         $actual = $test->log;
         easytest\assert_identical([], $actual);
-        easytest\_run_test_case($this->logger, $test);
+        easytest\_run_test_case($this->logger, \get_class($test), $test);
         $actual = $test->log;
         easytest\assert_identical($expected, $actual);
     }
@@ -239,39 +239,28 @@ class TestRunner {
         ]);
     }
 
-    public function test_multiple_setup_class_fixtures() {
+    public function test_reports_error_on_multiple_object_fixtures() {
         $this->assert_run(
-            new MultipleSetupClassTestCase(),
+            new MultipleObjectFixtureTestCase(),
             []
         );
         $this->assert_report([
-            easytest\LOG_EVENT_ERROR => 1,
+            easytest\LOG_EVENT_ERROR => 2,
             'events' => [
                 [
                     easytest\LOG_EVENT_ERROR,
-                    'MultipleSetupClassTestCase',
-                    "Multiple fixtures found:\n\tSetUpClass\n\tsetup_class"
+                    'MultipleObjectFixtureTestCase',
+                    "Multiple setup fixtures found:\n\tSetUpClass\n\tsetup_class"
+                ],
+                [
+                    easytest\LOG_EVENT_ERROR,
+                    'MultipleObjectFixtureTestCase',
+                    "Multiple teardown fixtures found:\n\tTearDownClass\n\tteardown_class"
                 ],
             ],
         ]);
     }
 
-    public function test_multiple_teardown_class_fixtures() {
-        $this->assert_run(
-            new MultipleTeardownClassTestCase(),
-            []
-        );
-        $this->assert_report([
-            easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
-                    easytest\LOG_EVENT_ERROR,
-                    'MultipleTeardownClassTestCase',
-                    "Multiple fixtures found:\n\tTearDownClass\n\tteardown_class"
-                ],
-            ],
-        ]);
-    }
 
     public function test_skip() {
         $this->assert_run(
@@ -673,13 +662,11 @@ class TeardownClassErrorTestCase extends BaseTestCase {
     }
 }
 
-class MultipleSetupClassTestCase extends BaseTestCase {
+class MultipleObjectFixtureTestCase extends BaseTestCase {
     public function SetUpClass() {
         $this->log[] = __FUNCTION__;
     }
-}
 
-class MultipleTeardownClassTestCase extends BaseTestCase {
     public function TearDownClass() {
         $this->log[] = __FUNCTION__;
     }

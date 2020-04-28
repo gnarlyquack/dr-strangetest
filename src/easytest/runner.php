@@ -11,14 +11,6 @@ namespace easytest;
 const ERROR_SETUP    = 0x01;
 const ERROR_TEARDOWN = 0x02;
 
-const PATTERN_TEST           = '~^test~i';
-const PATTERN_SETUP_CLASS    = '~^setup_?class$~i';
-const PATTERN_TEARDOWN_CLASS = '~^teardown_?class$~i';
-const PATTERN_SETUP          = '~^setup$~i';
-const PATTERN_TEARDOWN       = '~^teardown$~i';
-
-const REGEX_DIR_FIXTURE = '~^(setup|teardown)_?directory~i';
-
 
 function discover_tests(BufferingLogger $logger, array $paths) {
     $state = new State();
@@ -213,7 +205,7 @@ function _parse_setup(State $state, BufferingLogger $logger, $file) {
                 break;
             }
 
-            if (\preg_match(namespace\REGEX_DIR_FIXTURE, $function, $matches)) {
+            if (\preg_match('~^(setup|teardown)_?directory~i', $function, $matches)) {
                 $function = "$ns$function";
                 if ('setup' === \strtolower($matches[1])) {
                     if ($setup) {
@@ -241,7 +233,7 @@ function _parse_setup(State $state, BufferingLogger $logger, $file) {
             $logger->log_error(
                 $file,
                 \sprintf(
-                    "Multiple setup directory fixtures found:\n\t%s",
+                    "Multiple setup fixtures found:\n\t%s",
                     \implode("\n\t", $setup)
                 )
             );
@@ -250,7 +242,7 @@ function _parse_setup(State $state, BufferingLogger $logger, $file) {
             $logger->log_error(
                 $file,
                 \sprintf(
-                    "Multiple teardown directory fixtures found:\n\t%s",
+                    "Multiple teardown fixtures found:\n\t%s",
                     \implode("\n\t", $teardown)
                 )
             );
@@ -303,10 +295,10 @@ function _discover_file(State $state, BufferingLogger $logger, $file, $args) {
             if (!isset($state->seen[$class]) && \class_exists($class)) {
                 $state->seen[$class] = true;
                 $logger->start_buffering($class);
-                $test = namespace\_instantiate_test($logger, $class, $args);
+                $object = namespace\_instantiate_test($logger, $class, $args);
                 $logger->end_buffering();
-                if ($test) {
-                    namespace\_run_test_case($logger, $test);
+                if ($object) {
+                    namespace\_run_test_case($logger, $class, $object);
                 }
             }
             break;
@@ -516,8 +508,7 @@ function _instantiate_test(BufferingLogger $logger, $class, $args) {
 }
 
 
-function _run_test_case(BufferingLogger $logger, $object) {
-    $class = \get_class($object);
+function _run_test_case(BufferingLogger $logger, $class, $object) {
     $methods = namespace\_process_methods($logger, $class, $object);
     if (!$methods) {
         return;
@@ -552,38 +543,78 @@ function _run_test_case(BufferingLogger $logger, $object) {
 
 
 function _process_methods(BufferingLogger $logger, $class, $object) {
-    $methods = \get_class_methods($object);
+    $error = 0;
+    $setup_class = [];
+    $teardown_class = [];
+    $setup = null;
+    $teardown = null;
+    $tests = [];
 
-    $setup_class =  namespace\_find_fixture(
-        $logger, $class, $methods, namespace\PATTERN_SETUP_CLASS);
-    if (false === $setup_class) {
-        return false;
+    foreach (\get_class_methods($object) as $method) {
+        if (0 === \substr_compare($method, 'test', 0, 4, true)) {
+            $tests[] = $method;
+            continue;
+        }
+
+        if(\preg_match('~^(setup|teardown)(?:$|_?class)~i', $method, $matches)) {
+            if (0 === \strcasecmp('setup', $matches[1])) {
+                if ($matches[0] === $matches[1]) {
+                    $setup = $method;
+                }
+                else {
+                    if ($setup_class) {
+                        $error |= namespace\ERROR_SETUP;
+                    }
+                    $setup_class[] = $method;
+                }
+            }
+            else {
+                if ($matches[0] === $matches[1]) {
+                    $teardown = $method;
+                }
+                else {
+                    if ($teardown_class) {
+                        $error |= namespace\ERROR_TEARDOWN;
+                    }
+                    $teardown_class[] = $method;
+                }
+            }
+            continue;
+        }
     }
 
-    $teardown_class = namespace\_find_fixture(
-        $logger, $class, $methods, namespace\PATTERN_TEARDOWN_CLASS);
-    if (false === $teardown_class) {
+    if ($error) {
+        if ($error & namespace\ERROR_SETUP) {
+            $logger->log_error(
+                $class,
+                \sprintf(
+                    "Multiple setup fixtures found:\n\t%s",
+                    \implode("\n\t", $setup_class)
+                )
+            );
+        }
+        if ($error & namespace\ERROR_TEARDOWN) {
+            $logger->log_error(
+                $class,
+                \sprintf(
+                    "Multiple teardown fixtures found:\n\t%s",
+                    \implode("\n\t", $teardown_class)
+                )
+            );
+        }
         return false;
     }
-
-    $setup = namespace\_find_fixture(
-        $logger, $class, $methods, namespace\PATTERN_SETUP);
-    if (false === $setup) {
-        return false;
-    }
-
-    $teardown = namespace\_find_fixture(
-        $logger, $class, $methods, namespace\PATTERN_TEARDOWN);
-    if (false === $teardown) {
-        return false;
-    }
-
-    $tests = \preg_grep(namespace\PATTERN_TEST, $methods);
     if (!$tests) {
         return false;
     }
 
-    return [$setup_class, $teardown_class, $setup, $teardown, $tests];
+    return [
+        $setup_class ? $setup_class[0] : null,
+        $teardown_class ? $teardown_class[0] : null,
+        $setup,
+        $teardown,
+        $tests,
+    ];
 }
 
 
@@ -641,28 +672,5 @@ function _run_test_method(BufferingLogger $logger, $source, $callable) {
     catch (\Exception $e) {
         $logger->log_error($source, $e);
     }
-    return false;
-}
-
-
-function _find_fixture($logger, $class, $methods, $pattern) {
-    $found = \preg_grep($pattern, $methods);
-    $count = \count($found);
-
-    if (0 === $count) {
-        return null;
-    }
-
-    if (1 === $count) {
-        return \current($found);
-    }
-
-    $logger->log_error(
-        $class,
-        \sprintf(
-            "Multiple fixtures found:\n\t%s",
-            \implode("\n\t", $found)
-        )
-    );
     return false;
 }
