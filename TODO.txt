@@ -9,8 +9,6 @@ Release
 -------
 -   Test installing and running via Composer/Packagist
 
--   Report how long test runs take
-
 -   _format_exception_string: bulletproof the check to filter out calls within
     Easytest
 

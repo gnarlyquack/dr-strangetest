@@ -90,10 +90,12 @@ function main($argc, $argv) {
     );
 
     namespace\output_header(namespace\_get_version());
+    $start = namespace\_microtime();
     namespace\discover_tests($logger, $tests);
+    $end = namespace\_microtime();
 
     $log = $logger->get_log();
-    namespace\output_log($log);
+    namespace\output_log($log, \round(($end - $start) / 1000000, 3));
 
     exit(
         $log->failure_count() || $log->error_count()
@@ -184,6 +186,19 @@ function _load_easytest() {
     }
     foreach ($files as $file) {
         require \sprintf('%s%s%s.php', __DIR__, \DIRECTORY_SEPARATOR, $file);
+    }
+}
+
+
+function _microtime() {
+    if (\function_exists('hrtime')) {
+        list($sec, $nsec) = hrtime();
+        return 1000000 * $sec + $nsec / 1000;
+    }
+    // #BC(7.2): Use microtime for timing
+    else {
+        list($usec, $sec) = \explode(' ', \microtime());
+        return 1000000 * $sec + 1000000 * $usec;
     }
 }
 

@@ -43,7 +43,7 @@ function output_output() {
 }
 
 
-function output_log(Log $log) {
+function output_log(Log $log, $secs_elapsed) {
     $event_types = [
         namespace\LOG_EVENT_FAIL => 'FAILED',
         namespace\LOG_EVENT_ERROR => 'ERROR',
@@ -110,7 +110,10 @@ function output_log(Log $log) {
     }
 
     if ($summary) {
-        echo ($omitted ? "\n\n" : "\n\n\n"), \implode(', ', $summary), "\n";
+        echo
+            ($omitted ? "\n\n" : "\n\n\n"),
+            "Seconds elapsed: $secs_elapsed\n",
+            \implode(', ', $summary), "\n";
     }
     else {
         echo "No tests found!\n";

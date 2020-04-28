@@ -22,7 +22,7 @@ class TestQuietOutput {
     // helper assertions
 
     private function assert_output($expected) {
-        easytest\output_log($this->logger->get_log());
+        easytest\output_log($this->logger->get_log(), 1);
         easytest\assert_identical($expected, ob_get_contents());
     }
 
@@ -36,7 +36,7 @@ class TestQuietOutput {
 
     public function test_reports_success() {
         $this->logger->log_pass();
-        $this->assert_output("\n\n\nPassed: 1\n");
+        $this->assert_output("\n\n\nSeconds elapsed: 1\nPassed: 1\n");
     }
 
 
@@ -51,6 +51,7 @@ message
 
 
 
+Seconds elapsed: 1
 Errors: 1\n
 OUT;
         $this->assert_output($expected);
@@ -68,6 +69,7 @@ message
 
 
 
+Seconds elapsed: 1
 Failed: 1\n
 OUT;
         $this->assert_output($expected);
@@ -83,6 +85,7 @@ OUT;
 This report omitted skipped tests.
 To view, rerun easytest with the --verbose option.
 
+Seconds elapsed: 1
 Skipped: 1\n
 OUT;
         $this->assert_output($expected);
@@ -98,6 +101,7 @@ OUT;
 This report omitted output.
 To view, rerun easytest with the --verbose option.
 
+Seconds elapsed: 1
 Output: 1\n
 OUT;
         $this->assert_output($expected);
@@ -115,6 +119,7 @@ message
 
 
 
+Seconds elapsed: 1
 Output: 1\n
 OUT;
         $this->assert_output($expected);
@@ -158,6 +163,7 @@ output 3
 This report omitted output and skipped tests.
 To view, rerun easytest with the --verbose option.
 
+Seconds elapsed: 1
 Passed: 1, Failed: 1, Errors: 1, Skipped: 1, Output: 4\n
 OUT;
         $this->assert_output($expected);
@@ -183,7 +189,7 @@ class TestVerboseOutput {
     // helper assertions
 
     private function assert_output($expected) {
-        easytest\output_log($this->logger->get_log());
+        easytest\output_log($this->logger->get_log(), 1);
         easytest\assert_identical($expected, ob_get_contents());
     }
 
@@ -197,7 +203,7 @@ class TestVerboseOutput {
 
     public function test_reports_success() {
         $this->logger->log_pass();
-        $this->assert_output("\n\n\nPassed: 1\n");
+        $this->assert_output("\n\n\nSeconds elapsed: 1\nPassed: 1\n");
     }
 
 
@@ -212,6 +218,7 @@ message
 
 
 
+Seconds elapsed: 1
 Errors: 1\n
 OUT;
         $this->assert_output($expected);
@@ -229,6 +236,7 @@ message
 
 
 
+Seconds elapsed: 1
 Failed: 1\n
 OUT;
         $this->assert_output($expected);
@@ -246,6 +254,7 @@ message
 
 
 
+Seconds elapsed: 1
 Skipped: 1\n
 OUT;
         $this->assert_output($expected);
@@ -263,6 +272,7 @@ message
 
 
 
+Seconds elapsed: 1
 Output: 1\n
 OUT;
         $this->assert_output($expected);
@@ -318,6 +328,7 @@ output 4
 
 
 
+Seconds elapsed: 1
 Passed: 1, Failed: 1, Errors: 1, Skipped: 1, Output: 4\n
 OUT;
         $this->assert_output($expected);
