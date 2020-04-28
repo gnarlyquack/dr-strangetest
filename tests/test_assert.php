@@ -40,7 +40,7 @@ class TestAssertExpression {
 
         // #BC(5.6): Check format of default assert description
         $expected = version_compare(PHP_VERSION, '7.0', '<')
-                  ? 'assert() failed'
+                  ? 'Assertion failed'
                   : 'assert($true == $false)';
         easytest\assert_identical($expected, $f->getMessage());
     }
@@ -49,9 +49,7 @@ class TestAssertExpression {
     public function test_uses_provided_description() {
         // #BC(5.4): Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
-            easytest\skip(
-                "assert() description parameter was added in PHP 5.4.8"
-            );
+            easytest\skip('PHP 5.4.8 added assert() $description parameter');
         }
 
         $expected = 'My assertion failed. Or did it?';
@@ -67,9 +65,7 @@ class TestAssertExpression {
     public function test_uses_exception_as_description() {
         // #BC(5.4): Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
-            easytest\skip(
-                "assert() description parameter was added in PHP 5.4.8"
-            );
+            easytest\skip('PHP 5.4.8 added assert() $description parameter');
         }
 
         $expected = new ExpectedException();
@@ -129,9 +125,7 @@ class TestAssertString {
     public function test_uses_provided_description() {
         // #BC(5.4): Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
-            easytest\skip(
-                "assert() description parameter wasn't added until PHP 5.4.8"
-            );
+            easytest\skip('PHP 5.4.8 added assert() $description parameter');
         }
 
         $expected = 'My assertion failed. Or did it?';
@@ -140,16 +134,17 @@ class TestAssertString {
             function() use ($expected) { assert('true == false', $expected); }
         );
 
-        easytest\assert_identical($expected, $f->getMessage());
+        easytest\assert_identical(
+            "assert(true == false) failed\n$expected",
+            $f->getMessage()
+        );
     }
 
 
     public function test_uses_exception_as_description() {
         // #BC(5.4): Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
-            easytest\skip(
-                "assert() description parameter was added in PHP 5.4.8"
-            );
+            easytest\skip('PHP 5.4.8 added assert() $description parameter');
         }
 
         $expected = new ExpectedException();
@@ -158,7 +153,10 @@ class TestAssertString {
             function() use ($expected) { assert('true == false', $expected); }
         );
 
-        easytest\assert_identical("$expected", $f->getMessage());
+        easytest\assert_identical(
+            "assert(true == false) failed\n$expected",
+            $f->getMessage()
+        );
     }
 }
 
@@ -172,7 +170,7 @@ class TestExpectExpression {
     public function setup_class() {
         // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
-            easytest\skip('Skipping tests of PHP 7 expectations');
+            easytest\skip('PHP 7 introduced "expectations"');
         }
         $this->assert_exception = ini_get('assert.exception');
         ini_set('assert.exception', true);
@@ -250,7 +248,7 @@ class TestExpectString {
         }
         // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
-            easytest\skip('Skipping tests of PHP 7 expectations');
+            easytest\skip('PHP 7 introduced "expectations"');
         }
         $this->assert_exception = ini_get('assert.exception');
         ini_set('assert.exception', true);

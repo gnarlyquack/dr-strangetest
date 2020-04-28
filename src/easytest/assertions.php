@@ -10,7 +10,7 @@ namespace easytest;
 
 // The functions in this file comprise EasyTest's assertion API
 
-function assert_throws($expected, $callback, $message = null) {
+function assert_throws($expected, $callback, $description = null) {
     try {
         $callback();
     }
@@ -19,9 +19,11 @@ function assert_throws($expected, $callback, $message = null) {
     catch (\Exception $e) {}
 
     if (!isset($e)) {
-        throw new Failure(
-            $message ?: "Expected to catch $expected but no exception was thrown"
+        $message = namespace\format_failure_message(
+            "Expected to catch $expected but no exception was thrown",
+            $description
         );
+        throw new Failure($message);
     }
 
     if ($e instanceof $expected) {
@@ -36,13 +38,7 @@ function assert_throws($expected, $callback, $message = null) {
 }
 
 
-/*
- * assert_equal() and assert_identical() are simply proxies for static methods
- * on the ErrorHandler. This is done to support the $message parameter in
- * versions of PHP < 5.4.8.
- */
-
-function assert_equal($expected, $actual, $message = null) {
+function assert_equal($expected, $actual, $description = null) {
     if ($expected == $actual) {
         return;
     }
@@ -51,40 +47,32 @@ function assert_equal($expected, $actual, $message = null) {
         namespace\ksort_recursive($expected);
         namespace\ksort_recursive($actual);
     }
-    if (!isset($message)) {
-        $message = 'Assertion "$expected == $actual" failed';
-    }
-    throw new Failure(
-        \sprintf(
-            "%s\n\n%s",
-            $message,
-            namespace\diff(
-                namespace\format_variable($expected),
-                namespace\format_variable($actual),
-                'expected', 'actual'
-            )
+    $message = namespace\format_failure_message(
+        'Assertion "$expected == $actual" failed',
+        $description,
+        namespace\diff(
+            namespace\format_variable($expected),
+            namespace\format_variable($actual),
+            'expected', 'actual'
         )
     );
+    throw new Failure($message);
 }
 
 
-function assert_identical($expected, $actual, $message = null) {
+function assert_identical($expected, $actual, $description = null) {
     if ($expected === $actual) {
         return;
     }
 
-    if (!isset($message)) {
-        $message = 'Assertion "$expected === $actual" failed';
-    }
-    throw new Failure(
-        \sprintf(
-            "%s\n\n%s",
-            $message,
-            namespace\diff(
-                namespace\format_variable($expected),
-                namespace\format_variable($actual),
-                'expected', 'actual'
-            )
+    $message = namespace\format_failure_message(
+        'Assertion "$expected === $actual" failed',
+        $description,
+        namespace\diff(
+            namespace\format_variable($expected),
+            namespace\format_variable($actual),
+            'expected', 'actual'
         )
     );
+    throw new Failure($message);
 }

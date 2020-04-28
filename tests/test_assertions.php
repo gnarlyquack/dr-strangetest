@@ -94,6 +94,7 @@ EXPECTED;
         }
 
         $expected = <<<EXPECTED
+Assertion "\$expected === \$actual" failed
 $message
 
 - expected
@@ -173,7 +174,10 @@ class TestAssertThrows {
             throw new easytest\Failure('Did not fail when no exception was thrown');
         }
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        easytest\assert_identical(
+            "Expected to catch ExpectedException but no exception was thrown\n$expected",
+            $actual->getMessage()
+        );
     }
 }
 
@@ -269,6 +273,7 @@ EXPECTED;
         );
 
         $expected = <<<EXPECTED
+Assertion "\$expected == \$actual" failed
 $message
 
 - expected

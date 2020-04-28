@@ -54,10 +54,11 @@ interface Logger {
 final class ErrorHandler {
     public function handle_assertion($file, $line, $code, $desc = null) {
         if (!\ini_get('assert.exception')) {
-            if (!$desc) {
-                $desc = $code ? "assert($code) failed" : 'assert() failed';
+            if ('' !== $code) {
+                $code = "assert($code) failed";
             }
-            throw new Failure($desc);
+            $message = namespace\format_failure_message($code, $desc);
+            throw new Failure($message);
         }
     }
 
