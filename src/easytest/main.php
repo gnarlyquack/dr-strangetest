@@ -51,28 +51,6 @@ interface Logger {
 
 
 
-final class ErrorHandler {
-    public function handle_assertion($file, $line, $code, $desc = null) {
-        if (!\ini_get('assert.exception')) {
-            if ('' !== $code) {
-                $code = "assert($code) failed";
-            }
-            $message = namespace\format_failure_message($code, $desc);
-            throw new Failure($message);
-        }
-    }
-
-    public function handle_error($errno, $errstr, $errfile, $errline) {
-        if (!(\error_reporting() & $errno)) {
-            // This error code is not included in error_reporting
-            return;
-        }
-        throw new Error($errstr, $errno, $errfile, $errline);
-    }
-}
-
-
-
 final class State {
     public $seen = [];
     public $files = [];
@@ -126,11 +104,9 @@ function main($argc, $argv) {
 
 
 function _enable_error_handling() {
-    $eh = new ErrorHandler();
-
     // #BC(5.3): Include E_STRICT in error_reporting()
     \error_reporting(\E_ALL | \E_STRICT);
-    \set_error_handler([$eh, 'handle_error'], \error_reporting());
+    \set_error_handler('easytest\\_handle_error', \error_reporting());
 
     // #BC(5.6): Check if PHP 7 assertion options are supported
     if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
@@ -154,7 +130,26 @@ function _enable_error_handling() {
     \assert_options(\ASSERT_WARNING, 0); // Default is 1
     \assert_options(\ASSERT_BAIL, 0);
     \assert_options(\ASSERT_QUIET_EVAL, 0);
-    \assert_options(\ASSERT_CALLBACK, [$eh, 'handle_assertion']);
+    \assert_options(\ASSERT_CALLBACK, 'easytest\\_handle_assertion');
+}
+
+
+function _handle_assertion($file, $line, $code, $desc = null) {
+    if (!\ini_get('assert.exception')) {
+        if ('' !== $code) {
+            $code = "assert($code) failed";
+        }
+        $message = namespace\format_failure_message($code, $desc);
+        throw new Failure($message);
+    }
+}
+
+function _handle_error($errno, $errstr, $errfile, $errline) {
+    if (!(\error_reporting() & $errno)) {
+        // This error code is not included in error_reporting
+        return;
+    }
+    throw new Error($errstr, $errno, $errfile, $errline);
 }
 
 
