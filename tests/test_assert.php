@@ -10,7 +10,7 @@ class TestAssertExpression {
     private $assert_exception;
 
 
-    public function setup_class() {
+    public function setup_object() {
         // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             $this->assert_exception = ini_get('assert.exception');
@@ -19,7 +19,7 @@ class TestAssertExpression {
     }
 
 
-    public function teardown_class() {
+    public function teardown_object() {
         // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             ini_set('assert.exception', $this->assert_exception);
@@ -86,7 +86,7 @@ class TestAssertString {
     private $assert_exception;
 
 
-    public function setup_class() {
+    public function setup_object() {
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
             easytest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
@@ -98,7 +98,7 @@ class TestAssertString {
     }
 
 
-    public function teardown_class() {
+    public function teardown_object() {
         // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             ini_set('assert.exception', $this->assert_exception);
@@ -167,7 +167,7 @@ class TestExpectExpression {
     private $assert_exception;
 
 
-    public function setup_class() {
+    public function setup_object() {
         // #BC(5.6): Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
             easytest\skip('PHP 7 introduced "expectations"');
@@ -177,7 +177,7 @@ class TestExpectExpression {
     }
 
 
-    public function teardown_class() {
+    public function teardown_object() {
         ini_set('assert.exception', $this->assert_exception);
     }
 
@@ -242,7 +242,7 @@ class TestExpectString {
     private $assert_exception;
 
 
-    public function setup_class() {
+    public function setup_object() {
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
             easytest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
@@ -255,7 +255,7 @@ class TestExpectString {
     }
 
 
-    public function teardown_class() {
+    public function teardown_object() {
         ini_set('assert.exception', $this->assert_exception);
     }
 

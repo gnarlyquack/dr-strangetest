@@ -14,9 +14,6 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   Rename setup/teardown_class, since these methods are actually operating on
-    instantiated class instances
-
 -   Treat any exception that is thrown during file inclusion as an error
 
 -   Review test suite

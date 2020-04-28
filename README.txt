@@ -181,20 +181,20 @@ it immediately after each test method. teardown() is run only if setup() is
 successful.
 
 
-setup_class()/setupClass() and teardown_class()/teardownClass()
----------------------------------------------------------------
+setup_object()/setupObject() and teardown_object()/teardownObject()
+-------------------------------------------------------------------
 
-If a test case defines a public method called 'setup_class' or 'setupClass',
+If a test case defines a public method called 'setup_object' or 'setupObject',
 EasyTest will run it after instantiating the test case and prior to running
 any of the test case's test methods. If an error occurs or skip() is called
-in setup_class(), then the entire test case is skipped.
+in setup_object(), then the entire test case is skipped.
 
-If a test case defines a public method called 'teardown_class' or
-'teardownClass', EasyTest will run it after running all of the test case's
-test methods. teardown_class() is only run if setup_class() is successful.
+If a test case defines a public method called 'teardown_object' or
+'teardownObject', EasyTest will run it after running all of the test case's
+test methods. teardown_object() is only run if setup_object() is successful.
 
-Should a test case define both setup_class() and setupClass() and/or
-teardown_class() and teardownClass(), an error is reported and the test case
+Should a test case define both setup_object() and setupObject() and/or
+teardown_object() and teardownObject(), an error is reported and the test case
 is skipped.
 
 

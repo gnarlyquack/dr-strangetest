@@ -514,12 +514,12 @@ function _run_test_case(BufferingLogger $logger, $class, $object) {
         return;
     }
 
-    list($setup_class, $teardown_class, $setup, $teardown, $tests)
+    list($setup_object, $teardown_object, $setup, $teardown, $tests)
         = $methods;
 
-    if ($setup_class) {
-        $source = "$class::$setup_class";
-        $callable = [$object, $setup_class];
+    if ($setup_object) {
+        $source = "$class::$setup_object";
+        $callable = [$object, $setup_object];
         $logger->start_buffering($source);
         list($succeeded,) = namespace\_run_setup($logger, $source, $callable);
         $logger->end_buffering();
@@ -532,9 +532,9 @@ function _run_test_case(BufferingLogger $logger, $class, $object) {
         namespace\_run_test($logger, $class, $object, $test, $setup, $teardown);
     }
 
-    if ($teardown_class) {
-        $source = "$class::$teardown_class";
-        $callable = [$object, $teardown_class];
+    if ($teardown_object) {
+        $source = "$class::$teardown_object";
+        $callable = [$object, $teardown_object];
         $logger->start_buffering($source);
         namespace\_run_teardown($logger, $source, $callable);
         $logger->end_buffering();
@@ -544,8 +544,8 @@ function _run_test_case(BufferingLogger $logger, $class, $object) {
 
 function _process_methods(BufferingLogger $logger, $class, $object) {
     $error = 0;
-    $setup_class = [];
-    $teardown_class = [];
+    $setup_object = [];
+    $teardown_object = [];
     $setup = null;
     $teardown = null;
     $tests = [];
@@ -556,16 +556,16 @@ function _process_methods(BufferingLogger $logger, $class, $object) {
             continue;
         }
 
-        if(\preg_match('~^(setup|teardown)(?:$|_?class)~i', $method, $matches)) {
+        if(\preg_match('~^(setup|teardown)(?:$|_?object)~i', $method, $matches)) {
             if (0 === \strcasecmp('setup', $matches[1])) {
                 if ($matches[0] === $matches[1]) {
                     $setup = $method;
                 }
                 else {
-                    if ($setup_class) {
+                    if ($setup_object) {
                         $error |= namespace\ERROR_SETUP;
                     }
-                    $setup_class[] = $method;
+                    $setup_object[] = $method;
                 }
             }
             else {
@@ -573,10 +573,10 @@ function _process_methods(BufferingLogger $logger, $class, $object) {
                     $teardown = $method;
                 }
                 else {
-                    if ($teardown_class) {
+                    if ($teardown_object) {
                         $error |= namespace\ERROR_TEARDOWN;
                     }
-                    $teardown_class[] = $method;
+                    $teardown_object[] = $method;
                 }
             }
             continue;
@@ -589,7 +589,7 @@ function _process_methods(BufferingLogger $logger, $class, $object) {
                 $class,
                 \sprintf(
                     "Multiple setup fixtures found:\n\t%s",
-                    \implode("\n\t", $setup_class)
+                    \implode("\n\t", $setup_object)
                 )
             );
         }
@@ -598,7 +598,7 @@ function _process_methods(BufferingLogger $logger, $class, $object) {
                 $class,
                 \sprintf(
                     "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $teardown_class)
+                    \implode("\n\t", $teardown_object)
                 )
             );
         }
@@ -609,8 +609,8 @@ function _process_methods(BufferingLogger $logger, $class, $object) {
     }
 
     return [
-        $setup_class ? $setup_class[0] : null,
-        $teardown_class ? $teardown_class[0] : null,
+        $setup_object ? $setup_object[0] : null,
+        $teardown_object ? $teardown_object[0] : null,
         $setup,
         $teardown,
         $tests,
