@@ -51,17 +51,10 @@ function output_log(Log $log) {
         namespace\LOG_EVENT_OUTPUT => 'OUTPUT',
     ];
 
-    $passed = $log->pass_count();
-    $failed = $log->failure_count();
-    $errors = $log->error_count();
-    $skipped = $log->skip_count();
-    $output = $log->output_count();
-
     $output_count = 0;
     $skip_count = 0;
     foreach ($log->get_events() as $entry) {
         list($type, $source, $message) = $entry;
-
         switch ($type) {
             case namespace\LOG_EVENT_OUTPUT:
                 ++$output_count;
@@ -73,15 +66,18 @@ function output_log(Log $log) {
         }
 
         \printf(
-            "\n\n%s\n%s: %s\n%s\n%s",
-            \str_repeat('=', 70),
+            "\n\n\n%s: %s\n%s\n",
             $event_types[$type],
             $source,
-            \str_repeat('-', 70),
-            $message
+            \trim($message)
         );
     }
 
+    $passed = $log->pass_count();
+    $failed = $log->failure_count();
+    $errors = $log->error_count();
+    $skipped = $log->skip_count();
+    $output = $log->output_count();
     $omitted = [];
     if ($output_count !== $output) {
         $omitted[] = 'output';
