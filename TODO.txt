@@ -9,11 +9,6 @@ Release
 -------
 -   Test installing and running via Composer/Packagist
 
--   Make diff output more compact?
-    Instead of showing "- expected" and "+ actual" as prefixes to the diff,
-    maybe include them as part of the diff, e.g.: "- $expected = x" and
-    "+ $actual = y", where 'x' and 'y' is the first line of the diff
-
 -   When trying to load Composer, only check the path(s) the autoloader would
     be if EasyTest had been installed via Composer(?). I.e., since EasyTest
     itself doesn't require Composer, we (might) never want/need to try loading

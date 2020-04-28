@@ -53,7 +53,7 @@ function assert_equal($expected, $actual, $description = null) {
         namespace\diff(
             namespace\format_variable($expected),
             namespace\format_variable($actual),
-            'expected', 'actual'
+            '$expected', '$actual'
         )
     );
     throw new Failure($message);
@@ -71,7 +71,7 @@ function assert_identical($expected, $actual, $description = null) {
         namespace\diff(
             namespace\format_variable($expected),
             namespace\format_variable($actual),
-            'expected', 'actual'
+            '$expected', '$actual'
         )
     );
     throw new Failure($message);

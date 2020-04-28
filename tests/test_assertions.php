@@ -61,8 +61,8 @@ MSG;
         $expected = <<<'EXPECTED'
 Assertion "$expected === $actual" failed
 
-- expected
-+ actual
+- $expected
++ $actual
 
   array(
 -     0 => 1,
@@ -97,8 +97,8 @@ EXPECTED;
 Assertion "\$expected === \$actual" failed
 $message
 
-- expected
-+ actual
+- \$expected
++ \$actual
 
 - 1
 + '1'
@@ -233,8 +233,8 @@ class TestAssertEqual {
         $expected = <<<'EXPECTED'
 Assertion "$expected == $actual" failed
 
-- expected
-+ actual
+- $expected
++ $actual
 
   array(
       0 => 1,
@@ -276,8 +276,8 @@ EXPECTED;
 Assertion "\$expected == \$actual" failed
 $message
 
-- expected
-+ actual
+- \$expected
++ \$actual
 
 - true
 + false
