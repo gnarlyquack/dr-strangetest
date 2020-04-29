@@ -1,12 +1,16 @@
 <?php
 
-namespace condition;
+namespace conditional;
 
 if (true) {
 
-    class TestA {
+    class TestB {
         public function test() {}
     }
+
+
+    function test_b() {}
+
 
 }
 elseif (false) {
@@ -18,6 +22,9 @@ elseif (false) {
     }
 
 
+    function test_a() {}
+
+
     class TestB {
         public function __construct() {
             trigger_error('I should not have been discovered!');
@@ -25,10 +32,16 @@ elseif (false) {
     }
 
 
+    function test_b() {}
+
+
     class TestC {
         public function __construct() {
             trigger_error('I should not have been discovered!');
         }
     }
+
+
+    function test_c() {}
 
 }

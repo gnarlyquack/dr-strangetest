@@ -1,20 +1,28 @@
 <?php
 
-namespace ns02;
+namespace ns2;
 
-class TestNamespaces {
+class TestNamespace {
     public function test() {}
 }
 
+
+function TestNamespace() {}
+
+
 /* ensure the namespace operator isn't confused for a namespace declaration */
-const BAR = 'bar';
-$bar = namespace\BAR;
+const FOO = 'foo';
+namespace\FOO;
 
 
 namespace/* Yup, this is valid! */
          // as is this!
-         ns03;
+         ns3;
 
-class TestNamespaces {
+
+function TestNamespace() {}
+
+
+class TestNamespace {
     public function test() {}
 }

@@ -282,11 +282,11 @@ MESSAGE;
                         easytest\LOG_EVENT_OUTPUT,
                         "'class TestTextBefore {}\n\n\nclass TestTestAfter {}\n'"
                     ],
-                    'Test::test_me' => [easytest\LOG_EVENT_PASS, null],
-                    'test2::testOne' => [easytest\LOG_EVENT_PASS, null],
-                    'test2::testTwo' => [easytest\LOG_EVENT_PASS, null],
-                    'test2::testThree' => [easytest\LOG_EVENT_PASS, null],
-                    'TestThree::test2' => [easytest\LOG_EVENT_PASS, null],
+                    'Test1::test_me' => [easytest\LOG_EVENT_PASS, null],
+                    'test_two::test1' => [easytest\LOG_EVENT_PASS, null],
+                    'test_two::test2' => [easytest\LOG_EVENT_PASS, null],
+                    'test_two::test3' => [easytest\LOG_EVENT_PASS, null],
+                    'Test3::test_two' => [easytest\LOG_EVENT_PASS, null],
                 ],
             ],
         ];
@@ -605,11 +605,11 @@ MESSAGE;
         $expected = [
             "$path/" => [
                 'tests' => [
-                    'ns1\\ns1\\TestNamespace::test' => [easytest\LOG_EVENT_PASS, null],
-                    'ns1\\ns2\\TestNamespace::test' => [easytest\LOG_EVENT_PASS, null],
-                    'TestNamespace::test' => [easytest\LOG_EVENT_PASS, null],
-                    'ns2\\TestNamespace::test' => [easytest\LOG_EVENT_PASS, null],
-                    'ns3\\TestNamespace::test' => [easytest\LOG_EVENT_PASS, null],
+                    'ns01\\ns1\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
+                    'ns01\\ns2\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
+                    'TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
+                    'ns02\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
+                    'ns03\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
                 ],
             ],
         ];
@@ -684,8 +684,8 @@ MESSAGE;
         $expected = [
             "$path/" => [
                 'tests' => [
-                    'conditional\\TestA::test' => [easytest\LOG_EVENT_PASS, null],
-                    'conditional\\TestB::test' => [easytest\LOG_EVENT_PASS, null],
+                    'condition\\TestA::test' => [easytest\LOG_EVENT_PASS, null],
+                    'condition\\TestB::test' => [easytest\LOG_EVENT_PASS, null],
                 ],
             ],
         ];

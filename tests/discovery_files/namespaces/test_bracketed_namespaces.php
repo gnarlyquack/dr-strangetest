@@ -1,39 +1,39 @@
 <?php
 
-namespace ns1\ns1 {
+namespace ns01\ns1 {
 
-class TestNamespace {
+class TestNamespaces {
     public function test() {}
 }
 
 /* ensure the namespace operator isn't confused for a namespace declaration */
-const FOO = 'foo';
-namespace\FOO;
+const BAR = 'bar';
+$bar = namespace\BAR;
 
 }
 
 namespace
-    ns1 // parent namespace
+    ns01 // parent namespace
     \   // namespace separator
     ns2 // sub namespace
 {
 
-class TestNamespace {
+class TestNamespaces {
     public function test() {}
 }
 
-const FOO = 'foo';
-namespace\FOO;
+const BAR = 'bar';
+$bar = namespace\BAR;
 
 }
 
 namespace { // global namespace
 
-class TestNamespace {
+class TestNamespaces {
     public function test() {}
 }
 
-const FOO = 'foo';
-namespace\FOO;
+const BAR = 'bar';
+$bar = namespace\BAR;
 
 }

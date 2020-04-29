@@ -16,6 +16,30 @@ const DEBUG_DIRECTORY_EXIT     = 2;
 const DEBUG_DIRECTORY_SETUP    = 3;
 const DEBUG_DIRECTORY_TEARDOWN = 4;
 
+const TYPE_CLASS    = 1;
+const TYPE_FUNCTION = 2;
+
+
+
+final class ClassTest extends struct {
+    public $name;
+    public $setup_object;
+    public $teardown_object;
+    public $setup;
+    public $teardown;
+    public $methods;
+}
+
+
+final class FunctionTest extends struct {
+    public $name;
+    public $function;
+    public $setup_name;
+    public $setup;
+    public $teardown_name;
+    public $teardown;
+}
+
 
 function discover_tests(Logger $logger, array $paths) {
     $state = new State();
@@ -272,57 +296,6 @@ function _parse_setup(State $state, Logger $logger, $file) {
 }
 
 
-/*
- * Discover and run tests in a file.
- */
-function _discover_file(State $state, Logger $logger, $file, $args) {
-    if (isset($state->files[$file])) {
-        $logger->log_skip($file, 'File has already been tested!');
-        return;
-    }
-    $state->files[$file] = true;
-
-    $tokens = namespace\_tokenize_file($logger, $file);
-    if (!$tokens) {
-        return;
-    }
-
-    $ns = '';
-    for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
-        if (!\is_array($tokens[$i])) {
-            continue;
-        }
-        switch ($tokens[$i][0]) {
-        case \T_CLASS:
-            list($class, $i) = namespace\_parse_identifier($tokens, $i);
-            if (!isset($class)) {
-                break;
-            }
-
-            if (0 !== \substr_compare($class, 'test', 0, 4, true)) {
-                break;
-            }
-
-            $class = "$ns$class";
-            if (!isset($state->seen[$class]) && \class_exists($class)) {
-                $state->seen[$class] = true;
-                $logger = namespace\start_buffering($logger, $class);
-                $object = namespace\_instantiate_test($logger, $class, $args);
-                $logger = namespace\end_buffering($logger);
-                if ($object) {
-                    namespace\_run_test_case($logger, $class, $object);
-                }
-            }
-            break;
-
-        case \T_NAMESPACE:
-            list($ns, $i) = namespace\_parse_namespace($tokens, $i, $ns);
-            break;
-        }
-    }
-}
-
-
 function _tokenize_file(Logger $logger, $filename) {
     $logger = namespace\start_buffering($logger, $filename);
     $succeeded = namespace\_include_file($logger, $filename);
@@ -352,37 +325,165 @@ function _tokenize_file(Logger $logger, $filename) {
 }
 
 
+function _discover_file(State $state, Logger $logger, $filepath, $args) {
+    if (isset($state->files[$filepath])) {
+        $logger->log_skip($filepath, 'File has already been tested!');
+        return;
+    }
+    $state->files[$filepath] = true;
+
+    $identifiers = namespace\_parse_test_file($logger, $filepath, $state->seen);
+    if (!$identifiers) {
+        return;
+    }
+
+    $test = new FunctionTest();
+    foreach ($identifiers as $identifier) {
+        list($name, $type) = $identifier;
+        switch ($type) {
+        case namespace\TYPE_CLASS:
+            $logger = namespace\start_buffering($logger, $name);
+            $object = namespace\_instantiate_test($logger, $name, $args);
+            $logger = namespace\end_buffering($logger);
+            if ($object) {
+                namespace\_run_class_test($logger, $name, $object);
+            }
+            break;
+
+        case namespace\TYPE_FUNCTION:
+            $test->name = $name;
+            $test->function = $name;
+            namespace\_run_test($logger, $test);
+            break;
+
+        default:
+            throw new \Exception("Unknown test type: $type");
+            break;
+        }
+    }
+}
+
+
+function _parse_test_file(Logger $logger, $filepath, array &$seen) {
+    $tests = [];
+    $source = namespace\_read_file($logger, $filepath);
+    if (!$source) {
+        return $tests;
+    }
+
+    $ns = '';
+    $tokens = \token_get_all($source);
+    for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
+        if (!\is_array($tokens[$i])) {
+            continue;
+        }
+        switch ($tokens[$i][0]) {
+        case \T_CLASS:
+            list($class, $i) = namespace\_parse_identifier($tokens, $i);
+            if (!$class) {
+                break;
+            }
+
+            if (0 !== \substr_compare($class, 'test', 0, 4, true)) {
+                break;
+            }
+
+            $fullname = "$ns$class";
+            $seenname = "class $fullname";
+            if (!isset($seen[$seenname]) && \class_exists($fullname)) {
+                $seen[$seenname] = true;
+                $tests[] = [$fullname, namespace\TYPE_CLASS];
+            }
+            break;
+
+        case \T_FUNCTION:
+            list($function, $i) = namespace\_parse_identifier($tokens, $i);
+            if (!$function) {
+                break;
+            }
+
+            if (0 !== \substr_compare($function, 'test', 0, 4, true)) {
+                break;
+            }
+
+            $fullname = "$ns$function";
+            $seenname = "function $fullname";
+            if (!isset($seen[$seenname]) && \function_exists($fullname)) {
+                $seen[$seenname] = true;
+                $tests[] = [$fullname, namespace\TYPE_FUNCTION];
+            }
+            break;
+
+        case \T_NAMESPACE:
+            list($ns, $i) = namespace\_parse_namespace($tokens, $i, $ns);
+            break;
+        }
+    }
+    return $tests;
+}
+
+
+function _read_file(Logger $logger, $filepath) {
+    // First include the file to ensure it parses correctly
+    $logger = namespace\start_buffering($logger, $filepath);
+    $succeeded = namespace\_include_file($logger, $filepath);
+    $logger = namespace\end_buffering($logger);
+    if (!$succeeded) {
+        return false;
+    }
+
+    try {
+        $source = \file_get_contents($filepath);
+    }
+    catch (\Throwable $e) {
+        $logger->log_error($filename, $e);
+        return false;
+    }
+    // #(BC 5.6): Catch Exception
+    catch (\Exception $e) {
+        $logger->log_error($filename, $e);
+        return false;
+    }
+
+    if (false === $source) {
+        $logger->log_error($filename, "Failed to read file (no error was raised)");
+    }
+    return $source;
+}
+
+
+
 function _parse_identifier($tokens, $i) {
-        $identifier = null;
-        // $i = keyword identifying the type of identifer ('class', 'function',
-        // etc.) and $i+1 = whitespace
-        $i += 2;
-        while (true) {
-            $token = $tokens[$i];
-            if ('{' === $token) {
-                break;
-            }
-            ++$i;
-            if (\is_array($token) && \T_STRING === $token[0]) {
-                $identifier = $token[1];
-                break;
-            }
+    $identifier = null;
+    // $i = keyword identifying the type of identifer ('class', 'function',
+    // etc.) and $i+1 = whitespace
+    $i += 2;
+    while (true) {
+        $token = $tokens[$i];
+        if ('{' === $token) {
+            break;
         }
-
-        // advance token index to the end of the definition
-        while ('{' !== $tokens[$i++]);
-        $scope = 1;
-        while ($scope) {
-            $token = $tokens[$i++];
-            if ('{' === $token) {
-                ++$scope;
-            }
-            elseif ('}' === $token) {
-                --$scope;
-            }
+        ++$i;
+        if (\is_array($token) && \T_STRING === $token[0]) {
+            $identifier = $token[1];
+            break;
         }
+    }
 
-        return [$identifier, $i];
+    // advance token index to the end of the definition
+    while ('{' !== $tokens[$i++]);
+    $scope = 1;
+    while ($scope) {
+        $token = $tokens[$i++];
+        if ('{' === $token) {
+            ++$scope;
+        }
+        elseif ('}' === $token) {
+            --$scope;
+        }
+    }
+
+    return [$identifier, $i];
 }
 
 
@@ -443,8 +544,8 @@ function _include_file(Logger $logger, $file) {
 }
 
 
-// Isolate included files to prevent them from meddling with any local state
 function _guard_include($file) {
+    // Isolate included files to prevent them from meddling with local state
     include $file;
 }
 
@@ -517,33 +618,41 @@ function _instantiate_test(Logger $logger, $class, $args) {
 }
 
 
-function _run_test_case(Logger $logger, $class, $object) {
-    $methods = namespace\_process_methods($logger, $class, $object);
-    if (!$methods) {
+function _run_class_test(Logger $logger, $class, $object) {
+    $class = namespace\_discover_class($logger, $class);
+    if (!$class) {
         return;
     }
 
-    list($setup_object, $teardown_object, $setup, $teardown, $tests)
-        = $methods;
-
-    if ($setup_object) {
-        $source = "$class::$setup_object";
-        $callable = [$object, $setup_object];
+    if ($class->setup_object) {
+        $source = "{$class->name}::{$class->setup_object}";
+        $callable = [$object, $class->setup_object];
         $logger = namespace\start_buffering($logger, $source);
-        list($succeeded,) = namespace\_run_setup($logger, $source, $callable);
+        list($success,) = namespace\_run_setup($logger, $source, $callable);
         $logger = namespace\end_buffering($logger);
-        if (!$succeeded) {
+        if (!$success) {
             return;
         }
     }
 
-    foreach ($tests as $test) {
-        namespace\_run_test($logger, $class, $object, $test, $setup, $teardown);
+    $test = new FunctionTest();
+    if ($class->setup) {
+        $test->setup_name = $class->setup;
+        $test->setup = [$object, $class->setup];
+    }
+    if ($class->teardown) {
+        $test->teardown_name = $class->teardown;
+        $test->teardown = [$object, $class->teardown];
+    }
+    foreach ($class->methods as $method) {
+        $test->name = "{$class->name}::$method";
+        $test->function = [$object, $method];
+        namespace\_run_test($logger, $test);
     }
 
-    if ($teardown_object) {
-        $source = "$class::$teardown_object";
-        $callable = [$object, $teardown_object];
+    if ($class->teardown_object) {
+        $source = "{$class->name}::{$class->teardown_object}";
+        $callable = [$object, $class->teardown_object];
         $logger = namespace\start_buffering($logger, $source);
         namespace\_run_teardown($logger, $source, $callable);
         $logger = namespace\end_buffering($logger);
@@ -551,21 +660,21 @@ function _run_test_case(Logger $logger, $class, $object) {
 }
 
 
-function _process_methods(Logger $logger, $class, $object) {
+function _discover_class(Logger $logger, $class) {
     $error = 0;
     $setup_object = [];
     $teardown_object = [];
     $setup = null;
     $teardown = null;
-    $tests = [];
+    $methods = [];
 
-    foreach (\get_class_methods($object) as $method) {
+    foreach (\get_class_methods($class) as $method) {
         if (0 === \substr_compare($method, 'test', 0, 4, true)) {
-            $tests[] = $method;
+            $methods[] = $method;
             continue;
         }
 
-        if(\preg_match('~^(setup|teardown)(?:$|_?object)~i', $method, $matches)) {
+        if(\preg_match('~^(setup|teardown)(?:_?object)?$~i', $method, $matches)) {
             if (0 === \strcasecmp('setup', $matches[1])) {
                 if ($matches[0] === $matches[1]) {
                     $setup = $method;
@@ -613,53 +722,50 @@ function _process_methods(Logger $logger, $class, $object) {
         }
         return false;
     }
-    if (!$tests) {
+    if (!$methods) {
         return false;
     }
 
-    return [
+    return new ClassTest(
+        $class,
         $setup_object ? $setup_object[0] : null,
         $teardown_object ? $teardown_object[0] : null,
         $setup,
         $teardown,
-        $tests,
-    ];
+        $methods
+    );
 }
 
 
-function _run_test(Logger $logger, $class, $object, $test, $setup, $teardown) {
-    $passed = true;
+function _run_test(Logger $logger, FunctionTest $test) {
+    $success = true;
 
-    if ($setup) {
-        $source = "$setup for $class::$test";
-        $callable = [$object, $setup];
+    if ($test->setup) {
+        $source = "{$test->setup_name} for {$test->name}";
         $logger = namespace\start_buffering($logger, $source);
-        list($passed,) = namespace\_run_setup($logger, $source, $callable);
+        list($success,) = namespace\_run_setup($logger, $source, $test->setup);
     }
 
-    if ($passed) {
-        $source = "$class::$test";
-        $callable = [$object, $test];
-        $logger = namespace\start_buffering($logger, $source);
-        $passed = namespace\_run_test_method($logger, $source, $callable);
+    if ($success) {
+        $logger = namespace\start_buffering($logger, $test->name);
+        $success = namespace\_run_test_function($logger, $test->name, $test->function);
 
-        if ($teardown) {
-            $source = "$teardown for $class::$test";
-            $callable = [$object, $teardown];
+        if ($test->teardown) {
+            $source = "{$test->teardown_name} for {$test->name}";
             $logger = namespace\start_buffering($logger, $source);
-            $passed = namespace\_run_teardown($logger, $source, $callable)
-                    && $passed;
+            $success = namespace\_run_teardown($logger, $source, $test->teardown)
+                    && $success;
         }
     }
 
     $logger = namespace\end_buffering($logger);
-    if ($passed) {
-        $logger->log_pass("$class::$test");
+    if ($success) {
+        $logger->log_pass($test->name);
     }
 }
 
 
-function _run_test_method(Logger $logger, $source, $callable) {
+function _run_test_function(Logger $logger, $source, $callable) {
     try {
         $callable();
         return true;

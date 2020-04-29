@@ -52,7 +52,48 @@ interface Logger {
 
 
 
-final class State {
+abstract class struct {
+    final public function __construct() {
+        $this->init_from_array(\func_get_args());
+    }
+
+
+    final public function __set($name, $value) {
+        throw new \Exception(
+            \sprintf("Undefined property: %s::%s", \get_class($this), $name)
+        );
+    }
+
+
+    final static public function from_array(array $array) {
+        $object = new static();
+        $object->init_from_array($array);
+        return $object;
+    }
+
+
+    final static public function from_map(array $map) {
+        $object = new static();
+        foreach ($map as $key => $value) {
+            $object->$key = $value;
+        }
+        return $object;
+    }
+
+
+    private function init_from_array(array $args)  {
+        if ($args) {
+            $props = \array_keys(\get_object_vars($this));
+            foreach ($args as $i => $value) {
+                $this->{$props[$i]} = $value;
+            }
+        }
+    }
+}
+
+
+
+final class State extends struct {
     public $seen = [];
     public $files = [];
 }

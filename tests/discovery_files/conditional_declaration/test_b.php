@@ -1,6 +1,6 @@
 <?php
 
-namespace conditional;
+namespace condition;
 
 if (true) {
 

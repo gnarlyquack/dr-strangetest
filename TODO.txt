@@ -47,6 +47,8 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
+-   How to handle a skip in a test function that then errors during teardown?
+
 
 Future
 ------
