@@ -35,7 +35,7 @@ class TestQuietOutput {
 
 
     public function test_reports_success() {
-        $this->logger->log_pass();
+        $this->logger->log_pass('source');
         $this->assert_output("\n\n\nSeconds elapsed: 1\nPassed: 1\n");
     }
 
@@ -127,7 +127,7 @@ OUT;
 
 
     public function test_reports_multiple_events() {
-        $this->logger->log_pass();
+        $this->logger->log_pass('pass1');
         $this->logger->log_output('output1', 'output 1', false);
         $this->logger->log_failure('fail', 'failure');
         $this->logger->log_output('output2', 'output 2', true);
@@ -202,7 +202,7 @@ class TestVerboseOutput {
 
 
     public function test_reports_success() {
-        $this->logger->log_pass();
+        $this->logger->log_pass('source');
         $this->assert_output("\n\n\nSeconds elapsed: 1\nPassed: 1\n");
     }
 
@@ -280,7 +280,7 @@ OUT;
 
 
     public function test_reports_multiple_events() {
-        $this->logger->log_pass();
+        $this->logger->log_pass('pass1');
         $this->logger->log_output('output1', 'output 1', false);
         $this->logger->log_failure('fail', 'failure');
         $this->logger->log_output('output2', 'output 2', true);

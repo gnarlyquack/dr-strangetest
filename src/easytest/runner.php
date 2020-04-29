@@ -11,6 +11,11 @@ namespace easytest;
 const ERROR_SETUP    = 0x01;
 const ERROR_TEARDOWN = 0x02;
 
+const DEBUG_DIRECTORY_ENTER    = 1;
+const DEBUG_DIRECTORY_EXIT     = 2;
+const DEBUG_DIRECTORY_SETUP    = 3;
+const DEBUG_DIRECTORY_TEARDOWN = 4;
+
 
 function discover_tests(Logger $logger, array $paths) {
     $state = new State();
@@ -71,6 +76,7 @@ function _discover_directory(State $state, Logger $logger, $dir, $args, $target 
     if (!$processed) {
         return;
     }
+    $logger->log_debug($dir, namespace\DEBUG_DIRECTORY_ENTER);
 
     list($setup, $teardown, $tests) = $processed;
     if ($setup) {
@@ -78,8 +84,10 @@ function _discover_directory(State $state, Logger $logger, $dir, $args, $target 
         list($succeeded, $args) = namespace\_run_setup($logger, $setup, $setup, $args);
         $logger = namespace\end_buffering($logger);
         if (!$succeeded) {
+            $logger->log_debug($dir, namespace\DEBUG_DIRECTORY_EXIT);
             return;
         }
+        $logger->log_debug($setup, namespace\DEBUG_DIRECTORY_SETUP);
     }
 
     foreach ($tests as $test => $run) {
@@ -88,9 +96,13 @@ function _discover_directory(State $state, Logger $logger, $dir, $args, $target 
 
     if ($teardown) {
         $logger = namespace\start_buffering($logger, $teardown);
-        namespace\_run_teardown($logger, $teardown, $teardown, $args);
+        if(namespace\_run_teardown($logger, $teardown, $teardown, $args)) {
+            $logger->log_debug($teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
+        }
         $logger = namespace\end_buffering($logger);
     }
+
+    $logger->log_debug($dir, namespace\DEBUG_DIRECTORY_EXIT);
 }
 
 
@@ -642,7 +654,7 @@ function _run_test(Logger $logger, $class, $object, $test, $setup, $teardown) {
 
     $logger = namespace\end_buffering($logger);
     if ($passed) {
-        $logger->log_pass();
+        $logger->log_pass("$class::$test");
     }
 }
 

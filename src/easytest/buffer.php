@@ -10,18 +10,14 @@ namespace easytest;
 
 final class BufferingLogger implements Logger {
 
-    public function __set($name, $value) {
-        throw new \Exception("Property $name doesn't exist");
-    }
-
     public function __construct(Logger $logger, $source, $ob_level) {
         $this->logger = $logger;
         $this->source = $source;
         $this->ob_level_start = $this->ob_level_current = $ob_level;
     }
 
-    public function log_pass() {
-        $this->queued[] = [namespace\LOG_EVENT_PASS, null];
+    public function log_pass($source) {
+        $this->queued[] = [namespace\LOG_EVENT_PASS, $source];
     }
 
 
@@ -44,6 +40,11 @@ final class BufferingLogger implements Logger {
 
     public function log_output($source, $output, $during_error) {
         $this->queued[] = [namespace\LOG_EVENT_OUTPUT, [$source, $output]];
+    }
+
+
+    public function log_debug($source, $output) {
+        $this->queued[] = [namespace\LOG_EVENT_DEBUG, [$source, $output]];
     }
 
 
@@ -113,7 +114,7 @@ function end_buffering(BufferingLogger $logger) {
             list($type, $data) = $event;
             switch ($type) {
                 case namespace\LOG_EVENT_PASS:
-                    $logger->log_pass();
+                    $logger->log_pass($data);
                     break;
 
                 case namespace\LOG_EVENT_FAIL:
@@ -134,6 +135,11 @@ function end_buffering(BufferingLogger $logger) {
                 case namespace\LOG_EVENT_OUTPUT:
                     list($source, $reason) = $data;
                     $logger->log_output($source, $reason, $error);
+                    break;
+
+                case namespace\LOG_EVENT_DEBUG:
+                    list($source, $reason) = $data;
+                    $logger->log_debug($source, $reason, $error);
                     break;
             }
         }

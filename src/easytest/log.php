@@ -59,7 +59,7 @@ final class BasicLogger implements Logger {
     }
 
 
-    public function log_pass() {
+    public function log_pass($source) {
         ++$this->count[namespace\LOG_EVENT_PASS];
     }
 
@@ -90,6 +90,9 @@ final class BasicLogger implements Logger {
             $this->events[] = [namespace\LOG_EVENT_OUTPUT, $source, $reason];
         }
     }
+
+
+    public function log_debug($source, $output) {}
 
 
     public function get_log() {

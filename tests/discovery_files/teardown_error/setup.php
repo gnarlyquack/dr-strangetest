@@ -1,11 +1,8 @@
 <?php
 
-function setup_directory_teardown_error() {
-    echo __FUNCTION__;
-}
+function setup_directory_teardown_error() {}
 
 
 function teardown_directory_teardown_error() {
-    echo __FUNCTION__;
     throw new Exception('An error happened');
 }

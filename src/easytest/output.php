@@ -15,9 +15,9 @@ final class LiveUpdatingLogger implements Logger {
     }
 
 
-    public function log_pass() {
+    public function log_pass($source) {
         namespace\output_pass();
-        $this->logger->log_pass();
+        $this->logger->log_pass($source);
     }
 
 
@@ -43,6 +43,12 @@ final class LiveUpdatingLogger implements Logger {
         namespace\output_output();
         $this->logger->log_output($source, $reason, $during_error);
     }
+
+
+    public function log_debug($source, $reason) {
+        $this->logger->log_debug($source, $reason);
+    }
+
 
     private $logger;
 }

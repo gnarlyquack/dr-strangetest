@@ -18,6 +18,7 @@ const LOG_EVENT_FAIL   = 2;
 const LOG_EVENT_ERROR  = 3;
 const LOG_EVENT_SKIP   = 4;
 const LOG_EVENT_OUTPUT = 5;
+const LOG_EVENT_DEBUG  = 6;
 
 
 
@@ -36,7 +37,7 @@ interface Log {
 }
 
 interface Logger {
-    public function log_pass();
+    public function log_pass($source);
 
     public function log_failure($source, $reason);
 
@@ -45,6 +46,8 @@ interface Logger {
     public function log_skip($source, $reason);
 
     public function log_output($source, $reason, $during_error);
+
+    public function log_debug($source, $reason);
 }
 
 

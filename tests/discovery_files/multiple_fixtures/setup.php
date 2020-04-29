@@ -1,17 +1,9 @@
 <?php
 
-function setup_directory_multiple_fixtures() {
-    echo __FUNCTION;
-}
+function setup_directory_multiple_fixtures() {}
 
-function teardown_directory_multiple_fixtures() {
-    echo __FUNCTION;
-}
+function teardown_directory_multiple_fixtures() {}
 
-function SetupDirectoryMultipleFixtures() {
-    echo __FUNCTION;
-}
+function SetupDirectoryMultipleFixtures() {}
 
-function TeardownDirectoryMultipleFixtures() {
-    echo __FUNCTION;
-}
+function TeardownDirectoryMultipleFixtures() {}

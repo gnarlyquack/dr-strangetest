@@ -17,12 +17,6 @@ Release
 
 -   Implement file-level fixtures
 
--   Add additional verbosity level? The bulk of our discovery tests works by
-    generating output and then checking for it in the test log, which seems a
-    little janky
-    -   Actually we probably want to implement additional debugging logging
-        events that we can then inspect with a debugging logger
-
 -   Review test suite
 
 -   Niggles to test/check:
@@ -82,6 +76,11 @@ Future
 
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
+
+-   Add additional verbosity levels? Most of this would only seem to be
+    necessary to support testing... :-/
+    -   "all" could show passed tests (in addition to skips and output)
+    -   "debug" could show debug events in addiont to "all"
 
 
 Wishlist / Someday
