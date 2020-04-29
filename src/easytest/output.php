@@ -8,6 +8,47 @@
 namespace easytest;
 
 
+final class LiveUpdatingLogger implements Logger {
+
+    public function __construct(Logger $logger) {
+        $this->logger = $logger;
+    }
+
+
+    public function log_pass() {
+        namespace\output_pass();
+        $this->logger->log_pass();
+    }
+
+
+    public function log_failure($source, $reason) {
+        namespace\output_failure();
+        $this->logger->log_failure($source, $reason);
+    }
+
+
+    public function log_error($source, $reason) {
+        namespace\output_error();
+        $this->logger->log_error($source, $reason);
+    }
+
+
+    public function log_skip($source, $reason) {
+        namespace\output_skip();
+        $this->logger->log_skip($source, $reason);
+    }
+
+
+    public function log_output($source, $reason, $during_error) {
+        namespace\output_output();
+        $this->logger->log_output($source, $reason, $during_error);
+    }
+
+    private $logger;
+}
+
+
+
 function output($text) {
     echo "$text\n";
 }

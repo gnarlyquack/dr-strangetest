@@ -12,7 +12,7 @@ const ERROR_SETUP    = 0x01;
 const ERROR_TEARDOWN = 0x02;
 
 
-function discover_tests(BufferingLogger $logger, array $paths) {
+function discover_tests(Logger $logger, array $paths) {
     $state = new State();
     if (!$paths) {
         $paths[] = \getcwd();
@@ -57,7 +57,7 @@ function _determine_root($path) {
 }
 
 
-function _discover_directory(State $state, BufferingLogger $logger, $dir, $args, $target = null) {
+function _discover_directory(State $state, Logger $logger, $dir, $args, $target = null) {
     // Discover and run tests in a directory
     //
     // If $target is null, then all files and subdirectories within the
@@ -74,9 +74,9 @@ function _discover_directory(State $state, BufferingLogger $logger, $dir, $args,
 
     list($setup, $teardown, $tests) = $processed;
     if ($setup) {
-        $logger->start_buffering($setup);
+        $logger = namespace\start_buffering($logger, $setup);
         list($succeeded, $args) = namespace\_run_setup($logger, $setup, $setup, $args);
-        $logger->end_buffering();
+        $logger = namespace\end_buffering($logger);
         if (!$succeeded) {
             return;
         }
@@ -87,14 +87,14 @@ function _discover_directory(State $state, BufferingLogger $logger, $dir, $args,
     }
 
     if ($teardown) {
-        $logger->start_buffering($teardown);
+        $logger = namespace\start_buffering($logger, $teardown);
         namespace\_run_teardown($logger, $teardown, $teardown, $args);
-        $logger->end_buffering();
+        $logger = namespace\end_buffering($logger);
     }
 }
 
 
-function _process_directory(State $state, BufferingLogger $logger, $path, $target) {
+function _process_directory(State $state, Logger $logger, $path, $target) {
     $error = false;
     $target_found = false;
     $setup = [];
@@ -180,7 +180,7 @@ function _process_directory(State $state, BufferingLogger $logger, $path, $targe
 }
 
 
-function _parse_setup(State $state, BufferingLogger $logger, $file) {
+function _parse_setup(State $state, Logger $logger, $file) {
     if (isset($state->files[$file])) {
         return $state->files[$file];
     }
@@ -263,7 +263,7 @@ function _parse_setup(State $state, BufferingLogger $logger, $file) {
 /*
  * Discover and run tests in a file.
  */
-function _discover_file(State $state, BufferingLogger $logger, $file, $args) {
+function _discover_file(State $state, Logger $logger, $file, $args) {
     if (isset($state->files[$file])) {
         $logger->log_skip($file, 'File has already been tested!');
         return;
@@ -294,9 +294,9 @@ function _discover_file(State $state, BufferingLogger $logger, $file, $args) {
             $class = "$ns$class";
             if (!isset($state->seen[$class]) && \class_exists($class)) {
                 $state->seen[$class] = true;
-                $logger->start_buffering($class);
+                $logger = namespace\start_buffering($logger, $class);
                 $object = namespace\_instantiate_test($logger, $class, $args);
-                $logger->end_buffering();
+                $logger = namespace\end_buffering($logger);
                 if ($object) {
                     namespace\_run_test_case($logger, $class, $object);
                 }
@@ -311,10 +311,10 @@ function _discover_file(State $state, BufferingLogger $logger, $file, $args) {
 }
 
 
-function _tokenize_file(BufferingLogger $logger, $filename) {
-    $logger->start_buffering($filename);
+function _tokenize_file(Logger $logger, $filename) {
+    $logger = namespace\start_buffering($logger, $filename);
     $succeeded = namespace\_include_file($logger, $filename);
-    $logger->end_buffering();
+    $logger = namespace\end_buffering($logger);
     if (!$succeeded) {
         return;
     }
@@ -415,7 +415,7 @@ function _parse_namespace($tokens, $i, $current_ns) {
 }
 
 
-function _include_file(BufferingLogger $logger, $file) {
+function _include_file(Logger $logger, $file) {
     try {
         namespace\_guard_include($file);
         return true;
@@ -437,7 +437,7 @@ function _guard_include($file) {
 }
 
 
-function _run_setup(BufferingLogger $logger, $source, $callable, $args=null) {
+function _run_setup(Logger $logger, $source, $callable, $args=null) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -462,7 +462,7 @@ function _run_setup(BufferingLogger $logger, $source, $callable, $args=null) {
 }
 
 
-function _run_teardown(BufferingLogger $logger, $source, $callable, $args = null) {
+function _run_teardown(Logger $logger, $source, $callable, $args = null) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -484,7 +484,7 @@ function _run_teardown(BufferingLogger $logger, $source, $callable, $args = null
 }
 
 
-function _instantiate_test(BufferingLogger $logger, $class, $args) {
+function _instantiate_test(Logger $logger, $class, $args) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -505,7 +505,7 @@ function _instantiate_test(BufferingLogger $logger, $class, $args) {
 }
 
 
-function _run_test_case(BufferingLogger $logger, $class, $object) {
+function _run_test_case(Logger $logger, $class, $object) {
     $methods = namespace\_process_methods($logger, $class, $object);
     if (!$methods) {
         return;
@@ -517,9 +517,9 @@ function _run_test_case(BufferingLogger $logger, $class, $object) {
     if ($setup_object) {
         $source = "$class::$setup_object";
         $callable = [$object, $setup_object];
-        $logger->start_buffering($source);
+        $logger = namespace\start_buffering($logger, $source);
         list($succeeded,) = namespace\_run_setup($logger, $source, $callable);
-        $logger->end_buffering();
+        $logger = namespace\end_buffering($logger);
         if (!$succeeded) {
             return;
         }
@@ -532,14 +532,14 @@ function _run_test_case(BufferingLogger $logger, $class, $object) {
     if ($teardown_object) {
         $source = "$class::$teardown_object";
         $callable = [$object, $teardown_object];
-        $logger->start_buffering($source);
+        $logger = namespace\start_buffering($logger, $source);
         namespace\_run_teardown($logger, $source, $callable);
-        $logger->end_buffering();
+        $logger = namespace\end_buffering($logger);
     }
 }
 
 
-function _process_methods(BufferingLogger $logger, $class, $object) {
+function _process_methods(Logger $logger, $class, $object) {
     $error = 0;
     $setup_object = [];
     $teardown_object = [];
@@ -615,39 +615,39 @@ function _process_methods(BufferingLogger $logger, $class, $object) {
 }
 
 
-function _run_test(BufferingLogger $logger, $class, $object, $test, $setup, $teardown) {
+function _run_test(Logger $logger, $class, $object, $test, $setup, $teardown) {
     $passed = true;
 
     if ($setup) {
         $source = "$setup for $class::$test";
         $callable = [$object, $setup];
-        $logger->start_buffering($source);
+        $logger = namespace\start_buffering($logger, $source);
         list($passed,) = namespace\_run_setup($logger, $source, $callable);
     }
 
     if ($passed) {
         $source = "$class::$test";
         $callable = [$object, $test];
-        $logger->start_buffering($source);
+        $logger = namespace\start_buffering($logger, $source);
         $passed = namespace\_run_test_method($logger, $source, $callable);
 
         if ($teardown) {
             $source = "$teardown for $class::$test";
             $callable = [$object, $teardown];
-            $logger->start_buffering($source);
+            $logger = namespace\start_buffering($logger, $source);
             $passed = namespace\_run_teardown($logger, $source, $callable)
                     && $passed;
         }
     }
 
-    $logger->end_buffering();
+    $logger = namespace\end_buffering($logger);
     if ($passed) {
         $logger->log_pass();
     }
 }
 
 
-function _run_test_method(BufferingLogger $logger, $source, $callable) {
+function _run_test_method(Logger $logger, $source, $callable) {
     try {
         $callable();
         return true;

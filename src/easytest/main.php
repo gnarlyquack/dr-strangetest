@@ -45,8 +45,6 @@ interface Logger {
     public function log_skip($source, $reason);
 
     public function log_output($source, $reason, $during_error);
-
-    public function get_log();
 }
 
 
@@ -83,15 +81,11 @@ function main($argc, $argv) {
     namespace\_load_easytest();
 
     list($options, $tests) = namespace\_parse_arguments($argc, $argv);
-    $logger = new BufferingLogger(
-        new LiveUpdatingLogger(
-            new BasicLogger($options['verbose'])
-        )
-    );
+    $logger = new BasicLogger($options['verbose']);
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-    namespace\discover_tests($logger, $tests);
+    namespace\discover_tests(new LiveUpdatingLogger($logger) , $tests);
     $end = namespace\_microtime();
 
     $log = $logger->get_log();
@@ -171,7 +165,7 @@ function _try_loading_composer() {
 
 
 function _load_easytest() {
-    $files = ['assertions', 'exceptions', 'log', 'output', 'runner', 'util'];
+    $files = ['assertions', 'buffer', 'exceptions', 'log', 'output', 'runner', 'util'];
     // #BC(5.5): Implement proxy functions for argument unpacking
     // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
     // versions, so we need to include version-dependent proxy functions to do

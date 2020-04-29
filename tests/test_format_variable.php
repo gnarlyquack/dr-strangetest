@@ -5,9 +5,8 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-
 // Some helper classes to test formatting
-//
+
 class ObjectFormat {
     public $one = 'parent public';
     protected $two = 'parent protected';

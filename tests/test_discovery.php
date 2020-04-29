@@ -19,9 +19,7 @@ class TestDiscovery {
     ];
 
     public function setup() {
-        $this->logger = new easytest\BufferingLogger(
-            new easytest\BasicLogger(true)
-        );
+        $this->logger = new easytest\BasicLogger(true);
         $this->path = __DIR__ . '/discovery_files/';
     }
 

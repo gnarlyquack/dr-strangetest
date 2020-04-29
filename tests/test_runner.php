@@ -18,9 +18,7 @@ class TestRunner {
     ];
 
     public function setup() {
-        $this->logger = new easytest\BufferingLogger(
-            new easytest\BasicLogger(false)
-        );
+        $this->logger = new easytest\BasicLogger(false);
     }
 
     // helper assertions

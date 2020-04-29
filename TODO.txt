@@ -7,25 +7,15 @@ desirable for future releases may be listed at the bottom of the file.
 
 Release
 -------
--   Test installing and running via Composer/Packagist
+-   Implement subtests
 
--   When trying to load Composer, only check the path(s) the autoloader would
-    be if EasyTest had been installed via Composer(?). I.e., since EasyTest
-    itself doesn't require Composer, we (might) never want/need to try loading
-    Composer from our own source tree.
+-   Implement test-specific teardown
 
--   Review test suite
+-   Implement multiple execution of parameterized tests
 
+-   Implement test functions
 
-Future
-------
--   Distribute EasyTest as a single executable (Phar?)
-
--   Add support for config files(?)
-
--   Implement additional CLI options(?)
-    -   specify a config file
-    -   reverse report output
+-   Implement file-level fixtures
 
 -   Add additional verbosity level? The bulk of our discovery tests works by
     generating output and then checking for it in the test log, which seems a
@@ -33,12 +23,7 @@ Future
     -   Actually we probably want to implement additional debugging logging
         events that we can then inspect with a debugging logger
 
--   Cache results of directory (and file?) discovery
-
--   diff: Limit number of lines that are reported before and after the
-    differing portion of text
-
--   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
+-   Review test suite
 
 -   Niggles to test/check:
 
@@ -53,6 +38,38 @@ Future
         directory "tests/test_foo" (which may or may not also include a file
         "test_target.php")
 
+-   Support PHP 5.3(?)
+    -   Short array syntax ([]) isn't supported
+    -   Closures don't have access to $this
+
+-   Implement additional assertions? Currently EasyTest's test suite only
+    uses/needs the assertions already provided by the framework, but
+    presumably other assertions would be useful in other contexts
+
+-   Test installing and running via Composer/Packagist
+
+-   When trying to load Composer, only check the path(s) the autoloader would
+    be if EasyTest had been installed via Composer(?). I.e., since EasyTest
+    itself doesn't require Composer, we (might) never want/need to try loading
+    Composer from our own source tree.
+
+
+Future
+------
+-   Distribute EasyTest as a single executable (Phar?)
+
+-   Add support for config files(?)
+
+-   Implement additional CLI options(?)
+    -   specify a config file
+    -   reverse report output
+-   Cache results of directory (and file?) discovery
+
+-   diff: Limit number of lines that are reported before and after the
+    differing portion of text
+
+-   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
+
 -   Only determine the test root once. Currently, we determine a new root for
     every provided path, which means we could run potentially try to run tests
     from completely unrelated test suites. This could be problematic, e.g., we
@@ -63,22 +80,12 @@ Future
 
 -   Compress the token-processing loops in _parse_setup and _discover_file?
 
--   Support PHP >= 5.3(?)
-    -   Short array syntax ([]) isn't supported
-    -   Closures don't have access to $this
-
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
-
--   Implement additional assertions? Currently EasyTest's test suite only
-    uses/needs the assertions already provided by the framework, but
-    presumably other assertions would be useful in other contexts
 
 
 Wishlist / Someday
 ------------------
--   Implement data generators/subtests
-
 -   Improve diff algorithm
     -   "a high-performance library in multiple languages that manipulates
         plain text"
