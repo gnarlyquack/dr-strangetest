@@ -13,8 +13,6 @@ Release
 
 -   Implement multiple execution of parameterized tests
 
--   Implement test functions
-
 -   Implement file-level fixtures
 
 -   Review test suite
@@ -48,6 +46,14 @@ Release
     Composer from our own source tree.
 
 -   How to handle a skip in a test function that then errors during teardown?
+
+-   Handle errors during test file parsing
+
+-   Fix-up teardown fixtures:
+    -   teardown_function, etc. should get unpacked arguments
+    -   directory (and file) teardowns should get packed arguments but
+        unwrapped from ArgList. Or should we make this dynamic? I.e., a single
+        arglist is unpacked, multiple list are unwrapped and passed-in as-is
 
 
 Future

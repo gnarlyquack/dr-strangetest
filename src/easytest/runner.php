@@ -21,6 +21,13 @@ const TYPE_FUNCTION = 2;
 
 
 
+final class FileTest extends struct {
+    public $setup;
+    public $teardown;
+    public $identifiers = [];
+}
+
+
 final class ClassTest extends struct {
     public $name;
     public $setup_object;
@@ -53,6 +60,7 @@ function discover_tests(Logger $logger, array $paths) {
             continue;
         }
 
+        $path = $realpath;
         if (\is_dir($path)) {
             $path .= \DIRECTORY_SEPARATOR;
         }
@@ -332,13 +340,20 @@ function _discover_file(State $state, Logger $logger, $filepath, $args) {
     }
     $state->files[$filepath] = true;
 
-    $identifiers = namespace\_parse_test_file($logger, $filepath, $state->seen);
-    if (!$identifiers) {
+    $file = namespace\_parse_test_file($logger, $filepath, $state->seen);
+    if (!$file) {
         return;
     }
 
     $test = new FunctionTest();
-    foreach ($identifiers as $identifier) {
+    if ($file->setup) {
+        $test->setup = $test->setup_name = $file->setup;
+    }
+    if ($file->teardown) {
+        $test->teardown = $test->teardown_name = $file->teardown;
+    }
+
+    foreach ($file->identifiers as $identifier) {
         list($name, $type) = $identifier;
         switch ($type) {
         case namespace\TYPE_CLASS:
@@ -365,52 +380,105 @@ function _discover_file(State $state, Logger $logger, $filepath, $args) {
 
 
 function _parse_test_file(Logger $logger, $filepath, array &$seen) {
-    $tests = [];
+    $file = new FileTest();
+
+    $parsers = [
+        \T_CLASS => function($class, $fullname) use ($file) {
+            return namespace\_is_test_class($file, $class, $fullname);
+        },
+        \T_FUNCTION => function($function, $fullname) use ($file) {
+            return namespace\_is_test_function($file, $function, $fullname);
+        },
+    ];
+    if (!namespace\_parse_file($logger, $filepath, $parsers, $seen)) {
+        return false;
+    }
+    return $file;
+}
+
+
+function _is_test_class(FileTest $file, $class, $fullname) {
+    if (0 === \substr_compare($class, 'test', 0, 4, true)) {
+        $file->identifiers[] = [$fullname, namespace\TYPE_CLASS];
+        return true;
+    }
+    return false;
+}
+
+
+function _is_test_function(FileTest $file, $function, $fullname) {
+    if (0 === \substr_compare($function, 'test', 0, 4, true)) {
+        $file->identifiers[] = [$fullname, namespace\TYPE_FUNCTION];
+        return true;
+    }
+
+    if (\preg_match('~^(setup|teardown)_?function~i', $function, $matches)) {
+        if (0 === \strcasecmp('setup', $matches[1])) {
+            $file->setup = $fullname;
+        }
+        else {
+            $file->teardown = $fullname;
+        }
+        return true;
+    }
+    return false;
+}
+
+
+function _parse_file(Logger $logger, $filepath, array $parsers, array &$seen) {
     $source = namespace\_read_file($logger, $filepath);
     if (!$source) {
-        return $tests;
+        return false;
     }
 
     $ns = '';
     $tokens = \token_get_all($source);
-    for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
+    // Start with $i = 2 since all PHP code starts with '<?php' followed by
+    // whitespace
+    for ($i = 2, $c = \count($tokens); $i < $c; ++$i) {
         if (!\is_array($tokens[$i])) {
             continue;
         }
-        switch ($tokens[$i][0]) {
+
+        $token = $tokens[$i];
+        list($token_type, $token_name, ) = $tokens[$i];
+        switch ($token_type) {
         case \T_CLASS:
-            list($class, $i) = namespace\_parse_identifier($tokens, $i);
-            if (!$class) {
-                break;
-            }
-
-            if (0 !== \substr_compare($class, 'test', 0, 4, true)) {
-                break;
-            }
-
-            $fullname = "$ns$class";
-            $seenname = "class $fullname";
-            if (!isset($seen[$seenname]) && \class_exists($fullname)) {
-                $seen[$seenname] = true;
-                $tests[] = [$fullname, namespace\TYPE_CLASS];
-            }
-            break;
-
         case \T_FUNCTION:
-            list($function, $i) = namespace\_parse_identifier($tokens, $i);
-            if (!$function) {
+            // Always parse the identifier so we only match top-level
+            // identifiers and not class methods, anonymous objects, etc.
+            list($name, $i) = namespace\_parse_identifier($tokens, $i);
+            if (!$name) {
+                // anonymous object, although this test might be unnecessary?
+                break;
+            }
+            if (!isset($parsers[$token_type])) {
+                // whatever we're parsing doesn't care about this identifier
                 break;
             }
 
-            if (0 !== \substr_compare($function, 'test', 0, 4, true)) {
+            $fullname = "$ns$name";
+            // functions and classes with identical names can coexist!
+            $seenname = "$token_name $fullname";
+            $exists = "{$token_name}_exists";
+            // Handle conditionally-defined identifiers, i.e., we found the
+            // identifier in the file, but it wasn't actually defined due to
+            // some failed conditional. The identifier could have still been
+            // defined previously -- e.g., perhaps the file has multiple
+            // configuration-based implementations -- so we also need to
+            // ensure we don't "rediscover" already-defined identifiers. Our
+            // implementation here isn't necessarily foolproof, because we
+            // only keep track of identifiers we've seen in files we've parsed,
+            // however it seems like somebody would have to be doing something
+            // very bizarre for us to have a false positive here
+            if (isset($seen[$seenname]) || !$exists($fullname)) {
                 break;
             }
 
-            $fullname = "$ns$function";
-            $seenname = "function $fullname";
-            if (!isset($seen[$seenname]) && \function_exists($fullname)) {
+            if ($parsers[$token_type]($name, $fullname)) {
+                // whatever we're parsing cared about this identifier, so add
+                // it to the "seen" list
                 $seen[$seenname] = true;
-                $tests[] = [$fullname, namespace\TYPE_FUNCTION];
             }
             break;
 
@@ -419,7 +487,7 @@ function _parse_test_file(Logger $logger, $filepath, array &$seen) {
             break;
         }
     }
-    return $tests;
+    return true;
 }
 
 
@@ -575,7 +643,7 @@ function _run_setup(Logger $logger, $source, $callable, $args=null) {
 }
 
 
-function _run_teardown(Logger $logger, $source, $callable, $args = null) {
+function _run_teardown(Logger $logger, $source, $callable, $args = null, $unpack = false) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -739,21 +807,22 @@ function _discover_class(Logger $logger, $class) {
 
 function _run_test(Logger $logger, FunctionTest $test) {
     $success = true;
+    $args = null;
 
     if ($test->setup) {
         $source = "{$test->setup_name} for {$test->name}";
         $logger = namespace\start_buffering($logger, $source);
-        list($success,) = namespace\_run_setup($logger, $source, $test->setup);
+        list($success, $args) = namespace\_run_setup($logger, $source, $test->setup);
     }
 
     if ($success) {
         $logger = namespace\start_buffering($logger, $test->name);
-        $success = namespace\_run_test_function($logger, $test->name, $test->function);
+        $success = namespace\_run_test_function($logger, $test->name, $test->function, $args);
 
         if ($test->teardown) {
             $source = "{$test->teardown_name} for {$test->name}";
             $logger = namespace\start_buffering($logger, $source);
-            $success = namespace\_run_teardown($logger, $source, $test->teardown)
+            $success = namespace\_run_teardown($logger, $source, $test->teardown, $args, true)
                     && $success;
         }
     }
@@ -765,9 +834,15 @@ function _run_test(Logger $logger, FunctionTest $test) {
 }
 
 
-function _run_test_function(Logger $logger, $source, $callable) {
+function _run_test_function(Logger $logger, $source, $callable, $args) {
     try {
-        $callable();
+        if ($args) {
+            // #BC(5.5): Use proxy function for argument unpacking
+            namespace\_unpack_function($callable, $args->args());
+        }
+        else {
+            $callable();
+        }
         return true;
     }
     catch (\AssertionError $e) {
