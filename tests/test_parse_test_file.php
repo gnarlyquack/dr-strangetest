@@ -12,7 +12,7 @@ class TestParseTestFile {
 
     public function setup_object() {
         $this->root = \sprintf(
-            '%1$s%2$ssample_files%2$s',
+            '%1$s%2$ssample_files%2$sparse_file%2$s',
             __DIR__, \DIRECTORY_SEPARATOR
         );
     }

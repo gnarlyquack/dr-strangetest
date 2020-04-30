@@ -13,8 +13,6 @@ Release
 
 -   Implement multiple execution of parameterized tests
 
--   Implement file-level fixtures
-
 -   Review test suite
 
 -   Niggles to test/check:

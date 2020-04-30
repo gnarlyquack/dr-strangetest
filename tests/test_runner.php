@@ -8,14 +8,6 @@
 class TestRunner {
     private $logger;
     private $runner;
-    private $blank_report = [
-        easytest\LOG_EVENT_PASS => 0,
-        easytest\LOG_EVENT_FAIL => 0,
-        easytest\LOG_EVENT_ERROR => 0,
-        easytest\LOG_EVENT_SKIP => 0,
-        easytest\LOG_EVENT_OUTPUT => 0,
-        'events' => [],
-    ];
 
     public function setup() {
         $this->logger = new easytest\BasicLogger(false);
@@ -31,56 +23,17 @@ class TestRunner {
         easytest\assert_identical($expected, $actual);
     }
 
-    private function assert_report($report) {
-        $expected = $this->blank_report;
-        foreach ($report as $i => $entry) {
-            $expected[$i] = $entry;
-        }
 
-        $log = $this->logger->get_log();
-        $actual = [
-            easytest\LOG_EVENT_PASS => $log->pass_count(),
-            easytest\LOG_EVENT_FAIL => $log->failure_count(),
-            easytest\LOG_EVENT_ERROR => $log->error_count(),
-            easytest\LOG_EVENT_SKIP => $log->skip_count(),
-            easytest\LOG_EVENT_OUTPUT => $log->output_count(),
-            'events' => $log->get_events(),
-        ];
-        for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
-            list($type, $source, $reason) = $actual['events'][$i];
-            switch ($type) {
-                case easytest\LOG_EVENT_ERROR:
-                    if ($reason instanceof Throwable
-                        || $reason instanceof Exception)
-                    {
-                        $reason = $reason->getMessage();
-                        $actual['events'][$i][2] = $reason;
-                    }
-                    break;
-
-                case easytest\LOG_EVENT_FAIL:
-                    if ($reason instanceof AssertionError
-                        || $reason instanceof easytest\Failure)
-                    {
-                        $reason = $reason->getMessage();
-                        $actual['events'][$i][2] = $reason;
-                    }
-                    break;
-
-                case easytest\LOG_EVENT_SKIP:
-                    $actual['events'][$i][2] = $reason->getMessage();
-                    break;
-            }
-        }
-
-        easytest\assert_identical($expected, $actual);
+    private function assert_log($expected) {
+        namespace\assert_log($expected, $this->logger);
     }
+
 
     // tests
 
     public function test_run_test_method() {
         $this->assert_run(new SimpleTestCase(), ['test']);
-        $this->assert_report([easytest\LOG_EVENT_PASS => 1]);
+        $this->assert_log([easytest\LOG_EVENT_PASS => 1]);
     }
 
     public function test_fixtures() {
@@ -93,7 +46,7 @@ class TestRunner {
                 'teardown_object',
             ]
         );
-        $this->assert_report([easytest\LOG_EVENT_PASS => 2]);
+        $this->assert_log([easytest\LOG_EVENT_PASS => 2]);
     }
 
     public function test_case_insensitivity() {
@@ -106,7 +59,7 @@ class TestRunner {
                 'TearDownObject',
             ]
         );
-        $this->assert_report([easytest\LOG_EVENT_PASS => 2]);
+        $this->assert_log([easytest\LOG_EVENT_PASS => 2]);
     }
 
     public function test_exception() {
@@ -114,7 +67,7 @@ class TestRunner {
             new ExceptionTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -131,7 +84,7 @@ class TestRunner {
             new ErrorTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -148,7 +101,7 @@ class TestRunner {
             new SuppressedErrorTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([easytest\LOG_EVENT_PASS => 1]);
+        $this->assert_log([easytest\LOG_EVENT_PASS => 1]);
     }
 
     public function test_failure() {
@@ -156,7 +109,7 @@ class TestRunner {
             new FailedTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_FAIL => 1,
             'events' => [
                 [
@@ -173,7 +126,7 @@ class TestRunner {
             new SetupObjectErrorTestCase(),
             ['setup_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -190,7 +143,7 @@ class TestRunner {
             new SetupErrorTestCase(),
             ['setup_object', 'setup', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -207,7 +160,7 @@ class TestRunner {
             new TeardownErrorTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -224,7 +177,7 @@ class TestRunner {
             new TeardownObjectErrorTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
@@ -242,7 +195,7 @@ class TestRunner {
             new MultipleObjectFixtureTestCase(),
             []
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 2,
             'events' => [
                 [
@@ -265,7 +218,7 @@ class TestRunner {
             new SkipTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([easytest\LOG_EVENT_SKIP => 1]);
+        $this->assert_log([easytest\LOG_EVENT_SKIP => 1]);
     }
 
     public function test_skip_in_setup() {
@@ -273,7 +226,7 @@ class TestRunner {
             new SkipSetupTestCase(),
             ['setup_object', 'setup', 'teardown_object']
         );
-        $this->assert_report([easytest\LOG_EVENT_SKIP => 1]);
+        $this->assert_log([easytest\LOG_EVENT_SKIP => 1]);
     }
 
     public function test_skip_in_setup_object() {
@@ -281,7 +234,7 @@ class TestRunner {
             new SkipSetupObjectTestCase(),
             ['setup_object']
         );
-        $this->assert_report([easytest\LOG_EVENT_SKIP => 1]);
+        $this->assert_log([easytest\LOG_EVENT_SKIP => 1]);
     }
 
     public function test_skip_in_teardown() {
@@ -289,7 +242,7 @@ class TestRunner {
             new SkipTeardownTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
                 [
@@ -306,7 +259,7 @@ class TestRunner {
             new SkipTeardownObjectTestCase(),
             ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
             'events' => [
@@ -332,7 +285,7 @@ class TestRunner {
                 'teardown_object'
             ]
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_FAIL => 1,
             easytest\LOG_EVENT_ERROR => 1,
@@ -386,7 +339,7 @@ class TestRunner {
                 'teardown_object'
             ]
         );
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_FAIL => 1,
             easytest\LOG_EVENT_ERROR => 1,
@@ -438,7 +391,7 @@ class TestRunner {
         // desirable: errors associated with buffering will get logged and
         // cause the test suite in general to fail (so hopefully people will
         // clean up their tests), but do not otherwise impede testing.
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 4,
             'events' => [
@@ -478,7 +431,7 @@ class TestRunner {
         // and cause the test suite in general to fail (so hopefully people
         // will clean up their tests), but do not otherwise impede testing.
         $message = "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.";
-        $this->assert_report([
+        $this->assert_log([
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 5,
             'events' => [

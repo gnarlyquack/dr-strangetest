@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of EasyTest. It is subject to the license terms in the
 // LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
@@ -22,6 +23,8 @@ const TYPE_FUNCTION = 2;
 
 
 final class FileTest extends struct {
+    public $setup_file;
+    public $teardown_file;
     public $setup;
     public $teardown;
     public $identifiers = [];
@@ -345,6 +348,16 @@ function _discover_file(State $state, Logger $logger, $filepath, $args) {
         return;
     }
 
+    if ($file->setup_file) {
+        $logger = namespace\start_buffering($logger, $file->setup_file);
+        list($success, $args) = namespace\_run_setup(
+            $logger, $file->setup_file, $file->setup_file, $args);
+        $logger = namespace\end_buffering($logger);
+        if (!$success) {
+            return;
+        }
+    }
+
     $test = new FunctionTest();
     if ($file->setup) {
         $test->setup = $test->setup_name = $file->setup;
@@ -368,7 +381,7 @@ function _discover_file(State $state, Logger $logger, $filepath, $args) {
         case namespace\TYPE_FUNCTION:
             $test->name = $name;
             $test->function = $name;
-            namespace\_run_test($logger, $test);
+            namespace\_run_test($logger, $test, $args);
             break;
 
         default:
@@ -376,6 +389,14 @@ function _discover_file(State $state, Logger $logger, $filepath, $args) {
             break;
         }
     }
+
+    if ($file->teardown_file) {
+        $logger = namespace\start_buffering($logger, $file->teardown_file);
+        namespace\_run_teardown(
+            $logger, $file->teardown_file, $file->teardown_file, $args);
+        $logger = namespace\end_buffering($logger);
+    }
+
 }
 
 
@@ -412,12 +433,22 @@ function _is_test_function(FileTest $file, $function, $fullname) {
         return true;
     }
 
-    if (\preg_match('~^(setup|teardown)_?function~i', $function, $matches)) {
+    if (\preg_match('~^(setup|teardown)_?(file|function)~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
-            $file->setup = $fullname;
+            if (0 === \strcasecmp('file', $matches[2])) {
+                $file->setup_file = $fullname;
+            }
+            else {
+                $file->setup = $fullname;
+            }
         }
         else {
-            $file->teardown = $fullname;
+            if (0 === \strcasecmp('file', $matches[2])) {
+                $file->teardown_file = $fullname;
+            }
+            else {
+                $file->teardown = $fullname;
+            }
         }
         return true;
     }
@@ -643,7 +674,7 @@ function _run_setup(Logger $logger, $source, $callable, $args=null) {
 }
 
 
-function _run_teardown(Logger $logger, $source, $callable, $args = null, $unpack = false) {
+function _run_teardown(Logger $logger, $source, $callable, $args = null) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -715,7 +746,7 @@ function _run_class_test(Logger $logger, $class, $object) {
     foreach ($class->methods as $method) {
         $test->name = "{$class->name}::$method";
         $test->function = [$object, $method];
-        namespace\_run_test($logger, $test);
+        namespace\_run_test($logger, $test, null);
     }
 
     if ($class->teardown_object) {
@@ -805,14 +836,13 @@ function _discover_class(Logger $logger, $class) {
 }
 
 
-function _run_test(Logger $logger, FunctionTest $test) {
+function _run_test(Logger $logger, FunctionTest $test, $args) {
     $success = true;
-    $args = null;
 
     if ($test->setup) {
         $source = "{$test->setup_name} for {$test->name}";
         $logger = namespace\start_buffering($logger, $source);
-        list($success, $args) = namespace\_run_setup($logger, $source, $test->setup);
+        list($success, $args) = namespace\_run_setup($logger, $source, $test->setup, $args);
     }
 
     if ($success) {
@@ -822,7 +852,7 @@ function _run_test(Logger $logger, FunctionTest $test) {
         if ($test->teardown) {
             $source = "{$test->teardown_name} for {$test->name}";
             $logger = namespace\start_buffering($logger, $source);
-            $success = namespace\_run_teardown($logger, $source, $test->teardown, $args, true)
+            $success = namespace\_run_teardown($logger, $source, $test->teardown, $args)
                     && $success;
         }
     }
