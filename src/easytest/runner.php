@@ -63,6 +63,46 @@ final class FunctionTest extends struct {
 }
 
 
+final class TestContext {
+    private $source;
+    private $logger;
+    private $success = true;
+
+
+    public function __construct(Logger $logger, $source) {
+        $this->logger = $logger;
+        $this->source = $source;
+    }
+
+
+    public function subtest($callable) {
+        try {
+            $callable();
+            return;
+        }
+        catch (\AssertionError $e) {
+            $this->logger->log_failure($this->source, $e);
+        }
+        // #BC(5.6): Catch Failure
+        catch (Failure $e) {
+            $this->logger->log_failure($this->source, $e);
+        }
+        catch (\Throwable $e) {
+            $this->logger->log_error($this->source, $e);
+        }
+        // #BC(5.6): Catch Exception
+        catch (\Exception $e) {
+            $this->logger->log_error($this->source, $e);
+        }
+        $this->success = false;
+    }
+
+    public function succeeded() {
+        return $this->success;
+    }
+}
+
+
 function discover_tests(Logger $logger, array $paths) {
     $state = new State();
     if (!$paths) {
@@ -897,8 +937,9 @@ function _run_test(Logger $logger, FunctionTest $test, $args) {
     }
 
     if ($success) {
+        $context = new TestContext($logger, $test->name);
         $logger = namespace\start_buffering($logger, $test->name);
-        $success = namespace\_run_test_function($logger, $test->name, $test->function, $args);
+        $success = namespace\_run_test_function($logger, $test->name, $test->function, $args, $context);
 
         if ($test->teardown) {
             $source = "{$test->teardown_name} for {$test->name}";
@@ -915,16 +956,17 @@ function _run_test(Logger $logger, FunctionTest $test, $args) {
 }
 
 
-function _run_test_function(Logger $logger, $source, $callable, $args) {
+function _run_test_function(Logger $logger, $source, $callable, $args, TestContext $context) {
     try {
         if ($args) {
+            $args[] = $context;
             // #BC(5.5): Use proxy function for argument unpacking
             namespace\_unpack_function($callable, $args);
         }
         else {
-            $callable();
+            $callable($context);
         }
-        return true;
+        return $context->succeeded();
     }
     catch (\AssertionError $e) {
         $logger->log_failure($source, $e);
