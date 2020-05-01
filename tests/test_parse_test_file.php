@@ -8,6 +8,7 @@
 class TestParseTestFile {
     private $root;
     private $logger;
+    private $state;
 
 
     public function setup_object() {
@@ -19,6 +20,7 @@ class TestParseTestFile {
 
     public function setup() {
         $this->logger = new easytest\BasicLogger(true);
+        $this->state = new easytest\State();
     }
 
 
@@ -34,14 +36,14 @@ class TestParseTestFile {
     }
 
 
-    private function assert_discovered(easytest\FileTest $expected, easytest\FileTest $discovered, array $seen) {
+    private function assert_discovered(easytest\FileTest $expected, easytest\FileTest $discovered) {
         easytest\assert_identical(
             (array)$expected, (array)$discovered,
             'Failed parsing names'
         );
 
         easytest\assert_identical(
-            $this->seen_names($expected), $seen,
+            $this->seen_names($expected), $this->state->seen,
             'Failed adding seen names'
         );
     }
@@ -77,8 +79,7 @@ class TestParseTestFile {
 
     public function test_parses_unnamespaced_file() {
         $filepath = "{$this->root}unnamespaced.php";
-        $seen = [];
-        $discovered = easytest\_parse_test_file($this->logger, $filepath, $seen);
+        $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
         $this->assert_log([
             [
@@ -89,6 +90,7 @@ class TestParseTestFile {
         ]);
 
         $expected = new easytest\FileTest();
+        $expected->filepath = $filepath;
         $expected->identifiers = [
             ['Test', easytest\TYPE_CLASS],
             ['Test', easytest\TYPE_FUNCTION],
@@ -97,7 +99,7 @@ class TestParseTestFile {
             ['TestThree', easytest\TYPE_CLASS],
             ['test_three', easytest\TYPE_FUNCTION],
         ];
-        $this->assert_discovered($expected, $discovered, $seen);
+        $this->assert_discovered($expected, $discovered);
     }
 
 
@@ -108,45 +110,45 @@ class TestParseTestFile {
         }
 
         $filepath = "{$this->root}anonymous_class.php";
-        $seen = [];
-        $discovered = easytest\_parse_test_file($this->logger, $filepath, $seen);
+        $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
         $this->assert_log([]);
 
         $expected = new easytest\FileTest();
+        $expected->filepath = $filepath;
         $expected->identifiers = [
             ['TestUsesAnonymousClass', easytest\TYPE_CLASS],
         ];
-        $this->assert_discovered($expected, $discovered, $seen);
+        $this->assert_discovered($expected, $discovered);
     }
 
 
     public function test_parses_simple_namespaces() {
         $filepath = "{$this->root}namespaces_simple.php";
-        $seen = [];
-        $discovered = easytest\_parse_test_file($this->logger, $filepath, $seen);
+        $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
         $this->assert_log([]);
 
         $expected = new easytest\FileTest();
+        $expected->filepath = $filepath;
         $expected->identifiers = [
             ['ns2\\TestNamespace', easytest\TYPE_CLASS],
             ['ns2\\TestNamespace', easytest\TYPE_FUNCTION],
             ['ns3\\TestNamespace', easytest\TYPE_FUNCTION],
             ['ns3\\TestNamespace', easytest\TYPE_CLASS],
         ];
-        $this->assert_discovered($expected, $discovered, $seen);
+        $this->assert_discovered($expected, $discovered);
     }
 
 
     public function test_parses_bracketed_namespaces() {
         $filepath = "{$this->root}namespaces_bracketed.php";
-        $seen = [];
-        $discovered = easytest\_parse_test_file($this->logger, $filepath, $seen);
+        $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
         $this->assert_log([]);
 
         $expected = new easytest\FileTest();
+        $expected->filepath = $filepath;
         $expected->identifiers = [
             ['ns1\\ns1\\TestNamespace', easytest\TYPE_CLASS],
             ['ns1\\ns1\\TestNamespace', easytest\TYPE_FUNCTION],
@@ -155,18 +157,18 @@ class TestParseTestFile {
             ['TestNamespace', easytest\TYPE_FUNCTION],
             ['TestNamespace', easytest\TYPE_CLASS],
         ];
-        $this->assert_discovered($expected, $discovered, $seen);
+        $this->assert_discovered($expected, $discovered);
     }
 
 
     public function test_parses_conditional_definitions() {
         $filepath = "{$this->root}conditional1.php";
-        $seen = [];
-        $discovered = easytest\_parse_test_file($this->logger, $filepath, $seen);
+        $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
         $this->assert_log([]);
 
         $expected_discovered = new easytest\FileTest();
+        $expected_discovered->filepath = $filepath;
         $expected_discovered->identifiers = [
             ['conditional\\TestA', easytest\TYPE_CLASS],
             ['conditional\\test_a', easytest\TYPE_FUNCTION],
@@ -181,7 +183,7 @@ class TestParseTestFile {
             'function conditional\\test_a' => true,
         ];
         easytest\assert_identical(
-            $expected_seen, $seen,
+            $expected_seen, $this->state->seen,
             'Failed adding seen names'
         );
 
@@ -189,11 +191,12 @@ class TestParseTestFile {
         // Ensure already-seen names aren't re-discovered
 
         $filepath = "{$this->root}conditional2.php";
-        $discovered = easytest\_parse_test_file($this->logger, $filepath, $seen);
+        $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
         $this->assert_log([]);
 
         $expected_discovered = new easytest\FileTest();
+        $expected_discovered->filepath = $filepath;
         $expected_discovered->identifiers = [
             ['conditional\\TestB', easytest\TYPE_CLASS],
             ['conditional\\test_b', easytest\TYPE_FUNCTION],
@@ -206,7 +209,7 @@ class TestParseTestFile {
         $expected_seen['class conditional\\TestB'] = true;
         $expected_seen['function conditional\\test_b'] = true;
         easytest\assert_identical(
-            $expected_seen, $seen,
+            $expected_seen, $this->state->seen,
             'Failed adding seen names'
         );
     }

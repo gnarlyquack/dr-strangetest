@@ -22,9 +22,15 @@ class TestRunFile {
 
 
     private function assert_run($file, $expected){
+        $state = new easytest\State();
+        $logger = new easytest\BasicLogger(true);
         $filepath = "{$this->root}$file";
-        $logger = new easytest\BasicLogger(false);
-        easytest\_discover_file(new easytest\State, $logger, $filepath, null);
+        easytest\_run_file_tests(
+            $state,
+            $logger,
+            easytest\_discover_file($state, $logger, $filepath),
+            null
+        );
 
         assert_log($expected, $logger);
     }
@@ -65,6 +71,24 @@ class TestRunFile {
             'file_and_function_fixtures.php',
             [
                 easytest\LOG_EVENT_PASS => 3,
+            ]
+        );
+    }
+
+
+    public function test_runs_tests_once_per_arg_list() {
+        $this->assert_run(
+            'multiple_runs.php',
+            [
+                easytest\LOG_EVENT_PASS => 6,
+                easytest\LOG_EVENT_OUTPUT => 1,
+                'events' => [
+                    [
+                        easytest\LOG_EVENT_OUTPUT,
+                        'multiple_runs\\teardown_file',
+                        "'multiple_runs\\\\teardown_file'",
+                    ],
+                ],
             ]
         );
     }

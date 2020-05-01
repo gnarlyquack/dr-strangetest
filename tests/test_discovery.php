@@ -711,4 +711,300 @@ MESSAGE;
         ];
         $this->assert_log($expected);
     }
+
+
+    public function test_runs_directory_tests_once_per_arg_list() {
+        $path = \sprintf(
+            '%1$s%2$ssample_files%2$stest_directory%2$sdir_params%2$s',
+            __DIR__, \DIRECTORY_SEPARATOR
+        );
+        easytest\discover_tests($this->logger, [$path]);
+
+        $expected = [
+            [
+                easytest\LOG_EVENT_DEBUG,
+                $path,
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'dir_params\\setup_directory',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\test_function',
+                "'2 4'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\TestClass::test',
+                "'2 4'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\test_function',
+                "'4 2'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\TestClass::test',
+                "'4 2'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\teardown_file',
+                "'2 4 4 2'",
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\test_function',
+                "'8 16'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\TestClass::test',
+                "'8 16'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\test_function',
+                "'16 8'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\TestClass::test',
+                "'16 8'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\teardown_file',
+                "'8 16 16 8'",
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'dir_params\\teardown_directory',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\teardown_directory',
+                "'dir_params\\\\teardown_directory'",
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                $path,
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ],
+        ];
+        $this->assert_log($expected);
+    }
+
+
+    public function test_runs_subdirectory_tests_once_per_arg_list() {
+        $path = \sprintf(
+            '%1$s%2$ssample_files%2$stest_directory%2$ssubdir_params%2$s',
+            __DIR__, \DIRECTORY_SEPARATOR
+        );
+        easytest\discover_tests($this->logger, [$path]);
+
+        $expected = [
+            [
+                easytest\LOG_EVENT_DEBUG,
+                $path,
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'subdir_params\\setup_directory',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_subdir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'subdir_params\\subdir\\setup_directory',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\test_function',
+                "'2 4 8'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\TestClass::test',
+                "'2 4'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\test_function',
+                "'4 2 8'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\TestClass::test',
+                "'4 2'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'subdir_params\\subdir\\teardown_directory',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\teardown_directory',
+                "'2 4 4 2'",
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_subdir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_subdir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'subdir_params\\subdir\\setup_directory',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\test_function',
+                "'8 16 128'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\TestClass::test',
+                "'8 16'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\test_function',
+                "'16 8 128'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\test_function',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\TestClass::test',
+                "'16 8'",
+            ],
+            [
+                easytest\LOG_EVENT_PASS,
+                'subdir_params\\subdir\\TestClass::test',
+                null,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'subdir_params\\subdir\\teardown_directory',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\subdir\\teardown_directory',
+                "'8 16 16 8'",
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_subdir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                'subdir_params\\teardown_directory',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ],
+            [
+                easytest\LOG_EVENT_OUTPUT,
+                'subdir_params\\teardown_directory',
+                "'subdir_params\\\\teardown_directory'",
+            ],
+            [
+                easytest\LOG_EVENT_DEBUG,
+                $path,
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ],
+        ];
+        $this->assert_log($expected);
+    }
 }

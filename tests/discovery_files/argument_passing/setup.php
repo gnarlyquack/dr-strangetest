@@ -1,7 +1,7 @@
 <?php
 
 function setup_directory_arguments() {
-    return new easytest\ArgList('one', 'two');
+    return ['one', 'two'];
 }
 
 function teardown_directory_arguments($one, $two) {

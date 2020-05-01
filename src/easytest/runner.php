@@ -17,16 +17,28 @@ const DEBUG_DIRECTORY_EXIT     = 2;
 const DEBUG_DIRECTORY_SETUP    = 3;
 const DEBUG_DIRECTORY_TEARDOWN = 4;
 
-const TYPE_CLASS    = 1;
-const TYPE_FUNCTION = 2;
+const TYPE_DIRECTORY = 1;
+const TYPE_FILE      = 2;
+const TYPE_CLASS     = 3;
+const TYPE_FUNCTION  = 4;
 
+
+
+final class DirectoryTest extends struct {
+    public $path;
+    public $target;
+    public $setup;
+    public $teardown;
+    public $paths = [];
+}
 
 
 final class FileTest extends struct {
+    public $filepath;
     public $setup_file;
     public $teardown_file;
-    public $setup;
-    public $teardown;
+    public $setup_function;
+    public $teardown_function;
     public $identifiers = [];
 }
 
@@ -35,8 +47,8 @@ final class ClassTest extends struct {
     public $name;
     public $setup_object;
     public $teardown_object;
-    public $setup;
-    public $teardown;
+    public $setup_method;
+    public $teardown_method;
     public $methods;
 }
 
@@ -68,7 +80,12 @@ function discover_tests(Logger $logger, array $paths) {
             $path .= \DIRECTORY_SEPARATOR;
         }
         $root = namespace\_determine_root($path);
-        namespace\_discover_directory($state, $logger, $root, null, $path);
+        $directory = namespace\_discover_directory(
+            $state, $logger, $root, $path);
+        if (!$directory) {
+            continue;
+        }
+        namespace\_run_directory_tests($state, $logger, $directory, null);
     }
 }
 
@@ -97,55 +114,18 @@ function _determine_root($path) {
 }
 
 
-function _discover_directory(State $state, Logger $logger, $dir, $args, $target = null) {
-    // Discover and run tests in a directory
-    //
-    // If $target is null, then all files and subdirectories within the
-    // directory whose case-insensitive name begins with 'test' is discovered.
-    // Otherwise, discovery is only done for the file or directory specified in
-    // $target. Directory fixtures are discovered and run in either case.
-    if ($target === $dir) {
-        $target = null;
-    }
-    $processed = namespace\_process_directory($state, $logger, $dir, $target);
-    if (!$processed) {
-        return;
-    }
-    $logger->log_debug($dir, namespace\DEBUG_DIRECTORY_ENTER);
-
-    list($setup, $teardown, $tests) = $processed;
-    if ($setup) {
-        $logger = namespace\start_buffering($logger, $setup);
-        list($succeeded, $args) = namespace\_run_setup($logger, $setup, $setup, $args);
-        $logger = namespace\end_buffering($logger);
-        if (!$succeeded) {
-            $logger->log_debug($dir, namespace\DEBUG_DIRECTORY_EXIT);
-            return;
-        }
-        $logger->log_debug($setup, namespace\DEBUG_DIRECTORY_SETUP);
-    }
-
-    foreach ($tests as $test => $run) {
-        $run($state, $logger, $test, $args, $target);
-    }
-
-    if ($teardown) {
-        $logger = namespace\start_buffering($logger, $teardown);
-        if(namespace\_run_teardown($logger, $teardown, $teardown, $args)) {
-            $logger->log_debug($teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
-        }
-        $logger = namespace\end_buffering($logger);
-    }
-
-    $logger->log_debug($dir, namespace\DEBUG_DIRECTORY_EXIT);
-}
-
-
-function _process_directory(State $state, Logger $logger, $path, $target) {
+function _discover_directory(State $state, Logger $logger, $path, $target) {
+    // If $target is null, then all files and subdirectories within $path whose
+    // case-insensitive name begins with 'test' are discovered. Otherwise,
+    // discovery is only done for the file or directory specified in $target.
+    // Directory fixtures are discovered in either case.
     $error = false;
     $target_found = false;
     $setup = [];
     $tests = [];
+    if ($target === $path) {
+        $target = null;
+    }
 
     foreach (new \DirectoryIterator($path) as $file) {
         $basename = $file->getBasename();
@@ -169,7 +149,7 @@ function _process_directory(State $state, Logger $logger, $path, $target) {
                 && 0 === \strcasecmp($file->getExtension(), 'php'))
             {
                 if (!$target || $target === $pathname) {
-                    $tests[$pathname] = 'easytest\\_discover_file';
+                    $tests[$pathname] = namespace\TYPE_FILE;
                     if ($target) {
                         $target_found = true;
                     }
@@ -190,7 +170,7 @@ function _process_directory(State $state, Logger $logger, $path, $target) {
                 if (!$target
                     || 0 === \substr_compare($target, $pathname, 0, \strlen($pathname)))
                 {
-                    $tests[$pathname] = 'easytest\\_discover_directory';
+                    $tests[$pathname] = namespace\TYPE_DIRECTORY;
                     if ($target) {
                         $target_found = true;
                     }
@@ -223,7 +203,69 @@ function _process_directory(State $state, Logger $logger, $path, $target) {
         $teardown = null;
     }
 
-    return [$setup, $teardown, $tests];
+    return new DirectoryTest($path, $target, $setup, $teardown, $tests);
+}
+
+
+function _run_directory_tests(State $state, Logger $logger, DirectoryTest $test, $args) {
+    $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_ENTER);
+
+    if ($test->setup) {
+        $logger = namespace\start_buffering($logger, $test->setup);
+        list($success, $args) = namespace\_run_setup(
+            $logger, $test->setup, $test->setup, $args);
+        $logger = namespace\end_buffering($logger);
+        if (!$success) {
+            $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_EXIT);
+            return;
+        }
+        $logger->log_debug($test->setup, namespace\DEBUG_DIRECTORY_SETUP);
+    }
+
+    if ($args instanceof ArgumentLists) {
+        $arglists = $args->arglists;
+    }
+    else {
+        $arglists = [$args];
+    }
+
+    foreach ($test->paths as $path => $type) {
+        switch ($type) {
+        case namespace\TYPE_DIRECTORY:
+            $directory = namespace\_discover_directory($state, $logger, $path, $test->target);
+            if (!$directory) {
+                break;
+            }
+            foreach ($arglists as $arglist) {
+                namespace\_run_directory_tests($state, $logger, $directory, $arglist);
+            }
+            break;
+
+        case namespace\TYPE_FILE:
+            $file = namespace\_discover_file($state, $logger, $path);
+            if (!$file) {
+                break;
+            }
+            foreach ($arglists as $arglist) {
+                namespace\_run_file_tests($state, $logger, $file, $arglist);
+            }
+            break;
+
+        default:
+            throw new \Exception("Unknown test type: $type");
+            break;
+        }
+    }
+
+    if ($test->teardown) {
+        $logger = namespace\start_buffering($logger, $test->teardown);
+        if(namespace\_run_teardown($logger, $test->teardown, $test->teardown, $args)) {
+            $logger->log_debug($test->teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
+        }
+        $logger = namespace\end_buffering($logger);
+    }
+
+    $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_EXIT);
 }
 
 
@@ -336,71 +378,11 @@ function _tokenize_file(Logger $logger, $filename) {
 }
 
 
-function _discover_file(State $state, Logger $logger, $filepath, $args) {
+function _discover_file(State $state, Logger $logger, $filepath) {
     if (isset($state->files[$filepath])) {
-        $logger->log_skip($filepath, 'File has already been tested!');
-        return;
-    }
-    $state->files[$filepath] = true;
-
-    $file = namespace\_parse_test_file($logger, $filepath, $state->seen);
-    if (!$file) {
-        return;
+        return $state->files[$filepath];
     }
 
-    if ($file->setup_file) {
-        $logger = namespace\start_buffering($logger, $file->setup_file);
-        list($success, $args) = namespace\_run_setup(
-            $logger, $file->setup_file, $file->setup_file, $args);
-        $logger = namespace\end_buffering($logger);
-        if (!$success) {
-            return;
-        }
-    }
-
-    $test = new FunctionTest();
-    if ($file->setup) {
-        $test->setup = $test->setup_name = $file->setup;
-    }
-    if ($file->teardown) {
-        $test->teardown = $test->teardown_name = $file->teardown;
-    }
-
-    foreach ($file->identifiers as $identifier) {
-        list($name, $type) = $identifier;
-        switch ($type) {
-        case namespace\TYPE_CLASS:
-            $logger = namespace\start_buffering($logger, $name);
-            $object = namespace\_instantiate_test($logger, $name, $args);
-            $logger = namespace\end_buffering($logger);
-            if ($object) {
-                namespace\_run_class_test($logger, $name, $object);
-            }
-            break;
-
-        case namespace\TYPE_FUNCTION:
-            $test->name = $name;
-            $test->function = $name;
-            namespace\_run_test($logger, $test, $args);
-            break;
-
-        default:
-            throw new \Exception("Unknown test type: $type");
-            break;
-        }
-    }
-
-    if ($file->teardown_file) {
-        $logger = namespace\start_buffering($logger, $file->teardown_file);
-        namespace\_run_teardown(
-            $logger, $file->teardown_file, $file->teardown_file, $args);
-        $logger = namespace\end_buffering($logger);
-    }
-
-}
-
-
-function _parse_test_file(Logger $logger, $filepath, array &$seen) {
     $file = new FileTest();
 
     $parsers = [
@@ -411,10 +393,14 @@ function _parse_test_file(Logger $logger, $filepath, array &$seen) {
             return namespace\_is_test_function($file, $function, $fullname);
         },
     ];
-    if (!namespace\_parse_file($logger, $filepath, $parsers, $seen)) {
-        return false;
+    if (!namespace\_parse_file($logger, $filepath, $parsers, $state->seen)) {
+        $state->files[$filepath] = false;
     }
-    return $file;
+    else {
+        $file->filepath = $filepath;
+        $state->files[$filepath] = $file;
+    }
+    return $state->files[$filepath];
 }
 
 
@@ -439,7 +425,7 @@ function _is_test_function(FileTest $file, $function, $fullname) {
                 $file->setup_file = $fullname;
             }
             else {
-                $file->setup = $fullname;
+                $file->setup_function = $fullname;
             }
         }
         else {
@@ -447,7 +433,7 @@ function _is_test_function(FileTest $file, $function, $fullname) {
                 $file->teardown_file = $fullname;
             }
             else {
-                $file->teardown = $fullname;
+                $file->teardown_function = $fullname;
             }
         }
         return true;
@@ -649,11 +635,73 @@ function _guard_include($file) {
 }
 
 
+function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
+    if ($file->setup_file) {
+        $logger = namespace\start_buffering($logger, $file->setup_file);
+        list($success, $args) = namespace\_run_setup(
+            $logger, $file->setup_file, $file->setup_file, $args);
+        $logger = namespace\end_buffering($logger);
+        if (!$success) {
+            return;
+        }
+    }
+
+    $test = new FunctionTest();
+    if ($file->setup_function) {
+        $test->setup = $test->setup_name = $file->setup_function;
+    }
+    if ($file->teardown_function) {
+        $test->teardown = $test->teardown_name = $file->teardown_function;
+    }
+
+    if ($args instanceof ArgumentLists) {
+        $arglists = $args->arglists;
+    }
+    else {
+        $arglists = [$args];
+    }
+
+    foreach ($arglists as $file_args) {
+        foreach ($file->identifiers as $identifier) {
+            list($name, $type) = $identifier;
+            switch ($type) {
+            case namespace\TYPE_CLASS:
+                $logger = namespace\start_buffering($logger, $name);
+                $object = namespace\_instantiate_test($logger, $name, $file_args);
+                $logger = namespace\end_buffering($logger);
+                if ($object) {
+                    namespace\_run_class_test($logger, $name, $object);
+                }
+                break;
+
+            case namespace\TYPE_FUNCTION:
+                $test->name = $name;
+                $test->function = $name;
+                namespace\_run_test($logger, $test, $file_args);
+                break;
+
+            default:
+                throw new \Exception("Unknown test type: $type");
+                break;
+            }
+        }
+    }
+
+    if ($file->teardown_file) {
+        $logger = namespace\start_buffering($logger, $file->teardown_file);
+        namespace\_run_teardown(
+            $logger, $file->teardown_file, $file->teardown_file, $args);
+        $logger = namespace\end_buffering($logger);
+    }
+
+}
+
+
 function _run_setup(Logger $logger, $source, $callable, $args=null) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
-            $result = namespace\_unpack_function($callable, $args->args());
+            $result = namespace\_unpack_function($callable, $args);
         }
         else {
             $result = $callable();
@@ -674,14 +722,17 @@ function _run_setup(Logger $logger, $source, $callable, $args=null) {
 }
 
 
-function _run_teardown(Logger $logger, $source, $callable, $args = null) {
+function _run_teardown(Logger $logger, $source, $callable, $args) {
     try {
-        if ($args) {
-            // #BC(5.5): Use proxy function for argument unpacking
-            namespace\_unpack_function($callable, $args->args());
+        if (!$args) {
+            $callable();
+        }
+        elseif ($args instanceof ArgumentLists) {
+            $callable($args->arglists);
         }
         else {
-            $callable();
+            // #BC(5.5): Use proxy function for argument unpacking
+            namespace\_unpack_function($callable, $args);
         }
         return true;
     }
@@ -700,7 +751,7 @@ function _instantiate_test(Logger $logger, $class, $args) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
-            return namespace\_unpack_construct($class, $args->args());
+            return namespace\_unpack_construct($class, $args);
         }
         else {
             return new $class();
@@ -735,13 +786,13 @@ function _run_class_test(Logger $logger, $class, $object) {
     }
 
     $test = new FunctionTest();
-    if ($class->setup) {
-        $test->setup_name = $class->setup;
-        $test->setup = [$object, $class->setup];
+    if ($class->setup_method) {
+        $test->setup_name = $class->setup_method;
+        $test->setup = [$object, $class->setup_method];
     }
-    if ($class->teardown) {
-        $test->teardown_name = $class->teardown;
-        $test->teardown = [$object, $class->teardown];
+    if ($class->teardown_method) {
+        $test->teardown_name = $class->teardown_method;
+        $test->teardown = [$object, $class->teardown_method];
     }
     foreach ($class->methods as $method) {
         $test->name = "{$class->name}::$method";
@@ -753,7 +804,7 @@ function _run_class_test(Logger $logger, $class, $object) {
         $source = "{$class->name}::{$class->teardown_object}";
         $callable = [$object, $class->teardown_object];
         $logger = namespace\start_buffering($logger, $source);
-        namespace\_run_teardown($logger, $source, $callable);
+        namespace\_run_teardown($logger, $source, $callable, null);
         $logger = namespace\end_buffering($logger);
     }
 }
@@ -868,7 +919,7 @@ function _run_test_function(Logger $logger, $source, $callable, $args) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
-            namespace\_unpack_function($callable, $args->args());
+            namespace\_unpack_function($callable, $args);
         }
         else {
             $callable();

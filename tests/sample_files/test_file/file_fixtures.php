@@ -5,7 +5,7 @@ namespace file_fixtures;
 use easytest;
 
 function setup_file() {
-    return easytest\args(2, 4);
+    return [2, 4];
 }
 
 function teardown_file($one, $two) {

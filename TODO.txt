@@ -11,8 +11,6 @@ Release
 
 -   Implement test-specific teardown
 
--   Implement multiple execution of parameterized tests
-
 -   Review test suite
 
 -   Niggles to test/check:
@@ -47,11 +45,16 @@ Release
 
 -   Handle errors during test file parsing
 
--   Fix-up teardown fixtures:
-    -   teardown_function, etc. should get unpacked arguments
-    -   directory (and file) teardowns should get packed arguments but
-        unwrapped from ArgList. Or should we make this dynamic? I.e., a single
-        arglist is unpacked, multiple list are unwrapped and passed-in as-is
+-   Don't use var_export to display output. Maybe just print directly, but it
+    would be nice to display something for output that is just whitespace or
+    an empty string
+
+-   Error-checking for argument lists:
+    -   setup fixtures must either return an array or an instance of
+        ArgumentLists
+    -   each arglist in ArgumentLists must be an array
+
+-   Show a parameterized test name if a test is run multiple times
 
 
 Future

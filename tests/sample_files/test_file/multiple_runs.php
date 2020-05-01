@@ -1,26 +1,29 @@
 <?php
 
-namespace file_fixtures;
+namespace multiple_runs;
 
 use easytest;
 
 
-function setup_file_for_functions_and_classes() {
-    return [2, 4];
+function setup_file() {
+    return easytest\arglists(
+        [2, 4],
+        [8, 16]
+    );
 }
 
-function teardown_file_for_everybody($one, $two) {
-    easytest\assert_identical(2, $one);
-    easytest\assert_identical(4, $two);
+function teardown_file($args) {
+    echo __FUNCTION__;
+    easytest\assert_identical([[2, 4], [8, 16]], $args);
 }
 
 
 
-function setup_functions_only($one, $two) {
+function setup_functions($one, $two) {
     return [$one, $two, $one + $two];
 }
 
-function teardown_functions_only($one, $two, $three) {
+function teardown_functions($one, $two, $three) {
     easytest\assert_identical($one + $two, $three);
 }
 
@@ -45,7 +48,7 @@ class TestClass {
         $this->two = $two;
     }
 
-    public function test_one() {
-        easytest\assert_identical([2, 4], [$this->one, $this->two]);
+    public function test() {
+        easytest\assert_identical(2 * $this->one, $this->two);
     }
 }

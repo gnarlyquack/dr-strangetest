@@ -100,21 +100,17 @@ final class State extends struct {
 
 
 
-final class ArgList {
-    private $args;
+final class ArgumentLists {
+    public $arglists;
 
-    public function __construct($arg) {
-        $this->args = \func_get_args();
-    }
-
-    public function args() {
-        return $this->args;
+    public function __construct(array $arglists) {
+        $this->arglists = $arglists;
     }
 }
 
-function args($arg) {
+function arglists(array $arglist) {
     // #BC(5.5): Use proxy function for argument unpacking
-    return namespace\_unpack_construct('easytest\\ArgList', \func_get_args());
+    return new namespace\ArgumentLists(\func_get_args());
 }
 
 
