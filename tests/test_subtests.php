@@ -15,7 +15,7 @@ function test_logs_multiple_passed_subtests_as_one_passed_test() {
         function(easytest\TestContext $context) use ($true) {
             $context->subtest($true);
             $context->subtest($true);
-        },
+        }
     );
 
     easytest\_run_test($logger, $test, null);
@@ -33,7 +33,7 @@ function test_logs_failed_subtests_and_continues_tests() {
         function(easytest\TestContext $context) use ($false) {
             $context->subtest($false);
             $context->subtest($false);
-        },
+        }
     );
 
     easytest\_run_test($logger, $test, null);
@@ -47,4 +47,20 @@ function test_logs_failed_subtests_and_continues_tests() {
             ],
         ],
         $logger);
+}
+
+
+function test_provides_assertions_as_subtests() {
+    $logger = new easytest\BasicLogger(false);
+    $test = new easytest\FunctionTest(
+        'assertion_subtest',
+        function(easytest\TestContext $context) {
+            $context->assert_identical(true, true);
+            $context->assert_equal(1, '1');
+        }
+    );
+
+    easytest\_run_test($logger, $test, null);
+
+    namespace\assert_log([easytest\LOG_EVENT_PASS => 1], $logger);
 }

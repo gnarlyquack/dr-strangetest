@@ -75,6 +75,40 @@ final class TestContext {
     }
 
 
+    public function __call($name, $args) {
+        // This works, and will automatically pick up new assertions, but it'd
+        // probably be best to provide actual class methods
+        if ('assert' === \substr($name, 0, 6)
+            && \function_exists("easytest\\$name"))
+        {
+            try {
+                // #BC(5.5): Use proxy function for argument unpacking
+                namespace\_unpack_function("easytest\\$name", $args);
+                return;
+            }
+            catch (\AssertionError $e) {
+                $this->logger->log_failure($this->source, $e);
+            }
+            // #BC(5.6): Catch Failure
+            catch (Failure $e) {
+                $this->logger->log_failure($this->source, $e);
+            }
+            catch (\Throwable $e) {
+                $this->logger->log_error($this->source, $e);
+            }
+            // #BC(5.6): Catch Exception
+            catch (\Exception $e) {
+                $this->logger->log_error($this->source, $e);
+            }
+            $this->success = false;
+        }
+
+        throw new \Exception(
+            \sprintf('Call to undefined method %s::%s()', __CLASS__, $name)
+        );
+    }
+
+
     public function subtest($callable) {
         try {
             $callable();
@@ -96,6 +130,7 @@ final class TestContext {
         }
         $this->success = false;
     }
+
 
     public function succeeded() {
         return $this->success;
