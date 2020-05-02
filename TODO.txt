@@ -26,6 +26,9 @@ Release
 
     -   Do we not discover/traverse symbolic links?
 
+    -   Do we handle traversing multiple times to a directory, file, etc. that
+        had a setup error?
+
 -   Implement additional assertions? Currently EasyTest's test suite only
     uses/needs the assertions already provided by the framework, but
     presumably other assertions would be useful in other contexts
@@ -56,17 +59,12 @@ Release
     namespace\test_function" instead of "namespace\setup_function for
     namespace\test_function"
 
--   Only determine the test root once. Currently, we determine a new root for
-    every provided path, which means we could run potentially try to run tests
-    from completely unrelated test suites. This could be problematic, e.g., we
-    could have name collisions between the test suites.
-
-    -   Fixing this introduces a new niggle: handling an individual path
-        that falls outside of the determined root
-
 -   Compress the token-processing loops in _parse_setup and _discover_file?
 
 -   Cache results of directory (and file?) discovery
+
+-   Why does/did this work on my computer?
+    https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
 
 
 Future

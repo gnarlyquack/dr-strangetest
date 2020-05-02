@@ -26,7 +26,6 @@ const TYPE_FUNCTION  = 4;
 
 final class DirectoryTest extends struct {
     public $path;
-    public $target;
     public $setup;
     public $teardown;
     public $paths = array();
@@ -60,6 +59,43 @@ final class FunctionTest extends struct {
     public $setup;
     public $teardown_name;
     public $teardown;
+}
+
+
+final class TestTargets {
+    public function __construct(Logger $logger, array $targets) {
+        $this->logger = $logger;
+        $this->targets = $targets;
+    }
+
+    public function current() {
+        return $this->current;
+    }
+
+    public function next() {
+        while (isset($this->targets[++$this->index])) {
+            $path = $this->targets[$this->index];
+            $realpath = \realpath($path);
+            if (!$realpath) {
+                $this->logger->log_error($path, 'No such file or directory');
+                continue;
+            }
+
+            if (\is_dir($realpath)) {
+                $realpath .= \DIRECTORY_SEPARATOR;
+            }
+            $this->current = $realpath;
+            return $realpath;
+        }
+
+        $this->current = null;
+        return null;
+    }
+
+    private $logger;
+    private $targets;
+    private $current;
+    private $index = -1;
 }
 
 
@@ -144,24 +180,29 @@ function discover_tests(Logger $logger, array $paths) {
     if (!$paths) {
         $paths[] = \getcwd();
     }
-    foreach ($paths as $path) {
-        $realpath = \realpath($path);
-        if (!$realpath) {
-            $logger->log_error($path, 'No such file or directory');
-            continue;
-        }
-
-        $path = $realpath;
-        if (\is_dir($path)) {
-            $path .= \DIRECTORY_SEPARATOR;
-        }
+    $targets = new TestTargets($logger, $paths);
+    $path = $targets->next();
+    if ($path) {
         $root = namespace\_determine_root($path);
-        $directory = namespace\_discover_directory(
-            $state, $logger, $root, $path);
-        if (!$directory) {
-            continue;
+        $path = $root;
+        while ($path) {
+            $directory = namespace\_discover_directory($state, $logger, $path);
+            if (!$directory) {
+                break;
+            }
+            namespace\_test_directory($state, $logger, $directory, $targets, null);
+            $path = $targets->current();
+            if ($path) {
+                $message = <<<MESSAGE
+This path could not be tested, either because an error prevented it from being
+searched for tests, or because it is not a test in the test suite found in
+$root
+MESSAGE;
+                $logger->log_error($path, $message);
+                $path = $targets->next();
+            }
+
         }
-        namespace\_run_directory_tests($state, $logger, $directory, null);
     }
 }
 
@@ -190,18 +231,11 @@ function _determine_root($path) {
 }
 
 
-function _discover_directory(State $state, Logger $logger, $path, $target) {
-    // If $target is null, then all files and subdirectories within $path whose
-    // case-insensitive name begins with 'test' are discovered. Otherwise,
-    // discovery is only done for the file or directory specified in $target.
-    // Directory fixtures are discovered in either case.
+function _discover_directory(State $state, Logger $logger, $path) {
     $error = false;
     $target_found = false;
     $setup = array();
     $tests = array();
-    if ($target === $path) {
-        $target = null;
-    }
 
     foreach (new \DirectoryIterator($path) as $file) {
         $basename = $file->getBasename();
@@ -218,23 +252,18 @@ function _discover_directory(State $state, Logger $logger, $path, $target) {
                 $setup[] = $pathname;
                 continue;
             }
-            if ($error || $target_found) {
+            if ($error) {
                 continue;
             }
             if (0 === \substr_compare($basename, 'test', 0, 4, true)
                 && 0 === \strcasecmp($file->getExtension(), 'php'))
             {
-                if (!$target || $target === $pathname) {
-                    $tests[$pathname] = namespace\TYPE_FILE;
-                    if ($target) {
-                        $target_found = true;
-                    }
-                }
+                $tests[$pathname] = namespace\TYPE_FILE;
             }
             continue;
         }
 
-        if ($error || $target_found) {
+        if ($error) {
             continue;
         }
 
@@ -243,14 +272,7 @@ function _discover_directory(State $state, Logger $logger, $path, $target) {
                 // Ensure directory names end with a directory separator to
                 // ensure we can only match against full directory names
                 $pathname .= \DIRECTORY_SEPARATOR;
-                if (!$target
-                    || 0 === \substr_compare($target, $pathname, 0, \strlen($pathname)))
-                {
-                    $tests[$pathname] = namespace\TYPE_DIRECTORY;
-                    if ($target) {
-                        $target_found = true;
-                    }
-                }
+                $tests[$pathname] = namespace\TYPE_DIRECTORY;
             }
             continue;
         }
@@ -279,11 +301,11 @@ function _discover_directory(State $state, Logger $logger, $path, $target) {
         $teardown = null;
     }
 
-    return new DirectoryTest($path, $target, $setup, $teardown, $tests);
+    return new DirectoryTest($path, $setup, $teardown, $tests);
 }
 
 
-function _run_directory_tests(State $state, Logger $logger, DirectoryTest $test, $args) {
+function _test_directory(State $state, Logger $logger, DirectoryTest $test, TestTargets $targets = null, $args) {
     $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_ENTER);
 
     if ($test->setup) {
@@ -298,6 +320,56 @@ function _run_directory_tests(State $state, Logger $logger, DirectoryTest $test,
         $logger->log_debug($test->setup, namespace\DEBUG_DIRECTORY_SETUP);
     }
 
+    if (!$targets) {
+        namespace\_run_directory_tests($state, $logger, $test->paths, $args);
+    }
+    else {
+        $target = $targets->current();
+        while ($target) {
+            if ($target === $test->path) {
+                namespace\_run_directory_tests($state, $logger, $test->paths, $args);
+                $target = $targets->next();
+            }
+            else if (isset($test->paths[$target])) {
+                $paths = array($target => $test->paths[$target]);
+                namespace\_run_directory_tests($state, $logger, $paths, $args);
+                $target = $targets->next();
+            }
+            else if (0 === \substr_compare($target, $test->path, 0, \strlen($test->path))) {
+                // $target is in a subdirectory of the current directory, so
+                // determine the subdirectory and test only that directory.
+                $i = \strpos($target, \DIRECTORY_SEPARATOR, \strlen($test->path));
+                // $i = the location of the directory separator, which we want
+                // to include, so we want the substring of $target up to $i+1
+                $subdir = \substr($target, 0, $i+1);
+                $paths = array($subdir => $test->paths[$subdir]);
+                namespace\_run_directory_tests($state, $logger, $paths, $args, $targets);
+                // the subdirectory will have advanced $targets, and since
+                // we're back here, either $targets is empty, or there's
+                // another target that was a parent of the subdirectory (and
+                // could be in the current directory)
+                $target = $targets->current();
+            }
+            else {
+                // the target is in a parent directory
+                break;
+            }
+        }
+    }
+
+    if ($test->teardown) {
+        $logger = namespace\start_buffering($logger, $test->teardown);
+        if(namespace\_run_teardown($logger, $test->teardown, $test->teardown, $args)) {
+            $logger->log_debug($test->teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
+        }
+        $logger = namespace\end_buffering($logger);
+    }
+
+    $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_EXIT);
+}
+
+
+function _run_directory_tests(State $state, Logger $logger, array $paths, $args, TestTargets $targets = null) {
     if ($args instanceof ArgumentLists) {
         $arglists = $args->arglists;
     }
@@ -305,15 +377,15 @@ function _run_directory_tests(State $state, Logger $logger, DirectoryTest $test,
         $arglists = array($args);
     }
 
-    foreach ($test->paths as $path => $type) {
+    foreach ($paths as $path => $type) {
         switch ($type) {
         case namespace\TYPE_DIRECTORY:
-            $directory = namespace\_discover_directory($state, $logger, $path, $test->target);
+            $directory = namespace\_discover_directory($state, $logger, $path);
             if (!$directory) {
                 break;
             }
             foreach ($arglists as $arglist) {
-                namespace\_run_directory_tests($state, $logger, $directory, $arglist);
+                namespace\_test_directory($state, $logger, $directory, $targets, $arglist);
             }
             break;
 
@@ -332,16 +404,6 @@ function _run_directory_tests(State $state, Logger $logger, DirectoryTest $test,
             break;
         }
     }
-
-    if ($test->teardown) {
-        $logger = namespace\start_buffering($logger, $test->teardown);
-        if(namespace\_run_teardown($logger, $test->teardown, $test->teardown, $args)) {
-            $logger->log_debug($test->teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
-        }
-        $logger = namespace\end_buffering($logger);
-    }
-
-    $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_EXIT);
 }
 
 

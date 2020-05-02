@@ -71,7 +71,7 @@ class TestDiscovery {
             case easytest\LOG_EVENT_SKIP:
             case easytest\LOG_EVENT_OUTPUT:
                 if (!$current) {
-                    easytest\fail("Got event $type but we never entered a directory\nsource: $source");
+                    easytest\fail("Got event $type but we never entered a directory\nsource: $source\nevent: " . \print_r($event, true));
                 }
 
                 if (isset($directory['tests'][$source])) {
@@ -486,17 +486,30 @@ MESSAGE;
         $path = $this->path . 'setup_error';
         easytest\discover_tests($this->logger, array($path));
 
-        $expected = array(
-            "$path/" => array(
-                'tests' => array(
-                    'setup_directory_setup_error' => array(
-                        easytest\LOG_EVENT_ERROR,
-                        'An error happened',
-                    ),
-                ),
+        $this->assert_log(array(
+             array(
+                easytest\LOG_EVENT_DEBUG,
+                "$path/",
+                easytest\DEBUG_DIRECTORY_ENTER,
             ),
-        );
-        $this->assert_events($expected);
+             array(
+                easytest\LOG_EVENT_ERROR,
+                'setup_directory_setup_error',
+                'An error happened',
+            ),
+             array(
+                easytest\LOG_EVENT_DEBUG,
+                "$path/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+            array(
+                easytest\LOG_EVENT_ERROR,
+                "$path/",
+"This path could not be tested, either because an error prevented it from being
+searched for tests, or because it is not a test in the test suite found in
+{$path}/",
+            ),
+        ));
     }
 
     public function test_teardown_error() {
