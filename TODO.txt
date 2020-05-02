@@ -49,11 +49,9 @@ Release
     an empty string
 
 -   Error-checking for argument lists:
-    -   setup fixtures must either return an array or an instance of
+    -   setup fixtures must either return an iterable or an instance of
         ArgumentLists
-    -   each arglist in ArgumentLists must be an array
-
--   Show a parameterized test name if a test is run multiple times
+    -   each arglist in ArgumentLists must be an iterable
 
 -   Omit namespace when displaying function fixtures, e.g, "setup_function for
     namespace\test_function" instead of "namespace\setup_function for

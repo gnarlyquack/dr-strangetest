@@ -6,10 +6,10 @@ use easytest;
 
 
 function setup_file($one, $two) {
-    return easytest\arglists(
+    return easytest\arglists(array(
         array($one, 2 * $one),
         array($two, $two / 2)
-    );
+    ));
 }
 
 function teardown_file($arglists) {

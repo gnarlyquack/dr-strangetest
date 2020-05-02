@@ -18,7 +18,7 @@ class TestRunner {
     private function assert_run($test, $expected) {
         $actual = $test->log;
         easytest\assert_identical(array(), $actual);
-        easytest\_run_class_test($this->logger, \get_class($test), $test);
+        easytest\_run_class_test($this->logger, \get_class($test), $test, array());
         $actual = $test->log;
         easytest\assert_identical($expected, $actual);
     }

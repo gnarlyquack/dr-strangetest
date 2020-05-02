@@ -29,6 +29,7 @@ final class DirectoryTest extends struct {
     public $setup;
     public $teardown;
     public $paths = array();
+    public $id = array();
 }
 
 
@@ -39,6 +40,7 @@ final class FileTest extends struct {
     public $setup_function;
     public $teardown_function;
     public $identifiers = array();
+    public $id = array();
 }
 
 
@@ -49,6 +51,7 @@ final class ClassTest extends struct {
     public $setup_method;
     public $teardown_method;
     public $methods;
+    public $id = array();
 }
 
 
@@ -309,9 +312,13 @@ function _test_directory(State $state, Logger $logger, DirectoryTest $test, Test
     $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_ENTER);
 
     if ($test->setup) {
-        $logger = namespace\start_buffering($logger, $test->setup);
+        $source = $test->setup;
+        if ($test->id) {
+            $source = \sprintf("$source (%s)", \implode(', ', $test->id));
+        }
+        $logger = namespace\start_buffering($logger, $source);
         list($success, $args) = namespace\_run_setup(
-            $logger, $test->setup, $test->setup, $args);
+            $logger, $source, $test->setup, $args);
         $logger = namespace\end_buffering($logger);
         if (!$success) {
             $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_EXIT);
@@ -321,18 +328,18 @@ function _test_directory(State $state, Logger $logger, DirectoryTest $test, Test
     }
 
     if (!$targets) {
-        namespace\_run_directory_tests($state, $logger, $test->paths, $args);
+        namespace\_run_directory_tests($state, $logger, $test->paths, $test->id, $args);
     }
     else {
         $target = $targets->current();
         while ($target) {
             if ($target === $test->path) {
-                namespace\_run_directory_tests($state, $logger, $test->paths, $args);
+                namespace\_run_directory_tests($state, $logger, $test->paths, $test->id, $args);
                 $target = $targets->next();
             }
             else if (isset($test->paths[$target])) {
                 $paths = array($target => $test->paths[$target]);
-                namespace\_run_directory_tests($state, $logger, $paths, $args);
+                namespace\_run_directory_tests($state, $logger, $paths, $test->id, $args);
                 $target = $targets->next();
             }
             else if (0 === \substr_compare($target, $test->path, 0, \strlen($test->path))) {
@@ -343,7 +350,7 @@ function _test_directory(State $state, Logger $logger, DirectoryTest $test, Test
                 // to include, so we want the substring of $target up to $i+1
                 $subdir = \substr($target, 0, $i+1);
                 $paths = array($subdir => $test->paths[$subdir]);
-                namespace\_run_directory_tests($state, $logger, $paths, $args, $targets);
+                namespace\_run_directory_tests($state, $logger, $paths, $test->id, $args, $targets);
                 // the subdirectory will have advanced $targets, and since
                 // we're back here, either $targets is empty, or there's
                 // another target that was a parent of the subdirectory (and
@@ -358,8 +365,12 @@ function _test_directory(State $state, Logger $logger, DirectoryTest $test, Test
     }
 
     if ($test->teardown) {
-        $logger = namespace\start_buffering($logger, $test->teardown);
-        if(namespace\_run_teardown($logger, $test->teardown, $test->teardown, $args)) {
+        $source = $test->teardown;
+        if ($test->id) {
+            $source = \sprintf("$source (%s)", \implode(', ', $test->id));
+        }
+        $logger = namespace\start_buffering($logger, $source);
+        if(namespace\_run_teardown($logger, $source, $test->teardown, $args)) {
             $logger->log_debug($test->teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
         }
         $logger = namespace\end_buffering($logger);
@@ -369,9 +380,9 @@ function _test_directory(State $state, Logger $logger, DirectoryTest $test, Test
 }
 
 
-function _run_directory_tests(State $state, Logger $logger, array $paths, $args, TestTargets $targets = null) {
+function _run_directory_tests(State $state, Logger $logger, array $paths, array $id, $args, TestTargets $targets = null) {
     if ($args instanceof ArgumentLists) {
-        $arglists = $args->arglists;
+        $arglists = $args->arglists();
     }
     else {
         $arglists = array($args);
@@ -384,7 +395,11 @@ function _run_directory_tests(State $state, Logger $logger, array $paths, $args,
             if (!$directory) {
                 break;
             }
-            foreach ($arglists as $arglist) {
+            foreach ($arglists as $i => $arglist) {
+                $directory->id = $id;
+                if (\count($arglists) > 1) {
+                    $directory->id[] = $i;
+                }
                 namespace\_test_directory($state, $logger, $directory, $targets, $arglist);
             }
             break;
@@ -394,7 +409,11 @@ function _run_directory_tests(State $state, Logger $logger, array $paths, $args,
             if (!$file) {
                 break;
             }
-            foreach ($arglists as $arglist) {
+            foreach ($arglists as $i => $arglist) {
+                $file->id = $id;
+                if (\count($arglists) > 1) {
+                    $file->id[] = $i;
+                }
                 namespace\_run_file_tests($state, $logger, $file, $arglist);
             }
             break;
@@ -775,9 +794,13 @@ function _guard_include($file) {
 
 function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
     if ($file->setup_file) {
-        $logger = namespace\start_buffering($logger, $file->setup_file);
+        $source = $file->setup_file;
+        if ($file->id) {
+            $source = \sprintf("$source (%s)", \implode(', ', $file->id));
+        }
+        $logger = namespace\start_buffering($logger, $source);
         list($success, $args) = namespace\_run_setup(
-            $logger, $file->setup_file, $file->setup_file, $args);
+            $logger, $source, $file->setup_file, $args);
         $logger = namespace\end_buffering($logger);
         if (!$success) {
             return;
@@ -793,13 +816,13 @@ function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
     }
 
     if ($args instanceof ArgumentLists) {
-        $arglists = $args->arglists;
+        $arglists = $args->arglists();
     }
     else {
         $arglists = array($args);
     }
 
-    foreach ($arglists as $file_args) {
+    foreach ($arglists as $i => $file_args) {
         foreach ($file->identifiers as $identifier) {
             list($name, $type) = $identifier;
             switch ($type) {
@@ -808,13 +831,26 @@ function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
                 $object = namespace\_instantiate_test($logger, $name, $file_args);
                 $logger = namespace\end_buffering($logger);
                 if ($object) {
-                    namespace\_run_class_test($logger, $name, $object);
+                    $oid = $file->id;
+                    if (\count($arglists) > 1) {
+                        $oid[] = $i;
+                    }
+                    namespace\_run_class_test($logger, $name, $object, $oid);
                 }
                 break;
 
             case namespace\TYPE_FUNCTION:
-                $test->name = $name;
                 $test->function = $name;
+                $test->name = $name;
+                $fid = $file->id;
+                if (\count($arglists) > 1) {
+                    $fid[] = $i;
+                }
+                if ($fid) {
+                    $test->name = \sprintf(
+                        "{$test->name} (%s)", \implode(', ', $fid)
+                    );
+                }
                 namespace\_run_test($logger, $test, $file_args);
                 break;
 
@@ -826,9 +862,12 @@ function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
     }
 
     if ($file->teardown_file) {
-        $logger = namespace\start_buffering($logger, $file->teardown_file);
-        namespace\_run_teardown(
-            $logger, $file->teardown_file, $file->teardown_file, $args);
+        $source = $file->teardown_file;
+        if ($file->id) {
+            $source = \sprintf("$source (%s)", \implode(', ', $file->id));
+        }
+        $logger = namespace\start_buffering($logger, $source);
+        namespace\_run_teardown($logger, $source, $file->teardown_file, $args);
         $logger = namespace\end_buffering($logger);
     }
 
@@ -869,7 +908,7 @@ function _run_teardown(Logger $logger, $source, $callable, $args) {
         }
         elseif ($args instanceof ArgumentLists) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable, $args->arglists);
+            \call_user_func($callable, $args->arglists());
         }
         else {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -909,14 +948,18 @@ function _instantiate_test(Logger $logger, $class, $args) {
 }
 
 
-function _run_class_test(Logger $logger, $class, $object) {
+function _run_class_test(Logger $logger, $class, $object, array $oid) {
     $class = namespace\_discover_class($logger, $class);
     if (!$class) {
         return;
     }
 
+    $class->id = $oid;
     if ($class->setup_object) {
         $source = "{$class->name}::{$class->setup_object}";
+        if ($class->id) {
+            $source = \sprintf("$source (%s)", \implode(', ', $class->id));
+        }
         $callable = array($object, $class->setup_object);
         $logger = namespace\start_buffering($logger, $source);
         list($success,) = namespace\_run_setup($logger, $source, $callable);
@@ -937,12 +980,20 @@ function _run_class_test(Logger $logger, $class, $object) {
     }
     foreach ($class->methods as $method) {
         $test->name = "{$class->name}::$method";
+        if ($class->id) {
+            $test->name = \sprintf(
+                "{$test->name} (%s)", \implode(', ', $class->id)
+            );
+        }
         $test->function = array($object, $method);
         namespace\_run_test($logger, $test, null);
     }
 
     if ($class->teardown_object) {
         $source = "{$class->name}::{$class->teardown_object}";
+        if ($class->id) {
+            $source = \sprintf("$source (%s)", \implode(', ', $class->id));
+        }
         $callable = array($object, $class->teardown_object);
         $logger = namespace\start_buffering($logger, $source);
         namespace\_run_teardown($logger, $source, $callable, null);

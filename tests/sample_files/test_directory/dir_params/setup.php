@@ -6,10 +6,10 @@ use easytest;
 
 
 function setup_directory() {
-    return easytest\arglists(
+    return easytest\arglists(array(
         array(2, 4),
         array(8, 16)
-    );
+    ));
 }
 
 function teardown_directory($args) {
