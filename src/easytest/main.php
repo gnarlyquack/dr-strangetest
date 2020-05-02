@@ -94,8 +94,8 @@ abstract class struct {
 
 
 final class State extends struct {
-    public $seen = [];
-    public $files = [];
+    public $seen = array();
+    public $files = array();
 }
 
 
@@ -190,10 +190,10 @@ function _handle_error($errno, $errstr, $errfile, $errline) {
 
 
 function _try_loading_composer() {
-    $files = [
+    $files = array(
         '%1$s%2$s..%2$s..%2$s..%2$s..%2$sautoload.php',
         '%1$s%2$s..%2$s..%2$svendor%2$sautoload.php',
-    ];
+    );
     foreach ($files as $file) {
         $file = \sprintf($file, __DIR__, \DIRECTORY_SEPARATOR);
         if (\file_exists($file)) {
@@ -205,7 +205,8 @@ function _try_loading_composer() {
 
 
 function _load_easytest() {
-    $files = ['assertions', 'buffer', 'exceptions', 'log', 'output', 'runner', 'util'];
+    $files = array('assertions', 'buffer', 'exceptions', 'log', 'output',
+        'runner', 'util');
     // #BC(5.5): Implement proxy functions for argument unpacking
     // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
     // versions, so we need to include version-dependent proxy functions to do
@@ -238,7 +239,7 @@ function _microtime() {
 
 
 function _parse_arguments($argc, $argv) {
-    $opts = ['verbose' => false];
+    $opts = array('verbose' => false);
     $args = \array_slice($argv, 1);
 
     while ($args) {
@@ -262,7 +263,7 @@ function _parse_arguments($argc, $argv) {
         }
     }
 
-    return [$opts, $args];
+    return array($opts, $args);
 }
 
 
@@ -289,7 +290,7 @@ function _parse_short_option($args, $opts) {
         }
         list($opts, $args) = namespace\_parse_option($opt, $args, $opts);
     }
-    return [$opts, $args];
+    return array($opts, $args);
 }
 
 
@@ -316,7 +317,7 @@ function _parse_option($opt, $args, $opts) {
             break;
     }
 
-    return [$opts, $args];
+    return array($opts, $args);
 }
 
 

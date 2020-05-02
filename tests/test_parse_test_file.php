@@ -52,7 +52,7 @@ class TestParseTestFile {
     // helper function
 
     private function seen_names(easytest\FileTest $discovered) {
-        $seen = [];
+        $seen = array();
         foreach ($discovered->identifiers as $item) {
             list($name, $type) = $item;
             switch ($type) {
@@ -81,24 +81,24 @@ class TestParseTestFile {
         $filepath = "{$this->root}unnamespaced.php";
         $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
-        $this->assert_log([
-            [
+        $this->assert_log(array(
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 $filepath,
                 "'class TestTextBefore {}\n\n\nclass TestTextAfter {}\n'",
-            ],
-        ]);
+            ),
+        ));
 
         $expected = new easytest\FileTest();
         $expected->filepath = $filepath;
-        $expected->identifiers = [
-            ['Test', easytest\TYPE_CLASS],
-            ['Test', easytest\TYPE_FUNCTION],
-            ['testTwo', easytest\TYPE_FUNCTION],
-            ['test2', easytest\TYPE_CLASS],
-            ['TestThree', easytest\TYPE_CLASS],
-            ['test_three', easytest\TYPE_FUNCTION],
-        ];
+        $expected->identifiers = array(
+            array('Test', easytest\TYPE_CLASS),
+            array('Test', easytest\TYPE_FUNCTION),
+            array('testTwo', easytest\TYPE_FUNCTION),
+            array('test2', easytest\TYPE_CLASS),
+            array('TestThree', easytest\TYPE_CLASS),
+            array('test_three', easytest\TYPE_FUNCTION),
+        );
         $this->assert_discovered($expected, $discovered);
     }
 
@@ -112,13 +112,13 @@ class TestParseTestFile {
         $filepath = "{$this->root}anonymous_class.php";
         $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
-        $this->assert_log([]);
+        $this->assert_log(array());
 
         $expected = new easytest\FileTest();
         $expected->filepath = $filepath;
-        $expected->identifiers = [
-            ['TestUsesAnonymousClass', easytest\TYPE_CLASS],
-        ];
+        $expected->identifiers = array(
+            array('TestUsesAnonymousClass', easytest\TYPE_CLASS),
+        );
         $this->assert_discovered($expected, $discovered);
     }
 
@@ -127,16 +127,16 @@ class TestParseTestFile {
         $filepath = "{$this->root}namespaces_simple.php";
         $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
-        $this->assert_log([]);
+        $this->assert_log(array());
 
         $expected = new easytest\FileTest();
         $expected->filepath = $filepath;
-        $expected->identifiers = [
-            ['ns2\\TestNamespace', easytest\TYPE_CLASS],
-            ['ns2\\TestNamespace', easytest\TYPE_FUNCTION],
-            ['ns3\\TestNamespace', easytest\TYPE_FUNCTION],
-            ['ns3\\TestNamespace', easytest\TYPE_CLASS],
-        ];
+        $expected->identifiers = array(
+            array('ns2\\TestNamespace', easytest\TYPE_CLASS),
+            array('ns2\\TestNamespace', easytest\TYPE_FUNCTION),
+            array('ns3\\TestNamespace', easytest\TYPE_FUNCTION),
+            array('ns3\\TestNamespace', easytest\TYPE_CLASS),
+        );
         $this->assert_discovered($expected, $discovered);
     }
 
@@ -145,18 +145,18 @@ class TestParseTestFile {
         $filepath = "{$this->root}namespaces_bracketed.php";
         $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
-        $this->assert_log([]);
+        $this->assert_log(array());
 
         $expected = new easytest\FileTest();
         $expected->filepath = $filepath;
-        $expected->identifiers = [
-            ['ns1\\ns1\\TestNamespace', easytest\TYPE_CLASS],
-            ['ns1\\ns1\\TestNamespace', easytest\TYPE_FUNCTION],
-            ['ns1\\ns2\\TestNamespace', easytest\TYPE_CLASS],
-            ['ns1\\ns2\\TestNamespace', easytest\TYPE_FUNCTION],
-            ['TestNamespace', easytest\TYPE_FUNCTION],
-            ['TestNamespace', easytest\TYPE_CLASS],
-        ];
+        $expected->identifiers = array(
+            array('ns1\\ns1\\TestNamespace', easytest\TYPE_CLASS),
+            array('ns1\\ns1\\TestNamespace', easytest\TYPE_FUNCTION),
+            array('ns1\\ns2\\TestNamespace', easytest\TYPE_CLASS),
+            array('ns1\\ns2\\TestNamespace', easytest\TYPE_FUNCTION),
+            array('TestNamespace', easytest\TYPE_FUNCTION),
+            array('TestNamespace', easytest\TYPE_CLASS),
+        );
         $this->assert_discovered($expected, $discovered);
     }
 
@@ -165,23 +165,23 @@ class TestParseTestFile {
         $filepath = "{$this->root}conditional1.php";
         $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
-        $this->assert_log([]);
+        $this->assert_log(array());
 
         $expected_discovered = new easytest\FileTest();
         $expected_discovered->filepath = $filepath;
-        $expected_discovered->identifiers = [
-            ['conditional\\TestA', easytest\TYPE_CLASS],
-            ['conditional\\test_a', easytest\TYPE_FUNCTION],
-        ];
+        $expected_discovered->identifiers = array(
+            array('conditional\\TestA', easytest\TYPE_CLASS),
+            array('conditional\\test_a', easytest\TYPE_FUNCTION),
+        );
         easytest\assert_identical(
             (array)$expected_discovered, (array)$discovered,
             'Failed parsing names'
         );
 
-        $expected_seen = [
+        $expected_seen = array(
             'class conditional\\TestA' => true,
             'function conditional\\test_a' => true,
-        ];
+        );
         easytest\assert_identical(
             $expected_seen, $this->state->seen,
             'Failed adding seen names'
@@ -193,14 +193,14 @@ class TestParseTestFile {
         $filepath = "{$this->root}conditional2.php";
         $discovered = easytest\_discover_file($this->state, $this->logger, $filepath);
 
-        $this->assert_log([]);
+        $this->assert_log(array());
 
         $expected_discovered = new easytest\FileTest();
         $expected_discovered->filepath = $filepath;
-        $expected_discovered->identifiers = [
-            ['conditional\\TestB', easytest\TYPE_CLASS],
-            ['conditional\\test_b', easytest\TYPE_FUNCTION],
-        ];
+        $expected_discovered->identifiers = array(
+            array('conditional\\TestB', easytest\TYPE_CLASS),
+            array('conditional\\test_b', easytest\TYPE_FUNCTION),
+        );
         easytest\assert_identical(
             (array)$expected_discovered, (array)$discovered,
             'Failed parsing names'

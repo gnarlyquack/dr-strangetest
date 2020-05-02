@@ -6,7 +6,7 @@ use easytest;
 
 
 function setup_file_for_functions_and_classes() {
-    return [2, 4];
+    return array(2, 4);
 }
 
 function teardown_file_for_everybody($one, $two) {
@@ -17,7 +17,7 @@ function teardown_file_for_everybody($one, $two) {
 
 
 function setup_functions_only($one, $two) {
-    return [$one, $two, $one + $two];
+    return array($one, $two, $one + $two);
 }
 
 function teardown_functions_only($one, $two, $three) {
@@ -46,6 +46,6 @@ class TestClass {
     }
 
     public function test_one() {
-        easytest\assert_identical([2, 4], [$this->one, $this->two]);
+        easytest\assert_identical(array(2, 4), array($this->one, $this->two));
     }
 }

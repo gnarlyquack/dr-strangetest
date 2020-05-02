@@ -31,13 +31,13 @@ class IntegerProperties {
 class TestFormatVariable {
 
     public function test_formats_scalars() {
-        $tests = [
-            [1, '1'],
-            [1.5, '1.5'],
-            ["Here's a string", "'Here\\'s a string'"],
-            [true, 'true'],
-            [null, 'NULL']
-        ];
+        $tests = array(
+            array(1, '1'),
+            array(1.5, '1.5'),
+            array("Here's a string", "'Here\\'s a string'"),
+            array(true, 'true'),
+            array(null, 'NULL')
+        );
 
         foreach ($tests as $test) {
             list($variable, $expected) = $test;
@@ -48,19 +48,19 @@ class TestFormatVariable {
 
 
     public function test_formats_empty_array() {
-        $variable = [];
+        $variable = array();
         $actual = easytest\format_variable($variable);
         easytest\assert_identical('array()', $actual);
     }
 
 
     public function test_formats_array() {
-        $variable = [
+        $variable = array(
             'one' => 'one',
             'two' => 2,
-            ['one', 2, 'three', null],
-            'three' => [1, 2, 3],
-        ];
+            array('one', 2, 'three', null),
+            'three' => array(1, 2, 3),
+        );
         $expected = <<<'EXPECTED'
 array(
     'one' => 'one',
@@ -120,10 +120,10 @@ EXPECTED;
 
 
     public function test_handles_recursive_array() {
-        $variable = [
+        $variable = array(
             'one' => 'one',
-            'two' => ['one', 2, 'three', null],
-        ];
+            'two' => array('one', 2, 'three', null),
+        );
         $variable['three'] = $variable['one'];
         $variable['four'] = $variable['two'];
         $variable['five'] = &$variable['one'];

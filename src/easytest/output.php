@@ -91,12 +91,12 @@ function output_output() {
 
 
 function output_log(Log $log, $secs_elapsed) {
-    $event_types = [
+    $event_types = array(
         namespace\LOG_EVENT_FAIL => 'FAILED',
         namespace\LOG_EVENT_ERROR => 'ERROR',
         namespace\LOG_EVENT_SKIP => 'SKIPPED',
         namespace\LOG_EVENT_OUTPUT => 'OUTPUT',
-    ];
+    );
 
     $output_count = 0;
     $skip_count = 0;
@@ -125,7 +125,7 @@ function output_log(Log $log, $secs_elapsed) {
     $errors = $log->error_count();
     $skipped = $log->skip_count();
     $output = $log->output_count();
-    $omitted = [];
+    $omitted = array();
     if ($output_count !== $output) {
         $omitted[] = 'output';
     }
@@ -139,7 +139,7 @@ function output_log(Log $log, $secs_elapsed) {
         );
     }
 
-    $summary = [];
+    $summary = array();
     if ($passed) {
         $summary[] = \sprintf('Passed: %d', $passed);
     }

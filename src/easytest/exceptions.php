@@ -135,23 +135,23 @@ function _find_client_call_site() {
     $trace = \version_compare(\PHP_VERSION, '5.3.6', '<')
            ? \debug_backtrace(false)
            : \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    for($i = 0, $c = \count($trace); $i < $c; ++$i) {
+    foreach ($trace as $i => $frame) {
         // Apparently there's no file if we were thrown from the error
         // handler
-        if (isset($trace[$i]['file'])
-            && __DIR__ !== \dirname($trace[$i]['file']))
+        if (isset($frame['file'])
+            && __DIR__ !== \dirname($frame['file']))
         {
             break;
         }
     }
 
-    return [
-        $trace[$i]['file'],
-        $trace[$i]['line'],
+    return array(
+        $frame['file'],
+        $frame['line'],
         // Advance the trace index ($i) so the trace array provides a backtrace
         // from the call site
         \array_slice($trace, $i + 1),
-    ];
+    );
 }
 
 
@@ -159,10 +159,15 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
     $string = \sprintf($format, $message, $file, $line);
 
     // Create a backtrace excluding calls made within easytest
-    $buffer = [];
-    for($i = 0, $c = \count($trace); $i < $c; ++$i) {
-        $line = $trace[$i];
-        if (__DIR__ === \dirname($line['file'])) {
+    $buffer = array();
+    foreach ($trace as $frame) {
+        // #BC(5.3): Functions have no file if executed in call_user_func()
+        // call_user_func() specifically was giving us a (fatal) error, but
+        // possibly we should guard against this regardless?
+        if (!isset($frame['file'])) {
+            continue;
+        }
+        if ( __DIR__ === \dirname($frame['file'])) {
             // We don't want to walk the entire call stack, because easytest's
             // entry point is probably outside the easytest directory, and we
             // don't want to erroneously show that as a client call. We need a
@@ -171,25 +176,18 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
             // that checkpoint, as clients can throw exceptions in a variety of
             // places (e.g., setup fixtures) all of which are subsumed by
             // discover_tests
-            if ('easytest\\discover_tests' === $line['function']) {
+            if ('easytest\\discover_tests' === $frame['function']) {
                 break;
             }
             continue;
         }
 
-        $callee = $line['function'];
-        if (isset($line['class'])) {
-            $callee = \sprintf(
-                '%s%s%s',
-                $line['class'], $line['type'], $callee
-            );
+        $callee = $frame['function'];
+        if (isset($frame['class'])) {
+            $callee = "{$frame['class']}{$frame['type']}{$callee}";
         }
 
-        $buffer[] = \sprintf('%s(%d): %s()',
-            $line['file'],
-            $line['line'],
-            $callee
-        );
+        $buffer[] = "{$frame['file']}({$frame['line']}): {$callee}()";
     }
     if ($buffer) {
         $string = \sprintf(

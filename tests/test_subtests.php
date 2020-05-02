@@ -20,7 +20,7 @@ function test_logs_multiple_passed_subtests_as_one_passed_test() {
 
     easytest\_run_test($logger, $test, null);
 
-    namespace\assert_log([easytest\LOG_EVENT_PASS => 1], $logger);
+    namespace\assert_log(array(easytest\LOG_EVENT_PASS => 1), $logger);
 }
 
 
@@ -39,13 +39,13 @@ function test_logs_failed_subtests_and_continues_tests() {
     easytest\_run_test($logger, $test, null);
 
     namespace\assert_log(
-        [
+        array(
             easytest\LOG_EVENT_FAIL => 2,
-            'events' => [
-                [easytest\LOG_EVENT_FAIL, $name, "I failed :-("],
-                [easytest\LOG_EVENT_FAIL, $name, "I failed :-("],
-            ],
-        ],
+            'events' => array(
+                array(easytest\LOG_EVENT_FAIL, $name, "I failed :-("),
+                array(easytest\LOG_EVENT_FAIL, $name, "I failed :-("),
+            ),
+        ),
         $logger);
 }
 
@@ -62,5 +62,5 @@ function test_provides_assertions_as_subtests() {
 
     easytest\_run_test($logger, $test, null);
 
-    namespace\assert_log([easytest\LOG_EVENT_PASS => 1], $logger);
+    namespace\assert_log(array(easytest\LOG_EVENT_PASS => 1), $logger);
 }

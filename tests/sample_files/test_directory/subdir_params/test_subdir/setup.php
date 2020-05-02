@@ -7,13 +7,13 @@ use easytest;
 
 function setup_directory($one, $two) {
     return easytest\arglists(
-        [$one, 2 * $one],
-        [$two, $two / 2]
+        array($one, 2 * $one),
+        array($two, $two / 2)
     );
 }
 
 function teardown_directory($arglists) {
-    $args = [];
+    $args = array();
     foreach ($arglists as $list) {
         $args = \array_merge($args, $list);
     }

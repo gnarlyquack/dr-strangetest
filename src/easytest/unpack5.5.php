@@ -20,5 +20,7 @@ function _unpack_function($callable, $args) {
 
 
 function _unpack_construct($class, $args) {
-    return (new \ReflectionClass($class))->newInstanceArgs($args);
+    // #BC(5.3): Save object to variable before accessing member
+    $object = new \ReflectionClass($class);
+    return $object->newInstanceArgs($args);
 }

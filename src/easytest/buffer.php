@@ -17,39 +17,39 @@ final class BufferingLogger implements Logger {
     }
 
     public function log_pass($source) {
-        $this->queued[] = [namespace\LOG_EVENT_PASS, $source];
+        $this->queued[] = array(namespace\LOG_EVENT_PASS, $source);
     }
 
 
     public function log_failure($source, $reason) {
-        $this->queued[] = [namespace\LOG_EVENT_FAIL, [$source, $reason]];
+        $this->queued[] = array(namespace\LOG_EVENT_FAIL, array($source, $reason));
         $this->error = true;
     }
 
 
     public function log_error($source, $reason) {
-        $this->queued[] = [namespace\LOG_EVENT_ERROR, [$source, $reason]];
+        $this->queued[] = array(namespace\LOG_EVENT_ERROR, array($source, $reason));
         $this->error = true;
     }
 
 
     public function log_skip($source, $reason) {
-        $this->queued[] = [namespace\LOG_EVENT_SKIP, [$source, $reason]];
+        $this->queued[] = array(namespace\LOG_EVENT_SKIP, array($source, $reason));
     }
 
 
     public function log_output($source, $output, $during_error) {
-        $this->queued[] = [namespace\LOG_EVENT_OUTPUT, [$source, $output]];
+        $this->queued[] = array(namespace\LOG_EVENT_OUTPUT, array($source, $output));
     }
 
 
     public function log_debug($source, $output) {
-        $this->queued[] = [namespace\LOG_EVENT_DEBUG, [$source, $output]];
+        $this->queued[] = array(namespace\LOG_EVENT_DEBUG, array($source, $output));
     }
 
 
     public $source;
-    public $queued = [];
+    public $queued = array();
     public $ob_level_current;
     public $ob_level_start;
     public $error = false;
@@ -75,7 +75,7 @@ function start_buffering(Logger $logger, $source) {
 
 
 function end_buffering(BufferingLogger $logger) {
-    $buffers = [];
+    $buffers = array();
     for ($level = \ob_get_level();
          $level > $logger->ob_level_start;
          --$level)
@@ -162,7 +162,7 @@ function _reset_buffer(BufferingLogger $logger) {
         return;
     }
 
-    $buffers = [];
+    $buffers = array();
     if ($level > $logger->ob_level_start) {
         // Somebody else is doing their own output buffering, so we don't
         // want to mess it with. If their buffering started before we last

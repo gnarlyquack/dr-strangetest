@@ -5,7 +5,7 @@ namespace function_fixtures;
 use easytest;
 
 function setup_function() {
-    return [2, 4];
+    return array(2, 4);
 }
 
 function teardown_function($one, $two) {

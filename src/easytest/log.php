@@ -66,20 +66,20 @@ final class BasicLogger implements Logger {
 
     public function log_failure($source, $reason) {
         ++$this->count[namespace\LOG_EVENT_FAIL];
-        $this->events[] = [namespace\LOG_EVENT_FAIL, $source, $reason];
+        $this->events[] = array(namespace\LOG_EVENT_FAIL, $source, $reason);
     }
 
 
     public function log_error($source, $reason) {
         ++$this->count[namespace\LOG_EVENT_ERROR];
-        $this->events[] = [namespace\LOG_EVENT_ERROR, $source, $reason];
+        $this->events[] = array(namespace\LOG_EVENT_ERROR, $source, $reason);
     }
 
 
     public function log_skip($source, $reason) {
         ++$this->count[namespace\LOG_EVENT_SKIP];
         if ($this->verbose) {
-            $this->events[] = [namespace\LOG_EVENT_SKIP, $source, $reason];
+            $this->events[] = array(namespace\LOG_EVENT_SKIP, $source, $reason);
         }
     }
 
@@ -87,7 +87,7 @@ final class BasicLogger implements Logger {
     public function log_output($source, $reason, $during_error) {
         ++$this->count[namespace\LOG_EVENT_OUTPUT];
         if ($this->verbose || $during_error) {
-            $this->events[] = [namespace\LOG_EVENT_OUTPUT, $source, $reason];
+            $this->events[] = array(namespace\LOG_EVENT_OUTPUT, $source, $reason);
         }
     }
 
@@ -99,13 +99,13 @@ final class BasicLogger implements Logger {
         return new BasicLog($this->count, $this->events);
     }
 
-    private $count = [
+    private $count = array(
         namespace\LOG_EVENT_PASS   => 0,
         namespace\LOG_EVENT_ERROR  => 0,
         namespace\LOG_EVENT_FAIL   => 0,
         namespace\LOG_EVENT_SKIP   => 0,
         namespace\LOG_EVENT_OUTPUT => 0,
-    ];
-    private $events = [];
+    );
+    private $events = array();
     private $verbose;
 }

@@ -17,7 +17,7 @@ class TestRunner {
 
     private function assert_run($test, $expected) {
         $actual = $test->log;
-        easytest\assert_identical([], $actual);
+        easytest\assert_identical(array(), $actual);
         easytest\_run_class_test($this->logger, \get_class($test), $test);
         $actual = $test->log;
         easytest\assert_identical($expected, $actual);
@@ -32,398 +32,398 @@ class TestRunner {
     // tests
 
     public function test_run_test_method() {
-        $this->assert_run(new SimpleTestCase(), ['test']);
-        $this->assert_log([easytest\LOG_EVENT_PASS => 1]);
+        $this->assert_run(new SimpleTestCase(), array('test'));
+        $this->assert_log(array(easytest\LOG_EVENT_PASS => 1));
     }
 
     public function test_fixtures() {
         $this->assert_run(
             new FixtureTestCase(),
-            [
+            array(
                 'setup_object',
                 'setup', 'test1', 'teardown',
                 'setup', 'test2', 'teardown',
                 'teardown_object',
-            ]
+            )
         );
-        $this->assert_log([easytest\LOG_EVENT_PASS => 2]);
+        $this->assert_log(array(easytest\LOG_EVENT_PASS => 2));
     }
 
     public function test_case_insensitivity() {
         $this->assert_run(
             new CapitalizedTestCase(),
-            [
+            array(
                 'SetUpObject',
                 'SetUp', 'TestOne', 'TearDown',
                 'SetUp', 'TestTwo', 'TearDown',
                 'TearDownObject',
-            ]
+            )
         );
-        $this->assert_log([easytest\LOG_EVENT_PASS => 2]);
+        $this->assert_log(array(easytest\LOG_EVENT_PASS => 2));
     }
 
     public function test_exception() {
         $this->assert_run(
             new ExceptionTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'ExceptionTestCase::test',
                     'How exceptional!'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_error() {
         $this->assert_run(
             new ErrorTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'ErrorTestCase::test',
                     'Did I err?'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_suppressed_error() {
         $this->assert_run(
             new SuppressedErrorTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([easytest\LOG_EVENT_PASS => 1]);
+        $this->assert_log(array(easytest\LOG_EVENT_PASS => 1));
     }
 
     public function test_failure() {
         $this->assert_run(
             new FailedTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_FAIL => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_FAIL,
                     'FailedTestCase::test',
                     'Assertion failed'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_setup_object_error() {
         $this->assert_run(
             new SetupObjectErrorTestCase(),
-            ['setup_object']
+            array('setup_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'SetupObjectErrorTestCase::setup_object',
                     'An error happened'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_setup_error() {
         $this->assert_run(
             new SetupErrorTestCase(),
-            ['setup_object', 'setup', 'teardown_object']
+            array('setup_object', 'setup', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'setup for SetupErrorTestCase::test',
                     'An error happened'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_teardown_error() {
         $this->assert_run(
             new TeardownErrorTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for TeardownErrorTestCase::test',
                     'An error happened'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_teardown_object_error() {
         $this->assert_run(
             new TeardownObjectErrorTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'TeardownObjectErrorTestCase::teardown_object',
                     'An error happened'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_reports_error_on_multiple_object_fixtures() {
         $this->assert_run(
             new MultipleObjectFixtureTestCase(),
-            []
+            array()
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 2,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'MultipleObjectFixtureTestCase',
                     "Multiple setup fixtures found:\n\tSetUpObject\n\tsetup_object"
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'MultipleObjectFixtureTestCase',
                     "Multiple teardown fixtures found:\n\tTearDownObject\n\tteardown_object"
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
 
     public function test_skip() {
         $this->assert_run(
             new SkipTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([easytest\LOG_EVENT_SKIP => 1]);
+        $this->assert_log(array(easytest\LOG_EVENT_SKIP => 1));
     }
 
     public function test_skip_in_setup() {
         $this->assert_run(
             new SkipSetupTestCase(),
-            ['setup_object', 'setup', 'teardown_object']
+            array('setup_object', 'setup', 'teardown_object')
         );
-        $this->assert_log([easytest\LOG_EVENT_SKIP => 1]);
+        $this->assert_log(array(easytest\LOG_EVENT_SKIP => 1));
     }
 
     public function test_skip_in_setup_object() {
         $this->assert_run(
             new SkipSetupObjectTestCase(),
-            ['setup_object']
+            array('setup_object')
         );
-        $this->assert_log([easytest\LOG_EVENT_SKIP => 1]);
+        $this->assert_log(array(easytest\LOG_EVENT_SKIP => 1));
     }
 
     public function test_skip_in_teardown() {
         $this->assert_run(
             new SkipTeardownTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for SkipTeardownTestCase::test',
                     'Skip me'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
     public function test_skip_in_teardown_object() {
         $this->assert_run(
             new SkipTeardownObjectTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 1,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'SkipTeardownObjectTestCase::teardown_object',
                     'Skip me'
-                ],
-            ],
-        ]);
+                ),
+            ),
+        ));
     }
 
 
     public function test_logs_output_and_displays_it_on_error() {
         $this->assert_run(
             new OutputTestCase(),
-            [
+            array(
                 'setup_object',
                 'setup', 'test_pass', 'teardown',
                 'setup', 'test_fail', 'teardown',
                 'setup', 'test_error', 'teardown',
                 'setup', 'test_skip', 'teardown',
                 'teardown_object'
-            ]
+            )
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_FAIL => 1,
             easytest\LOG_EVENT_ERROR => 1,
             easytest\LOG_EVENT_SKIP => 1,
             easytest\LOG_EVENT_OUTPUT => 10,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputTestCase::test_fail',
                     "'setup output that should be seen'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_FAIL,
                     'OutputTestCase::test_fail',
                     'Assertion failed'
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputTestCase::test_fail',
                     "'teardown output that should be seen'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputTestCase::test_error',
                     "'setup output that should be seen'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'OutputTestCase::test_error',
                     'Did I err?',
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputTestCase::test_error',
                     "'teardown output that should be seen'",
-                ],
-            ]
-        ]);
+                ),
+            )
+        ));
     }
 
 
     public function test_allows_our_own_output_buffering() {
         $this->assert_run(
             new OutputBufferingTestCase(),
-            [
+            array(
                 'setup_object',
                 'setup', 'test_skip', 'teardown',
                 'setup', 'test_error', 'teardown',
                 'setup', 'test_fail', 'teardown',
                 'setup', 'test_pass', 'teardown',
                 'teardown_object'
-            ]
+            )
         );
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_FAIL => 1,
             easytest\LOG_EVENT_ERROR => 1,
             easytest\LOG_EVENT_SKIP => 1,
             easytest\LOG_EVENT_OUTPUT => 10,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputBufferingTestCase::test_error',
                     "'setup output that should be seen'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'OutputBufferingTestCase::test_error',
                     'Did I err?',
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputBufferingTestCase::test_error',
                     "'teardown output that should be seen'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputBufferingTestCase::test_fail',
                     "'setup output that should be seen'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_FAIL,
                     'OutputBufferingTestCase::test_fail',
                     'Assertion failed'
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputBufferingTestCase::test_fail',
                     "'teardown output that should be seen'",
-                ],
-            ]
-        ]);
+                ),
+            )
+        ));
     }
 
 
     public function test_reports_errors_for_undeleted_output_buffers() {
         $this->assert_run(
             new UndeletedOutputBufferTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
         // Note that since the test itself didn't fail, we log a pass, but we
         // also get errors due to dangling output buffers. This seems
         // desirable: errors associated with buffering will get logged and
         // cause the test suite in general to fail (so hopefully people will
         // clean up their tests), but do not otherwise impede testing.
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 4,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'UndeletedOutputBufferTestCase::setup_object',
                     "An output buffer was started but never deleted.\nBuffer contents were: 'setup_object'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for UndeletedOutputBufferTestCase::test',
                     "An output buffer was started but never deleted.\nBuffer contents were: 'test output'",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for UndeletedOutputBufferTestCase::test',
                     "An output buffer was started but never deleted.\nBuffer contents were: ''",
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'UndeletedOutputBufferTestCase::teardown_object',
                     "An output buffer was started but never deleted.\nBuffer contents were: 'teardown_object'",
-                ],
-            ]
-        ]);
+                ),
+            )
+        ));
     }
 
 
     public function test_reports_error_for_deleting_easytest_output_buffers() {
         $this->assert_run(
             new DeletingOutputBufferTestCase(),
-            ['setup_object', 'setup', 'test', 'teardown', 'teardown_object']
+            array('setup_object', 'setup', 'test', 'teardown', 'teardown_object')
         );
         // Note that since the test itself didn't fail, we log a pass, but we
         // also get errors due to deleting EasyTest's output buffers. This
@@ -431,37 +431,37 @@ class TestRunner {
         // and cause the test suite in general to fail (so hopefully people
         // will clean up their tests), but do not otherwise impede testing.
         $message = "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.";
-        $this->assert_log([
+        $this->assert_log(array(
             easytest\LOG_EVENT_PASS => 1,
             easytest\LOG_EVENT_ERROR => 5,
-            'events' => [
-                [
+            'events' => array(
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'DeletingOutputBufferTestCase::setup_object',
                     $message,
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'setup for DeletingOutputBufferTestCase::test',
                     $message,
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'DeletingOutputBufferTestCase::test',
                     $message,
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for DeletingOutputBufferTestCase::test',
                     $message,
-                ],
-                [
+                ),
+                array(
                     easytest\LOG_EVENT_ERROR,
                     'DeletingOutputBufferTestCase::teardown_object',
                     $message,
-                ],
-            ]
-        ]);
+                ),
+            )
+        ));
 
         easytest\assert_identical('', \ob_get_contents());
     }
@@ -469,7 +469,7 @@ class TestRunner {
 
 
 class SimpleTestCase {
-    public $log = [];
+    public $log = array();
 
     public function test() {
         $this->log[] = __FUNCTION__;
@@ -477,7 +477,7 @@ class SimpleTestCase {
 }
 
 class FixtureTestCase {
-    public $log = [];
+    public $log = array();
 
     public function setup_object() {
         $this->log[] = __FUNCTION__;
@@ -505,7 +505,7 @@ class FixtureTestCase {
 }
 
 class CapitalizedTestCase {
-    public $log = [];
+    public $log = array();
 
     public function SetUpObject() {
         $this->log[] = __FUNCTION__;
@@ -534,7 +534,7 @@ class CapitalizedTestCase {
 
 
 abstract class BaseTestCase {
-    public $log = [];
+    public $log = array();
 
     public function setup_object() {
         $this->log[] = __FUNCTION__;
@@ -659,7 +659,7 @@ class SkipTeardownObjectTestCase extends BaseTestCase {
 }
 
 class OutputTestCase {
-    public $log = [];
+    public $log = array();
 
     public function setup_object() {
         $this->log[] = __FUNCTION__;
@@ -710,7 +710,7 @@ class OutputTestCase {
 }
 
 class OutputBufferingTestCase {
-    public $log = [];
+    public $log = array();
 
     public function setup_object() {
         $this->log[] = __FUNCTION__;
@@ -761,7 +761,7 @@ class OutputBufferingTestCase {
 }
 
 class UndeletedOutputBufferTestCase {
-    public $log = [];
+    public $log = array();
 
     public function setup_object() {
         $this->log[] = __FUNCTION__;
@@ -792,7 +792,7 @@ class UndeletedOutputBufferTestCase {
 }
 
 class DeletingOutputBufferTestCase {
-    public $log = [];
+    public $log = array();
 
     public function setup_object() {
         $this->log[] = __FUNCTION__;

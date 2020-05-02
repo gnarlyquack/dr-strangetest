@@ -10,27 +10,27 @@ class UnexpectedException extends \Exception {}
 
 
 function assert_log(array $log, easytest\BasicLogger $logger) {
-    $expected = [
+    $expected = array(
         easytest\LOG_EVENT_PASS => 0,
         easytest\LOG_EVENT_FAIL => 0,
         easytest\LOG_EVENT_ERROR => 0,
         easytest\LOG_EVENT_SKIP => 0,
         easytest\LOG_EVENT_OUTPUT => 0,
-        'events' => [],
-    ];
+        'events' => array(),
+    );
     foreach ($log as $i => $entry) {
         $expected[$i] = $entry;
     }
 
     $actual = $logger->get_log();
-    $actual = [
+    $actual = array(
         easytest\LOG_EVENT_PASS => $actual->pass_count(),
         easytest\LOG_EVENT_FAIL => $actual->failure_count(),
         easytest\LOG_EVENT_ERROR => $actual->error_count(),
         easytest\LOG_EVENT_SKIP => $actual->skip_count(),
         easytest\LOG_EVENT_OUTPUT => $actual->output_count(),
         'events' => $actual->get_events(),
-    ];
+    );
     for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
         list($type, $source, $reason) = $actual['events'][$i];
         if ($reason instanceof \Throwable

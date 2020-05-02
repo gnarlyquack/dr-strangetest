@@ -38,18 +38,18 @@ MSG;
         // NOTE: Test of equal arrays in different key order to ensure 1) this
         // fails, and 2) they're not sorted when displayed
         try {
-            $array1 = [
+            $array1 = array(
                 1,
-                [2, 3],
-                [],
+                array(2, 3),
+                array(),
                 4,
-            ];
-            $array2 = [
+            );
+            $array2 = array(
                 3 => 4,
-                2 => [],
-                1 => [1 => 3, 0 => 2],
+                2 => array(),
+                1 => array(1 => 3, 0 => 2),
                 0 => 1,
-            ];
+            );
             easytest\assert_identical($array1, $array2);
         }
         catch (easytest\Failure $actual) {}
@@ -188,18 +188,18 @@ class TestAssertEqual {
     public function test_passes() {
         // NOTE: Test of equal arrays that are in different key order to
         // ensure this passes
-        $array1 = [
+        $array1 = array(
             1,
-            [2, 3],
-            [],
+            array(2, 3),
+            array(),
             4,
-        ];
-        $array2 = [
+        );
+        $array2 = array(
             3 => 4,
-            2 => [],
-            1 => [1 => 3, 0 => 2],
+            2 => array(),
+            1 => array(1 => 3, 0 => 2),
             0 => 1,
-        ];
+        );
         easytest\assert_equal($array1, $array2);
     }
 
@@ -210,18 +210,18 @@ class TestAssertEqual {
             function() {
                 // NOTE: Test of unequal arrays with elements in different key
                 // order to ensure that they're sorted by key when displayed
-                $array1 = [
+                $array1 = array(
                     1,
-                    [2, 3],
-                    [],
+                    array(2, 3),
+                    array(),
                     4,
-                ];
-                $array2 = [
+                );
+                $array2 = array(
                     3 => 5,
-                    2 => [],
-                    1 => [1 => 3, 0 => 2],
+                    2 => array(),
+                    1 => array(1 => 3, 0 => 2),
                     0 => 1,
-                ];
+                );
                 /* Ensure recursion is handled */
                 $array1[] = &$array1;
                 $array2[] = &$array2;

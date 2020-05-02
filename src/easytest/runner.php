@@ -29,7 +29,7 @@ final class DirectoryTest extends struct {
     public $target;
     public $setup;
     public $teardown;
-    public $paths = [];
+    public $paths = array();
 }
 
 
@@ -39,7 +39,7 @@ final class FileTest extends struct {
     public $teardown_file;
     public $setup_function;
     public $teardown_function;
-    public $identifiers = [];
+    public $identifiers = array();
 }
 
 
@@ -111,7 +111,8 @@ final class TestContext {
 
     public function subtest($callable) {
         try {
-            $callable();
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable);
             return;
         }
         catch (\AssertionError $e) {
@@ -196,8 +197,8 @@ function _discover_directory(State $state, Logger $logger, $path, $target) {
     // Directory fixtures are discovered in either case.
     $error = false;
     $target_found = false;
-    $setup = [];
-    $tests = [];
+    $setup = array();
+    $tests = array();
     if ($target === $path) {
         $target = null;
     }
@@ -301,7 +302,7 @@ function _run_directory_tests(State $state, Logger $logger, DirectoryTest $test,
         $arglists = $args->arglists;
     }
     else {
-        $arglists = [$args];
+        $arglists = array($args);
     }
 
     foreach ($test->paths as $path => $type) {
@@ -356,8 +357,8 @@ function _parse_setup(State $state, Logger $logger, $file) {
 
     $error = 0;
     $ns = '';
-    $setup = [];
-    $teardown = [];
+    $setup = array();
+    $teardown = array();
     for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
         if (!\is_array($tokens[$i])) {
             continue;
@@ -414,10 +415,10 @@ function _parse_setup(State $state, Logger $logger, $file) {
         $state->files[$file] = false;
     }
     else {
-        $state->files[$file] = [
+        $state->files[$file] = array(
             $setup ? $setup[0] : null,
             $teardown ? $teardown[0] : null
-        ];
+        );
     }
 
     return $state->files[$file];
@@ -460,14 +461,14 @@ function _discover_file(State $state, Logger $logger, $filepath) {
 
     $file = new FileTest();
 
-    $parsers = [
+    $parsers = array(
         \T_CLASS => function($class, $fullname) use ($file) {
             return namespace\_is_test_class($file, $class, $fullname);
         },
         \T_FUNCTION => function($function, $fullname) use ($file) {
             return namespace\_is_test_function($file, $function, $fullname);
         },
-    ];
+    );
     if (!namespace\_parse_file($logger, $filepath, $parsers, $state->seen)) {
         $state->files[$filepath] = false;
     }
@@ -481,7 +482,7 @@ function _discover_file(State $state, Logger $logger, $filepath) {
 
 function _is_test_class(FileTest $file, $class, $fullname) {
     if (0 === \substr_compare($class, 'test', 0, 4, true)) {
-        $file->identifiers[] = [$fullname, namespace\TYPE_CLASS];
+        $file->identifiers[] = array($fullname, namespace\TYPE_CLASS);
         return true;
     }
     return false;
@@ -490,7 +491,7 @@ function _is_test_class(FileTest $file, $class, $fullname) {
 
 function _is_test_function(FileTest $file, $function, $fullname) {
     if (0 === \substr_compare($function, 'test', 0, 4, true)) {
-        $file->identifiers[] = [$fullname, namespace\TYPE_FUNCTION];
+        $file->identifiers[] = array($fullname, namespace\TYPE_FUNCTION);
         return true;
     }
 
@@ -643,7 +644,7 @@ function _parse_identifier($tokens, $i) {
         }
     }
 
-    return [$identifier, $i];
+    return array($identifier, $i);
 }
 
 
@@ -665,7 +666,7 @@ function _parse_namespace($tokens, $i, $current_ns) {
     $ns = '';
     while (++$i) {
         if ($tokens[$i] === ';' || $tokens[$i] === '{') {
-            return [$ns ? "$ns\\" : '', $i];
+            return array($ns ? "$ns\\" : '', $i);
         }
 
         if (!\is_array($tokens[$i])) {
@@ -675,7 +676,7 @@ function _parse_namespace($tokens, $i, $current_ns) {
         switch ($tokens[$i][0]) {
         case \T_NS_SEPARATOR:
             if (!$ns) {
-                return [$current_ns, $i];
+                return array($current_ns, $i);
             }
             $ns .= $tokens[$i][1];
             break;
@@ -733,7 +734,7 @@ function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
         $arglists = $args->arglists;
     }
     else {
-        $arglists = [$args];
+        $arglists = array($args);
     }
 
     foreach ($arglists as $file_args) {
@@ -779,9 +780,10 @@ function _run_setup(Logger $logger, $source, $callable, $args=null) {
             $result = namespace\_unpack_function($callable, $args);
         }
         else {
-            $result = $callable();
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            $result = \call_user_func($callable);
         }
-        return [true, $result ? $result : $args];
+        return array(true, $result ? $result : $args);
     }
     catch (Skip $e) {
         $logger->log_skip($source, $e);
@@ -793,17 +795,19 @@ function _run_setup(Logger $logger, $source, $callable, $args=null) {
     catch (\Exception $e) {
         $logger->log_error($source, $e);
     }
-    return [false, null];
+    return array(false, null);
 }
 
 
 function _run_teardown(Logger $logger, $source, $callable, $args) {
     try {
         if (!$args) {
-            $callable();
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable);
         }
         elseif ($args instanceof ArgumentLists) {
-            $callable($args->arglists);
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable, $args->arglists);
         }
         else {
             // #BC(5.5): Use proxy function for argument unpacking
@@ -851,7 +855,7 @@ function _run_class_test(Logger $logger, $class, $object) {
 
     if ($class->setup_object) {
         $source = "{$class->name}::{$class->setup_object}";
-        $callable = [$object, $class->setup_object];
+        $callable = array($object, $class->setup_object);
         $logger = namespace\start_buffering($logger, $source);
         list($success,) = namespace\_run_setup($logger, $source, $callable);
         $logger = namespace\end_buffering($logger);
@@ -863,21 +867,21 @@ function _run_class_test(Logger $logger, $class, $object) {
     $test = new FunctionTest();
     if ($class->setup_method) {
         $test->setup_name = $class->setup_method;
-        $test->setup = [$object, $class->setup_method];
+        $test->setup = array($object, $class->setup_method);
     }
     if ($class->teardown_method) {
         $test->teardown_name = $class->teardown_method;
-        $test->teardown = [$object, $class->teardown_method];
+        $test->teardown = array($object, $class->teardown_method);
     }
     foreach ($class->methods as $method) {
         $test->name = "{$class->name}::$method";
-        $test->function = [$object, $method];
+        $test->function = array($object, $method);
         namespace\_run_test($logger, $test, null);
     }
 
     if ($class->teardown_object) {
         $source = "{$class->name}::{$class->teardown_object}";
-        $callable = [$object, $class->teardown_object];
+        $callable = array($object, $class->teardown_object);
         $logger = namespace\start_buffering($logger, $source);
         namespace\_run_teardown($logger, $source, $callable, null);
         $logger = namespace\end_buffering($logger);
@@ -887,11 +891,11 @@ function _run_class_test(Logger $logger, $class, $object) {
 
 function _discover_class(Logger $logger, $class) {
     $error = 0;
-    $setup_object = [];
-    $teardown_object = [];
+    $setup_object = array();
+    $teardown_object = array();
     $setup = null;
     $teardown = null;
-    $methods = [];
+    $methods = array();
 
     foreach (\get_class_methods($class) as $method) {
         if (0 === \substr_compare($method, 'test', 0, 4, true)) {
@@ -999,7 +1003,8 @@ function _run_test_function(Logger $logger, $source, $callable, $args, TestConte
             namespace\_unpack_function($callable, $args);
         }
         else {
-            $callable($context);
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable, $context);
         }
         return $context->succeeded();
     }

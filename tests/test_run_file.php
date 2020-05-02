@@ -39,9 +39,9 @@ class TestRunFile {
     public function test_runs_function_tests() {
         $this->assert_run(
             'functions.php',
-            [
+            array(
                 easytest\LOG_EVENT_PASS => 2,
-            ]
+            )
         );
     }
 
@@ -49,9 +49,9 @@ class TestRunFile {
     public function test_sets_up_and_tears_down_functions() {
         $this->assert_run(
             'function_fixtures.php',
-            [
+            array(
                 easytest\LOG_EVENT_PASS => 2,
-            ]
+            )
         );
     }
 
@@ -59,9 +59,9 @@ class TestRunFile {
     public function test_sets_up_and_tears_down_file() {
         $this->assert_run(
             'file_fixtures.php',
-            [
+            array(
                 easytest\LOG_EVENT_PASS => 3,
-            ]
+            )
         );
     }
 
@@ -69,9 +69,9 @@ class TestRunFile {
     public function test_runs_file_and_function_fixtures() {
         $this->assert_run(
             'file_and_function_fixtures.php',
-            [
+            array(
                 easytest\LOG_EVENT_PASS => 3,
-            ]
+            )
         );
     }
 
@@ -79,17 +79,17 @@ class TestRunFile {
     public function test_runs_tests_once_per_arg_list() {
         $this->assert_run(
             'multiple_runs.php',
-            [
+            array(
                 easytest\LOG_EVENT_PASS => 6,
                 easytest\LOG_EVENT_OUTPUT => 1,
-                'events' => [
-                    [
+                'events' => array(
+                    array(
                         easytest\LOG_EVENT_OUTPUT,
                         'multiple_runs\\teardown_file',
                         "'multiple_runs\\\\teardown_file'",
-                    ],
-                ],
-            ]
+                    ),
+                ),
+            )
         );
     }
 }

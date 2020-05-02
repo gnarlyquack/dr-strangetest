@@ -14,8 +14,8 @@ namespace easytest;
 
 function diff($from, $to, $from_name, $to_name) {
     $diff = namespace\_diff_array(
-        '' === $from ? [] : \explode("\n", $from),
-        '' === $to   ? [] : \explode("\n", $to)
+        '' === $from ? array() : \explode("\n", $from),
+        '' === $to   ? array() : \explode("\n", $to)
     );
     $diff = \implode("\n", $diff);
     return "- $from_name\n+ $to_name\n\n$diff";
@@ -25,7 +25,7 @@ function diff($from, $to, $from_name, $to_name) {
 function _diff_array($from, $to) {
     $flen = \count($from);
     $tlen = \count($to);
-    $m = [];
+    $m = array();
 
     for ($i = 0; $i <= $flen; ++$i) {
         for ($j = 0; $j <= $tlen; ++$j) {
@@ -43,7 +43,7 @@ function _diff_array($from, $to) {
 
     $i = $flen;
     $j = $tlen;
-    $diff = [];
+    $diff = array();
     while ($i > 0 || $j > 0) {
         if ($i > 0 && $j > 0 && $from[$i-1] === $to[$j-1]) {
             --$i;
@@ -68,7 +68,7 @@ function _diff_array($from, $to) {
 
 
 function format_failure_message($assertion, $description, $detail = null) {
-    $message = [];
+    $message = array();
     // $assertion and $detail are provided by the framework, so we don't need
     // to "normalize" them. $description will have been passed through from
     // client code, so we'll trim off any extraneous whitespace
@@ -99,11 +99,11 @@ function format_failure_message($assertion, $description, $detail = null) {
 
 function format_variable(&$var) {
     $name = \is_object($var) ? \get_class($var) : \gettype($var);
-    $seen = ['byval' => [], 'byref' => []];
+    $seen = array('byval' => array(), 'byref' => array());
     // We'd really like to make this a constant static variable, but PHP won't
     // let us do that with an object instance. As a mitigation, we'll just
     // create the sentinels once at the start and then pass it around
-    $sentinels = ['byref' => null, 'byval' => new \stdClass()];
+    $sentinels = array('byref' => null, 'byval' => new \stdClass());
     return namespace\_format_recursive_variable($var, $name, $seen, $sentinels);
 }
 
@@ -255,7 +255,7 @@ function _check_reference(&$var, $name, &$seen, $sentinels) {
 
 
 
-function ksort_recursive(&$array, &$seen = []) {
+function ksort_recursive(&$array, &$seen = array()) {
     if (!\is_array($array)) {
         return;
     }

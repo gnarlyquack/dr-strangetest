@@ -5,7 +5,7 @@ namespace file_fixtures;
 use easytest;
 
 function setup_file() {
-    return [2, 4];
+    return array(2, 4);
 }
 
 function teardown_file($one, $two) {
@@ -33,6 +33,6 @@ class Test {
     }
 
     public function test_one() {
-        easytest\assert_identical([2, 4], [$this->one, $this->two]);
+        easytest\assert_identical(array(2, 4), array($this->one, $this->two));
     }
 }

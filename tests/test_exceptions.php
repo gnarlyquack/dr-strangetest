@@ -56,7 +56,7 @@ MSG;
         $message = 'Fail! :-(';
         $file = __FILE__;
         $class = __CLASS__;
-        $lines = [__LINE__ + 1];
+        $lines = array(__LINE__ + 1);
         $actual = $this->helper_one($message, $lines);
         $expected = <<<MSG
 $message

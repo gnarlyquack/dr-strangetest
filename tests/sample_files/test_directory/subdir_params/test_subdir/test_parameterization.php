@@ -6,7 +6,7 @@ use easytest;
 
 
 function setup_functions($one, $two) {
-    return [$one, $two, $one * $two];
+    return array($one, $two, $one * $two);
 }
 
 

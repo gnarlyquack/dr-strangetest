@@ -10,6 +10,9 @@ class TestArgumentsTwo {
     }
 
     public function test() {
-        easytest\assert_identical(['two', 'three'], [$this->two, $this->three]);
+        easytest\assert_identical(
+            array('two', 'three'),
+            array($this->two, $this->three)
+        );
     }
 }

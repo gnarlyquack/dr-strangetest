@@ -24,9 +24,7 @@ Release
         directory "tests/test_foo" (which may or may not also include a file
         "test_target.php")
 
--   Support PHP 5.3(?)
-    -   Short array syntax ([]) isn't supported
-    -   Closures don't have access to $this
+    -   Do we not discover/traverse symbolic links?
 
 -   Implement additional assertions? Currently EasyTest's test suite only
     uses/needs the assertions already provided by the framework, but
@@ -54,22 +52,9 @@ Release
 
 -   Show a parameterized test name if a test is run multiple times
 
-
-Future
-------
--   Distribute EasyTest as a single executable (Phar?)
-
--   Add support for config files(?)
-
--   Implement additional CLI options(?)
-    -   specify a config file
-    -   reverse report output
--   Cache results of directory (and file?) discovery
-
--   diff: Limit number of lines that are reported before and after the
-    differing portion of text
-
--   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
+-   Omit namespace when displaying function fixtures, e.g, "setup_function for
+    namespace\test_function" instead of "namespace\setup_function for
+    namespace\test_function"
 
 -   Only determine the test root once. Currently, we determine a new root for
     every provided path, which means we could run potentially try to run tests
@@ -80,6 +65,24 @@ Future
         that falls outside of the determined root
 
 -   Compress the token-processing loops in _parse_setup and _discover_file?
+
+-   Cache results of directory (and file?) discovery
+
+
+Future
+------
+-   Distribute EasyTest as a single executable (Phar?)
+
+-   Add support for config files(?)
+
+-   Implement additional CLI options(?)
+    -   specify a config file
+    -   reverse report output
+
+-   diff: Limit number of lines that are reported before and after the
+    differing portion of text
+
+-   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path

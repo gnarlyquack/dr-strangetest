@@ -6,30 +6,30 @@
 // LICENSE.txt file.
 
 final class DebugLogger implements easytest\Logger {
-    public $log = [];
+    public $log = array();
 
     public function log_pass($source) {
-        $this->log[] = [easytest\LOG_EVENT_PASS, $source, null];
+        $this->log[] = array(easytest\LOG_EVENT_PASS, $source, null);
     }
 
     public function log_failure($source, $reason) {
-        $this->log[] = [easytest\LOG_EVENT_FAIL, $source, $reason];
+        $this->log[] = array(easytest\LOG_EVENT_FAIL, $source, $reason);
     }
 
     public function log_error($source, $reason) {
-        $this->log[] = [easytest\LOG_EVENT_ERROR, $source, $reason];
+        $this->log[] = array(easytest\LOG_EVENT_ERROR, $source, $reason);
     }
 
     public function log_skip($source, $reason) {
-        $this->log[] = [easytest\LOG_EVENT_SKIP, $source, $reason];
+        $this->log[] = array(easytest\LOG_EVENT_SKIP, $source, $reason);
     }
 
     public function log_output($source, $reason, $during_error) {
-        $this->log[] = [easytest\LOG_EVENT_OUTPUT, $source, $reason];
+        $this->log[] = array(easytest\LOG_EVENT_OUTPUT, $source, $reason);
     }
 
     public function log_debug($source, $reason) {
-        $this->log[] = [easytest\LOG_EVENT_DEBUG, $source, $reason];
+        $this->log[] = array(easytest\LOG_EVENT_DEBUG, $source, $reason);
     }
 
 }
@@ -81,7 +81,7 @@ class TestDiscovery {
                     }
                     easytest\assert_identical(
                         $expected,
-                        [$type, $reason],
+                        array($type, $reason),
                         "Unexpected event\nsource: $source\ndirectory: $current"
                     );
                     unset($directory['tests'][$source]);
@@ -131,17 +131,17 @@ MESSAGE;
                             $directory[$directory['teardown']] = 0;
                         }
                         if (!isset($directory['dirs'])) {
-                            $directory['dirs'] = [];
+                            $directory['dirs'] = array();
                         }
                         else {
                             $dirs = $directory['dirs'];
-                            $directory['dirs'] = [];
+                            $directory['dirs'] = array();
                             foreach ($dirs as $dir) {
                                 $directory['dirs'][$dir] = true;
                             }
                         }
                         if (!isset($directory['tests'])) {
-                            $directory['tests'] = [];
+                            $directory['tests'] = array();
                         }
                     }
                     break;
@@ -241,11 +241,11 @@ MESSAGE;
                 );
             }
             easytest\assert_identical(
-                [], $directory['dirs'],
+                array(), $directory['dirs'],
                 "not all tests in subdirectories were run in\n$path"
             );
             easytest\assert_identical(
-                [], $directory['tests'],
+                array(), $directory['tests'],
                 "not all tests were run in\n$path"
             );
         }
@@ -263,7 +263,7 @@ MESSAGE;
                 $reason = $reason->getMessage();
             }
 
-            $actual[$i] = [$type, $source, $reason];
+            $actual[$i] = array($type, $source, $reason);
         }
         easytest\assert_identical($expected, $actual);
     }
@@ -273,383 +273,383 @@ MESSAGE;
 
     public function test_discover_file() {
         $path = $this->path . 'TestMyFile.php';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            $this->path => [
-                'tests' => [
-                    $path => [
+        $expected = array(
+            $this->path => array(
+                'tests' => array(
+                    $path => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'class TestTextBefore {}\n\n\nclass TestTestAfter {}\n'"
-                    ],
-                    'Test1::test_me' => [easytest\LOG_EVENT_PASS, null],
-                    'test_two::test1' => [easytest\LOG_EVENT_PASS, null],
-                    'test_two::test2' => [easytest\LOG_EVENT_PASS, null],
-                    'test_two::test3' => [easytest\LOG_EVENT_PASS, null],
-                    'Test3::test_two' => [easytest\LOG_EVENT_PASS, null],
-                ],
-            ],
-        ];
+                    ),
+                    'Test1::test_me' => array(easytest\LOG_EVENT_PASS, null),
+                    'test_two::test1' => array(easytest\LOG_EVENT_PASS, null),
+                    'test_two::test2' => array(easytest\LOG_EVENT_PASS, null),
+                    'test_two::test3' => array(easytest\LOG_EVENT_PASS, null),
+                    'Test3::test_two' => array(easytest\LOG_EVENT_PASS, null),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_discover_directory() {
         $path = $this->path . 'discover_directory';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'dirs' => ["$path/TEST_DIR1/", "$path/test_dir2/"],
-                'tests' => [
-                    "$path/test.php" => [
+        $expected = array(
+            "$path/" => array(
+                'dirs' => array("$path/TEST_DIR1/", "$path/test_dir2/"),
+                'tests' => array(
+                    "$path/test.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$path/test.php'"
-                    ],
-                ],
-            ],
+                    ),
+                ),
+            ),
 
-            "$path/TEST_DIR1/" => [
-                'fixtures' => [
+            "$path/TEST_DIR1/" => array(
+                'fixtures' => array(
                     'SetupDirectoryTEST1',
                     'TearDownDirectoryTEST1',
-                ],
+                ),
                 'parent' => "$path/",
-                'tests' => [
-                    "$path/TEST_DIR1/TEST1.PHP" => [
+                'tests' => array(
+                    "$path/TEST_DIR1/TEST1.PHP" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$path/TEST_DIR1/TEST1.PHP'",
-                    ],
-                    "$path/TEST_DIR1/TEST2.PHP" => [
+                    ),
+                    "$path/TEST_DIR1/TEST2.PHP" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$path/TEST_DIR1/TEST2.PHP'",
-                    ],
-                ],
-            ],
+                    ),
+                ),
+            ),
 
-            "$path/test_dir2/" => [
-                'fixtures' => [
+            "$path/test_dir2/" => array(
+                'fixtures' => array(
                     'setup_directory_test2',
                     'teardown_directory_test2',
-                ],
+                ),
                 'parent' => "$path/",
-                'tests' => [
-                    "$path/test_dir2/test1.php" => [
+                'tests' => array(
+                    "$path/test_dir2/test1.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$path/test_dir2/test1.php'",
-                    ],
-                    "$path/test_dir2/test2.php" => [
+                    ),
+                    "$path/test_dir2/test2.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$path/test_dir2/test2.php'",
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_individual_paths() {
         $root = $this->path . 'test_individual_paths';
-        $paths = [
+        $paths = array(
             "$root/test_dir1/test2.php",
             "$root/test_dir1/test3.php",
             "$root/test_dir2/test_subdir",
-        ];
+        );
         easytest\discover_tests($this->logger, $paths);
 
-        $expected = [
-            "$root/" => [
-                'fixtures' => [
+        $expected = array(
+            "$root/" => array(
+                'fixtures' => array(
                     'setup_directory_individual_paths',
                     'teardown_directory_individual_paths',
-                ],
-                'dirs' => ["$root/test_dir1/", "$root/test_dir2/"],
-            ],
+                ),
+                'dirs' => array("$root/test_dir1/", "$root/test_dir2/"),
+            ),
 
-            "$root/test_dir1/" => [
-                'fixtures' => [
+            "$root/test_dir1/" => array(
+                'fixtures' => array(
                     'setup_directory_individual_paths_dir1',
                     'teardown_directory_individual_paths_dir1',
-                ],
+                ),
                 'parent' => "$root/",
-                'tests' => [
-                    "$root/test_dir1/test2.php" => [
+                'tests' => array(
+                    "$root/test_dir1/test2.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$root/test_dir1/test2.php'",
-                    ],
-                    "$root/test_dir1/test3.php" => [
+                    ),
+                    "$root/test_dir1/test3.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$root/test_dir1/test3.php'",
-                    ],
-                ],
-            ],
+                    ),
+                ),
+            ),
 
-            "$root/test_dir2/" => [
-                'fixtures' => [
+            "$root/test_dir2/" => array(
+                'fixtures' => array(
                     'setup_directory_individual_paths_dir2',
                     'teardown_directory_individual_paths_dir2',
-                ],
+                ),
                 'parent' => "$root/",
-                'dirs' => ["$root/test_dir2/test_subdir/"],
-            ],
+                'dirs' => array("$root/test_dir2/test_subdir/"),
+            ),
 
-            "$root/test_dir2/test_subdir/" => [
-                'fixtures' => [
+            "$root/test_dir2/test_subdir/" => array(
+                'fixtures' => array(
                     'setup_directory_individual_paths_dir2_subdir',
                     'teardown_directory_individual_paths_dir2_subdir',
-                ],
+                ),
                 'parent' => "$root/test_dir2/",
-                'tests' => [
-                    "$root/test_dir2/test_subdir/test1.php" => [
+                'tests' => array(
+                    "$root/test_dir2/test_subdir/test1.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$root/test_dir2/test_subdir/test1.php'",
-                    ],
-                    "$root/test_dir2/test_subdir/test2.php" => [
+                    ),
+                    "$root/test_dir2/test_subdir/test2.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$root/test_dir2/test_subdir/test2.php'",
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_nonexistent_path() {
         $path = $this->path . 'foobar.php';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            [
+        $expected = array(
+            array(
                 easytest\LOG_EVENT_ERROR,
                 $path,
                 'No such file or directory'
-            ],
-        ];
+            ),
+        );
         easytest\assert_identical($expected, $this->logger->log);
     }
 
 
     public function test_handles_error_in_directory_setup_file() {
         $path = $this->path . 'directory_setup_error';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
         // Note that any exception thrown while including a file, including a
         // skip, is reported as an error
-        $expected = [
-            [
+        $expected = array(
+            array(
                 easytest\LOG_EVENT_ERROR,
                 "$path/setup.php",
                 'Skip me',
-            ],
-        ];
-        $expected = [
-            "$path/" => [
-                'tests' => [
-                    "$path/setup.php" => [easytest\LOG_EVENT_ERROR, 'Skip me'],
-                ],
-            ],
-        ];
+            ),
+        );
+        $expected = array(
+            "$path/" => array(
+                'tests' => array(
+                    "$path/setup.php" => array(easytest\LOG_EVENT_ERROR, 'Skip me'),
+                ),
+            ),
+        );
         //$this->assert_events($expected);
-        $expected = [
-            [
+        $expected = array(
+            array(
                 easytest\LOG_EVENT_ERROR,
                 "$path/setup.php",
                 'Skip me',
-            ],
-        ];
+            ),
+        );
         $this->assert_log($expected);
     }
 
 
     public function test_handles_error_in_test_file() {
         $path = $this->path . 'test_file_error';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
         // Note that any exception thrown while including a file, including a
         // skip, is reported as an error
-        $expected = [
-            "$path/" => [
-                'fixtures' => [
+        $expected = array(
+            "$path/" => array(
+                'fixtures' => array(
                     'setup_directory_test_file_error',
                     'teardown_directory_test_file_error',
-                ],
-                'tests' => [
-                    "$path/test1.php" => [easytest\LOG_EVENT_ERROR, 'An error happened'],
-                    "test_file_error_two::test" => [easytest\LOG_EVENT_PASS, null],
-                    "$path/test3.php" => [easytest\LOG_EVENT_ERROR, 'Skip me'],
-                ],
-            ],
-        ];
+                ),
+                'tests' => array(
+                    "$path/test1.php" => array(easytest\LOG_EVENT_ERROR, 'An error happened'),
+                    "test_file_error_two::test" => array(easytest\LOG_EVENT_PASS, null),
+                    "$path/test3.php" => array(easytest\LOG_EVENT_ERROR, 'Skip me'),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_setup_error() {
         $path = $this->path . 'setup_error';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'tests' => [
-                    'setup_directory_setup_error' => [
+        $expected = array(
+            "$path/" => array(
+                'tests' => array(
+                    'setup_directory_setup_error' => array(
                         easytest\LOG_EVENT_ERROR,
                         'An error happened',
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_teardown_error() {
         $path = $this->path . 'teardown_error';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'fixtures' =>  ['setup_directory_teardown_error'],
-                'tests' => [
-                    'test_teardown_error::test' => [easytest\LOG_EVENT_PASS, null],
-                    'teardown_directory_teardown_error' => [
+        $expected = array(
+            "$path/" => array(
+                'fixtures' =>  array('setup_directory_teardown_error'),
+                'tests' => array(
+                    'test_teardown_error::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'teardown_directory_teardown_error' => array(
                         easytest\LOG_EVENT_ERROR,
                         'An error happened',
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
 
     public function test_skip_in_teardown() {
         $path = $this->path . 'skip_in_teardown';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'tests' => [
-                    'test_skip_in_teardown::test' => [easytest\LOG_EVENT_PASS, null],
-                    'teardown_directory_skip_in_teardown' => [
+        $expected = array(
+            "$path/" => array(
+                'tests' => array(
+                    'test_skip_in_teardown::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'teardown_directory_skip_in_teardown' => array(
                         easytest\LOG_EVENT_ERROR,
                         'Skip me',
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
 
     public function test_passes_arguments_to_tests_and_subdirectories() {
         $path = $this->path . 'argument_passing';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'fixtures' => [
+        $expected = array(
+            "$path/" => array(
+                'fixtures' => array(
                     'setup_directory_arguments',
                     'teardown_directory_arguments',
-                ],
-                'dirs' => ["$path/test_subdir1/", "$path/test_subdir2/"],
-                'tests' => [
-                    'TestArgumentsOne::test' => [easytest\LOG_EVENT_PASS, null],
-                ],
-            ],
+                ),
+                'dirs' => array("$path/test_subdir1/", "$path/test_subdir2/"),
+                'tests' => array(
+                    'TestArgumentsOne::test' => array(easytest\LOG_EVENT_PASS, null),
+                ),
+            ),
 
-            "$path/test_subdir1/" => [
-                'fixtures' => ['setup_directory_arguments_subdir1'],
+            "$path/test_subdir1/" => array(
+                'fixtures' => array('setup_directory_arguments_subdir1'),
                 'parent' => "$path/",
-                'tests' => [
-                    'TestArgumentsTwo::test' => [easytest\LOG_EVENT_PASS, null],
-                ],
-            ],
+                'tests' => array(
+                    'TestArgumentsTwo::test' => array(easytest\LOG_EVENT_PASS, null),
+                ),
+            ),
 
-            "$path/test_subdir2/" => [
+            "$path/test_subdir2/" => array(
                 'parent' => "$path/",
-                'tests' => [
-                    'TestArgumentsThree::test' => [easytest\LOG_EVENT_PASS, null],
-                ],
-            ],
-        ];
+                'tests' => array(
+                    'TestArgumentsThree::test' => array(easytest\LOG_EVENT_PASS, null),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
 
     public function test_errors_on_insufficient_arguments() {
         $path = $this->path . 'insufficient_arguments';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
 
-        $expected = [
-            "$path/" => [
-                'fixtures' => [
+        $expected = array(
+            "$path/" => array(
+                'fixtures' => array(
                     'setup_directory_insufficient_arguments',
                     'teardown_directory_insufficient_arguments',
-                ],
-                'tests' => [
-                    'TestInsufficientArguments' => [
+                ),
+                'tests' => array(
+                    'TestInsufficientArguments' => array(
                         easytest\LOG_EVENT_ERROR,
                         // #BC(7.0): Check format of expected error message
                         version_compare(PHP_VERSION, '7.1', '<')
                             ? 'Missing argument 2 for TestInsufficientArguments::__construct()'
                             : 'Too few arguments to function TestInsufficientArguments::__construct()',
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_namespaces() {
         $path = $this->path . 'namespaces';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'tests' => [
-                    'ns01\\ns1\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
-                    'ns01\\ns2\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
-                    'TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
-                    'ns02\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
-                    'ns03\\TestNamespaces::test' => [easytest\LOG_EVENT_PASS, null],
-                ],
-            ],
-        ];
+        $expected = array(
+            "$path/" => array(
+                'tests' => array(
+                    'ns01\\ns1\\TestNamespaces::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'ns01\\ns2\\TestNamespaces::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'TestNamespaces::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'ns02\\TestNamespaces::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'ns03\\TestNamespaces::test' => array(easytest\LOG_EVENT_PASS, null),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
     public function test_output_buffering() {
         $path = $this->path . 'output_buffering';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'fixtures' => [
+        $expected = array(
+            "$path/" => array(
+                'fixtures' => array(
                     'setup_directory_output_buffering',
                     'teardown_directory_output_buffering',
-                ],
-                'tests' => [
-                    'setup_directory_output_buffering' => [
+                ),
+                'tests' => array(
+                    'setup_directory_output_buffering' => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'setup_directory_output_buffering'",
-                    ],
-                    "$path/test.php" => [
+                    ),
+                    "$path/test.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'$path/test.php'"
-                    ],
-                    'test_output_buffering' => [
+                    ),
+                    'test_output_buffering' => array(
                         easytest\LOG_EVENT_OUTPUT,
                         '\'__construct\''
-                    ],
-                    'test_output_buffering::test' => [
+                    ),
+                    'test_output_buffering::test' => array(
                         easytest\LOG_EVENT_PASS,
                         null
-                    ],
-                    'teardown_directory_output_buffering' => [
+                    ),
+                    'teardown_directory_output_buffering' => array(
                         easytest\LOG_EVENT_OUTPUT,
                         "'teardown_directory_output_buffering'",
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
@@ -661,54 +661,54 @@ MESSAGE;
         }
 
         $path = $this->path . 'TestAnonymousClass.php';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "{$this->path}" => [
-                'tests' => [
-                    'TestAnonymousClass::test' => [
+        $expected = array(
+            "{$this->path}" => array(
+                'tests' => array(
+                    'TestAnonymousClass::test' => array(
                         easytest\LOG_EVENT_PASS,
                         null
-                    ],
-                ],
-            ],
-        ];
+                    ),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
 
     public function test_does_not_find_conditionally_nondeclared_tests() {
         $path = $this->path . 'conditional_declaration';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            "$path/" => [
-                'tests' => [
-                    'condition\\TestA::test' => [easytest\LOG_EVENT_PASS, null],
-                    'condition\\TestB::test' => [easytest\LOG_EVENT_PASS, null],
-                ],
-            ],
-        ];
+        $expected = array(
+            "$path/" => array(
+                'tests' => array(
+                    'condition\\TestA::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'condition\\TestB::test' => array(easytest\LOG_EVENT_PASS, null),
+                ),
+            ),
+        );
         $this->assert_events($expected);
     }
 
 
     public function test_reports_error_for_multiple_directory_fixtures() {
         $path = $this->path . 'multiple_fixtures';
-        easytest\discover_tests($this->logger,[$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            [
+        $expected = array(
+            array(
                 easytest\LOG_EVENT_ERROR,
                 "$path/setup.php",
                 "Multiple setup fixtures found:\n\tsetup_directory_multiple_fixtures\n\tSetupDirectoryMultipleFixtures",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_ERROR,
                 "$path/setup.php",
                 "Multiple teardown fixtures found:\n\tteardown_directory_multiple_fixtures\n\tTeardownDirectoryMultipleFixtures",
-            ],
-        ];
+            ),
+        );
         $this->assert_log($expected);
     }
 
@@ -718,125 +718,125 @@ MESSAGE;
             '%1$s%2$ssample_files%2$stest_directory%2$sdir_params%2$s',
             __DIR__, \DIRECTORY_SEPARATOR
         );
-        easytest\discover_tests($this->logger, [$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            [
+        $expected = array(
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 $path,
                 easytest\DEBUG_DIRECTORY_ENTER,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'dir_params\\setup_directory',
                 easytest\DEBUG_DIRECTORY_SETUP,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function',
                 "'2 4'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test',
                 "'2 4'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function',
                 "'4 2'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test',
                 "'4 2'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\teardown_file',
                 "'2 4 4 2'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function',
                 "'8 16'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test',
                 "'8 16'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function',
                 "'16 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test',
                 "'16 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\teardown_file',
                 "'8 16 16 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'dir_params\\teardown_directory',
                 easytest\DEBUG_DIRECTORY_TEARDOWN,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\teardown_directory',
                 "'dir_params\\\\teardown_directory'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 $path,
                 easytest\DEBUG_DIRECTORY_EXIT,
-            ],
-        ];
+            ),
+        );
         $this->assert_log($expected);
     }
 
@@ -846,165 +846,165 @@ MESSAGE;
             '%1$s%2$ssample_files%2$stest_directory%2$ssubdir_params%2$s',
             __DIR__, \DIRECTORY_SEPARATOR
         );
-        easytest\discover_tests($this->logger, [$path]);
+        easytest\discover_tests($this->logger, array($path));
 
-        $expected = [
-            [
+        $expected = array(
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 $path,
                 easytest\DEBUG_DIRECTORY_ENTER,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'subdir_params\\setup_directory',
                 easytest\DEBUG_DIRECTORY_SETUP,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 "{$path}test_subdir/",
                 easytest\DEBUG_DIRECTORY_ENTER,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'subdir_params\\subdir\\setup_directory',
                 easytest\DEBUG_DIRECTORY_SETUP,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function',
                 "'2 4 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test',
                 "'2 4'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function',
                 "'4 2 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test',
                 "'4 2'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'subdir_params\\subdir\\teardown_directory',
                 easytest\DEBUG_DIRECTORY_TEARDOWN,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\teardown_directory',
                 "'2 4 4 2'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 "{$path}test_subdir/",
                 easytest\DEBUG_DIRECTORY_EXIT,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 "{$path}test_subdir/",
                 easytest\DEBUG_DIRECTORY_ENTER,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'subdir_params\\subdir\\setup_directory',
                 easytest\DEBUG_DIRECTORY_SETUP,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function',
                 "'8 16 128'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test',
                 "'8 16'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function',
                 "'16 8 128'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\test_function',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test',
                 "'16 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test',
                 null,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'subdir_params\\subdir\\teardown_directory',
                 easytest\DEBUG_DIRECTORY_TEARDOWN,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\teardown_directory',
                 "'8 16 16 8'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 "{$path}test_subdir/",
                 easytest\DEBUG_DIRECTORY_EXIT,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 'subdir_params\\teardown_directory',
                 easytest\DEBUG_DIRECTORY_TEARDOWN,
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\teardown_directory',
                 "'subdir_params\\\\teardown_directory'",
-            ],
-            [
+            ),
+            array(
                 easytest\LOG_EVENT_DEBUG,
                 $path,
                 easytest\DEBUG_DIRECTORY_EXIT,
-            ],
-        ];
+            ),
+        );
         $this->assert_log($expected);
     }
 }
