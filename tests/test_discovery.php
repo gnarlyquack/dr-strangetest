@@ -20,7 +20,7 @@ final class DebugLogger implements easytest\Logger {
         $this->log[] = array(easytest\LOG_EVENT_ERROR, $source, $reason);
     }
 
-    public function log_skip($source, $reason) {
+    public function log_skip($source, $reason, $during_error) {
         $this->log[] = array(easytest\LOG_EVENT_SKIP, $source, $reason);
     }
 

@@ -33,7 +33,7 @@ final class BufferingLogger implements Logger {
     }
 
 
-    public function log_skip($source, $reason) {
+    public function log_skip($source, $reason, $during_error = false) {
         $this->queued[] = array(namespace\LOG_EVENT_SKIP, array($source, $reason));
     }
 
@@ -129,7 +129,7 @@ function end_buffering(BufferingLogger $logger) {
 
                 case namespace\LOG_EVENT_SKIP:
                     list($source, $reason) = $data;
-                    $logger->log_skip($source, $reason);
+                    $logger->log_skip($source, $reason, $error);
                     break;
 
                 case namespace\LOG_EVENT_OUTPUT:

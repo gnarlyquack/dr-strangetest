@@ -106,8 +106,8 @@ else {
 
 final class Skip extends \Exception {
 
-    public function __construct($message) {
-        parent::__construct($message);
+    public function __construct($message, Skip $previous = null) {
+        parent::__construct($message, 0, $previous);
         list($this->file, $this->line, $this->trace)
             = namespace\_find_client_call_site();
     }
@@ -115,9 +115,22 @@ final class Skip extends \Exception {
 
     public function __toString() {
         if (!$this->string) {
+            $prev = $this->getPrevious();
+            if ($prev) {
+                $message = "$prev->message\n$this->message";
+                $file = $prev->file;
+                $line = $prev->line;
+                $trace = $prev->trace;
+            }
+            else {
+                $message = $this->message;
+                $file = $this->file;
+                $line = $this->line;
+                $trace = $this->trace;
+            }
             $this->string = namespace\_format_exception_string(
                 "%s\nin %s on line %s",
-                $this->message, $this->file, $this->line, $this->trace
+                $message, $file, $line, $trace
             );
         }
         return $this->string;

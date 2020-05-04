@@ -33,9 +33,9 @@ final class LiveUpdatingLogger implements Logger {
     }
 
 
-    public function log_skip($source, $reason) {
+    public function log_skip($source, $reason, $during_error = false) {
         namespace\output_skip();
-        $this->logger->log_skip($source, $reason);
+        $this->logger->log_skip($source, $reason, $during_error);
     }
 
 

@@ -102,6 +102,35 @@ function test_error_in_function_teardown_causes_test_to_fail() {
 }
 
 
+function test_skip_is_reported_is_teardown_has_an_error() {
+    $logger = new easytest\BasicLogger(false);
+    $test = new easytest\FunctionTest(
+        'test',
+        function(easytest\TestContext $context) {
+            easytest\skip('skip me');
+        },
+        null,
+        null,
+        'teardown',
+        function() { \trigger_error('I erred'); }
+    );
+
+    easytest\_run_test($logger, $test, null);
+
+    namespace\assert_log(
+        array(
+            easytest\LOG_EVENT_ERROR => 1,
+            easytest\LOG_EVENT_SKIP => 1,
+            'events' => array(
+                array(easytest\LOG_EVENT_SKIP, 'test', 'Although this test was skipped, there was also an error'),
+                array(easytest\LOG_EVENT_ERROR, 'teardown for test', 'I erred'),
+            ),
+        ),
+        $logger
+    );
+}
+
+
 function test_passing_subtests_dont_increase_the_test_count() {
     $true = function() { easytest\assert_identical(true, true); };
     $logger = new easytest\BasicLogger(false);

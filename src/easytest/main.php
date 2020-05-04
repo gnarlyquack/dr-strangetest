@@ -43,7 +43,7 @@ interface Logger {
 
     public function log_error($source, $reason);
 
-    public function log_skip($source, $reason);
+    public function log_skip($source, $reason, $during_error);
 
     public function log_output($source, $reason, $during_error);
 

@@ -38,8 +38,6 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   How to handle a skip in a test function that then errors during teardown?
-
 -   Handle errors during test file parsing
 
 -   Don't use var_export to display output. Maybe just print directly, but it
