@@ -24,6 +24,13 @@ const TYPE_FUNCTION  = 4;
 
 
 
+final class State extends struct {
+    public $seen = array();
+    public $directories = array();
+    public $files = array();
+}
+
+
 final class DirectoryTest extends struct {
     public $path;
     public $setup;
@@ -247,10 +254,13 @@ function _determine_root($path) {
 
 
 function _discover_directory(State $state, Logger $logger, $path) {
+    if (isset($state->directories[$path])) {
+        return $state->directories[$path];
+    }
+
+    $directory = new DirectoryTest($path, array(), array());
     $error = false;
-    $target_found = false;
     $setup = array();
-    $tests = array();
 
     foreach (new \DirectoryIterator($path) as $file) {
         $basename = $file->getBasename();
@@ -273,7 +283,7 @@ function _discover_directory(State $state, Logger $logger, $path) {
             if (0 === \substr_compare($basename, 'test', 0, 4, true)
                 && 0 === \strcasecmp($file->getExtension(), 'php'))
             {
-                $tests[$pathname] = namespace\TYPE_FILE;
+                $directory->paths[$pathname] = namespace\TYPE_FILE;
             }
             continue;
         }
@@ -287,7 +297,7 @@ function _discover_directory(State $state, Logger $logger, $path) {
                 // Ensure directory names end with a directory separator to
                 // ensure we can only match against full directory names
                 $pathname .= \DIRECTORY_SEPARATOR;
-                $tests[$pathname] = namespace\TYPE_DIRECTORY;
+                $directory->paths[$pathname] = namespace\TYPE_DIRECTORY;
             }
             continue;
         }
@@ -301,22 +311,20 @@ function _discover_directory(State $state, Logger $logger, $path) {
                 \implode("\n\t", $setup)
             )
         );
-        return false;
+        $directory = false;
     }
-
-    if ($setup) {
-        $result = namespace\_parse_setup($state, $logger, $setup[0]);
-        if (!$result) {
-            return false;
-        }
-        list($setup, $teardown) = $result;
+    elseif ($setup) {
+        $directory = namespace\_discover_setup_directory(
+            $logger, $directory, $setup[0], $state->seen
+        );
     }
     else {
-        $setup = null;
-        $teardown = null;
+        $directory->setup = null;
+        $directory->teardown = null;
     }
 
-    return new DirectoryTest($path, $setup, $teardown, $tests);
+    $state->directories[$path] = $directory;
+    return $directory;
 }
 
 
@@ -438,112 +446,62 @@ function _run_directory_tests(State $state, Logger $logger, array $paths, array 
 }
 
 
-function _parse_setup(State $state, Logger $logger, $file) {
-    if (isset($state->files[$file])) {
-        return $state->files[$file];
-    }
-
-    $tokens = namespace\_tokenize_file($logger, $file);
-    if (!$tokens) {
-        return false;
-    }
-
+function _discover_setup_directory(Logger $logger, DirectoryTest $test, $filepath, array &$seen) {
     $error = 0;
-    $ns = '';
-    $setup = array();
-    $teardown = array();
-    for ($i = 0, $c = \count($tokens); $i < $c; ++$i) {
-        if (!\is_array($tokens[$i])) {
-            continue;
-        }
-        switch ($tokens[$i][0]) {
-        case \T_FUNCTION:
-            list($function, $i) = namespace\_parse_identifier($tokens, $i);
-            if (!isset($function)) {
-                break;
-            }
-
-            if (\preg_match('~^(setup|teardown)_?directory~i', $function, $matches)) {
-                $function = "$ns$function";
-                if ('setup' === \strtolower($matches[1])) {
-                    if ($setup) {
-                        $error |= ERROR_SETUP;
-                    }
-                    $setup[] = $function;
-                }
-                else {
-                    if ($teardown) {
-                        $error |= ERROR_TEARDOWN;
-                    }
-                    $teardown[] = $function;
-                }
-            }
-            break;
-
-        case \T_NAMESPACE:
-            list($ns, $i) = namespace\_parse_namespace($tokens, $i, $ns);
-            break;
-        }
+    $parsers = array(
+        \T_FUNCTION => function($function, $fullname) use ($test, &$error) {
+            return namespace\_is_setup_directory_function($function, $fullname, $test, $error);
+        },
+    );
+    if (!namespace\_parse_file($logger, $filepath, $parsers, $seen)) {
+        return false;
     }
 
     if ($error) {
         if ($error & ERROR_SETUP) {
             $logger->log_error(
-                $file,
+                $filepath,
                 \sprintf(
                     "Multiple setup fixtures found:\n\t%s",
-                    \implode("\n\t", $setup)
+                    \implode("\n\t", $test->setup)
                 )
             );
         }
         if ($error & ERROR_TEARDOWN) {
             $logger->log_error(
-                $file,
+                $filepath,
                 \sprintf(
                     "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $teardown)
+                    \implode("\n\t", $test->teardown)
                 )
             );
         }
-        $state->files[$file] = false;
-    }
-    else {
-        $state->files[$file] = array(
-            $setup ? $setup[0] : null,
-            $teardown ? $teardown[0] : null
-        );
+        return false;
     }
 
-    return $state->files[$file];
+    $test->setup = $test->setup ? $test->setup[0] : null;
+    $test->teardown = $test->teardown ? $test->teardown[0] : null;
+    return $test;
 }
 
 
-function _tokenize_file(Logger $logger, $filename) {
-    $logger = namespace\start_buffering($logger, $filename);
-    $succeeded = namespace\_include_file($logger, $filename);
-    $logger = namespace\end_buffering($logger);
-    if (!$succeeded) {
-        return;
+function _is_setup_directory_function($function, $fullname, DirectoryTest $test, &$error) {
+    if (\preg_match('~^(setup|teardown)_?directory~i', $function, $matches)) {
+        if ('setup' === \strtolower($matches[1])) {
+            if ($test->setup) {
+                $error |= ERROR_SETUP;
+            }
+            $test->setup[] = $fullname;
+        }
+        else {
+            if ($test->teardown) {
+                $error |= ERROR_TEARDOWN;
+            }
+            $test->teardown[] = $fullname;
+        }
+        return true;
     }
-
-    try {
-        $code = \file_get_contents($filename);
-    }
-    catch (\Throwable $e) {
-        $logger->log_error($filename, $e);
-        return false;
-    }
-    // #(BC 5.6): Catch Exception
-    catch (\Exception $e) {
-        $logger->log_error($filename, $e);
-        return false;
-    }
-    if (false === $code) {
-        $logger->log_error($filename, "Failed to read file (no error was thrown)");
-        return false;
-    }
-
-    return \token_get_all($code);
+    return false;
 }
 
 

@@ -45,10 +45,6 @@ Release
         ArgumentLists
     -   each arglist in ArgumentLists must be an iterable
 
--   Compress the token-processing loops in _parse_setup and _discover_file?
-
--   Cache results of directory (and file?) discovery
-
 -   Why does/did this work on my computer?
     https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
 

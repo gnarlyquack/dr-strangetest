@@ -93,13 +93,6 @@ abstract class struct {
 
 
 
-final class State extends struct {
-    public $seen = array();
-    public $files = array();
-}
-
-
-
 final class ArgumentLists {
     private $arglists;
 
