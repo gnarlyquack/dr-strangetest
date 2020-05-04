@@ -65,6 +65,13 @@ abstract class struct {
     }
 
 
+    final public function __get($name) {
+        throw new \Exception(
+            \sprintf("Undefined property: %s::%s", \get_class($this), $name)
+        );
+    }
+
+
     final static public function from_array(array $array) {
         $object = new static();
         $object->init_from_array($array);
