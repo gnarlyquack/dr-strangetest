@@ -37,7 +37,9 @@ final class FileTest extends struct {
     public $filepath;
     public $setup_file;
     public $teardown_file;
+    public $setup_function_name;
     public $setup_function;
+    public $teardown_function_name;
     public $teardown_function;
     public $identifiers = array();
     public $id = array();
@@ -592,6 +594,7 @@ function _is_test_function(FileTest $file, $function, $fullname) {
                 $file->setup_file = $fullname;
             }
             else {
+                $file->setup_function_name = $function;
                 $file->setup_function = $fullname;
             }
         }
@@ -600,6 +603,7 @@ function _is_test_function(FileTest $file, $function, $fullname) {
                 $file->teardown_file = $fullname;
             }
             else {
+                $file->teardown_function_name = $function;
                 $file->teardown_function = $fullname;
             }
         }
@@ -819,10 +823,12 @@ function _run_file_tests(State $state, Logger $logger, FileTest $file, $args) {
 
     $test = new FunctionTest();
     if ($file->setup_function) {
-        $test->setup = $test->setup_name = $file->setup_function;
+        $test->setup_name = $file->setup_function_name;
+        $test->setup = $file->setup_function;
     }
     if ($file->teardown_function) {
-        $test->teardown = $test->teardown_name = $file->teardown_function;
+        $test->teardown_name = $file->teardown_function_name;
+        $test->teardown = $file->teardown_function;
     }
 
     if ($args instanceof ArgumentLists) {
