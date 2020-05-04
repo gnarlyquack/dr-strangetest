@@ -7,11 +7,106 @@
 // LICENSE.txt file.
 
 
-function test_logs_multiple_passed_subtests_as_one_passed_test() {
+function test_teardown_is_run_after_test() {
+    $logger = new easytest\BasicLogger(false);
+    $test = new easytest\FunctionTest(
+        'test',
+        function(easytest\TestContext $context) {
+            $context->teardown(function() { echo "teardown one\n"; });
+            $context->teardown(function() { echo "teardown two\n"; });
+            echo "test\n";
+        },
+        null,
+        null,
+        'teardown',
+        function() { echo 'common teardown'; }
+    );
+
+    easytest\_run_test($logger, $test, null);
+
+    namespace\assert_log(
+        array(
+            easytest\LOG_EVENT_PASS => 1,
+            easytest\LOG_EVENT_OUTPUT => 2,
+        ),
+        $logger
+    );
+}
+
+
+function test_teardown_is_run_after_failing_test() {
+    $logger = new easytest\BasicLogger(false);
+    $test = new easytest\FunctionTest(
+        'test',
+        function(easytest\TestContext $context) {
+            $context->teardown(function() { echo "teardown one\n"; });
+            $context->teardown(function() { echo "teardown two\n"; });
+            echo "test\n";
+            easytest\fail('f');
+        },
+        null,
+        null,
+        'teardown',
+        function() { echo 'common teardown'; }
+    );
+
+    easytest\_run_test($logger, $test, null);
+
+    namespace\assert_log(
+        array(
+            easytest\LOG_EVENT_FAIL => 1,
+            easytest\LOG_EVENT_OUTPUT => 2,
+            'events' => array(
+                array(easytest\LOG_EVENT_FAIL, 'test', 'f'),
+                array(easytest\LOG_EVENT_OUTPUT, 'test', "'test\nteardown one\nteardown two\n'"),
+                array(easytest\LOG_EVENT_OUTPUT, 'teardown for test', "'common teardown'"),
+            ),
+        ),
+        $logger
+    );
+}
+
+
+function test_error_in_function_teardown_causes_test_to_fail() {
+    $logger = new easytest\BasicLogger(false);
+    $test = new easytest\FunctionTest(
+        'test',
+        function(easytest\TestContext $context) {
+            $context->teardown(function() {
+                echo "teardown one\n";
+                trigger_error('I erred');
+            });
+            $context->teardown(function() { echo "teardown two\n"; });
+            echo "test\n";
+        },
+        null,
+        null,
+        'teardown',
+        function() { echo 'common teardown'; }
+    );
+
+    easytest\_run_test($logger, $test, null);
+
+    namespace\assert_log(
+        array(
+            easytest\LOG_EVENT_ERROR => 1,
+            easytest\LOG_EVENT_OUTPUT => 2,
+            'events' => array(
+                array(easytest\LOG_EVENT_ERROR, 'test', 'I erred'),
+                array(easytest\LOG_EVENT_OUTPUT, 'test', "'test\nteardown one\nteardown two\n'"),
+                array(easytest\LOG_EVENT_OUTPUT, 'teardown for test', "'common teardown'"),
+            ),
+        ),
+        $logger
+    );
+}
+
+
+function test_passing_subtests_dont_increase_the_test_count() {
     $true = function() { easytest\assert_identical(true, true); };
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest(
-        'test_passing_subtest',
+        'test',
         function(easytest\TestContext $context) use ($true) {
             $context->subtest($true);
             $context->subtest($true);
@@ -24,15 +119,13 @@ function test_logs_multiple_passed_subtests_as_one_passed_test() {
 }
 
 
-function test_logs_failed_subtests_and_continues_tests() {
-    $false = function() { easytest\fail("I failed :-("); };
-    $name = 'test_failing_subtest';
+function test_failed_subtests_dont_end_a_test() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest(
-        $name,
-        function(easytest\TestContext $context) use ($false) {
-            $context->subtest($false);
-            $context->subtest($false);
+        'test',
+        function(easytest\TestContext $context) {
+            $context->subtest(function() { easytest\fail('Fail me once'); });
+            $context->subtest(function() { easytest\fail('Fail me twice'); });
         }
     );
 
@@ -42,25 +135,10 @@ function test_logs_failed_subtests_and_continues_tests() {
         array(
             easytest\LOG_EVENT_FAIL => 2,
             'events' => array(
-                array(easytest\LOG_EVENT_FAIL, $name, "I failed :-("),
-                array(easytest\LOG_EVENT_FAIL, $name, "I failed :-("),
+                array(easytest\LOG_EVENT_FAIL, 'test', 'Fail me once'),
+                array(easytest\LOG_EVENT_FAIL, 'test', 'Fail me twice'),
             ),
         ),
-        $logger);
-}
-
-
-function test_provides_assertions_as_subtests() {
-    $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'assertion_subtest',
-        function(easytest\TestContext $context) {
-            $context->assert_identical(true, true);
-            $context->assert_equal(1, '1');
-        }
+        $logger
     );
-
-    easytest\_run_test($logger, $test, null);
-
-    namespace\assert_log(array(easytest\LOG_EVENT_PASS => 1), $logger);
 }

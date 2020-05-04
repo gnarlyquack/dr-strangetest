@@ -103,11 +103,6 @@ final class TestTargets {
 
 
 final class TestContext {
-    private $source;
-    private $logger;
-    private $success = true;
-
-
     public function __construct(Logger $logger, $source) {
         $this->logger = $logger;
         $this->source = $source;
@@ -172,9 +167,24 @@ final class TestContext {
     }
 
 
+    public function teardown($callable) {
+        $this->teardowns[] = $callable;
+    }
+
+
     public function succeeded() {
         return $this->success;
     }
+
+    public function teardowns() {
+        return $this->teardowns;
+    }
+
+
+    private $source;
+    private $logger;
+    private $success = true;
+    private $teardowns = array();
 }
 
 
@@ -1093,6 +1103,10 @@ function _run_test(Logger $logger, FunctionTest $test, $args) {
         $logger = namespace\start_buffering($logger, $test->name);
         $success = namespace\_run_test_function($logger, $test->name, $test->function, $args, $context);
 
+        foreach($context->teardowns() as $teardown) {
+            $success = namespace\_run_teardown($logger, $test->name, $teardown, null)
+                    && $success;
+        }
         if ($test->teardown) {
             $source = "{$test->teardown_name} for {$test->name}";
             $logger = namespace\start_buffering($logger, $source);
