@@ -295,7 +295,7 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputTestCase::test_fail',
-                    "'setup output that should be seen'",
+                    'setup output that should be seen',
                 ),
                 array(
                     easytest\LOG_EVENT_FAIL,
@@ -305,12 +305,12 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputTestCase::test_fail',
-                    "'teardown output that should be seen'",
+                    'teardown output that should be seen',
                 ),
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputTestCase::test_error',
-                    "'setup output that should be seen'",
+                    'setup output that should be seen',
                 ),
                 array(
                     easytest\LOG_EVENT_ERROR,
@@ -320,7 +320,7 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputTestCase::test_error',
-                    "'teardown output that should be seen'",
+                    'teardown output that should be seen',
                 ),
             )
         ));
@@ -349,7 +349,7 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputBufferingTestCase::test_error',
-                    "'setup output that should be seen'",
+                    'setup output that should be seen',
                 ),
                 array(
                     easytest\LOG_EVENT_ERROR,
@@ -359,12 +359,12 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputBufferingTestCase::test_error',
-                    "'teardown output that should be seen'",
+                    'teardown output that should be seen',
                 ),
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'setup for OutputBufferingTestCase::test_fail',
-                    "'setup output that should be seen'",
+                    'setup output that should be seen',
                 ),
                 array(
                     easytest\LOG_EVENT_FAIL,
@@ -374,7 +374,7 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_OUTPUT,
                     'teardown for OutputBufferingTestCase::test_fail',
-                    "'teardown output that should be seen'",
+                    'teardown output that should be seen',
                 ),
             )
         ));
@@ -398,22 +398,22 @@ class TestRunner {
                 array(
                     easytest\LOG_EVENT_ERROR,
                     'UndeletedOutputBufferTestCase::setup_object',
-                    "An output buffer was started but never deleted.\nBuffer contents were: 'setup_object'",
+                    "An output buffer was started but never deleted.\nBuffer contents were: setup_object",
                 ),
                 array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for UndeletedOutputBufferTestCase::test',
-                    "An output buffer was started but never deleted.\nBuffer contents were: 'test output'",
+                    "An output buffer was started but never deleted.\nBuffer contents were: test output",
                 ),
                 array(
                     easytest\LOG_EVENT_ERROR,
                     'teardown for UndeletedOutputBufferTestCase::test',
-                    "An output buffer was started but never deleted.\nBuffer contents were: ''",
+                    "An output buffer was started but never deleted.\nBuffer contents were: [the output buffer was empty]",
                 ),
                 array(
                     easytest\LOG_EVENT_ERROR,
                     'UndeletedOutputBufferTestCase::teardown_object',
-                    "An output buffer was started but never deleted.\nBuffer contents were: 'teardown_object'",
+                    "An output buffer was started but never deleted.\nBuffer contents were: teardown_object",
                 ),
             )
         ));

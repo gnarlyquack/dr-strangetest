@@ -58,8 +58,8 @@ function test_teardown_is_run_after_failing_test() {
             easytest\LOG_EVENT_OUTPUT => 2,
             'events' => array(
                 array(easytest\LOG_EVENT_FAIL, 'test', 'f'),
-                array(easytest\LOG_EVENT_OUTPUT, 'test', "'test\nteardown one\nteardown two\n'"),
-                array(easytest\LOG_EVENT_OUTPUT, 'teardown for test', "'common teardown'"),
+                array(easytest\LOG_EVENT_OUTPUT, 'test', "test\nteardown one\nteardown two\n"),
+                array(easytest\LOG_EVENT_OUTPUT, 'teardown for test', 'common teardown'),
             ),
         ),
         $logger
@@ -93,8 +93,8 @@ function test_error_in_function_teardown_causes_test_to_fail() {
             easytest\LOG_EVENT_OUTPUT => 2,
             'events' => array(
                 array(easytest\LOG_EVENT_ERROR, 'test', 'I erred'),
-                array(easytest\LOG_EVENT_OUTPUT, 'test', "'test\nteardown one\nteardown two\n'"),
-                array(easytest\LOG_EVENT_OUTPUT, 'teardown for test', "'common teardown'"),
+                array(easytest\LOG_EVENT_OUTPUT, 'test', "test\nteardown one\nteardown two\n"),
+                array(easytest\LOG_EVENT_OUTPUT, 'teardown for test', 'common teardown'),
             ),
         ),
         $logger

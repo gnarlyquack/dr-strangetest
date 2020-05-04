@@ -40,10 +40,6 @@ Release
 
 -   Handle errors during test file parsing
 
--   Don't use var_export to display output. Maybe just print directly, but it
-    would be nice to display something for output that is just whitespace or
-    an empty string
-
 -   Error-checking for argument lists:
     -   setup fixtures must either return an iterable or an instance of
         ArgumentLists

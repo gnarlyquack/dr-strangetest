@@ -84,7 +84,7 @@ function end_buffering(BufferingLogger $logger) {
             $logger->source,
             \sprintf(
                 "An output buffer was started but never deleted.\nBuffer contents were: %s",
-                \var_export(\ob_get_clean(), true)
+                namespace\_format_buffer(\ob_get_clean())
             )
         );
     }
@@ -100,7 +100,7 @@ function end_buffering(BufferingLogger $logger) {
         if (\strlen($output)) {
             $logger->log_output(
                 $logger->source,
-                \var_export($output, true),
+                namespace\_format_buffer($output),
                 $logger->error
             );
         }
@@ -185,7 +185,7 @@ function _reset_buffer(BufferingLogger $logger) {
     if (\strlen($output)) {
         $logger->log_output(
             $logger->source,
-            \var_export($output, true),
+            namespace\_format_buffer($output),
             $logger->error
         );
     }
@@ -199,4 +199,18 @@ function _reset_buffer(BufferingLogger $logger) {
         echo $buffer;
     }
     assert($logger->ob_level_current === \ob_get_level());
+}
+
+
+function _format_buffer($buffer) {
+    if ('' === $buffer) {
+        return '[the output buffer was empty]';
+    }
+    if ('' === \trim($buffer)) {
+        return \sprintf(
+            "[the output buffer contained only whitespace]\n%s",
+            \var_export($buffer, true)
+        );
+    }
+    return $buffer;
 }

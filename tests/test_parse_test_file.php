@@ -85,7 +85,7 @@ class TestParseTestFile {
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 $filepath,
-                "'class TestTextBefore {}\n\n\nclass TestTextAfter {}\n'",
+                "class TestTextBefore {}\n\n\nclass TestTextAfter {}\n",
             ),
         ));
 

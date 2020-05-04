@@ -280,7 +280,7 @@ MESSAGE;
                 'tests' => array(
                     $path => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'class TestTextBefore {}\n\n\nclass TestTestAfter {}\n'"
+                        "class TestTextBefore {}\n\n\nclass TestTestAfter {}\n"
                     ),
                     'Test1::test_me' => array(easytest\LOG_EVENT_PASS, null),
                     'test_two::test1' => array(easytest\LOG_EVENT_PASS, null),
@@ -303,7 +303,7 @@ MESSAGE;
                 'tests' => array(
                     "$path/test.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$path/test.php'"
+                        "$path/test.php"
                     ),
                 ),
             ),
@@ -317,11 +317,11 @@ MESSAGE;
                 'tests' => array(
                     "$path/TEST_DIR1/TEST1.PHP" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$path/TEST_DIR1/TEST1.PHP'",
+                        "$path/TEST_DIR1/TEST1.PHP",
                     ),
                     "$path/TEST_DIR1/TEST2.PHP" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$path/TEST_DIR1/TEST2.PHP'",
+                        "$path/TEST_DIR1/TEST2.PHP",
                     ),
                 ),
             ),
@@ -335,11 +335,11 @@ MESSAGE;
                 'tests' => array(
                     "$path/test_dir2/test1.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$path/test_dir2/test1.php'",
+                        "$path/test_dir2/test1.php",
                     ),
                     "$path/test_dir2/test2.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$path/test_dir2/test2.php'",
+                        "$path/test_dir2/test2.php",
                     ),
                 ),
             ),
@@ -374,11 +374,11 @@ MESSAGE;
                 'tests' => array(
                     "$root/test_dir1/test2.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$root/test_dir1/test2.php'",
+                        "$root/test_dir1/test2.php",
                     ),
                     "$root/test_dir1/test3.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$root/test_dir1/test3.php'",
+                        "$root/test_dir1/test3.php",
                     ),
                 ),
             ),
@@ -401,11 +401,11 @@ MESSAGE;
                 'tests' => array(
                     "$root/test_dir2/test_subdir/test1.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$root/test_dir2/test_subdir/test1.php'",
+                        "$root/test_dir2/test_subdir/test1.php",
                     ),
                     "$root/test_dir2/test_subdir/test2.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$root/test_dir2/test_subdir/test2.php'",
+                        "$root/test_dir2/test_subdir/test2.php",
                     ),
                 ),
             ),
@@ -642,15 +642,15 @@ searched for tests, or because it is not a test in the test suite found in
                 'tests' => array(
                     'setup_directory_output_buffering' => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'setup_directory_output_buffering'",
+                        'setup_directory_output_buffering',
                     ),
                     "$path/test.php" => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'$path/test.php'"
+                        "$path/test.php"
                     ),
                     'test_output_buffering' => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        '\'__construct\''
+                        '__construct'
                     ),
                     'test_output_buffering::test' => array(
                         easytest\LOG_EVENT_PASS,
@@ -658,7 +658,7 @@ searched for tests, or because it is not a test in the test suite found in
                     ),
                     'teardown_directory_output_buffering' => array(
                         easytest\LOG_EVENT_OUTPUT,
-                        "'teardown_directory_output_buffering'",
+                        'teardown_directory_output_buffering',
                     ),
                 ),
             ),
@@ -747,7 +747,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function (0, 0)',
-                "'2 4'",
+                '2 4',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -757,7 +757,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test (0, 0)',
-                "'2 4'",
+                '2 4',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -767,7 +767,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function (0, 1)',
-                "'4 2'",
+                '4 2',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -777,7 +777,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test (0, 1)',
-                "'4 2'",
+                '4 2',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -787,12 +787,12 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\teardown_file (0)',
-                "'2 4 4 2'",
+                '2 4 4 2',
             ),
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function (1, 0)',
-                "'8 16'",
+                '8 16',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -802,7 +802,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test (1, 0)',
-                "'8 16'",
+                '8 16',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -812,7 +812,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function (1, 1)',
-                "'16 8'",
+                '16 8',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -822,7 +822,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\TestClass::test (1, 1)',
-                "'16 8'",
+                '16 8',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -832,7 +832,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\teardown_file (1)',
-                "'8 16 16 8'",
+                '8 16 16 8',
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
@@ -842,7 +842,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\teardown_directory',
-                "'dir_params\\\\teardown_directory'",
+                'dir_params\\teardown_directory',
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
@@ -885,7 +885,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (0, 0)',
-                "'2 4 8'",
+                '2 4 8',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -895,7 +895,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (0, 0)',
-                "'2 4'",
+                '2 4',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -905,7 +905,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (0, 1)',
-                "'4 2 8'",
+                '4 2 8',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -915,7 +915,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (0, 1)',
-                "'4 2'",
+                '4 2',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -930,7 +930,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\teardown_directory (0)',
-                "'2 4 4 2'",
+                '2 4 4 2',
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
@@ -950,7 +950,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (1, 0)',
-                "'8 16 128'",
+                '8 16 128',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -960,7 +960,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (1, 0)',
-                "'8 16'",
+                '8 16',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -970,7 +970,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (1, 1)',
-                "'16 8 128'",
+                '16 8 128',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -980,7 +980,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (1, 1)',
-                "'16 8'",
+                '16 8',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
@@ -995,7 +995,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\subdir\\teardown_directory (1)',
-                "'8 16 16 8'",
+                '8 16 16 8',
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
@@ -1010,7 +1010,7 @@ searched for tests, or because it is not a test in the test suite found in
             array(
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\teardown_directory',
-                "'subdir_params\\\\teardown_directory'",
+                'subdir_params\\teardown_directory',
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,

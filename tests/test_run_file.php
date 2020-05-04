@@ -86,7 +86,7 @@ class TestRunFile {
                     array(
                         easytest\LOG_EVENT_OUTPUT,
                         'multiple_runs\\teardown_file',
-                        "'multiple_runs\\\\teardown_file'",
+                        'multiple_runs\\teardown_file',
                     ),
                 ),
             )
