@@ -9,20 +9,17 @@
 
 function test_teardown_is_run_after_test() {
     $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'test',
-        function(easytest\TestContext $context) {
-            $context->teardown(function() { echo "teardown one\n"; });
-            $context->teardown(function() { echo "teardown two\n"; });
-            echo "test\n";
-        },
-        null,
-        null,
-        'teardown',
-        function() { echo 'common teardown'; }
-    );
+    $test = new easytest\FunctionTest();
+    $test->name = 'test';
+    $test->test = function(easytest\TestContext $context) {
+        $context->teardown(function() { echo "teardown one\n"; });
+        $context->teardown(function() { echo "teardown two\n"; });
+        echo "test\n";
+    };
+    $test->teardown = function() { echo 'common teardown'; };
+    $test->teardown_name = 'teardown';
 
-    easytest\_run_function_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, array(), null);
 
     namespace\assert_log(
         array(
@@ -36,21 +33,18 @@ function test_teardown_is_run_after_test() {
 
 function test_teardown_is_run_after_failing_test() {
     $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'test',
-        function(easytest\TestContext $context) {
-            $context->teardown(function() { echo "teardown one\n"; });
-            $context->teardown(function() { echo "teardown two\n"; });
-            echo "test\n";
-            easytest\fail('f');
-        },
-        null,
-        null,
-        'teardown',
-        function() { echo 'common teardown'; }
-    );
+    $test = new easytest\FunctionTest();
+    $test->name = 'test';
+    $test->test = function(easytest\TestContext $context) {
+        $context->teardown(function() { echo "teardown one\n"; });
+        $context->teardown(function() { echo "teardown two\n"; });
+        echo "test\n";
+        easytest\fail('f');
+    };
+    $test->teardown = function() { echo 'common teardown'; };
+    $test->teardown_name = 'teardown';
 
-    easytest\_run_function_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, array(), null);
 
     namespace\assert_log(
         array(
@@ -69,23 +63,20 @@ function test_teardown_is_run_after_failing_test() {
 
 function test_error_in_function_teardown_causes_test_to_fail() {
     $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'test',
-        function(easytest\TestContext $context) {
-            $context->teardown(function() {
-                echo "teardown one\n";
-                trigger_error('I erred');
-            });
-            $context->teardown(function() { echo "teardown two\n"; });
-            echo "test\n";
-        },
-        null,
-        null,
-        'teardown',
-        function() { echo 'common teardown'; }
-    );
+    $test = new easytest\FunctionTest();
+    $test->name = 'test';
+    $test->test = function(easytest\TestContext $context) {
+        $context->teardown(function() {
+            echo "teardown one\n";
+            trigger_error('I erred');
+        });
+        $context->teardown(function() { echo "teardown two\n"; });
+        echo "test\n";
+    };
+    $test->teardown = function() { echo 'common teardown'; };
+    $test->teardown_name = 'teardown';
 
-    easytest\_run_function_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, array(), null);
 
     namespace\assert_log(
         array(
@@ -104,18 +95,15 @@ function test_error_in_function_teardown_causes_test_to_fail() {
 
 function test_skip_is_reported_is_teardown_has_an_error() {
     $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'test',
-        function(easytest\TestContext $context) {
-            easytest\skip('skip me');
-        },
-        null,
-        null,
-        'teardown',
-        function() { \trigger_error('I erred'); }
-    );
+    $test = new easytest\FunctionTest();
+    $test->name = 'test';
+    $test->test = function(easytest\TestContext $context) {
+        easytest\skip('skip me');
+    };
+    $test->teardown = function() { \trigger_error('I erred'); };
+    $test->teardown_name = 'teardown';
 
-    easytest\_run_function_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, array(), null);
 
     namespace\assert_log(
         array(
@@ -134,15 +122,14 @@ function test_skip_is_reported_is_teardown_has_an_error() {
 function test_passing_subtests_dont_increase_the_test_count() {
     $true = function() { easytest\assert_identical(true, true); };
     $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'test',
-        function(easytest\TestContext $context) use ($true) {
-            $context->subtest($true);
-            $context->subtest($true);
-        }
-    );
+    $test = new easytest\FunctionTest();
+    $test->name = 'test';
+    $test->test = function(easytest\TestContext $context) use ($true) {
+        $context->subtest($true);
+        $context->subtest($true);
+    };
 
-    easytest\_run_function_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, array(), null);
 
     namespace\assert_log(array(easytest\LOG_EVENT_PASS => 1), $logger);
 }
@@ -150,15 +137,14 @@ function test_passing_subtests_dont_increase_the_test_count() {
 
 function test_failed_subtests_dont_end_a_test() {
     $logger = new easytest\BasicLogger(false);
-    $test = new easytest\FunctionTest(
-        'test',
-        function(easytest\TestContext $context) {
-            $context->subtest(function() { easytest\fail('Fail me once'); });
-            $context->subtest(function() { easytest\fail('Fail me twice'); });
-        }
-    );
+    $test = new easytest\FunctionTest();
+    $test->name = 'test';
+    $test->test = function(easytest\TestContext $context) {
+        $context->subtest(function() { easytest\fail('Fail me once'); });
+        $context->subtest(function() { easytest\fail('Fail me twice'); });
+    };
 
-    easytest\_run_function_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, array(), null);
 
     namespace\assert_log(
         array(

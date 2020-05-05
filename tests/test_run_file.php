@@ -29,7 +29,8 @@ class TestRunFile {
             $state,
             $logger,
             easytest\_discover_file($state, $logger, $filepath),
-            null
+            null,
+            array()
         );
 
         assert_log($expected, $logger);

@@ -53,7 +53,7 @@ class TestParseTestFile {
 
     private function seen_names(easytest\FileTest $discovered) {
         $seen = array();
-        foreach ($discovered->identifiers as $item) {
+        foreach ($discovered->tests as $item) {
             list($name, $type) = $item;
             switch ($type) {
             case easytest\TYPE_CLASS:
@@ -90,14 +90,14 @@ class TestParseTestFile {
         ));
 
         $expected = new easytest\FileTest();
-        $expected->filepath = $filepath;
-        $expected->identifiers = array(
-            array('Test', easytest\TYPE_CLASS),
-            array('Test', easytest\TYPE_FUNCTION),
-            array('testTwo', easytest\TYPE_FUNCTION),
-            array('test2', easytest\TYPE_CLASS),
-            array('TestThree', easytest\TYPE_CLASS),
-            array('test_three', easytest\TYPE_FUNCTION),
+        $expected->name = $filepath;
+        $expected->tests = array(
+            'class Test' => array('Test', easytest\TYPE_CLASS),
+            'function Test' => array('Test', easytest\TYPE_FUNCTION),
+            'function testTwo' => array('testTwo', easytest\TYPE_FUNCTION),
+            'class test2' => array('test2', easytest\TYPE_CLASS),
+            'class TestThree' => array('TestThree', easytest\TYPE_CLASS),
+            'function test_three' => array('test_three', easytest\TYPE_FUNCTION),
         );
         $this->assert_discovered($expected, $discovered);
     }
@@ -115,9 +115,9 @@ class TestParseTestFile {
         $this->assert_log(array());
 
         $expected = new easytest\FileTest();
-        $expected->filepath = $filepath;
-        $expected->identifiers = array(
-            array('TestUsesAnonymousClass', easytest\TYPE_CLASS),
+        $expected->name = $filepath;
+        $expected->tests = array(
+            'class TestUsesAnonymousClass' => array('TestUsesAnonymousClass', easytest\TYPE_CLASS),
         );
         $this->assert_discovered($expected, $discovered);
     }
@@ -130,12 +130,12 @@ class TestParseTestFile {
         $this->assert_log(array());
 
         $expected = new easytest\FileTest();
-        $expected->filepath = $filepath;
-        $expected->identifiers = array(
-            array('ns2\\TestNamespace', easytest\TYPE_CLASS),
-            array('ns2\\TestNamespace', easytest\TYPE_FUNCTION),
-            array('ns3\\TestNamespace', easytest\TYPE_FUNCTION),
-            array('ns3\\TestNamespace', easytest\TYPE_CLASS),
+        $expected->name = $filepath;
+        $expected->tests = array(
+            'class ns2\\TestNamespace' => array('ns2\\TestNamespace', easytest\TYPE_CLASS),
+            'function ns2\\TestNamespace' => array('ns2\\TestNamespace', easytest\TYPE_FUNCTION),
+            'function ns3\\TestNamespace' => array('ns3\\TestNamespace', easytest\TYPE_FUNCTION),
+            'class ns3\\TestNamespace' => array('ns3\\TestNamespace', easytest\TYPE_CLASS),
         );
         $this->assert_discovered($expected, $discovered);
     }
@@ -148,14 +148,14 @@ class TestParseTestFile {
         $this->assert_log(array());
 
         $expected = new easytest\FileTest();
-        $expected->filepath = $filepath;
-        $expected->identifiers = array(
-            array('ns1\\ns1\\TestNamespace', easytest\TYPE_CLASS),
-            array('ns1\\ns1\\TestNamespace', easytest\TYPE_FUNCTION),
-            array('ns1\\ns2\\TestNamespace', easytest\TYPE_CLASS),
-            array('ns1\\ns2\\TestNamespace', easytest\TYPE_FUNCTION),
-            array('TestNamespace', easytest\TYPE_FUNCTION),
-            array('TestNamespace', easytest\TYPE_CLASS),
+        $expected->name = $filepath;
+        $expected->tests = array(
+            'class ns1\\ns1\\TestNamespace' => array('ns1\\ns1\\TestNamespace', easytest\TYPE_CLASS),
+            'function ns1\\ns1\\TestNamespace' => array('ns1\\ns1\\TestNamespace', easytest\TYPE_FUNCTION),
+            'class ns1\\ns2\\TestNamespace' => array('ns1\\ns2\\TestNamespace', easytest\TYPE_CLASS),
+            'function ns1\\ns2\\TestNamespace' => array('ns1\\ns2\\TestNamespace', easytest\TYPE_FUNCTION),
+            'function TestNamespace' => array('TestNamespace', easytest\TYPE_FUNCTION),
+            'class TestNamespace' => array('TestNamespace', easytest\TYPE_CLASS),
         );
         $this->assert_discovered($expected, $discovered);
     }
@@ -168,10 +168,10 @@ class TestParseTestFile {
         $this->assert_log(array());
 
         $expected_discovered = new easytest\FileTest();
-        $expected_discovered->filepath = $filepath;
-        $expected_discovered->identifiers = array(
-            array('conditional\\TestA', easytest\TYPE_CLASS),
-            array('conditional\\test_a', easytest\TYPE_FUNCTION),
+        $expected_discovered->name = $filepath;
+        $expected_discovered->tests = array(
+            'class conditional\\TestA' => array('conditional\\TestA', easytest\TYPE_CLASS),
+            'function conditional\\test_a' => array('conditional\\test_a', easytest\TYPE_FUNCTION),
         );
         easytest\assert_identical(
             (array)$expected_discovered, (array)$discovered,
@@ -196,10 +196,10 @@ class TestParseTestFile {
         $this->assert_log(array());
 
         $expected_discovered = new easytest\FileTest();
-        $expected_discovered->filepath = $filepath;
-        $expected_discovered->identifiers = array(
-            array('conditional\\TestB', easytest\TYPE_CLASS),
-            array('conditional\\test_b', easytest\TYPE_FUNCTION),
+        $expected_discovered->name = $filepath;
+        $expected_discovered->tests = array(
+            'class conditional\\TestB' => array('conditional\\TestB', easytest\TYPE_CLASS),
+            'function conditional\\test_b' => array('conditional\\test_b', easytest\TYPE_FUNCTION),
         );
         easytest\assert_identical(
             (array)$expected_discovered, (array)$discovered,

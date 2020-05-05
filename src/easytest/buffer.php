@@ -198,7 +198,7 @@ function _reset_buffer(BufferingLogger $logger) {
         \ob_start();
         echo $buffer;
     }
-    assert($logger->ob_level_current === \ob_get_level());
+    \assert($logger->ob_level_current === \ob_get_level());
 }
 
 

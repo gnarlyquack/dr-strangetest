@@ -21,8 +21,9 @@ class TestRunner {
         self::$log = array();
         easytest\_run_class_tests(
             $this->logger,
-            easytest\_discover_class($this->logger, \get_class($test)),
-            array()
+            easytest\_discover_class(new easytest\State(), $this->logger, \get_class($test)),
+            array(),
+            null
         );
         $actual = self::$log;
         easytest\assert_identical($expected, $actual);
@@ -196,7 +197,7 @@ class TestRunner {
     }
 
     public function test_reports_error_on_multiple_object_fixtures() {
-        $result = easytest\_discover_class($this->logger, 'MultipleObjectFixtureTestCase');
+        $result = easytest\_discover_class(new easytest\State(), $this->logger, 'MultipleObjectFixtureTestCase');
         easytest\assert_identical(false, $result);
         $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 2,
