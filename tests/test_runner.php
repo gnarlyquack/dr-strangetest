@@ -6,6 +6,8 @@
 // LICENSE.txt file.
 
 class TestRunner {
+    static public $log;
+
     private $logger;
     private $runner;
 
@@ -16,10 +18,13 @@ class TestRunner {
     // helper assertions
 
     private function assert_run($test, $expected) {
-        $actual = $test->log;
-        easytest\assert_identical(array(), $actual);
-        easytest\_run_class_test($this->logger, \get_class($test), $test, array());
-        $actual = $test->log;
+        self::$log = [];
+        easytest\_run_class_tests(
+            $this->logger,
+            easytest\_discover_class($this->logger, \get_class($test)),
+            array()
+        );
+        $actual = self::$log;
         easytest\assert_identical($expected, $actual);
     }
 
@@ -191,10 +196,8 @@ class TestRunner {
     }
 
     public function test_reports_error_on_multiple_object_fixtures() {
-        $this->assert_run(
-            new MultipleObjectFixtureTestCase(),
-            array()
-        );
+        $result = easytest\_discover_class($this->logger, 'MultipleObjectFixtureTestCase');
+        easytest\assert_identical(false, $result);
         $this->assert_log(array(
             easytest\LOG_EVENT_ERROR => 2,
             'events' => array(
@@ -469,357 +472,341 @@ class TestRunner {
 
 
 class SimpleTestCase {
-    public $log = array();
-
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 }
 
 class FixtureTestCase {
-    public $log = array();
-
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function test1() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function test2() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 }
 
 class CapitalizedTestCase {
-    public $log = array();
-
     public function SetUpObject() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function TearDownObject() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function SetUp() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function TearDown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function TestOne() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function TestTwo() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 }
 
 
 abstract class BaseTestCase {
-    public $log = array();
-
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 }
 
 class ExceptionTestCase extends BaseTestCase {
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         throw new \Exception('How exceptional!');
     }
 }
 
 class ErrorTestCase extends BaseTestCase {
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         trigger_error('Did I err?');
     }
 }
 
 class SuppressedErrorTestCase extends BaseTestCase {
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         @$foo['bar'];
     }
 }
 
 class FailedTestCase extends BaseTestCase {
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         easytest\fail('Assertion failed');
     }
 }
 
 class SetupObjectErrorTestCase extends BaseTestCase {
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         throw new \Exception('An error happened');
     }
 }
 
 class SetupErrorTestCase extends BaseTestCase {
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         throw new \Exception('An error happened');
     }
 }
 
 class TeardownErrorTestCase extends BaseTestCase {
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         throw new \Exception('An error happened');
     }
 }
 
 class TeardownObjectErrorTestCase extends BaseTestCase {
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         throw new \Exception('An error happened');
     }
 }
 
 class MultipleObjectFixtureTestCase extends BaseTestCase {
     public function SetUpObject() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function TearDownObject() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 }
 
 class SkipTestCase extends BaseTestCase {
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         easytest\skip('Skip me');
     }
 }
 
 class SkipSetupTestCase extends BaseTestCase {
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         easytest\skip('Skip me');
     }
 }
 
 class SkipSetupObjectTestCase extends BaseTestCase {
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         easytest\skip('Skip me');
     }
 }
 
 class SkipTeardownTestCase extends BaseTestCase {
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         easytest\skip('Skip me');
     }
 }
 
 class SkipTeardownObjectTestCase extends BaseTestCase {
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         easytest\skip('Skip me');
     }
 }
 
 class OutputTestCase {
-    public $log = array();
-
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
     }
 
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
     }
 
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo 'setup output that should be seen';
         ob_start();
         echo 'setup output that should not be seen';
     }
 
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo 'teardown output that should not be seen';
         ob_end_clean();
         echo 'teardown output that should be seen';
     }
 
     public function test_pass() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
     }
 
     public function test_fail() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         easytest\fail('Assertion failed');
     }
 
     public function test_error() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         trigger_error('Did I err?');
     }
 
     public function test_skip() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         easytest\skip('Skip me');
     }
 }
 
 class OutputBufferingTestCase {
-    public $log = array();
-
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
     }
 
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
     }
 
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo 'setup output that should be seen';
         ob_start();
         echo 'setup output that should not be seen';
     }
 
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo 'teardown output that should not be seen';
         ob_end_clean();
         echo 'teardown output that should be seen';
     }
 
     public function test_skip() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         easytest\skip('Skip me');
     }
 
     public function test_error() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         trigger_error('Did I err?');
     }
 
     public function test_fail() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         easytest\fail('Assertion failed');
     }
 
     public function test_pass() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
     }
 }
 
 class UndeletedOutputBufferTestCase {
-    public $log = array();
-
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         ob_start();
         echo __FUNCTION__;
     }
 
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         ob_start();
         echo __FUNCTION__;
     }
 
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         ob_start();
     }
 
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
     }
 
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         ob_start();
         echo 'test output';
     }
 }
 
 class DeletingOutputBufferTestCase {
-    public $log = array();
-
     public function setup_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         ob_end_clean();
     }
 
     public function teardown_object() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         ob_end_clean();
     }
 
     public function setup() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         ob_end_clean();
     }
 
     public function teardown() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         ob_end_clean();
     }
 
     public function test() {
-        $this->log[] = __FUNCTION__;
+        TestRunner::$log[] = __FUNCTION__;
         echo __FUNCTION__;
         ob_end_clean();
     }

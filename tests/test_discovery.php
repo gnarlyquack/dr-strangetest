@@ -756,22 +756,22 @@ searched for tests, or because it is not a test in the test suite found in
             ),
             array(
                 easytest\LOG_EVENT_OUTPUT,
-                'dir_params\\TestClass::test (0, 0)',
-                '2 4',
-            ),
-            array(
-                easytest\LOG_EVENT_PASS,
-                'dir_params\\TestClass::test (0, 0)',
-                null,
-            ),
-            array(
-                easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function (0, 1)',
                 '4 2',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\test_function (0, 1)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\TestClass::test (0, 0)',
+                '2 4',
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\TestClass::test (0, 0)',
                 null,
             ),
             array(
@@ -801,22 +801,22 @@ searched for tests, or because it is not a test in the test suite found in
             ),
             array(
                 easytest\LOG_EVENT_OUTPUT,
-                'dir_params\\TestClass::test (1, 0)',
-                '8 16',
-            ),
-            array(
-                easytest\LOG_EVENT_PASS,
-                'dir_params\\TestClass::test (1, 0)',
-                null,
-            ),
-            array(
-                easytest\LOG_EVENT_OUTPUT,
                 'dir_params\\test_function (1, 1)',
                 '16 8',
             ),
             array(
                 easytest\LOG_EVENT_PASS,
                 'dir_params\\test_function (1, 1)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_OUTPUT,
+                'dir_params\\TestClass::test (1, 0)',
+                '8 16',
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'dir_params\\TestClass::test (1, 0)',
                 null,
             ),
             array(

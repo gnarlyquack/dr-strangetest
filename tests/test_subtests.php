@@ -22,7 +22,7 @@ function test_teardown_is_run_after_test() {
         function() { echo 'common teardown'; }
     );
 
-    easytest\_run_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, null);
 
     namespace\assert_log(
         array(
@@ -50,7 +50,7 @@ function test_teardown_is_run_after_failing_test() {
         function() { echo 'common teardown'; }
     );
 
-    easytest\_run_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, null);
 
     namespace\assert_log(
         array(
@@ -85,7 +85,7 @@ function test_error_in_function_teardown_causes_test_to_fail() {
         function() { echo 'common teardown'; }
     );
 
-    easytest\_run_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, null);
 
     namespace\assert_log(
         array(
@@ -115,7 +115,7 @@ function test_skip_is_reported_is_teardown_has_an_error() {
         function() { \trigger_error('I erred'); }
     );
 
-    easytest\_run_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, null);
 
     namespace\assert_log(
         array(
@@ -142,7 +142,7 @@ function test_passing_subtests_dont_increase_the_test_count() {
         }
     );
 
-    easytest\_run_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, null);
 
     namespace\assert_log(array(easytest\LOG_EVENT_PASS => 1), $logger);
 }
@@ -158,7 +158,7 @@ function test_failed_subtests_dont_end_a_test() {
         }
     );
 
-    easytest\_run_test($logger, $test, null);
+    easytest\_run_function_test($logger, $test, null);
 
     namespace\assert_log(
         array(
