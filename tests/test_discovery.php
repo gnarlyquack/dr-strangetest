@@ -502,13 +502,6 @@ MESSAGE;
                 "$path/",
                 easytest\DEBUG_DIRECTORY_EXIT,
             ),
-            array(
-                easytest\LOG_EVENT_ERROR,
-                "$path/",
-"This path could not be tested, either because an error prevented it from being
-searched for tests, or because it is not a test in the test suite found in
-{$path}/",
-            ),
         ));
     }
 
@@ -879,7 +872,7 @@ searched for tests, or because it is not a test in the test suite found in
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
-                'subdir_params\\subdir\\setup_directory',
+                'subdir_params\\subdir\\setup_directory (0)',
                 easytest\DEBUG_DIRECTORY_SETUP,
             ),
             array(
@@ -924,7 +917,7 @@ searched for tests, or because it is not a test in the test suite found in
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
-                'subdir_params\\subdir\\teardown_directory',
+                'subdir_params\\subdir\\teardown_directory (0)',
                 easytest\DEBUG_DIRECTORY_TEARDOWN,
             ),
             array(
@@ -944,7 +937,7 @@ searched for tests, or because it is not a test in the test suite found in
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
-                'subdir_params\\subdir\\setup_directory',
+                'subdir_params\\subdir\\setup_directory (1)',
                 easytest\DEBUG_DIRECTORY_SETUP,
             ),
             array(
@@ -989,7 +982,7 @@ searched for tests, or because it is not a test in the test suite found in
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,
-                'subdir_params\\subdir\\teardown_directory',
+                'subdir_params\\subdir\\teardown_directory (1)',
                 easytest\DEBUG_DIRECTORY_TEARDOWN,
             ),
             array(
@@ -1011,6 +1004,203 @@ searched for tests, or because it is not a test in the test suite found in
                 easytest\LOG_EVENT_OUTPUT,
                 'subdir_params\\teardown_directory',
                 'subdir_params\\teardown_directory',
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                $path,
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+        );
+        $this->assert_log($expected);
+    }
+
+
+    public function test_runs_parameterized_target() {
+        $path = \sprintf(
+            '%1$s%2$ssample_files%2$sparameterized_target%2$s',
+            __DIR__, \DIRECTORY_SEPARATOR
+        );
+        easytest\discover_tests($this->logger, array($path));
+
+        $expected = array(
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                $path,
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\setup_directory',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\setup_directory (0)',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\setup_directory (0, 0)',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (0, 0, 0)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (0, 0, 1)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\teardown_directory (0, 0)',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\setup_directory (0, 1)',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (0, 1, 0)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (0, 1, 1)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\teardown_directory (0, 1)',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\teardown_directory (0)',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+
+
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\setup_directory (1)',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\setup_directory (1, 0)',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (1, 0, 0)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (1, 0, 1)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\teardown_directory (1, 0)',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_ENTER,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\setup_directory (1, 1)',
+                easytest\DEBUG_DIRECTORY_SETUP,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (1, 1, 0)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_PASS,
+                'param_target\\dir\\subdir\\test (1, 1, 1)',
+                null,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\subdir\\teardown_directory (1, 1)',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/test_subdir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\dir\\teardown_directory (1)',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                "{$path}test_dir/",
+                easytest\DEBUG_DIRECTORY_EXIT,
+            ),
+            array(
+                easytest\LOG_EVENT_DEBUG,
+                'param_target\\teardown_directory',
+                easytest\DEBUG_DIRECTORY_TEARDOWN,
             ),
             array(
                 easytest\LOG_EVENT_DEBUG,

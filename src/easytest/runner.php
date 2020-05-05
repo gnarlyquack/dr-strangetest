@@ -75,43 +75,6 @@ final class FunctionTest extends struct {
 }
 
 
-final class TestTargets {
-    public function __construct(Logger $logger, array $targets) {
-        $this->logger = $logger;
-        $this->targets = $targets;
-    }
-
-    public function current() {
-        return $this->current;
-    }
-
-    public function next() {
-        while (isset($this->targets[++$this->index])) {
-            $path = $this->targets[$this->index];
-            $realpath = \realpath($path);
-            if (!$realpath) {
-                $this->logger->log_error($path, 'No such file or directory');
-                continue;
-            }
-
-            if (\is_dir($realpath)) {
-                $realpath .= \DIRECTORY_SEPARATOR;
-            }
-            $this->current = $realpath;
-            return $realpath;
-        }
-
-        $this->current = null;
-        return null;
-    }
-
-    private $logger;
-    private $targets;
-    private $current;
-    private $index = -1;
-}
-
-
 final class TestContext {
     public function __construct(Logger $logger, $source) {
         $this->logger = $logger;
@@ -199,34 +162,48 @@ final class TestContext {
 
 
 function discover_tests(Logger $logger, array $paths) {
-    $state = new State();
+    list($root, $paths) = namespace\_process_paths($logger, $paths);
     if (!$paths) {
-        $paths[] = \getcwd();
+        return;
     }
-    $targets = new TestTargets($logger, $paths);
-    $path = $targets->next();
-    if ($path) {
-        $root = namespace\_determine_root($path);
-        $path = $root;
-        while ($path) {
-            $directory = namespace\_discover_directory($state, $logger, $path);
-            if (!$directory) {
-                break;
-            }
-            namespace\_test_directory($state, $logger, $directory, $targets, null);
-            $path = $targets->current();
-            if ($path) {
-                $message = <<<MESSAGE
-This path could not be tested, either because an error prevented it from being
-searched for tests, or because it is not a test in the test suite found in
-$root
-MESSAGE;
-                $logger->log_error($path, $message);
-                $path = $targets->next();
-            }
 
-        }
+    $state = new State();
+    $directory = namespace\_discover_directory($state, $logger, $root);
+    if (!$directory) {
+        return;
     }
+
+    namespace\_test_directory($state, $logger, $directory, $paths, null);
+}
+
+
+function _process_paths(Logger $logger, array $paths) {
+    if (!$paths) {
+        $paths[] = \getcwd() . \DIRECTORY_SEPARATOR;
+        $root = namespace\_determine_root($paths[0]);
+        return array($root, $paths);
+    }
+
+    $root = null;
+    $realpaths = array();
+    foreach ($paths as $path) {
+        $realpath = \realpath($path);
+        if (!$realpath) {
+            $logger->log_error($path, 'No such file or directory');
+            continue;
+        }
+
+        if (\is_dir($realpath)) {
+            $realpath .= \DIRECTORY_SEPARATOR;
+        }
+
+        if (!$root) {
+            $root = namespace\_determine_root($realpath);
+        }
+
+        $realpaths[] = $realpath;
+    }
+    return array($root, $realpaths);
 }
 
 
@@ -331,8 +308,12 @@ function _discover_directory(State $state, Logger $logger, $path) {
 
 function _test_directory(
     State $state, Logger $logger, DirectoryTest $test,
-    TestTargets $targets = null, $arglists
+    array $targets = null, $arglists
 ) {
+    if ($targets) {
+        $targets = namespace\_process_targets($logger, $test, $targets);
+    }
+
     if ($arglists instanceof ArgumentLists) {
         $arglists = $arglists->arglists();
     }
@@ -340,9 +321,8 @@ function _test_directory(
         $arglists = array($arglists);
     }
 
-    foreach ($arglists as $i => $arglist) {
-        $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_ENTER);
 
+    foreach ($arglists as $i => $arglist) {
         $id = $test->id;
         if (\count($arglists) > 1) {
             $id[] = $i;
@@ -354,6 +334,7 @@ function _test_directory(
             $ids = '';
         }
 
+        $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_ENTER);
         if ($test->setup) {
             $source = "{$test->setup}{$ids}";
             $logger = namespace\start_buffering($logger, $source);
@@ -364,51 +345,28 @@ function _test_directory(
                 $logger->log_debug($test->path, namespace\DEBUG_DIRECTORY_EXIT);
                 return;
             }
-            $logger->log_debug($test->setup, namespace\DEBUG_DIRECTORY_SETUP);
+            $logger->log_debug($source, namespace\DEBUG_DIRECTORY_SETUP);
         }
 
-        if (!$targets) {
-            namespace\_run_directory_tests($state, $logger, $test->paths, $id, $arglist);
+        if ($targets) {
+            foreach ($targets as $target) {
+                list($path, $targets) = $target;
+                namespace\_run_directory_tests(
+                    $state, $logger,
+                    array($path => $test->paths[$path]),
+                    $id, $arglist, $targets
+                );
+            }
         }
         else {
-            $target = $targets->current();
-            while ($target) {
-                if ($target === $test->path) {
-                    namespace\_run_directory_tests($state, $logger, $test->paths, $id, $arglist);
-                    $target = $targets->next();
-                }
-                else if (isset($test->paths[$target])) {
-                    $paths = array($target => $test->paths[$target]);
-                    namespace\_run_directory_tests($state, $logger, $paths, $id, $arglist);
-                    $target = $targets->next();
-                }
-                else if (0 === \substr_compare($target, $test->path, 0, \strlen($test->path))) {
-                    // $target is in a subdirectory of the current directory, so
-                    // determine the subdirectory and test only that directory.
-                    $i = \strpos($target, \DIRECTORY_SEPARATOR, \strlen($test->path));
-                    // $i = the location of the directory separator, which we want
-                    // to include, so we want the substring of $target up to $i+1
-                    $subdir = \substr($target, 0, $i+1);
-                    $paths = array($subdir => $test->paths[$subdir]);
-                    namespace\_run_directory_tests($state, $logger, $paths, $id, $arglist, $targets);
-                    // the subdirectory will have advanced $targets, and since
-                    // we're back here, either $targets is empty, or there's
-                    // another target that was a parent of the subdirectory (and
-                    // could be in the current directory)
-                    $target = $targets->current();
-                }
-                else {
-                    // the target is in a parent directory
-                    break;
-                }
-            }
+            namespace\_run_directory_tests($state, $logger, $test->paths, $id, $arglist);
         }
 
         if ($test->teardown) {
             $source = "{$test->teardown}{$ids}";
             $logger = namespace\start_buffering($logger, $source);
             if(namespace\_run_teardown($logger, $source, $test->teardown, $arglist)) {
-                $logger->log_debug($test->teardown, namespace\DEBUG_DIRECTORY_TEARDOWN);
+                $logger->log_debug($source, namespace\DEBUG_DIRECTORY_TEARDOWN);
             }
             $logger = namespace\end_buffering($logger);
         }
@@ -418,9 +376,53 @@ function _test_directory(
 }
 
 
+function _process_targets(Logger $logger, DirectoryTest $test, array $targets) {
+    $current = null;
+    $parents = array();
+    $children = array();
+    foreach ($targets as $target) {
+        if ($target === $test->path) {
+            // The entire path is a target, so test the entire path. Any
+            // other targets are just duplicates, which we can skip
+            return null;
+        }
+
+        if (isset($test->paths[$target])) {
+            $parent = $target;
+        }
+        elseif (0 === \substr_compare($target, $test->path, 0, \strlen($test->path))) {
+            // $target is in a subdirectory of the current directory.
+            // $i = the location of the directory separator, which we want
+            // to include in the subdirectory name
+            $i = \strpos($target, \DIRECTORY_SEPARATOR, \strlen($test->path));
+            $parent = \substr($target, 0, $i+1);
+        }
+        else {
+            $logger->log_error($test->path, "Invalid test requested: $target");
+            continue;
+        }
+
+        if ($parent === $current) {
+            $children[] = $target;
+        }
+        else {
+            if ($current) {
+                $parents[] = array($current, $children);
+            }
+            $current = $parent;
+            $children = array($target);
+        }
+    }
+    if ($current) {
+        $parents[] = array($current, $children);
+    }
+    return $parents;
+}
+
+
 function _run_directory_tests(
     State $state, Logger $logger,
-    array $paths, array $id, $arglists, TestTargets $targets = null
+    array $paths, array $id, $arglists, array $targets = null
 ) {
     foreach ($paths as $path => $type) {
         switch ($type) {

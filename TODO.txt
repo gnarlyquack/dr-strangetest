@@ -27,6 +27,13 @@ Release
     -   Do we handle traversing multiple times to a directory, file, etc. that
         had a setup error?
 
+    -   (Directory) setup errors when there are targets
+
+    -   Running targets that are a directory or a file that is parameterized
+        with multiple argument lists, and/or in a directory hierarchy where one
+        or more directories in the hierarchy are parameterized with multiple
+        argument lists
+
 -   Implement additional assertions? Currently EasyTest's test suite only
     uses/needs the assertions already provided by the framework, but
     presumably other assertions would be useful in other contexts
@@ -47,21 +54,6 @@ Release
 
 -   Why does/did this work on my computer?
     https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
-
--   Individual paths probably still need some work:
-
-    -   If (directory) setup fails, we'll probably end up in an infinite loop
-        becuase the target index is not advanced thus causing the parent
-        directory to simply retest the target.
-
-    -   If the target is a directory or a file that is parameterized with
-        multiple argument lists, and/or in a directory hierarchy where one or
-        more directories in the hierarchy are parameterized with multiple
-        argument lists, the target will probably only be run once because
-        targets are processed within the argument list loop and, after the
-        first run, the target index will have advanced past the target. Since
-        directory discovery is recursive, we need to ensure this works for any
-        arbitrary hierarchy of parameterized directories.
 
 
 Future

@@ -18,7 +18,7 @@ class TestRunner {
     // helper assertions
 
     private function assert_run($test, $expected) {
-        self::$log = [];
+        self::$log = array();
         easytest\_run_class_tests(
             $this->logger,
             easytest\_discover_class($this->logger, \get_class($test)),
