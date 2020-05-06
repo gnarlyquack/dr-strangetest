@@ -2,14 +2,14 @@
     "name": "easytest/easytest",
     "description": "Quick and painless testing for PHP",
     "keywords": ["testing"],
-    "homepage": "https://github.com/karlnack/easytest",
+    "homepage": "https://github.com/gnarlyquack/easytest",
     "license": "ISC",
     "support": {
-        "issues": "https://github.com/karlnack/easytest/issues",
-        "source": "https://github.com/karlnack/easytest"
+        "issues": "https://github.com/gnarlyquack/easytest/issues",
+        "source": "https://github.com/gnarlyquack/easytest"
     },
     "require": {
-        "php": ">= 5.4"
+        "php": ">= 5.3"
     },
     "bin": ["bin/easytest"],
     "extra": {
