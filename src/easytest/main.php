@@ -338,6 +338,11 @@ function _parse_option($opt, $args, $opts) {
             namespace\output(namespace\_get_help());
             exit(namespace\EXIT_SUCCESS);
             break;
+
+        default:
+            fwrite(\STDERR, "Unknown option: $opt\nPlease see 'easytest --help'\n");
+            exit(namespace\EXIT_FAILURE);
+            break;
     }
 
     return array($opts, $args);
@@ -367,7 +372,7 @@ Supported options:
     Show this help and exit.
 
   -q, --quiet
-    Omit reporting skipped tests and output, unless the output occurred in
+    Omit reporting skipped tests and output, unless they occurred in
     conjunction with an error or failed test. This is the default, and is
     provided to disable verbose reporting.
 
@@ -375,7 +380,7 @@ Supported options:
     Include skipped tests and all output in reporting.
 
   --version
-    Show the version information and exit
+    Show version information and exit.
 
 Please report bugs to: https://github.com/gnarlyquack/easytest/issues
 HELP;

@@ -6,7 +6,6 @@
 // LICENSE.txt file.
 
 class TestArgParse {
-
     public function test_parses_empty_argv() {
         // argv[0] is always the current executable name
         $argv = array('foo');
