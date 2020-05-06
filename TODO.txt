@@ -34,6 +34,15 @@ Release
         or more directories in the hierarchy are parameterized with multiple
         argument lists
 
+    -   Error-checking for argument lists:
+        -   setup fixtures must either return an iterable or an instance of
+            ArgumentLists
+        -   each arglist in ArgumentLists must be an iterable
+
+    -   Handling targets that don't match a test pattern
+
+    -   What if all targets are invalid?
+
 -   Implement additional assertions? Currently EasyTest's test suite only
     uses/needs the assertions already provided by the framework, but
     presumably other assertions would be useful in other contexts
@@ -46,11 +55,6 @@ Release
     Composer from our own source tree.
 
 -   Handle errors during test file parsing
-
--   Error-checking for argument lists:
-    -   setup fixtures must either return an iterable or an instance of
-        ArgumentLists
-    -   each arglist in ArgumentLists must be an iterable
 
 -   Why does/did this work on my computer?
     https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879

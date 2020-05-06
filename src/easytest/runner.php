@@ -715,20 +715,38 @@ function _discover_class(State $state, Logger $logger, $classname) {
 
 function _run_tests(
     State $state, Logger $logger, $test,
-    $arglists, array $run_id, array $targets = null
+    $params = null, array $run_id = null, array $targets = null
 ) {
     if ($targets) {
         $targets = namespace\_find_targets($logger, $test, $targets);
     }
 
-    if ($arglists instanceof ArgumentLists) {
-        $arglists = $arglists->arglists();
+    if ($params instanceof ArgumentLists) {
+        $arglists = $params->arglists();
     }
     else {
-        $arglists = array($arglists);
+        $arglists = array($params);
     }
 
     foreach ($arglists as $i => $arglist) {
+        if ($arglist
+            // #BC(7.0): don't use is_iterable to check if iterable
+            && !(\is_array($arglist) || $arglist instanceof \Traversable)
+        ) {
+            // $arglists can only be invalid if $params is an instance of
+            // ArgumentLists
+            $type = \is_object($arglist)
+                ? \sprintf('instance of %s', \get_class($arglist) )
+                : \sprintf(
+                    '%s %s',
+                    \gettype($arglist), \var_export($arglist, true));
+            $logger->log_error(
+                $params->source,
+                "Each argument list must be iterable, instead got $type"
+            );
+            continue;
+        }
+
         $this_run_id = $run_id;
         if (\count($arglists) > 1) {
             $this_run_id[] = $i;
@@ -815,7 +833,7 @@ function _find_targets(Logger $logger, $test, array $targets) {
 
 function _run_directory_tests(
     State $state, Logger $logger, DirectoryTest $directory,
-    $arglist, array $run_id, array $targets = null
+    array $arglist = null, array $run_id = null, array $targets = null
 ) {
     $logger->log_debug($directory->name, namespace\DEBUG_DIRECTORY_ENTER);
 
@@ -831,6 +849,7 @@ function _run_directory_tests(
             $logger->log_debug($directory->name, namespace\DEBUG_DIRECTORY_EXIT);
             return;
         }
+        $arglist = namespace\_normalize_arglists($arglist, $name);
         $logger->log_debug($name, namespace\DEBUG_DIRECTORY_SETUP);
     }
 
@@ -865,7 +884,7 @@ function _run_directory_tests(
 
 function _run_directory_test(
     State $state, Logger $logger, DirectoryTest $directory, $test,
-    $arglist, array $run_id, array $targets = null
+    $arglist = null, array $run_id = null, array $targets = null
 ) {
     $type = $directory->tests[$test];
     switch ($type) {
@@ -891,7 +910,7 @@ function _run_directory_test(
 
 function _run_file_tests(
     State $state, Logger $logger, FileTest $file,
-    $arglist, array $run_id, $targets=null
+    array $arglist = null, array $run_id = null, array $targets = null
 ) {
     // #BC(5.4): Omit description from assert
     \assert(!$targets); // file test targets aren't supported
@@ -907,6 +926,7 @@ function _run_file_tests(
         if (!$success) {
             return;
         }
+        $arglist = namespace\_normalize_arglists($arglist, $name);
     }
 
     $function = new FunctionTest();
@@ -957,7 +977,7 @@ function _run_file_tests(
 
 function _run_class_tests(
     Logger $logger, ClassTest $class,
-    $arglist, $run_id, $targets = null
+    array $arglist = null, array $run_id = null, array $targets = null
 ) {
     // #BC(5.4): Omit description from assert
     \assert(!$targets); // class test targets aren't supported
@@ -1001,7 +1021,7 @@ function _run_class_tests(
         $name = "{$class->name}::{$class->teardown}{$run_name}";
         $method = array($object, $class->teardown);
         $logger = namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $method, null);
+        namespace\_run_teardown($logger, $name, $method);
         $logger = namespace\end_buffering($logger);
     }
 }
@@ -1030,7 +1050,7 @@ function _instantiate_test(Logger $logger, $class, $args) {
 
 function _run_function_test(
     Logger $logger, FunctionTest $test,
-    $arglist, $run_id, $targets = null
+    array $arglist = null, array $run_id = null, array $targets = null
 ) {
     // #BC(5.4): Omit description from assert
     \assert(!$targets); // function tests can't have targets
@@ -1055,9 +1075,7 @@ function _run_function_test(
         );
 
         foreach($context->teardowns() as $teardown) {
-            $toredown = namespace\_run_teardown(
-                $logger, $test_name, $teardown, null
-            );
+            $toredown = namespace\_run_teardown($logger, $test_name, $teardown);
             $success = $success && $toredown;
         }
         if ($test->teardown) {
@@ -1141,17 +1159,24 @@ function _run_test_function(
 
 function _run_teardown(Logger $logger, $name, $callable, $args = null) {
     try {
-        if (!$args) {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable);
+        if ($args instanceof ArgumentLists) {
+            $args = $args->arglists();
+            if (\count($args) > 1) {
+                // #BC(5.3): Invoke (possible) object method using
+                // call_user_func()
+                \call_user_func($callable, $args);
+                return true;
+            }
+            $args = $args[0];
         }
-        elseif ($args instanceof ArgumentLists) {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable, $args->arglists());
-        }
-        else {
+
+        if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
             namespace\_unpack_function($callable, $args);
+        }
+        else {
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable);
         }
         return true;
     }

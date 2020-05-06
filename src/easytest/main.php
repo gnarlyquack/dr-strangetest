@@ -101,10 +101,18 @@ abstract class struct {
 
 
 final class ArgumentLists {
+    public $source;
     private $arglists;
 
 
-    public function __construct(array $arglists) {
+    public function __construct($arglists) {
+        // #BC(7.0): don't use iterable type hint to $arglists is iterable
+        if (!(\is_array($arglists) || $arglists instanceof \Traversable)) {
+            \trigger_error(
+                '$arglists must be an iterable of iterables',
+                \E_USER_WARNING
+            );
+        }
         $this->arglists = $arglists;
     }
 
@@ -114,8 +122,18 @@ final class ArgumentLists {
     }
 }
 
+
 function arglists($arglists) {
-    return new namespace\ArgumentLists($arglists);
+    return new ArgumentLists($arglists);
+}
+
+
+function _normalize_arglists($arglists, $source) {
+    if (!($arglists instanceof namespace\ArgumentLists)) {
+        $arglists = new ArgumentLists(array($arglists));
+    }
+    $arglists->source = $source;
+    return $arglists;
 }
 
 
