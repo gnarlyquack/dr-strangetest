@@ -54,10 +54,10 @@ Release
     itself doesn't require Composer, we (might) never want/need to try loading
     Composer from our own source tree.
 
--   Handle errors during test file parsing
-
 -   Why does/did this work on my computer?
     https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
+
+-   Error and show usage on invalid option
 
 
 Future

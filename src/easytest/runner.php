@@ -8,8 +8,10 @@
 namespace easytest;
 
 
-const ERROR_SETUP    = 0x01;
-const ERROR_TEARDOWN = 0x02;
+const ERROR_SETUP             = 0x1;
+const ERROR_TEARDOWN          = 0x2;
+const ERROR_SETUP_FUNCTION    = 0x4;
+const ERROR_TEARDOWN_FUNCTION = 0x8;
 
 const DEBUG_DIRECTORY_ENTER    = 1;
 const DEBUG_DIRECTORY_EXIT     = 2;
@@ -435,7 +437,6 @@ function _discover_directory(State $state, Logger $logger, $path) {
 
     $directory = new DirectoryTest();
     $directory->name = $path;
-    $directory->setup = array();
     $error = false;
     foreach (new \DirectoryIterator($path) as $file) {
         $basename = $file->getBasename();
@@ -488,17 +489,16 @@ function _discover_directory(State $state, Logger $logger, $path) {
         );
         $directory = false;
     }
+    elseif (!$directory->tests) {
+        // Should this be logged/reported?
+        $directory = false;
+    }
     elseif ($directory->setup) {
         $setup = $directory->setup[0];
-        $directory->setup = array();
-        $directory->teardown = array();
+        $directory->setup = null;
         $directory = namespace\_discover_directory_setup(
             $logger, $directory, $setup, $state->seen
         );
-    }
-    else {
-        $directory->setup = null;
-        $directory->teardown = null;
     }
 
     $state->directories[$path] = $directory;
@@ -522,7 +522,7 @@ function _discover_directory_setup(
     }
 
     if ($error) {
-        if ($error & ERROR_SETUP) {
+        if ($error & namespace\ERROR_SETUP) {
             $logger->log_error(
                 $filepath,
                 \sprintf(
@@ -531,7 +531,7 @@ function _discover_directory_setup(
                 )
             );
         }
-        if ($error & ERROR_TEARDOWN) {
+        if ($error & namespace\ERROR_TEARDOWN) {
             $logger->log_error(
                 $filepath,
                 \sprintf(
@@ -555,13 +555,13 @@ function _is_directory_setup_function(
     if (\preg_match('~^(setup|teardown)_?directory~i', $function, $matches)) {
         if ('setup' === \strtolower($matches[1])) {
             if ($directory->setup) {
-                $error |= ERROR_SETUP;
+                $error |= namespace\ERROR_SETUP;
             }
             $directory->setup[] = $fullname;
         }
         else {
             if ($directory->teardown) {
-                $error |= ERROR_TEARDOWN;
+                $error |= namespace\ERROR_TEARDOWN;
             }
             $directory->teardown[] = $fullname;
         }
@@ -578,22 +578,72 @@ function _discover_file(State $state, Logger $logger, $filepath) {
 
     $file = new FileTest();
     $file->name = $filepath;
-
+    $error = 0;
     $checks = array(
         \T_CLASS => function($class, $fullname) use ($file) {
             return namespace\_is_test_class($file, $class, $fullname);
         },
-        \T_FUNCTION => function($function, $fullname) use ($file) {
-            return namespace\_is_test_function($file, $function, $fullname);
+        \T_FUNCTION => function($function, $fullname) use ($file, &$error) {
+            return namespace\_is_test_function($file, $error, $function, $fullname);
         },
     );
     if (!namespace\_parse_file($logger, $filepath, $checks, $state->seen)) {
-        $state->files[$filepath] = false;
+        $file = false;
+    }
+    elseif ($error) {
+        if ($error & namespace\ERROR_SETUP) {
+            $logger->log_error(
+                $filepath,
+                \sprintf(
+                    "Multiple setup fixtures found:\n\t%s",
+                    \implode("\n\t", $directory->setup)
+                )
+            );
+        }
+        if ($error & namespace\ERROR_SETUP_FUNCTION) {
+            $logger->log_error(
+                $filepath,
+                \sprintf(
+                    "Multiple setup fixtures found:\n\t%s",
+                    \implode("\n\t", $directory->setup_function)
+                )
+            );
+        }
+        if ($error & namespace\ERROR_TEARDOWN) {
+            $logger->log_error(
+                $filepath,
+                \sprintf(
+                    "Multiple teardown fixtures found:\n\t%s",
+                    \implode("\n\t", $directory->teardown)
+                )
+            );
+        }
+        if ($error & namespace\ERROR_TEARDOWN_FUNCTION) {
+            $logger->log_error(
+                $filepath,
+                \sprintf(
+                    "Multiple teardown fixtures found:\n\t%s",
+                    \implode("\n\t", $directory->teardown_function)
+                )
+            );
+        }
+        $file = false;
+    }
+    elseif (!$file->tests) {
+        // Should this be logged/reported?
+        $file = false;
     }
     else {
-        $state->files[$filepath] = $file;
+        $file->setup = $file->setup ? $file->setup[0] : null;
+        $file->teardown = $file->teardown ? $file->teardown[0] : null;
+        $file->setup_function
+            = $file->setup_function ? $file->setup_function[0] : null;
+        $file->teardown_function
+            = $file->teardown_function ? $file->teardown_function[0] : null;
     }
-    return $state->files[$filepath];
+
+    $state->files[$filepath] = $file;
+    return $file;
 }
 
 
@@ -606,7 +656,7 @@ function _is_test_class(FileTest $file, $class, $fullname) {
 }
 
 
-function _is_test_function(FileTest $file, $function, $fullname) {
+function _is_test_function(FileTest $file, &$error, $function, $fullname) {
     if (0 === \substr_compare($function, 'test', 0, 4, true)) {
         $file->tests["function $fullname"] = array($fullname, namespace\TYPE_FUNCTION);
         return true;
@@ -615,19 +665,31 @@ function _is_test_function(FileTest $file, $function, $fullname) {
     if (\preg_match('~^(setup|teardown)_?(file|function)~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
             if (0 === \strcasecmp('file', $matches[2])) {
-                $file->setup = $fullname;
+                if ($file->setup) {
+                    $error |= namespace\ERROR_SETUP;
+                }
+                $file->setup[] = $fullname;
             }
             else {
-                $file->setup_function = $fullname;
+                if ($file->setup_function) {
+                    $error |= namespace\ERROR_SETUP_FUNCTION;
+                }
+                $file->setup_function[] = $fullname;
                 $file->setup_function_name = $function;
             }
         }
         else {
             if (0 === \strcasecmp('file', $matches[2])) {
-                $file->teardown = $fullname;
+                if ($file->teardown) {
+                    $error |= namespace\ERROR_TEARDOWN;
+                }
+                $file->teardown[] = $fullname;
             }
             else {
-                $file->teardown_function = $fullname;
+                if ($file->teardown_function) {
+                    $error |= namespace\ERROR_TEARDOWN_FUNCTION;
+                }
+                $file->teardown_function[] = $fullname;
                 $file->teardown_function_name = $function;
             }
         }
@@ -644,8 +706,6 @@ function _discover_class(State $state, Logger $logger, $classname) {
 
     $class = new ClassTest();
     $class->name = $classname;
-    $class->setup = array();
-    $class->teardown = array();
     $error = 0;
     foreach (\get_class_methods($classname) as $method) {
         if (0 === \substr_compare($method, 'test', 0, 4, true)) {
@@ -699,17 +759,19 @@ function _discover_class(State $state, Logger $logger, $classname) {
                 )
             );
         }
-        $state->classes[$classname] = false;
+        $class = false;
     }
     elseif (!$class->tests) {
-        $state->classes[$classname] = false;
+        // Should this be logged/reported?
+        $class = false;
     }
     else {
-        $class->setup = $class->setup ? $class->setup[0]: null;
-        $class->teardown = $class->teardown ? $class->teardown[0]: null;
-        $state->classes[$classname] = $class;
+        $class->setup = $class->setup ? $class->setup[0] : null;
+        $class->teardown = $class->teardown ? $class->teardown[0] : null;
     }
-    return $state->classes[$classname];
+
+    $state->classes[$classname] = $class;
+    return $class;
 }
 
 
