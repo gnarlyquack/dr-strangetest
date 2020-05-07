@@ -47,13 +47,6 @@ Release
     uses/needs the assertions already provided by the framework, but
     presumably other assertions would be useful in other contexts
 
--   Test installing and running via Composer/Packagist
-
--   When trying to load Composer, only check the path(s) the autoloader would
-    be if EasyTest had been installed via Composer(?). I.e., since EasyTest
-    itself doesn't require Composer, we (might) never want/need to try loading
-    Composer from our own source tree.
-
 -   Why does/did this work on my computer?
     https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
 

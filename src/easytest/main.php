@@ -213,16 +213,13 @@ function _handle_error($errno, $errstr, $errfile, $errline) {
 
 
 function _try_loading_composer() {
-    $files = array(
-        '%1$s%2$s..%2$s..%2$s..%2$s..%2$sautoload.php',
-        '%1$s%2$s..%2$s..%2$svendor%2$sautoload.php',
+    // Assume (reasonably?) users are working in their root source directory
+    $composer = \sprintf(
+        '%1$s%2$svendor%2$sautoload.php',
+        \getcwd(), \DIRECTORY_SEPARATOR
     );
-    foreach ($files as $file) {
-        $file = \sprintf($file, __DIR__, \DIRECTORY_SEPARATOR);
-        if (\file_exists($file)) {
-            require $file;
-            return;
-        }
+    if (\file_exists($composer)) {
+        require $composer;
     }
 }
 
