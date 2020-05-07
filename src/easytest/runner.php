@@ -76,7 +76,7 @@ final class FunctionTest extends struct {
 }
 
 
-final class TestContext {
+final class Context {
     public function __construct(Logger $logger, $name) {
         $this->logger = $logger;
         $this->name = $name;
@@ -92,7 +92,7 @@ final class TestContext {
             try {
                 // #BC(5.5): Use proxy function for argument unpacking
                 namespace\_unpack_function("easytest\\$name", $args);
-                return;
+                return true;
             }
             catch (\AssertionError $e) {
                 $this->logger->log_failure($this->name, $e);
@@ -109,6 +109,7 @@ final class TestContext {
                 $this->logger->log_error($this->name, $e);
             }
             $this->success = false;
+            return false;
         }
 
         throw new \Exception(
@@ -121,7 +122,7 @@ final class TestContext {
         try {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             \call_user_func($callable);
-            return;
+            return true;
         }
         catch (\AssertionError $e) {
             $this->logger->log_failure($this->name, $e);
@@ -138,6 +139,7 @@ final class TestContext {
             $this->logger->log_error($this->name, $e);
         }
         $this->success = false;
+        return false;
     }
 
 
@@ -1130,7 +1132,7 @@ function _run_function_test(
     }
 
     if ($success) {
-        $context = new TestContext($logger, $test_name);
+        $context = new Context($logger, $test_name);
         $logger = namespace\start_buffering($logger, $test_name);
         $success = namespace\_run_test_function(
             $logger, $test_name, $test->test, $context, $arglist
@@ -1184,7 +1186,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
 
 
 function _run_test_function(
-    Logger $logger, $name, $callable, TestContext $context, array $args = null
+    Logger $logger, $name, $callable, Context $context, array $args = null
 ) {
     try {
         if ($args) {

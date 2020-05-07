@@ -11,7 +11,7 @@ function test_teardown_is_run_after_test() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest();
     $test->name = 'test';
-    $test->test = function(easytest\TestContext $context) {
+    $test->test = function(easytest\Context $context) {
         $context->teardown(function() { echo "teardown one\n"; });
         $context->teardown(function() { echo "teardown two\n"; });
         echo "test\n";
@@ -35,7 +35,7 @@ function test_teardown_is_run_after_failing_test() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest();
     $test->name = 'test';
-    $test->test = function(easytest\TestContext $context) {
+    $test->test = function(easytest\Context $context) {
         $context->teardown(function() { echo "teardown one\n"; });
         $context->teardown(function() { echo "teardown two\n"; });
         echo "test\n";
@@ -65,7 +65,7 @@ function test_error_in_function_teardown_causes_test_to_fail() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest();
     $test->name = 'test';
-    $test->test = function(easytest\TestContext $context) {
+    $test->test = function(easytest\Context $context) {
         $context->teardown(function() {
             echo "teardown one\n";
             trigger_error('I erred');
@@ -97,7 +97,7 @@ function test_skip_is_reported_is_teardown_has_an_error() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest();
     $test->name = 'test';
-    $test->test = function(easytest\TestContext $context) {
+    $test->test = function(easytest\Context $context) {
         easytest\skip('skip me');
     };
     $test->teardown = function() { \trigger_error('I erred'); };
@@ -124,7 +124,7 @@ function test_passing_subtests_dont_increase_the_test_count() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest();
     $test->name = 'test';
-    $test->test = function(easytest\TestContext $context) use ($true) {
+    $test->test = function(easytest\Context $context) use ($true) {
         $context->subtest($true);
         $context->subtest($true);
     };
@@ -139,7 +139,7 @@ function test_failed_subtests_dont_end_a_test() {
     $logger = new easytest\BasicLogger(false);
     $test = new easytest\FunctionTest();
     $test->name = 'test';
-    $test->test = function(easytest\TestContext $context) {
+    $test->test = function(easytest\Context $context) {
         $context->subtest(function() { easytest\fail('Fail me once'); });
         $context->subtest(function() { easytest\fail('Fail me twice'); });
     };
