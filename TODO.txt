@@ -43,10 +43,6 @@ Release
 
     -   What if all targets are invalid?
 
--   Implement additional assertions? Currently EasyTest's test suite only
-    uses/needs the assertions already provided by the framework, but
-    presumably other assertions would be useful in other contexts
-
 -   Why does/did this work on my computer?
     https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
 

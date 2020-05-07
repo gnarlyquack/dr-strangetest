@@ -184,7 +184,6 @@ class TestAssertThrows {
 
 
 class TestAssertEqual {
-
     public function test_passes() {
         // NOTE: Test of equal arrays that are in different key order to
         // ensure this passes
@@ -280,6 +279,485 @@ $message
 + \$actual
 
 - true
++ false
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertDifferent {
+    public function test_passes() {
+        easytest\assert_different('1', 1);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_different(1, 1);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected !== $actual" failed
+
+$expected = $actual = 1
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_different(true, true, 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected !== $actual" failed
+I failed.
+
+$expected = $actual = true
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertFalse {
+    public function test_passes() {
+        easytest\assert_false(false);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_false(null);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual === false" failed
+
+$actual = NULL
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_false('0', 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual === false" failed
+I failed.
+
+$actual = '0'
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertFalsy {
+    public function test_passes() {
+        easytest\assert_falsy(null);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_falsy(true);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual == false" failed
+
+$actual = true
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_falsy('0 cabbage', 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual == false" failed
+I failed.
+
+$actual = '0 cabbage'
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertGreater {
+    public function test_passes() {
+        easytest\assert_greater('3 bones', 0);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_greater(0, 0);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual > 0" failed
+
+$actual = 0
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_greater(-6, -5, 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual > -5" failed
+I failed.
+
+$actual = -6
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertGreaterOrEqual {
+    public function test_passes() {
+        easytest\assert_greater_or_equal('0 cabbage', 0);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_greater_or_equal(-1, 0);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual >= 0" failed
+
+$actual = -1
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_greater_or_equal(-6, -5, 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual >= -5" failed
+I failed.
+
+$actual = -6
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertLess {
+    public function test_passes() {
+        easytest\assert_less('-3 bones', 0);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_less(0, 0);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual < 0" failed
+
+$actual = 0
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_less(-5, -6, 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual < -6" failed
+I failed.
+
+$actual = -5
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertLessOrEqual {
+    public function test_passes() {
+        easytest\assert_less_or_equal('0 cabbage', 0);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_less_or_equal(1, 0);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual <= 0" failed
+
+$actual = 1
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_less_or_equal(-5, -6, 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual <= -6" failed
+I failed.
+
+$actual = -5
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertTrue {
+    public function test_passes() {
+        easytest\assert_true(true);
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_true(1);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual === true" failed
+
+$actual = 1
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_true('true', 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual === true" failed
+I failed.
+
+$actual = 'true'
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertTruthy {
+    public function test_passes() {
+        easytest\assert_truthy(new \stdClass());
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_truthy('0');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual == true" failed
+
+$actual = '0'
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_truthy(array(), 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual == true" failed
+I failed.
+
+$actual = array()
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+}
+
+
+
+class TestAssertUnequal {
+    public function test_passes() {
+        easytest\assert_unequal('0', '');
+    }
+
+
+    public function test_shows_reason_for_failure() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                // NOTE: Test of equal arrays in different key order to ensure
+                // they're sorted by key when displayed
+                $array1 = array(
+                    1,
+                    array(2, 3),
+                    array(),
+                    4,
+                );
+                $array2 = array(
+                    3 => 4,
+                    2 => array(),
+                    1 => array(1 => 3, 0 => 2),
+                    0 => 1,
+                );
+                easytest\assert_unequal($array1, $array2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected != $actual" failed
+
+- $expected
++ $actual
+
+  array(
+      0 => 1,
+      1 => array(
+          0 => 2,
+          1 => 3,
+      ),
+      2 => array(),
+      3 => 4,
+  )
+EXPECTED;
+
+        easytest\assert_identical($expected, $actual->getMessage());
+    }
+
+
+    public function test_shows_description() {
+        $actual = easytest\assert_throws(
+            'easytest\\Failure',
+            function() {
+                easytest\assert_unequal(null, false, 'I failed.');
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$expected != $actual" failed
+I failed.
+
+- $expected
++ $actual
+
+- NULL
 + false
 EXPECTED;
 

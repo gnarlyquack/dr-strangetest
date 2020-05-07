@@ -70,47 +70,36 @@ class TestDiscovery {
             case easytest\LOG_EVENT_ERROR:
             case easytest\LOG_EVENT_SKIP:
             case easytest\LOG_EVENT_OUTPUT:
-                if (!$current) {
-                    easytest\fail("Got event $type but we never entered a directory\nsource: $source\nevent: " . \print_r($event, true));
-                }
+                easytest\assert_truthy(
+                    $current,
+                    "Got event $type but we never entered a directory\nsource: $source"
+                );
 
-                if (isset($directory['tests'][$source])) {
-                    $expected = $directory['tests'][$source];
-                    if ($reason !== $expected[1]) {
-                        $reason = \substr($reason, 0, \strlen($expected[1]));
-                    }
-                    easytest\assert_identical(
-                        $expected,
-                        array($type, $reason),
-                        "Unexpected event\nsource: $source\ndirectory: $current"
-                    );
-                    unset($directory['tests'][$source]);
+                easytest\assert_true(
+                    isset($directory['tests'][$source]),
+                    "Unexpected event $type\nsource: $source\nreason: $reason\ncurrent: $current\nexpected: "
+                        . \print_r($directory['tests'], true)
+                );
+
+                $expected = $directory['tests'][$source];
+                if ($reason !== $expected[1]) {
+                    $reason = \substr($reason, 0, \strlen($expected[1]));
                 }
-                else {
-                    $message = <<<MESSAGE
-Unexpected event $type
-source: $source
-reason: $reason
-current: $current
-expected: %s
-MESSAGE;
-                    easytest\fail(
-                        \sprintf($message, \print_r($directory['tests'], true))
-                    );
-                }
+                easytest\assert_identical(
+                    $expected,
+                    array($type, $reason),
+                    "Unexpected event\nsource: $source\ndirectory: $current"
+                );
+                unset($directory['tests'][$source]);
                 break;
 
             case easytest\LOG_EVENT_DEBUG:
                 switch ($reason) {
                 case easytest\DEBUG_DIRECTORY_ENTER:
-                    if ($current && !isset($directory['dirs'][$source])) {
-                        $message = <<<MESSAGE
-Wanted to descend into unexpected child directory
-current: $current
-child:   $source
-MESSAGE;
-                        easytest\fail($message);
-                    }
+                    easytest\assert_true(
+                        !$current || isset($directory['dirs'][$source]),
+                        "Wanted to descend into unexpected child directory\ncurrent: $current\nchild:   $source"
+                    );
 
                     if ($current) {
                         $directories[$current] = $directory;
@@ -147,13 +136,10 @@ MESSAGE;
                     break;
 
                 case easytest\DEBUG_DIRECTORY_EXIT:
-                    if (!$current) {
-                        $message = <<<MESSAGE
-Wanted to ascend into a parent directory but we never entered a directory.
-parent: $source
-MESSAGE;
-                        easytest\fail($message);
-                    }
+                    easytest\assert_truthy(
+                        $current,
+                        "Wanted to ascend into a parent directory but we never entered a directory.\nparent: $source"
+                    );
                     easytest\assert_identical(
                         $current, $source,
                         "We're exiting a directory we're not currently in?"
@@ -166,14 +152,10 @@ MESSAGE;
                     }
 
                     $parent = $directory['parent'];
-                    if (!isset($directories[$parent])) {
-                        $message = <<<MESSAGE
-Wanted to ascend into an invalid parent directory.
-current: $current
-parent:  $parent
-MESSAGE;
-                        easytest\fail($message);
-                    }
+                    easytest\assert_true(
+                        isset($directories[$parent]),
+                        "Wanted to ascend into an invalid parent directory.\ncurrent: $current\nparent:  $parent"
+                    );
 
                     $directory = $directories[$parent];
                     if (!($directories[$current]['dirs'] || $directories[$current]['tests'])) {
@@ -183,38 +165,26 @@ MESSAGE;
                     break;
 
                 case easytest\DEBUG_DIRECTORY_SETUP:
-                    if (!isset($directory['setup'])) {
-                        $message = <<<MESSAGE
-Wanted to run invalid directory fixture "$source" in
-$current
-MESSAGE;
-                        easytest\fail($message);
-                    }
-                    if ($directory['setup'] !== $source) {
-                        $message = <<<MESSAGE
-Expected fixture "{$directory['setup']}" but tried to run "$source" in
-$current
-MESSAGE;
-                        easytest\fail($message);
-                    }
+                    easytest\assert_true(
+                        isset($directory['setup']),
+                        "Wanted to run invalid directory fixture '$source' in\n$current"
+                    );
+                    easytest\assert_identical(
+                        $directory['setup'], $source,
+                        "Expected fixture '{$directory['setup']}' but tried to run '$source' in\n$current"
+                    );
                     ++$directory[$directory['setup']];
                     break;
 
                 case easytest\DEBUG_DIRECTORY_TEARDOWN:
-                    if (!isset($directory['teardown'])) {
-                        $message = <<<MESSAGE
-Wanted to run invalid directory fixture "$source" in
-$current
-MESSAGE;
-                        easytest\fail($message);
-                    }
-                    if ($directory['teardown'] !== $source) {
-                        $message = <<<MESSAGE
-Expected fixture "{$directory['teardown']}" but tried to run "$source" in
-$current
-MESSAGE;
-                        easytest\fail($message);
-                    }
+                    easytest\assert_true(
+                        isset($directory['teardown']),
+                        "Wanted to run invalid directory fixture '$source' in\n$current"
+                    );
+                    easytest\assert_identical(
+                        $directory['teardown'], $source,
+                        "Expected fixture '{$directory['teardown']}' but tried to run '$source' in\n$current"
+                    );
                     ++$directory[$directory['teardown']];
                     break;
                 }
@@ -224,14 +194,16 @@ MESSAGE;
 
         foreach ($directories as $path => $directory) {
             if (isset($directory['setup'])) {
-                if (!$directory[$directory['setup']]) {
-                    easytest\fail("Never ran {$directory['setup']} for\n$path");
-                }
+                easytest\assert_truthy(
+                    $directory[$directory['setup']],
+                    "Never ran {$directory['setup']} for\n$path"
+                );
             }
             if (isset($directory['teardown'])) {
-                if (!$directory[$directory['teardown']]) {
-                    easytest\fail("Never ran {$directory['teardown']} for\n$path\nevents: " . print_r($this->logger->log, true));
-                }
+                easytest\assert_truthy(
+                    $directory[$directory['teardown']],
+                    "Never ran {$directory['teardown']} for\n$path"
+                );
             }
             if (isset($directory['setup'], $directory['teardown'])) {
                 easytest\assert_identical(
