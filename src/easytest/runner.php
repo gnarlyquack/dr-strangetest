@@ -1129,26 +1129,28 @@ function _run_function_test(
         list($success, $arglist) = namespace\_run_setup(
             $logger, $name, $test->setup, $arglist
         );
+        if (!$success) {
+            $logger = namespace\end_buffering($logger);
+            return;
+        }
     }
 
-    if ($success) {
-        $context = new Context($logger, $test_name);
-        $logger = namespace\start_buffering($logger, $test_name);
-        $success = namespace\_run_test_function(
-            $logger, $test_name, $test->test, $context, $arglist
-        );
+    $context = new Context($logger, $test_name);
+    $logger = namespace\start_buffering($logger, $test_name);
+    $success = namespace\_run_test_function(
+        $logger, $test_name, $test->test, $context, $arglist
+    );
 
-        foreach($context->teardowns() as $teardown) {
-            $toredown = namespace\_run_teardown($logger, $test_name, $teardown);
-            $success = $success && $toredown;
-        }
-        if ($test->teardown) {
-            $name = "{$test->teardown_name} for {$test_name}";
-            $logger = namespace\start_buffering($logger, $name);
-            $toredown = namespace\_run_teardown(
-                $logger, $name, $test->teardown, $arglist
-            );
-            $success = $success && $toredown;
+    foreach($context->teardowns() as $teardown) {
+        $success = namespace\_run_teardown($logger, $test_name, $teardown)
+                && $success;
+    }
+    if ($test->teardown) {
+        $name = "{$test->teardown_name} for {$test_name}";
+        $logger = namespace\start_buffering($logger, $name);
+        if(!namespace\_run_teardown($logger, $name, $test->teardown, $arglist)) {
+            $logger = namespace\end_buffering($logger);
+            return;
         }
     }
 
