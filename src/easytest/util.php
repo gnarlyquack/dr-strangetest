@@ -67,22 +67,18 @@ function _diff_array($from, $to) {
 }
 
 
-function format_failure_message($assertion, $description, $detail = null) {
+function format_failure_message($assertion, $description = null, $detail = null) {
     $message = array();
-    // $assertion and $detail are provided by the framework, so we don't need
-    // to "normalize" them. $description will have been passed through from
-    // client code, so we'll trim off any extraneous whitespace
-    if ('' !== $assertion) {
+    if ($assertion) {
         $message[] = $assertion;
     }
-    $description = \trim($description);
-    if ('' !== $description) {
+    if ($description) {
         $message[] = $description;
     }
     if (!$message) {
         $message[] = 'Assertion failed';
     }
-    if (isset($detail)) {
+    if ($detail) {
         $message[] = '';
         $message[] = $detail;
     }
