@@ -1135,8 +1135,8 @@ function _run_function_test(
         }
     }
 
-    $context = new Context($logger, $test_name);
     $logger = namespace\start_buffering($logger, $test_name);
+    $context = new Context($logger, $test_name);
     $success = namespace\_run_test_function(
         $logger, $test_name, $test->test, $context, $arglist
     );
