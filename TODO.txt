@@ -43,9 +43,6 @@ Release
 
     -   What if all targets are invalid?
 
--   Why does/did this work on my computer?
-    https://travis-ci.org/github/gnarlyquack/easytest/jobs/682216879
-
 
 Future
 ------
@@ -68,7 +65,19 @@ Future
 -   Add additional verbosity levels? Most of this would only seem to be
     necessary to support testing... :-/
     -   "all" could show passed tests (in addition to skips and output)
-    -   "debug" could show debug events in addiont to "all"
+
+-   Allow test functions and function fixtures to be moved into a class and
+    "just work"
+
+-   Implement namespace fixtures and allowing tests to be grouped together
+    within a file by namespace?
+
+-   Implement test dependencies
+
+-   Implement Context::assert()?
+
+-   Implement individual Context assertions instead of dynamically searching
+    for them? Or cache looked-up names for performance?
 
 
 Wishlist / Someday
