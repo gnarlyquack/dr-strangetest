@@ -91,8 +91,8 @@ final class Context {
         {
             try {
                 // #BC(5.5): Use proxy function for argument unpacking
-                namespace\_unpack_function("easytest\\$name", $args);
-                return true;
+                $result = namespace\_unpack_function("easytest\\$name", $args);
+                return array(true, $result);
             }
             catch (\AssertionError $e) {
                 $this->logger->log_failure($this->name, $e);
@@ -102,7 +102,7 @@ final class Context {
                 $this->logger->log_failure($this->name, $e);
             }
             $this->success = false;
-            return false;
+            return array(false, null);
         }
 
         throw new \Exception(
@@ -114,8 +114,8 @@ final class Context {
     public function subtest($callable) {
         try {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable);
-            return true;
+            $result = \call_user_func($callable);
+            return array(true, $result);
         }
         catch (\AssertionError $e) {
             $this->logger->log_failure($this->name, $e);
@@ -125,7 +125,7 @@ final class Context {
             $this->logger->log_failure($this->name, $e);
         }
         $this->success = false;
-        return false;
+        return array(false, null);
     }
 
 
