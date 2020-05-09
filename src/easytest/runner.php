@@ -101,13 +101,6 @@ final class Context {
             catch (Failure $e) {
                 $this->logger->log_failure($this->name, $e);
             }
-            catch (\Throwable $e) {
-                $this->logger->log_error($this->name, $e);
-            }
-            // #BC(5.6): Catch Exception
-            catch (\Exception $e) {
-                $this->logger->log_error($this->name, $e);
-            }
             $this->success = false;
             return false;
         }
@@ -130,13 +123,6 @@ final class Context {
         // #BC(5.6): Catch Failure
         catch (Failure $e) {
             $this->logger->log_failure($this->name, $e);
-        }
-        catch (\Throwable $e) {
-            $this->logger->log_error($this->name, $e);
-        }
-        // #BC(5.6): Catch Exception
-        catch (\Exception $e) {
-            $this->logger->log_error($this->name, $e);
         }
         $this->success = false;
         return false;
