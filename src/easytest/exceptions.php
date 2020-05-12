@@ -24,30 +24,6 @@ function fail($reason) {
 // Implementation
 
 
-final class Error extends \ErrorException {
-
-    public function __construct($message, $severity, $file, $line) {
-        parent::__construct($message, 0, $severity, $file, $line);
-    }
-
-    public function __toString() {
-        if (!$this->string) {
-            $this->string =  \sprintf(
-                "%s\nin %s on line %s\n\nStack trace:\n%s",
-                $this->message,
-                $this->file,
-                $this->line,
-                $this->getTraceAsString()
-            );
-        }
-        return $this->string;
-    }
-
-    private $string;
-}
-
-
-
 // #BC(5.6): Extend Failure from Exception
 if (\version_compare(\PHP_VERSION, '7.0', '<')) {
 

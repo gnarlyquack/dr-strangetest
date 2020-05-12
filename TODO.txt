@@ -43,9 +43,6 @@ Release
 
     -   What if all targets are invalid?
 
--   Our exceptions need to be defined prior to loading Composer in case the
-    autoloader has an error.
-
 
 Future
 ------
@@ -56,6 +53,7 @@ Future
 -   Implement additional CLI options(?)
     -   specify a config file
     -   reverse report output
+    -   enable/disable autoloading, and specify an autoloader file location?
 
 -   diff: Limit number of lines that are reported before and after the
     differing portion of text
