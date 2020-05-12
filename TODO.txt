@@ -43,6 +43,9 @@ Release
 
     -   What if all targets are invalid?
 
+-   Our exceptions need to be defined prior to loading Composer in case the
+    autoloader has an error.
+
 
 Future
 ------
