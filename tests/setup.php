@@ -42,3 +42,12 @@ function assert_log(array $log, easytest\BasicLogger $logger) {
     }
     easytest\assert_identical($expected, $actual);
 }
+
+
+function assert_report($expected, easytest\BasicLogger $logger) {
+    $log = $logger->get_log();
+    $log->seconds_elapsed = 1;
+    $log->megabytes_used = 1;
+    easytest\output_log($log);
+    easytest\assert_identical($expected, ob_get_contents());
+}

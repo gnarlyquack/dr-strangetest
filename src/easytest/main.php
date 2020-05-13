@@ -33,6 +33,10 @@ interface Log {
 
     public function output_count();
 
+    public function seconds_elapsed();
+
+    public function memory_used();
+
     public function get_events();
 }
 
@@ -175,8 +179,11 @@ function main($argc, $argv) {
     namespace\discover_tests(new LiveUpdatingLogger($logger) , $tests);
     $end = namespace\_microtime();
 
+
     $log = $logger->get_log();
-    namespace\output_log($log, \round(($end - $start) / 1000000, 3));
+    $log->megabytes_used = \round(\memory_get_peak_usage() / 1048576, 3);
+    $log->seconds_elapsed = \round(($end - $start) / 1000000, 3);
+    namespace\output_log($log);
 
     exit(
         $log->failure_count() || $log->error_count()

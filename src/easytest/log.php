@@ -9,6 +9,11 @@ namespace easytest;
 
 
 final class BasicLog implements Log {
+    public $megabytes_used;
+    public $seconds_elapsed;
+    private $count;
+    private $events;
+
 
     public function __construct(array $count, array $events) {
         $this->count = $count;
@@ -41,18 +46,35 @@ final class BasicLog implements Log {
     }
 
 
+    public function seconds_elapsed() {
+        return $this->seconds_elapsed;
+    }
+
+
+    public function memory_used() {
+        return $this->megabytes_used;
+    }
+
+
     public function get_events() {
         // This is safe because PHP arrays are copy-on-write
         return $this->events;
     }
-
-    private $count;
-    private $events;
 }
 
 
 
 final class BasicLogger implements Logger {
+    private $count = array(
+        namespace\LOG_EVENT_PASS   => 0,
+        namespace\LOG_EVENT_ERROR  => 0,
+        namespace\LOG_EVENT_FAIL   => 0,
+        namespace\LOG_EVENT_SKIP   => 0,
+        namespace\LOG_EVENT_OUTPUT => 0,
+    );
+    private $events = array();
+    private $verbose;
+
 
     public function __construct($verbose) {
         $this->verbose = $verbose;
@@ -102,14 +124,4 @@ final class BasicLogger implements Logger {
     public function get_log() {
         return new BasicLog($this->count, $this->events);
     }
-
-    private $count = array(
-        namespace\LOG_EVENT_PASS   => 0,
-        namespace\LOG_EVENT_ERROR  => 0,
-        namespace\LOG_EVENT_FAIL   => 0,
-        namespace\LOG_EVENT_SKIP   => 0,
-        namespace\LOG_EVENT_OUTPUT => 0,
-    );
-    private $events = array();
-    private $verbose;
 }

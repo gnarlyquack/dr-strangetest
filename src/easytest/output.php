@@ -90,7 +90,7 @@ function output_output() {
 }
 
 
-function output_log(Log $log, $secs_elapsed) {
+function output_log(Log $log) {
     $event_types = array(
         namespace\LOG_EVENT_FAIL => 'FAILED',
         namespace\LOG_EVENT_ERROR => 'ERROR',
@@ -159,7 +159,8 @@ function output_log(Log $log, $secs_elapsed) {
     if ($summary) {
         echo
             ($omitted ? "\n\n" : "\n\n\n"),
-            "Seconds elapsed: $secs_elapsed\n",
+            "Seconds elapsed: ", $log->seconds_elapsed(),
+            "\nMemory used: ", $log->memory_used(), " MB\n",
             \implode(', ', $summary), "\n";
     }
     else {
