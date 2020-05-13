@@ -168,8 +168,9 @@ function discover_tests(Logger $logger, array $paths) {
 
 function _process_paths(Logger $logger, array $paths) {
     if (!$paths) {
-        $paths[] = \getcwd() . \DIRECTORY_SEPARATOR;
-        $root = namespace\_determine_root($paths[0]);
+        $path = \getcwd();
+        $root = namespace\_determine_root($path);
+        $paths[] = $path . \DIRECTORY_SEPARATOR;
         return array($root, $paths);
     }
 
@@ -182,12 +183,12 @@ function _process_paths(Logger $logger, array $paths) {
             continue;
         }
 
-        if (\is_dir($realpath)) {
-            $realpath .= \DIRECTORY_SEPARATOR;
-        }
-
         if (!$root) {
             $root = namespace\_determine_root($realpath);
+        }
+
+        if (\is_dir($realpath)) {
+            $realpath .= \DIRECTORY_SEPARATOR;
         }
 
         $realpaths[] = $realpath;
@@ -206,11 +207,7 @@ function _determine_root($path) {
     // individual subpaths within a test suite; discovery will begin at the
     // root directory and descend towards the specified path.
     if (\is_dir($path)) {
-        // dirname() doesn't include a trailing directory separator, so we add
-        // one before returning the determined root directory. However, if the
-        // current path is determined to be the root, dirname() is never
-        // called, so we want to avoid adding an extra directory separator
-        $root = $parent = \rtrim($path, \DIRECTORY_SEPARATOR);
+        $root = $parent = $path;
     }
     else {
         $root = $parent = \dirname($path);
