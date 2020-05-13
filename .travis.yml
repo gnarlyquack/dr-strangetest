@@ -17,4 +17,7 @@ jobs:
         - php: 5.5
           dist: trusty
 
-script: ./bin/easytest --verbose
+
+before_script: ./bin/makephar
+
+script: ./build/easytest.phar --verbose

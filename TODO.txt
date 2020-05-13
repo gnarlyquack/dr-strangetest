@@ -46,8 +46,6 @@ Release
 
 Future
 ------
--   Distribute EasyTest as a single executable (Phar?)
-
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)

@@ -6,5 +6,5 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-require __DIR__ . '/../src/easytest/main.php';
+require __DIR__ . \sprintf('%1$s..%1$ssrc%1$seasytest%1$smain.php', \DIRECTORY_SEPARATOR);
 exit(easytest\main($argc, $argv));

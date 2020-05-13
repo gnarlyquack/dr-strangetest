@@ -1,0 +1,67 @@
+#!/usr/bin/env php
+<?php
+
+$srcdir = 'src/easytest';
+$exefile = 'bin/easytest';
+$builddir = 'build';
+$pharname = 'easytest.phar';
+
+
+
+const EXIT_SUCCESS = 0;
+const EXIT_FAILURE = 1;
+
+
+
+$pharname = "{$builddir}/{$pharname}";
+if (\file_exists($pharname)) {
+    echo "Removing old phar: $pharname\n";
+    \unlink($pharname);
+}
+elseif (\file_exists($builddir)) {
+    if (!\is_dir($builddir)) {
+        \fwrite(\STDERR, "File '{$builddir}' already exists.\n");
+        exit(namespace\EXIT_FAILURE);
+    }
+}
+else {
+    echo "Making build directory: {$builddir}\n";
+    \mkdir($builddir);
+}
+
+
+
+// build a stub using the existing executable
+
+echo "Generating stub from executable: {$exefile}\n";
+$stub = \file_get_contents($exefile);
+if (!$stub) {
+    \fwrite(\STDERR, "Failed reading executable.\n");
+    exit(namespace\EXIT_FAILURE);
+}
+
+// change 'require ...' to point to the phar file
+$require = 'require \\sprintf(\'phar://%s%smain.php\', __FILE__, \\DIRECTORY_SEPARATOR);';
+$stub = \preg_replace('~^require (?:.+)$~m', $require, $stub, 1, $count);
+if (!$count) {
+    \fwrite(\STDERR, "Unable to generate stub\ncould not find 'require' statement in executable\n");
+    exit(namespace\EXIT_FAILURE);
+}
+$stub .= '__HALT_COMPILER();';
+
+
+
+echo "Building phar from: {$srcdir}\n";
+$phar = new \Phar($pharname);
+$phar->setSignatureAlgorithm(Phar::SHA256);
+$phar->startBuffering();
+$phar->buildFromDirectory($srcdir);
+$phar->setStub($stub);
+$phar->stopBuffering();
+
+\chmod($pharname, 0744);
+
+
+
+echo "Done!\n";
+exit(namespace\EXIT_SUCCESS);
