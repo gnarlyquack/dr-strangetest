@@ -9,12 +9,20 @@ namespace easytest;
 
 
 final class BufferingLogger implements Logger {
+    public $source;
+    public $queued = array();
+    public $ob_level_current;
+    public $ob_level_start;
+    public $error = false;
+    public $logger;
+
 
     public function __construct(Logger $logger, $source, $ob_level) {
         $this->logger = $logger;
         $this->source = $source;
         $this->ob_level_start = $this->ob_level_current = $ob_level;
     }
+
 
     public function log_pass($source) {
         $this->queued[] = array(namespace\LOG_EVENT_PASS, $source);
@@ -41,19 +49,6 @@ final class BufferingLogger implements Logger {
     public function log_output($source, $output, $during_error) {
         $this->queued[] = array(namespace\LOG_EVENT_OUTPUT, array($source, $output));
     }
-
-
-    public function log_debug($source, $output) {
-        $this->queued[] = array(namespace\LOG_EVENT_DEBUG, array($source, $output));
-    }
-
-
-    public $source;
-    public $queued = array();
-    public $ob_level_current;
-    public $ob_level_start;
-    public $error = false;
-    public $logger;
 }
 
 
@@ -135,11 +130,6 @@ function end_buffering(BufferingLogger $logger) {
                 case namespace\LOG_EVENT_OUTPUT:
                     list($source, $reason) = $data;
                     $logger->log_output($source, $reason, $error);
-                    break;
-
-                case namespace\LOG_EVENT_DEBUG:
-                    list($source, $reason) = $data;
-                    $logger->log_debug($source, $reason, $error);
                     break;
             }
         }

@@ -45,11 +45,6 @@ final class LiveUpdatingLogger implements Logger {
     }
 
 
-    public function log_debug($source, $reason) {
-        $this->logger->log_debug($source, $reason);
-    }
-
-
     private $logger;
 }
 

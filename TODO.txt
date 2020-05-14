@@ -30,9 +30,9 @@ Release
     -   (Directory) setup errors when there are targets
 
     -   Running targets that are a directory or a file that is parameterized
-        with multiple argument lists, and/or in a directory hierarchy where one
-        or more directories in the hierarchy are parameterized with multiple
-        argument lists
+        with multiple argument lists, and/or in a directory hierarchy where
+        one or more directories in the hierarchy are parameterized with
+        multiple argument lists
 
     -   Error-checking for argument lists:
         -   setup fixtures must either return an iterable or an instance of
@@ -42,6 +42,26 @@ Release
     -   Handling targets that don't match a test pattern
 
     -   What if all targets are invalid?
+
+-   How to format (and/or diff) identical objects that are different
+    instances?
+
+-   If getcwd() is 'foo' and it has two test directories 'test1' and 'test2',
+    and we run 'easytest', then 'test1' and 'test2' are discovered and tested.
+    If we run 'easytest test1 test2', then 'test2' is flagged as error for not
+    being in 'test1', since 'test1' is determined to be the test root. So, we
+    need to resolve this inconsistency
+
+-   Also, if given a path that is a directory, EasyTest searches it for tests
+    regardless of whether or not it begins with 'test'. However, if given a
+    path that is a file, EasyTest will only search it if its name begins with
+    'test'.  Is this an issue?
+
+-   Implement test dependencies
+
+-   Implement Context::assert()?
+
+-   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
 
 Future
@@ -56,24 +76,14 @@ Future
 -   diff: Limit number of lines that are reported before and after the
     differing portion of text
 
--   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
-
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
-
--   Add additional verbosity levels? Most of this would only seem to be
-    necessary to support testing... :-/
-    -   "all" could show passed tests (in addition to skips and output)
 
 -   Allow test functions and function fixtures to be moved into a class and
     "just work"
 
 -   Implement namespace fixtures and allowing tests to be grouped together
     within a file by namespace?
-
--   Implement test dependencies
-
--   Implement Context::assert()?
 
 -   Implement individual Context assertions instead of dynamically searching
     for them? Or cache looked-up names for performance?

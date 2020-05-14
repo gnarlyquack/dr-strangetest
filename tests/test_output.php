@@ -10,7 +10,7 @@ class TestQuietOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new easytest\BasicLogger(false);
+        $this->logger = new easytest\BasicLogger(easytest\LOG_QUIET);
         ob_start();
     }
 
@@ -190,7 +190,7 @@ class TestVerboseOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new easytest\BasicLogger(true);
+        $this->logger = new easytest\BasicLogger(easytest\LOG_VERBOSE);
         ob_start();
     }
 

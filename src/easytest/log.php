@@ -83,6 +83,9 @@ final class BasicLogger implements Logger {
 
     public function log_pass($source) {
         ++$this->count[namespace\LOG_EVENT_PASS];
+        if ($this->verbose & namespace\LOG_PASS) {
+            $this->events[] = array(namespace\LOG_EVENT_PASS, $source, null);
+        }
     }
 
 
@@ -104,7 +107,7 @@ final class BasicLogger implements Logger {
             $reason = new Skip('Although this test was skipped, there was also an error', $reason);
             $this->events[] = array(namespace\LOG_EVENT_SKIP, $source, $reason);
         }
-        elseif ($this->verbose) {
+        elseif ($this->verbose & namespace\LOG_SKIP) {
             $this->events[] = array(namespace\LOG_EVENT_SKIP, $source, $reason);
         }
     }
@@ -112,13 +115,10 @@ final class BasicLogger implements Logger {
 
     public function log_output($source, $reason, $during_error) {
         ++$this->count[namespace\LOG_EVENT_OUTPUT];
-        if ($this->verbose || $during_error) {
+        if (($this->verbose & namespace\LOG_OUTPUT) || $during_error) {
             $this->events[] = array(namespace\LOG_EVENT_OUTPUT, $source, $reason);
         }
     }
-
-
-    public function log_debug($source, $output) {}
 
 
     public function get_log() {

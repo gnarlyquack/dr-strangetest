@@ -17,13 +17,13 @@ class TestRunFile {
     }
 
     public function setup() {
-        $this->logger = new easytest\BasicLogger(true);
+        $this->logger = new easytest\BasicLogger(easytest\LOG_VERBOSE);
     }
 
 
     private function assert_run($file, $expected){
         $state = new easytest\State();
-        $logger = new easytest\BasicLogger(true);
+        $logger = new easytest\BasicLogger(easytest\LOG_VERBOSE);
         $filepath = "{$this->root}$file";
         easytest\_run_file_tests(
             $state,

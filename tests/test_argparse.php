@@ -48,7 +48,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            array('verbose' => true),
+            array('verbose' => easytest\LOG_VERBOSE),
             $opts,
             "Options weren't parsed correctly"
         );
@@ -66,7 +66,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            array('verbose' => true),
+            array('verbose' => easytest\LOG_VERBOSE),
             $opts,
             "Options weren't parsed correctly"
         );
@@ -84,7 +84,7 @@ class TestArgParse {
         list($opts, $args) = easytest\_parse_arguments(count($argv), $argv);
 
         easytest\assert_identical(
-            array('verbose' => true),
+            array('verbose' => easytest\LOG_VERBOSE),
             $opts,
             "Options weren't parsed correctly"
         );

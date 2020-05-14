@@ -13,11 +13,6 @@ const ERROR_TEARDOWN          = 0x2;
 const ERROR_SETUP_FUNCTION    = 0x4;
 const ERROR_TEARDOWN_FUNCTION = 0x8;
 
-const DEBUG_DIRECTORY_ENTER    = 1;
-const DEBUG_DIRECTORY_EXIT     = 2;
-const DEBUG_DIRECTORY_SETUP    = 3;
-const DEBUG_DIRECTORY_TEARDOWN = 4;
-
 const TYPE_DIRECTORY = 1;
 const TYPE_FILE      = 2;
 const TYPE_CLASS     = 3;
@@ -882,8 +877,6 @@ function _run_directory_tests(
     State $state, Logger $logger, DirectoryTest $directory,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
-    $logger->log_debug($directory->name, namespace\DEBUG_DIRECTORY_ENTER);
-
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
 
     if ($directory->setup) {
@@ -893,11 +886,9 @@ function _run_directory_tests(
             $logger, $name, $directory->setup, $arglist);
         $logger = namespace\end_buffering($logger);
         if (!$success) {
-            $logger->log_debug($directory->name, namespace\DEBUG_DIRECTORY_EXIT);
             return;
         }
         $arglist = namespace\_normalize_arglists($arglist, $name);
-        $logger->log_debug($name, namespace\DEBUG_DIRECTORY_SETUP);
     }
 
     if ($targets) {
@@ -919,13 +910,9 @@ function _run_directory_tests(
     if ($directory->teardown) {
         $name = "{$directory->teardown}{$run_name}";
         $logger = namespace\start_buffering($logger, $name);
-        if(namespace\_run_teardown($logger, $name, $directory->teardown, $arglist)) {
-            $logger->log_debug($name, namespace\DEBUG_DIRECTORY_TEARDOWN);
-        }
+        namespace\_run_teardown($logger, $name, $directory->teardown, $arglist);
         $logger = namespace\end_buffering($logger);
     }
-
-    $logger->log_debug($directory->name, namespace\DEBUG_DIRECTORY_EXIT);
 }
 
 

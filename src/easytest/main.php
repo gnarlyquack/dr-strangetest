@@ -18,7 +18,16 @@ const LOG_EVENT_FAIL   = 2;
 const LOG_EVENT_ERROR  = 3;
 const LOG_EVENT_SKIP   = 4;
 const LOG_EVENT_OUTPUT = 5;
-const LOG_EVENT_DEBUG  = 6;
+
+const LOG_QUIET =  0x0;
+const LOG_PASS =   0x01;
+const LOG_SKIP =   0x02;
+const LOG_OUTPUT = 0x04;
+// #BC(5.5): Use define() to define constants
+define('easytest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
+// Right now just used for debugging
+define('easytest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
+
 
 
 
@@ -50,8 +59,6 @@ interface Logger {
     public function log_skip($source, $reason, $during_error);
 
     public function log_output($source, $reason, $during_error);
-
-    public function log_debug($source, $reason);
 }
 
 
@@ -349,12 +356,12 @@ function _parse_option($opt, $args, $opts) {
     switch ($opt) {
         case 'q':
         case 'quiet':
-            $opts['verbose'] = false;
+            $opts['verbose'] = namespace\LOG_QUIET;
             break;
 
         case 'v':
         case 'verbose':
-            $opts['verbose'] = true;
+            $opts['verbose'] = namespace\LOG_VERBOSE;
             break;
 
         case 'version':

@@ -19,7 +19,7 @@ class TestParseTestFile {
     }
 
     public function setup() {
-        $this->logger = new easytest\BasicLogger(true);
+        $this->logger = new easytest\BasicLogger(easytest\LOG_VERBOSE);
         $this->state = new easytest\State();
     }
 
