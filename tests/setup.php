@@ -11,11 +11,11 @@ class UnexpectedException extends \Exception {}
 
 function assert_log(array $log, easytest\BasicLogger $logger) {
     $expected = array(
-        easytest\LOG_EVENT_PASS => 0,
-        easytest\LOG_EVENT_FAIL => 0,
-        easytest\LOG_EVENT_ERROR => 0,
-        easytest\LOG_EVENT_SKIP => 0,
-        easytest\LOG_EVENT_OUTPUT => 0,
+        easytest\EVENT_PASS => 0,
+        easytest\EVENT_FAIL => 0,
+        easytest\EVENT_ERROR => 0,
+        easytest\EVENT_SKIP => 0,
+        easytest\EVENT_OUTPUT => 0,
         'events' => array(),
     );
     foreach ($log as $i => $entry) {
@@ -24,11 +24,11 @@ function assert_log(array $log, easytest\BasicLogger $logger) {
 
     $actual = $logger->get_log();
     $actual = array(
-        easytest\LOG_EVENT_PASS => $actual->pass_count(),
-        easytest\LOG_EVENT_FAIL => $actual->failure_count(),
-        easytest\LOG_EVENT_ERROR => $actual->error_count(),
-        easytest\LOG_EVENT_SKIP => $actual->skip_count(),
-        easytest\LOG_EVENT_OUTPUT => $actual->output_count(),
+        easytest\EVENT_PASS => $actual->pass_count(),
+        easytest\EVENT_FAIL => $actual->failure_count(),
+        easytest\EVENT_ERROR => $actual->error_count(),
+        easytest\EVENT_SKIP => $actual->skip_count(),
+        easytest\EVENT_OUTPUT => $actual->output_count(),
         'events' => $actual->get_events(),
     );
     for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {

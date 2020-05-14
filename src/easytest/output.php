@@ -87,10 +87,10 @@ function output_output() {
 
 function output_log(Log $log) {
     $event_types = array(
-        namespace\LOG_EVENT_FAIL => 'FAILED',
-        namespace\LOG_EVENT_ERROR => 'ERROR',
-        namespace\LOG_EVENT_SKIP => 'SKIPPED',
-        namespace\LOG_EVENT_OUTPUT => 'OUTPUT',
+        namespace\EVENT_FAIL => 'FAILED',
+        namespace\EVENT_ERROR => 'ERROR',
+        namespace\EVENT_SKIP => 'SKIPPED',
+        namespace\EVENT_OUTPUT => 'OUTPUT',
     );
 
     $output_count = 0;
@@ -98,11 +98,11 @@ function output_log(Log $log) {
     foreach ($log->get_events() as $entry) {
         list($type, $source, $message) = $entry;
         switch ($type) {
-            case namespace\LOG_EVENT_OUTPUT:
+            case namespace\EVENT_OUTPUT:
                 ++$output_count;
                 break;
 
-            case namespace\LOG_EVENT_SKIP:
+            case namespace\EVENT_SKIP:
                 ++$skip_count;
                 break;
         }

@@ -83,7 +83,7 @@ class TestParseTestFile {
 
         $this->assert_log(array(
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 $filepath,
                 "class TestTextBefore {}\n\n\nclass TestTextAfter {}\n",
             ),

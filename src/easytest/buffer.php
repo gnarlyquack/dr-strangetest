@@ -25,29 +25,29 @@ final class BufferingLogger implements Logger {
 
 
     public function log_pass($source) {
-        $this->queued[] = array(namespace\LOG_EVENT_PASS, $source);
+        $this->queued[] = array(namespace\EVENT_PASS, $source);
     }
 
 
     public function log_failure($source, $reason) {
-        $this->queued[] = array(namespace\LOG_EVENT_FAIL, array($source, $reason));
+        $this->queued[] = array(namespace\EVENT_FAIL, array($source, $reason));
         $this->error = true;
     }
 
 
     public function log_error($source, $reason) {
-        $this->queued[] = array(namespace\LOG_EVENT_ERROR, array($source, $reason));
+        $this->queued[] = array(namespace\EVENT_ERROR, array($source, $reason));
         $this->error = true;
     }
 
 
     public function log_skip($source, $reason, $during_error = false) {
-        $this->queued[] = array(namespace\LOG_EVENT_SKIP, array($source, $reason));
+        $this->queued[] = array(namespace\EVENT_SKIP, array($source, $reason));
     }
 
 
     public function log_output($source, $output, $during_error) {
-        $this->queued[] = array(namespace\LOG_EVENT_OUTPUT, array($source, $output));
+        $this->queued[] = array(namespace\EVENT_OUTPUT, array($source, $output));
     }
 }
 
@@ -108,26 +108,26 @@ function end_buffering(BufferingLogger $logger) {
         foreach ($queued as $event) {
             list($type, $data) = $event;
             switch ($type) {
-                case namespace\LOG_EVENT_PASS:
+                case namespace\EVENT_PASS:
                     $logger->log_pass($data);
                     break;
 
-                case namespace\LOG_EVENT_FAIL:
+                case namespace\EVENT_FAIL:
                     list($source, $reason) = $data;
                     $logger->log_failure($source, $reason);
                     break;
 
-                case namespace\LOG_EVENT_ERROR:
+                case namespace\EVENT_ERROR:
                     list($source, $reason) = $data;
                     $logger->log_error($source, $reason);
                     break;
 
-                case namespace\LOG_EVENT_SKIP:
+                case namespace\EVENT_SKIP:
                     list($source, $reason) = $data;
                     $logger->log_skip($source, $reason, $error);
                     break;
 
-                case namespace\LOG_EVENT_OUTPUT:
+                case namespace\EVENT_OUTPUT:
                     list($source, $reason) = $data;
                     $logger->log_output($source, $reason, $error);
                     break;

@@ -44,15 +44,15 @@ class TestFiles {
 
         $this->assert_log(array(
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 $path,
                 "class TestTextBefore {}\n\n\nclass TestTestAfter {}\n"
             ),
-            array(easytest\LOG_EVENT_PASS, 'Test1::test_me', null),
-            array(easytest\LOG_EVENT_PASS, 'test_two::test1', null),
-            array(easytest\LOG_EVENT_PASS, 'test_two::test2', null),
-            array(easytest\LOG_EVENT_PASS, 'test_two::test3', null),
-            array(easytest\LOG_EVENT_PASS, 'Test3::test_two', null),
+            array(easytest\EVENT_PASS, 'Test1::test_me', null),
+            array(easytest\EVENT_PASS, 'test_two::test1', null),
+            array(easytest\EVENT_PASS, 'test_two::test2', null),
+            array(easytest\EVENT_PASS, 'test_two::test3', null),
+            array(easytest\EVENT_PASS, 'Test3::test_two', null),
         ));
     }
 
@@ -71,9 +71,9 @@ class TestFiles {
                     'teardown_directory_test_file_error',
                 ),
                 'tests' => array(
-                    "$path/test1.php" => array(easytest\LOG_EVENT_ERROR, 'An error happened'),
-                    "test_file_error_two::test" => array(easytest\LOG_EVENT_PASS, null),
-                    "$path/test3.php" => array(easytest\LOG_EVENT_ERROR, 'Skip me'),
+                    "$path/test1.php" => array(easytest\EVENT_ERROR, 'An error happened'),
+                    "test_file_error_two::test" => array(easytest\EVENT_PASS, null),
+                    "$path/test3.php" => array(easytest\EVENT_ERROR, 'Skip me'),
                 ),
             ),
         );
@@ -88,7 +88,7 @@ class TestFiles {
 
         $this->assert_log(array(
             array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 $path,
                 'No such file or directory'
             ),
@@ -101,8 +101,8 @@ class TestFiles {
         easytest\discover_tests($this->logger, array($path));
 
         $this->assert_log(array(
-            array(easytest\LOG_EVENT_PASS, 'ns02\\TestNamespaces::test', null),
-            array(easytest\LOG_EVENT_PASS, 'ns03\\TestNamespaces::test', null),
+            array(easytest\EVENT_PASS, 'ns02\\TestNamespaces::test', null),
+            array(easytest\EVENT_PASS, 'ns03\\TestNamespaces::test', null),
         ));
     }
 
@@ -112,9 +112,9 @@ class TestFiles {
         easytest\discover_tests($this->logger, array($path));
 
         $this->assert_log(array(
-            array(easytest\LOG_EVENT_PASS, 'ns01\\ns1\\TestNamespaces::test', null),
-            array(easytest\LOG_EVENT_PASS, 'ns01\\ns2\\TestNamespaces::test', null),
-            array(easytest\LOG_EVENT_PASS, 'TestNamespaces::test', null),
+            array(easytest\EVENT_PASS, 'ns01\\ns1\\TestNamespaces::test', null),
+            array(easytest\EVENT_PASS, 'ns01\\ns2\\TestNamespaces::test', null),
+            array(easytest\EVENT_PASS, 'TestNamespaces::test', null),
         ));
     }
 
@@ -124,9 +124,9 @@ class TestFiles {
         easytest\discover_tests($this->logger, array($path));
 
         $this->assert_log(array(
-            array(easytest\LOG_EVENT_OUTPUT, $path, $path),
-            array(easytest\LOG_EVENT_OUTPUT, 'test_file_buffering', '__construct'),
-            array(easytest\LOG_EVENT_PASS, 'test_file_buffering::test', null),
+            array(easytest\EVENT_OUTPUT, $path, $path),
+            array(easytest\EVENT_OUTPUT, 'test_file_buffering', '__construct'),
+            array(easytest\EVENT_PASS, 'test_file_buffering::test', null),
         ));
     }
 
@@ -141,7 +141,7 @@ class TestFiles {
         easytest\discover_tests($this->logger, array($path));
 
         $this->assert_log(array(
-            array(easytest\LOG_EVENT_PASS, 'TestAnonymousClass::test', null),
+            array(easytest\EVENT_PASS, 'TestAnonymousClass::test', null),
         ));
     }
 
@@ -153,8 +153,8 @@ class TestFiles {
         easytest\discover_tests($this->logger, $paths);
 
         $this->assert_log(array(
-            array(easytest\LOG_EVENT_PASS, 'condition\\TestA::test', null),
-            array(easytest\LOG_EVENT_PASS, 'condition\\TestB::test', null),
+            array(easytest\EVENT_PASS, 'condition\\TestA::test', null),
+            array(easytest\EVENT_PASS, 'condition\\TestB::test', null),
         ));
     }
 }

@@ -22,27 +22,27 @@ final class BasicLog implements Log {
 
 
     public function pass_count() {
-        return $this->count[namespace\LOG_EVENT_PASS];
+        return $this->count[namespace\EVENT_PASS];
     }
 
 
     public function failure_count() {
-        return $this->count[namespace\LOG_EVENT_FAIL];
+        return $this->count[namespace\EVENT_FAIL];
     }
 
 
     public function error_count() {
-        return $this->count[namespace\LOG_EVENT_ERROR];
+        return $this->count[namespace\EVENT_ERROR];
     }
 
 
     public function skip_count() {
-        return $this->count[namespace\LOG_EVENT_SKIP];
+        return $this->count[namespace\EVENT_SKIP];
     }
 
 
     public function output_count() {
-        return $this->count[namespace\LOG_EVENT_OUTPUT];
+        return $this->count[namespace\EVENT_OUTPUT];
     }
 
 
@@ -66,11 +66,11 @@ final class BasicLog implements Log {
 
 final class BasicLogger implements Logger {
     private $count = array(
-        namespace\LOG_EVENT_PASS   => 0,
-        namespace\LOG_EVENT_ERROR  => 0,
-        namespace\LOG_EVENT_FAIL   => 0,
-        namespace\LOG_EVENT_SKIP   => 0,
-        namespace\LOG_EVENT_OUTPUT => 0,
+        namespace\EVENT_PASS   => 0,
+        namespace\EVENT_ERROR  => 0,
+        namespace\EVENT_FAIL   => 0,
+        namespace\EVENT_SKIP   => 0,
+        namespace\EVENT_OUTPUT => 0,
     );
     private $events = array();
     private $verbose;
@@ -82,41 +82,41 @@ final class BasicLogger implements Logger {
 
 
     public function log_pass($source) {
-        ++$this->count[namespace\LOG_EVENT_PASS];
+        ++$this->count[namespace\EVENT_PASS];
         if ($this->verbose & namespace\LOG_PASS) {
-            $this->events[] = array(namespace\LOG_EVENT_PASS, $source, null);
+            $this->events[] = array(namespace\EVENT_PASS, $source, null);
         }
     }
 
 
     public function log_failure($source, $reason) {
-        ++$this->count[namespace\LOG_EVENT_FAIL];
-        $this->events[] = array(namespace\LOG_EVENT_FAIL, $source, $reason);
+        ++$this->count[namespace\EVENT_FAIL];
+        $this->events[] = array(namespace\EVENT_FAIL, $source, $reason);
     }
 
 
     public function log_error($source, $reason) {
-        ++$this->count[namespace\LOG_EVENT_ERROR];
-        $this->events[] = array(namespace\LOG_EVENT_ERROR, $source, $reason);
+        ++$this->count[namespace\EVENT_ERROR];
+        $this->events[] = array(namespace\EVENT_ERROR, $source, $reason);
     }
 
 
     public function log_skip($source, $reason, $during_error = false) {
-        ++$this->count[namespace\LOG_EVENT_SKIP];
+        ++$this->count[namespace\EVENT_SKIP];
         if ($during_error) {
             $reason = new Skip('Although this test was skipped, there was also an error', $reason);
-            $this->events[] = array(namespace\LOG_EVENT_SKIP, $source, $reason);
+            $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
         }
         elseif ($this->verbose & namespace\LOG_SKIP) {
-            $this->events[] = array(namespace\LOG_EVENT_SKIP, $source, $reason);
+            $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
         }
     }
 
 
     public function log_output($source, $reason, $during_error) {
-        ++$this->count[namespace\LOG_EVENT_OUTPUT];
+        ++$this->count[namespace\EVENT_OUTPUT];
         if (($this->verbose & namespace\LOG_OUTPUT) || $during_error) {
-            $this->events[] = array(namespace\LOG_EVENT_OUTPUT, $source, $reason);
+            $this->events[] = array(namespace\EVENT_OUTPUT, $source, $reason);
         }
     }
 

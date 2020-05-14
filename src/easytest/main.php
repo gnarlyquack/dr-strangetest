@@ -13,11 +13,11 @@ const PROGRAM_VERSION = '0.3.0';
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
 
-const LOG_EVENT_PASS   = 1;
-const LOG_EVENT_FAIL   = 2;
-const LOG_EVENT_ERROR  = 3;
-const LOG_EVENT_SKIP   = 4;
-const LOG_EVENT_OUTPUT = 5;
+const EVENT_PASS   = 1;
+const EVENT_FAIL   = 2;
+const EVENT_ERROR  = 3;
+const EVENT_SKIP   = 4;
+const EVENT_OUTPUT = 5;
 
 const LOG_QUIET =  0x0;
 const LOG_PASS =   0x01;

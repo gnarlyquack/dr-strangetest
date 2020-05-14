@@ -36,10 +36,10 @@ class TestDirectories {
 
             switch ($type) {
 
-            case easytest\LOG_EVENT_PASS:
-            case easytest\LOG_EVENT_FAIL:
-            case easytest\LOG_EVENT_ERROR:
-            case easytest\LOG_EVENT_SKIP:
+            case easytest\EVENT_PASS:
+            case easytest\EVENT_FAIL:
+            case easytest\EVENT_ERROR:
+            case easytest\EVENT_SKIP:
                 if (!$current) {
                     easytest\fail(
                         \sprintf(
@@ -75,7 +75,7 @@ class TestDirectories {
                 unset($directory['events'][$source]);
                 break;
 
-            case easytest\LOG_EVENT_OUTPUT:
+            case easytest\EVENT_OUTPUT:
                 if (\preg_match('~^setup_?directory~i', $source)) {
                     if ($current && !isset($directory['dirs'][$reason])) {
                         easytest\fail(
@@ -218,7 +218,7 @@ class TestDirectories {
                 'dirs' => array("$path/TEST_DIR1", "$path/test_dir2"),
                 'events' => array(
                     "$path/test.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$path/test.php"
                     ),
                 ),
@@ -230,11 +230,11 @@ class TestDirectories {
                 'parent' => $path,
                 'events' => array(
                     "$path/TEST_DIR1/TEST1.PHP" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$path/TEST_DIR1/TEST1.PHP",
                     ),
                     "$path/TEST_DIR1/TEST2.PHP" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$path/TEST_DIR1/TEST2.PHP",
                     ),
                 ),
@@ -246,11 +246,11 @@ class TestDirectories {
                 'parent' => $path,
                 'events' => array(
                     "$path/test_dir2/test1.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$path/test_dir2/test1.php",
                     ),
                     "$path/test_dir2/test2.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$path/test_dir2/test2.php",
                     ),
                 ),
@@ -281,11 +281,11 @@ class TestDirectories {
                 'parent' => $root,
                 'events' => array(
                     "$root/test_dir1/test2.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$root/test_dir1/test2.php",
                     ),
                     "$root/test_dir1/test3.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$root/test_dir1/test3.php",
                     ),
                 ),
@@ -304,11 +304,11 @@ class TestDirectories {
                 'parent' => "$root/test_dir2",
                 'events' => array(
                     "$root/test_dir2/test_subdir/test1.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$root/test_dir2/test_subdir/test1.php",
                     ),
                     "$root/test_dir2/test_subdir/test2.php" => array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         "$root/test_dir2/test_subdir/test2.php",
                     ),
                 ),
@@ -326,7 +326,7 @@ class TestDirectories {
 
         $expected = array(
             array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 $path,
                 'No such file or directory'
             ),
@@ -346,7 +346,7 @@ class TestDirectories {
         // skip, is reported as an error
         $expected = array(
             array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 "$path/setup.php",
                 'Skip me',
             ),
@@ -354,14 +354,14 @@ class TestDirectories {
         $expected = array(
             "$path/" => array(
                 'tests' => array(
-                    "$path/setup.php" => array(easytest\LOG_EVENT_ERROR, 'Skip me'),
+                    "$path/setup.php" => array(easytest\EVENT_ERROR, 'Skip me'),
                 ),
             ),
         );
         //$this->assert_events($expected);
         $expected = array(
             array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 "$path/setup.php",
                 'Skip me',
             ),
@@ -376,7 +376,7 @@ class TestDirectories {
 
         $this->assert_log(array(
              array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 'setup_directory_setup_error',
                 'An error happened',
             ),
@@ -392,9 +392,9 @@ class TestDirectories {
                 'setup' => 1,
                 'teardown' => 1,
                 'events' => array(
-                    'test_teardown_error::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'test_teardown_error::test' => array(easytest\EVENT_PASS, null),
                     'teardown_directory_teardown_error' => array(
-                        easytest\LOG_EVENT_ERROR,
+                        easytest\EVENT_ERROR,
                         'Skip is an error here',
                     ),
                 ),
@@ -414,8 +414,8 @@ class TestDirectories {
                 'teardown' => 1,
                 'dirs' => array("$path/test_subdir1"),
                 'events' => array(
-                    'TestArgumentsOne::test' => array(easytest\LOG_EVENT_PASS, null),
-                    'TestArgumentsThree::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'TestArgumentsOne::test' => array(easytest\EVENT_PASS, null),
+                    'TestArgumentsThree::test' => array(easytest\EVENT_PASS, null),
                 ),
             ),
 
@@ -424,7 +424,7 @@ class TestDirectories {
                 'teardown' => 1,
                 'parent' => $path,
                 'events' => array(
-                    'TestArgumentsTwo::test' => array(easytest\LOG_EVENT_PASS, null),
+                    'TestArgumentsTwo::test' => array(easytest\EVENT_PASS, null),
                 ),
             ),
         );
@@ -443,7 +443,7 @@ class TestDirectories {
                 'teardown' => 1,
                 'events' => array(
                     'TestInsufficientArguments' => array(
-                        easytest\LOG_EVENT_ERROR,
+                        easytest\EVENT_ERROR,
                         // #BC(7.0): Check format of expected error message
                         version_compare(PHP_VERSION, '7.1', '<')
                             ? 'Missing argument 2 for TestInsufficientArguments::__construct()'
@@ -462,12 +462,12 @@ class TestDirectories {
 
         $expected = array(
             array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 "$path/setup.php",
                 "Multiple setup fixtures found:\n\tsetup_directory_multiple_fixtures\n\tSetupDirectoryMultipleFixtures",
             ),
             array(
-                easytest\LOG_EVENT_ERROR,
+                easytest\EVENT_ERROR,
                 "$path/setup.php",
                 "Multiple teardown fixtures found:\n\tteardown_directory_multiple_fixtures\n\tTeardownDirectoryMultipleFixtures",
             ),
@@ -482,102 +482,102 @@ class TestDirectories {
 
         $expected = array(
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\setup_directory',
                 $path,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (0, 0)',
                 '2 4',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\test_function (0, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (0, 1)',
                 '4 2',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\test_function (0, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (0, 0)',
                 '2 4',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\TestClass::test (0, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (0, 1)',
                 '4 2',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\TestClass::test (0, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_file (0)',
                 '2 4 4 2',
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (1, 0)',
                 '8 16',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\test_function (1, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (1, 1)',
                 '16 8',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\test_function (1, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (1, 0)',
                 '8 16',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\TestClass::test (1, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (1, 1)',
                 '16 8',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'dir_params\\TestClass::test (1, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_file (1)',
                 '8 16 16 8',
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_directory',
                 $path,
             ),
@@ -592,116 +592,116 @@ class TestDirectories {
 
         $expected = array(
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\setup_directory',
                 $path,
             ),
 
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\setup_directory (0)',
                 "$path/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (0, 0)',
                 '2 4 8',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\test_function (0, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (0, 0)',
                 '2 4',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test (0, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (0, 1)',
                 '4 2 8',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\test_function (0, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (0, 1)',
                 '4 2',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test (0, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\teardown_directory (0)',
                 '2 4 4 2',
             ),
 
 
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\setup_directory (1)',
                 "$path/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (1, 0)',
                 '8 16 128',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\test_function (1, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (1, 0)',
                 '8 16',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test (1, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\test_function (1, 1)',
                 '16 8 128',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\test_function (1, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\TestClass::test (1, 1)',
                 '16 8',
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'subdir_params\\subdir\\TestClass::test (1, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\subdir\\teardown_directory (1)',
                 '8 16 16 8',
             ),
 
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'subdir_params\\teardown_directory',
                 $path,
             ),
@@ -716,118 +716,118 @@ class TestDirectories {
 
         $expected = array(
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\setup_directory',
                 $path,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\setup_directory (0)',
                 "$path/test_dir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\setup_directory (0, 0)',
                 "$path/test_dir/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (0, 0, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (0, 0, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\teardown_directory (0, 0)',
                 "$path/test_dir/test_subdir",
             ),
 
 
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\setup_directory (0, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (0, 1, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (0, 1, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\teardown_directory (0, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\teardown_directory (0)',
                 "$path/test_dir",
             ),
 
 
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\setup_directory (1)',
                 "$path/test_dir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\setup_directory (1, 0)',
                 "$path/test_dir/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (1, 0, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (1, 0, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\teardown_directory (1, 0)',
                 "$path/test_dir/test_subdir",
             ),
 
 
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\setup_directory (1, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (1, 1, 0)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_PASS,
+                easytest\EVENT_PASS,
                 'param_target\\dir\\subdir\\test (1, 1, 1)',
                 null,
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\subdir\\teardown_directory (1, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\dir\\teardown_directory (1)',
                 "$path/test_dir",
             ),
             array(
-                easytest\LOG_EVENT_OUTPUT,
+                easytest\EVENT_OUTPUT,
                 'param_target\\teardown_directory',
                 $path,
             ),

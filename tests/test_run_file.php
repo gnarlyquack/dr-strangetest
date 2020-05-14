@@ -41,7 +41,7 @@ class TestRunFile {
         $this->assert_run(
             'functions.php',
             array(
-                easytest\LOG_EVENT_PASS => 2,
+                easytest\EVENT_PASS => 2,
             )
         );
     }
@@ -51,7 +51,7 @@ class TestRunFile {
         $this->assert_run(
             'function_fixtures.php',
             array(
-                easytest\LOG_EVENT_PASS => 2,
+                easytest\EVENT_PASS => 2,
             )
         );
     }
@@ -61,7 +61,7 @@ class TestRunFile {
         $this->assert_run(
             'file_fixtures.php',
             array(
-                easytest\LOG_EVENT_PASS => 3,
+                easytest\EVENT_PASS => 3,
             )
         );
     }
@@ -71,7 +71,7 @@ class TestRunFile {
         $this->assert_run(
             'file_and_function_fixtures.php',
             array(
-                easytest\LOG_EVENT_PASS => 3,
+                easytest\EVENT_PASS => 3,
             )
         );
     }
@@ -81,11 +81,11 @@ class TestRunFile {
         $this->assert_run(
             'multiple_runs.php',
             array(
-                easytest\LOG_EVENT_PASS => 6,
-                easytest\LOG_EVENT_OUTPUT => 1,
+                easytest\EVENT_PASS => 6,
+                easytest\EVENT_OUTPUT => 1,
                 'events' => array(
                     array(
-                        easytest\LOG_EVENT_OUTPUT,
+                        easytest\EVENT_OUTPUT,
                         'multiple_runs\\teardown_file',
                         'multiple_runs\\teardown_file',
                     ),
