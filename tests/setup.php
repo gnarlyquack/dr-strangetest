@@ -44,6 +44,23 @@ function assert_log(array $log, easytest\BasicLogger $logger) {
 }
 
 
+function assert_events($expected, easytest\BasicLogger $logger) {
+    $actual = $logger->get_log()->get_events();
+    foreach ($actual as $i => $event) {
+        list($type, $source, $reason) = $event;
+        // #BC(5.6): Check if reason is instance of Exception
+        if ($reason instanceof \Throwable
+            || $reason instanceof \Exception)
+        {
+            $reason = $reason->getMessage();
+        }
+
+        $actual[$i] = array($type, $source, $reason);
+    }
+    easytest\assert_identical($expected, $actual);
+}
+
+
 function assert_report($expected, easytest\BasicLogger $logger) {
     $log = $logger->get_log();
     $log->seconds_elapsed = 1;

@@ -76,7 +76,7 @@ class TestDirectories {
                 break;
 
             case easytest\EVENT_OUTPUT:
-                if (\preg_match('~^setup_?directory~i', $source)) {
+                if (\preg_match('~setup_?directory~i', $source)) {
                     if ($current && !isset($directory['dirs'][$reason])) {
                         easytest\fail(
                             \sprintf(
@@ -114,7 +114,7 @@ class TestDirectories {
                     }
                 }
 
-                elseif (\preg_match('~^teardown_?directory~i', $source)) {
+                elseif (\preg_match('~teardown_?directory~i', $source)) {
                     if (!$current) {
                         easytest\fail(
                             \sprintf(
@@ -258,6 +258,27 @@ class TestDirectories {
         );
         $this->assert_events($expected, $context);
     }
+
+
+    public function test_does_not_find_conditionally_nondeclared_tests(easytest\Context $context) {
+        $path = $this->path . 'conditional';
+        easytest\discover_tests($this->logger, array($path));
+
+        $this->assert_events(
+            array(
+                $path => array(
+                    'setup' => 1,
+                    'teardown' => 1,
+                    'events' => array(
+                        'condition\\TestA::test' => array(easytest\EVENT_PASS , null),
+                        'condition\\TestB::test' => array(easytest\EVENT_PASS , null),
+                    ),
+                ),
+            ),
+            $context
+        );
+    }
+
 
     public function test_individual_paths(easytest\Context $context) {
         $root = $this->path . 'test_individual_paths';

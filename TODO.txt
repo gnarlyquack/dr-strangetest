@@ -63,6 +63,18 @@ Release
 
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
 
+-   Consider whether we want to show fully-qualified names in test report, or
+    omit the namespace. With the exception of output (and passes), all events
+    are traced to a file and line number.
+
+-   Maybe reconsider Context::subtest() return argument. Currently it makes it
+    hard to do simple conditional checks on whether or not the subtest passed
+    or failed. Instead, we may just want to return true or false and then add
+    an optional reference parameter in which to return the value of the
+    subtest $callable. If we do this, we will need to explicitly implement at
+    least assert_throws() on the Context class in order to handle returning
+    the thrown exception.
+
 
 Future
 ------
@@ -87,6 +99,10 @@ Future
 
 -   Implement individual Context assertions instead of dynamically searching
     for them? Or cache looked-up names for performance?
+
+-   Do we want to reverse the order of the test and arglists loops?
+    -   Right now it's: foreach test, foreach arglist, run the test
+    -   Maybe we prefer: foreach arglist, foreach test, run test ?
 
 
 Wishlist / Someday
