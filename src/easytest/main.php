@@ -110,7 +110,6 @@ abstract class struct {
 }
 
 
-
 final class Error extends \ErrorException {
 
     public function __construct($message, $severity, $file, $line) {
@@ -133,6 +132,11 @@ final class Error extends \ErrorException {
     private $string;
 }
 
+
+final class Target extends struct {
+    public $name;
+    public $targets = array();
+}
 
 
 final class ArgumentLists {
@@ -319,6 +323,12 @@ function _parse_arguments($argc, $argv) {
         else {
             break;
         }
+    }
+
+    foreach ($args as $i => $arg) {
+        $target = new Target();
+        $target->name = $arg;
+        $args[$i] = $target;
     }
 
     return array($opts, $args);

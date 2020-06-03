@@ -20,6 +20,11 @@ class TestFiles {
     // helper assertions
 
     private function assert_events($expected) {
+        if (!($this->path instanceof easytest\Target)) {
+            $target = new easytest\Target();
+            $target->name = $this->path;
+            $this->path = $target;
+        }
         easytest\discover_tests($this->logger, array($this->path));
         assert_events($expected, $this->logger);
     }
@@ -734,5 +739,31 @@ class TestFiles {
 
             array(easytest\EVENT_PASS, 'subtests\\test::test_two', null),
         ));
+    }
+
+
+    function test_runs_only_targeted_tests() {
+        $this->path .= 'targets/test.php';
+
+        $target = new easytest\Target();
+        $target->name = $this->path;
+        $target->targets = array(
+            new easytest\Target('function targets\\test_two'),
+            new easytest\Target(
+                'class targets\\test',
+                array(
+                    new easytest\Target('test_two'),
+                )
+            ),
+            new easytest\Target('function targets\\test_one'),
+        );
+        $this->path = $target;
+
+        $this->assert_events(array(
+            array(easytest\EVENT_PASS, 'targets\\test_two', null),
+            array(easytest\EVENT_PASS, 'targets\\test::test_two', null),
+            array(easytest\EVENT_PASS, 'targets\\test_one', null),
+        ));
+
     }
 }

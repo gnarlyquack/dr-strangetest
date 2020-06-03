@@ -57,15 +57,9 @@ Release
     path that is a file, EasyTest will only search it if its name begins with
     'test'.  Is this an issue?
 
--   Implement test dependencies
-
 -   Implement Context::assert()?
 
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
-
--   Consider whether we want to show fully-qualified names in test report, or
-    omit the namespace. With the exception of output (and passes), all events
-    are traced to a file and line number.
 
 -   Maybe reconsider Context::subtest() return argument. Currently it makes it
     hard to do simple conditional checks on whether or not the subtest passed
@@ -74,6 +68,23 @@ Release
     subtest $callable. If we do this, we will need to explicitly implement at
     least assert_throws() on the Context class in order to handle returning
     the thrown exception.
+    -   Actually, replace it altogether with Context::assert?
+
+-   Clean up targets:
+    -   File target processing should collapse class tests
+    -   Just treat functions as a string, rather than as a new target object?
+
+-   Do we want to reverse the order of the test and arglists loops?
+    -   Right now it's: foreach test, foreach arglist, run the test
+    -   Maybe we prefer: foreach arglist, foreach test, run test ?
+
+-   Fix run names so that they don't have to start with a space
+
+-   Implement iterable checks as a conditionally-defined function
+
+-   Change setup/teardown_function to just setup/teardown
+
+-   Support tearing down individual parameterized test runs
 
 
 Future
@@ -85,24 +96,14 @@ Future
     -   reverse report output
     -   enable/disable autoloading, and specify an autoloader file location?
 
--   diff: Limit number of lines that are reported before and after the
-    differing portion of text
-
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
 -   Allow test functions and function fixtures to be moved into a class and
-    "just work"
-
--   Implement namespace fixtures and allowing tests to be grouped together
-    within a file by namespace?
+    "just work"?
 
 -   Implement individual Context assertions instead of dynamically searching
     for them? Or cache looked-up names for performance?
-
--   Do we want to reverse the order of the test and arglists loops?
-    -   Right now it's: foreach test, foreach arglist, run the test
-    -   Maybe we prefer: foreach arglist, foreach test, run test ?
 
 
 Wishlist / Someday
@@ -118,3 +119,6 @@ Wishlist / Someday
 -   Support calling assert() with arbitrary exceptions in PHP >= 7? It's not
     entirely clear what this would even entail: perhaps allow for outputting
     custom types of errors/failures?
+
+-   diff: Limit number of lines that are reported before and after the
+    differing portion of text

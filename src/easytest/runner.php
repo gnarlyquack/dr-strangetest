@@ -18,6 +18,13 @@ const TYPE_FILE      = 2;
 const TYPE_CLASS     = 3;
 const TYPE_FUNCTION  = 4;
 
+const RESULT_PASS     = 0x0;
+const RESULT_FAIL     = 0x1;
+const RESULT_POSTPONE = 0x2;
+
+
+
+final class Postpone extends \Exception {}
 
 
 final class State extends struct {
@@ -25,6 +32,17 @@ final class State extends struct {
     public $directories = array();
     public $files = array();
     public $classes = array();
+    public $results = array();
+    public $depends = array();
+    public $fixture = array();
+}
+
+
+final class TestInfo extends struct {
+    public $type;
+    public $filename;
+    public $namespace;
+    public $name;
 }
 
 
@@ -50,17 +68,25 @@ final class FileTest extends struct {
 
 
 final class ClassTest extends struct {
+    public $file;
+    public $namespace;
+
     public $name;
     public $setup;
     public $teardown;
-    public $tests = array();
 
     public $setup_function;
     public $teardown_function;
+    public $tests = array();
 }
 
 
 final class FunctionTest extends struct {
+    public $file;
+    public $namespace;
+    public $class;
+    public $function;
+
     public $name;
     public $setup;
     public $teardown;
@@ -71,10 +97,134 @@ final class FunctionTest extends struct {
 }
 
 
-final class Context {
-    public function __construct(Logger $logger, $name) {
+final class Dependency extends struct {
+    public $file;
+    public $class;
+    public $function;
+    public $dependees;
+}
+
+
+final class DependencyGraph {
+    private $state;
+    private $logger;
+    private $postorder = array();
+    private $marked = array();
+    private $stack = array();
+
+
+    public function __construct(State $state, Logger $logger) {
+        $this->state = $state;
         $this->logger = $logger;
-        $this->name = $name;
+    }
+
+
+    public function sort() {
+        foreach ($this->state->depends as $from => $_) {
+            $this->postorder($from);
+        }
+        return $this->postorder;
+    }
+
+
+    private function postorder($from, array $runs = array()) {
+        if (isset($this->marked[$from])) {
+            if (!$this->marked[$from]) {
+                return false;
+            }
+
+            if (!isset($this->state->results[$from])) {
+                return true;
+            }
+
+            return $this->check_run_results($from, $runs);
+        }
+
+        $this->marked[$from] = true;
+        $this->stack[$from] = true;
+
+        if (isset($this->state->depends[$from])) {
+            $dependency = $this->state->depends[$from];
+            foreach ($dependency->dependees as $to => $runs) {
+                if (isset($this->stack[$to])) {
+                    $cycle = array();
+                    \end($this->stack);
+                    do {
+                        \prev($this->stack);
+                        $key = \key($this->stack);
+                        $cycle[] = $key;
+                    } while ($key !== $to);
+
+                    $this->marked[$from] = false;
+                    $this->logger->log_error(
+                        $from,
+                        \sprintf(
+                            "This test has a cyclical dependency with the following tests:\n\t%s",
+                            \implode("\n\t", $cycle)
+                        )
+                    );
+                }
+                else {
+                    $this->marked[$from] = $this->postorder($to, $runs);
+                    if (!$this->marked[$from]) {
+                        $this->logger->log_skip($from, "This test depends on '$to', which did not pass");
+                    }
+                }
+            }
+
+            if ($this->marked[$from]) {
+                $this->postorder[] = $dependency;
+            }
+        }
+        else {
+            if (!isset($this->state->results[$from])) {
+                $this->marked[$from] = false;
+                $this->logger->log_error(
+                    $from,
+                    'Other tests depend on this test, but this test was never run'
+                );
+            }
+            else {
+                $result = $this->check_run_results($from, $runs);
+            }
+        }
+
+        \array_pop($this->stack);
+        return isset($result) ? $result : $this->marked[$from];
+    }
+
+
+    private function check_run_results($from, array $runs) {
+        $result = true;
+        foreach ($runs as $run) {
+            if (!isset($this->state->results[$from][$run])) {
+                $this->logger->log_error(
+                    "$from$run",
+                    'Other tests depend on this test, but this test was never run'
+                );
+                $result = false;
+            }
+        }
+        return $result;
+    }
+}
+
+
+final class Context {
+    private $state;
+    private $logger;
+    private $test;
+    private $run;
+    private $result = namespace\RESULT_PASS;
+    private $teardowns = array();
+
+    public function __construct(State $state, Logger $logger,
+        FunctionTest $test, $run
+    ) {
+        $this->state = $state;
+        $this->logger = $logger;
+        $this->test = $test;
+        $this->run = $run;
     }
 
 
@@ -86,18 +236,18 @@ final class Context {
         {
             try {
                 // #BC(5.5): Use proxy function for argument unpacking
-                $result = namespace\_unpack_function("easytest\\$name", $args);
-                return array(true, $result);
+                $value = namespace\_unpack_function("easytest\\$name", $args);
+                return array(namespace\RESULT_PASS, $value);
             }
             catch (\AssertionError $e) {
-                $this->logger->log_failure($this->name, $e);
+                $this->logger->log_failure($this->test->name, $e);
             }
             // #BC(5.6): Catch Failure
             catch (Failure $e) {
-                $this->logger->log_failure($this->name, $e);
+                $this->logger->log_failure($this->test->name, $e);
             }
-            $this->success = false;
-            return array(false, null);
+            $this->result = namespace\RESULT_FAIL;
+            return array(namespace\RESULT_FAIL, null);
         }
 
         throw new \Exception(
@@ -109,18 +259,18 @@ final class Context {
     public function subtest($callable) {
         try {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
-            $result = \call_user_func($callable);
-            return array(true, $result);
+            $value = \call_user_func($callable);
+            return array(namespace\RESULT_PASS, $value);
         }
         catch (\AssertionError $e) {
-            $this->logger->log_failure($this->name, $e);
+            $this->logger->log_failure($this->test->name, $e);
         }
         // #BC(5.6): Catch Failure
         catch (Failure $e) {
-            $this->logger->log_failure($this->name, $e);
+            $this->logger->log_failure($this->test->name, $e);
         }
-        $this->success = false;
-        return array(false, null);
+        $this->result = namespace\RESULT_FAIL;
+        return array(namespace\RESULT_FAIL, null);
     }
 
 
@@ -129,19 +279,109 @@ final class Context {
     }
 
 
-    public function succeeded() {
-        return $this->success;
+    public function depends($name) {
+        $dependees = array();
+        // #BC(5.5): Use func_get_args instead of argument unpacking
+        foreach (\func_get_args() as $name) {
+            list($name, $run) = $this->normalize_name($name);
+
+            if (!isset($this->state->results[$name][$run])) {
+                $dependees[] = $name;
+            }
+            elseif (!$this->state->results[$name][$run]) {
+                throw new Skip("This test depends on '{$name}{$run}', which did not pass");
+            }
+        }
+
+        if ($dependees) {
+            if (!isset($this->state->depends[$this->test->name])) {
+                $dependency = new Dependency();
+                $dependency->file = $this->test->file;
+                $dependency->class = $this->test->class;
+                $dependency->function = $this->test->function;
+                $this->state->depends[$this->test->name] = $dependency;
+            }
+            else {
+                $dependency = $this->state->depends[$this->test->name];
+            }
+
+            foreach ($dependees as $dependee) {
+                if (!isset($dependency->dependees[$dependee])) {
+                    $dependency->dependees[$dependee] = array();
+                }
+                $dependency->dependees[$dependee][] = $run;
+            }
+
+            throw new Postpone();
+        }
     }
+
+
+    public function set($value) {
+        $this->state->fixture[$this->test->name][$this->run] = $value;
+    }
+
+
+    public function get($name) {
+        list($name, $run) = $this->normalize_name($name);
+        return $this->state->fixture[$name][$run];
+    }
+
+
+    public function result() {
+        return $this->result;
+    }
+
 
     public function teardowns() {
         return $this->teardowns;
     }
 
 
-    private $name;
-    private $logger;
-    private $success = true;
-    private $teardowns = array();
+    private function normalize_name($name) {
+        if (
+            !\preg_match(
+                '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*(\\((.*)\\))?$~',
+                $name,
+                $matches
+            )
+        ) {
+            \trigger_error("Invalid test name: $name");
+        }
+
+        list(, $namespace, $class, $function) = $matches;
+
+        if (!$namespace) {
+            if (!$class && $this->test->class) {
+                // the namespace is already included in the class name
+                $class = $this->test->class;
+            }
+            else {
+                $namespace = $this->test->namespace;
+                if ($class) {
+                    $class = \rtrim($class, ':');
+                }
+            }
+        }
+        else {
+            $namespace = \ltrim($namespace, '\\');
+        }
+
+        if ($class) {
+            $class .= '::';
+        }
+
+        $name = $namespace . $class . $function;
+
+        if (isset($matches[4])) {
+            $run = ('' === $matches[5]) ? $matches[5] : " {$matches[4]}";
+        }
+        else {
+            $run = $this->run;
+        }
+
+        return array($name, $run);
+    }
 }
 
 
@@ -157,7 +397,15 @@ function discover_tests(Logger $logger, array $paths) {
         return;
     }
 
-    namespace\_run_tests($state, $logger, $directory, null, array(), $paths);
+    namespace\_run_tests($state, $logger, $directory, null, null, $paths);
+    while ($state->depends) {
+        $targets = namespace\_resolve_dependencies($state, $logger);
+        if (!$targets) {
+            break;
+        }
+        $state->depends = array();
+        namespace\_run_tests($state, $logger, $directory, null, null, $targets);
+    }
 }
 
 
@@ -165,16 +413,19 @@ function _process_paths(Logger $logger, array $paths) {
     if (!$paths) {
         $path = \getcwd();
         $root = namespace\_determine_root($path);
-        $paths[] = $path . \DIRECTORY_SEPARATOR;
+
+        $target = new Target();
+        $target->name = $path . \DIRECTORY_SEPARATOR;
+        $paths[] = $target;
         return array($root, $paths);
     }
 
     $root = null;
-    $realpaths = array();
+    $targets = array();
     foreach ($paths as $path) {
-        $realpath = \realpath($path);
+        $realpath = \realpath($path->name);
         if (!$realpath) {
-            $logger->log_error($path, 'No such file or directory');
+            $logger->log_error($path->name, 'No such file or directory');
             continue;
         }
 
@@ -186,9 +437,10 @@ function _process_paths(Logger $logger, array $paths) {
             $realpath .= \DIRECTORY_SEPARATOR;
         }
 
-        $realpaths[] = $realpath;
+        $path->name = $realpath;
+        $targets[] = $path;
     }
-    return array($root, $realpaths);
+    return array($root, $targets);
 }
 
 
@@ -265,7 +517,7 @@ function _parse_file(Logger $logger, $filepath, array $checks, array &$seen) {
                 break;
             }
 
-            if ($checks[$token_type]($name, $fullname)) {
+            if ($checks[$token_type]($ns, $name, $fullname)) {
                 // whatever we're parsing cared about this identifier, so add
                 // it to the "seen" list
                 $seen[$seenname] = true;
@@ -491,9 +743,9 @@ function _discover_directory_setup(
 ) {
     $error = 0;
     $checks = array(
-        \T_FUNCTION => function($function, $fullname) use ($directory, &$error) {
+        \T_FUNCTION => function($namespace, $function, $fullname) use ($directory, &$error) {
             return namespace\_is_directory_setup_function(
-                $directory, $error, $function, $fullname
+                $directory, $error, $namespace, $function, $fullname
             );
         },
     );
@@ -530,7 +782,7 @@ function _discover_directory_setup(
 
 
 function _is_directory_setup_function(
-    DirectoryTest $directory, &$error, $function, $fullname
+    DirectoryTest $directory, &$error, $namespace, $function, $fullname
 ) {
     if (\preg_match('~^(setup|teardown)_?directory~i', $function, $matches)) {
         if ('setup' === \strtolower($matches[1])) {
@@ -560,11 +812,11 @@ function _discover_file(State $state, Logger $logger, $filepath) {
     $file->name = $filepath;
     $error = 0;
     $checks = array(
-        \T_CLASS => function($class, $fullname) use ($file) {
-            return namespace\_is_test_class($file, $class, $fullname);
+        \T_CLASS => function($namespace, $class, $fullname) use ($file) {
+            return namespace\_is_test_class($file, $namespace, $class, $fullname);
         },
-        \T_FUNCTION => function($function, $fullname) use ($file, &$error) {
-            return namespace\_is_test_function($file, $error, $function, $fullname);
+        \T_FUNCTION => function($namespace, $function, $fullname) use ($file, &$error) {
+            return namespace\_is_test_function($file, $error, $namespace, $function, $fullname);
         },
     );
     if (!namespace\_parse_file($logger, $filepath, $checks, $state->seen)) {
@@ -627,18 +879,28 @@ function _discover_file(State $state, Logger $logger, $filepath) {
 }
 
 
-function _is_test_class(FileTest $file, $class, $fullname) {
+function _is_test_class(FileTest $file, $namespace, $class, $fullname) {
     if (0 === \substr_compare($class, 'test', 0, 4, true)) {
-        $file->tests["class $fullname"] = array($fullname, namespace\TYPE_CLASS);
+        $info = new TestInfo();
+        $info->type = namespace\TYPE_CLASS;
+        $info->filename = $file->name;
+        $info->namespace = $namespace;
+        $info->name = $fullname;
+        $file->tests["class $fullname"] = $info;
         return true;
     }
     return false;
 }
 
 
-function _is_test_function(FileTest $file, &$error, $function, $fullname) {
+function _is_test_function(FileTest $file, &$error, $namespace, $function, $fullname) {
     if (0 === \substr_compare($function, 'test', 0, 4, true)) {
-        $file->tests["function $fullname"] = array($fullname, namespace\TYPE_FUNCTION);
+        $info = new TestInfo();
+        $info->type = namespace\TYPE_FUNCTION;
+        $info->filename = $file->name;
+        $info->namespace = $namespace;
+        $info->name = $fullname;
+        $file->tests["function $fullname"] = $info;
         return true;
     }
 
@@ -679,12 +941,15 @@ function _is_test_function(FileTest $file, &$error, $function, $fullname) {
 }
 
 
-function _discover_class(State $state, Logger $logger, $classname) {
+function _discover_class(State $state, Logger $logger, TestInfo $info) {
+    $classname = $info->name;
     if (isset($state->classes[$classname])) {
         return $state->classes[$classname];
     }
 
     $class = new ClassTest();
+    $class->file = $info->filename;
+    $class->namespace = $info->namespace;
     $class->name = $classname;
     $error = 0;
     foreach (\get_class_methods($classname) as $method) {
@@ -760,7 +1025,25 @@ function _run_tests(
     $params = null, array $run_id = null, array $targets = null
 ) {
     if ($targets) {
-        $targets = namespace\_find_targets($logger, $test, $targets);
+        $type = \get_class($test);
+        switch ($type) {
+        case 'easytest\\DirectoryTest':
+            $targets = namespace\_find_directory_targets($logger, $test, $targets);
+            break;
+
+        case 'easytest\\FileTest':
+            $targets = namespace\_find_file_targets($logger, $test, $targets);
+            break;
+
+        case 'easytest\\ClassTest':
+            $targets = namespace\_find_class_targets($logger, $test, $targets);
+            break;
+
+        default:
+            // #BC(5.4): Omit description from assert
+            \assert(false); // "Test type '$type' can't have targets"
+            break;
+        }
     }
 
     if ($params instanceof ArgumentLists) {
@@ -810,13 +1093,13 @@ function _run_tests(
 
         case 'easytest\\ClassTest':
             namespace\_run_class_tests(
-                $logger, $test, $arglist, $this_run_id, $targets
+                $state, $logger, $test, $arglist, $this_run_id, $targets
             );
             break;
 
         case 'easytest\\FunctionTest':
             namespace\_run_function_test(
-                $logger, $test, $arglist, $this_run_id, $targets
+                $state, $logger, $test, $arglist, $this_run_id, $targets
             );
             break;
 
@@ -829,47 +1112,78 @@ function _run_tests(
 }
 
 
-function _find_targets(Logger $logger, $test, array $targets) {
+function _find_directory_targets(Logger $logger, DirectoryTest $test, array $targets) {
     $current = null;
     $parents = array();
     $children = array();
     foreach ($targets as $target) {
-        if ($target === $test->name) {
-            // The entire path is a target, so test the entire path. Any
+        $name = $target->name;
+        if ($name === $test->name) {
+            // The entire directory is a target, so test the entire path. Any
             // other targets are just duplicates, which we can skip
             return null;
         }
 
-        if (isset($test->tests[$target])) {
-            $parent = $target;
+        if (isset($test->tests[$name])) {
+            $parent = $name;
+            $target = $target->targets;
         }
-        elseif (0 === \substr_compare($target, $test->name, 0, \strlen($test->name))) {
+        elseif (0 === \substr_compare($name, $test->name, 0, \strlen($test->name))) {
             // $target is in a subdirectory of the current directory.
             // $i = the location of the directory separator, which we want
             // to include in the subdirectory name
-            $i = \strpos($target, \DIRECTORY_SEPARATOR, \strlen($test->name));
-            $parent = \substr($target, 0, $i+1);
+            $i = \strpos($name, \DIRECTORY_SEPARATOR, \strlen($test->name));
+            $parent = \substr($name, 0, $i+1);
+            $target = array($target);
         }
         else {
-            $logger->log_error($test->name, "Invalid test requested: $target");
+            $logger->log_error($test->name, "Invalid test requested: $name");
             continue;
         }
 
         if ($parent === $current) {
-            $children[] = $target;
+            $children = \array_merge($children, $target);
         }
         else {
             if ($current) {
                 $parents[] = array($current, $children);
             }
             $current = $parent;
-            $children = array($target);
+            $children = $target;
         }
     }
     if ($current) {
         $parents[] = array($current, $children);
     }
     return $parents;
+}
+
+
+function _find_file_targets(Logger $logger, FileTest $test, array $targets) {
+    $tests = array();
+    foreach ($targets as $target) {
+        if (!isset($test->tests[$target->name])) {
+            $logger->log_error($test->name, "Invalid test requested: $target->name");
+            continue;
+        }
+        $tests[] = $target;
+    }
+    return $tests;
+}
+
+
+function _find_class_targets(Logger $logger, ClassTest $test, array $targets) {
+    $methods = array();
+    foreach ($targets as $target) {
+        \assert(!$target->targets);
+        $method = $target->name;
+        if (!\method_exists($test->name, $method)) {
+            $logger->log_error($test->name, "Invalid test requested: $method");
+            continue;
+        }
+        $methods[] = $method;
+    }
+    return $methods;
 }
 
 
@@ -882,10 +1196,10 @@ function _run_directory_tests(
     if ($directory->setup) {
         $name = "{$directory->setup}{$run_name}";
         $logger = namespace\start_buffering($logger, $name);
-        list($success, $arglist) = namespace\_run_setup(
+        list($result, $arglist) = namespace\_run_setup(
             $logger, $name, $directory->setup, $arglist);
         $logger = namespace\end_buffering($logger);
-        if (!$success) {
+        if (namespace\RESULT_PASS !== $result) {
             return;
         }
         $arglist = namespace\_normalize_arglists($arglist, $name);
@@ -946,57 +1260,32 @@ function _run_file_tests(
     State $state, Logger $logger, FileTest $file,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
-    // #BC(5.4): Omit description from assert
-    \assert(!$targets); // file test targets aren't supported
-
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
 
     if ($file->setup) {
         $name = "{$file->setup}{$run_name}";
         $logger = namespace\start_buffering($logger, $name);
-        list($success, $arglist) = namespace\_run_setup(
+        list($result, $arglist) = namespace\_run_setup(
             $logger, $name, $file->setup, $arglist);
         $logger = namespace\end_buffering($logger);
-        if (!$success) {
+        if (namespace\RESULT_PASS !== $result) {
             return;
         }
         $arglist = namespace\_normalize_arglists($arglist, $name);
     }
 
-    $function = new FunctionTest();
-    if ($file->setup_function) {
-        $function->setup_name = $file->setup_function_name;
-        $function->setup = $file->setup_function;
-    }
-    if ($file->teardown_function) {
-        $function->teardown_name = $file->teardown_function_name;
-        $function->teardown = $file->teardown_function;
-    }
-
-    foreach ($file->tests as $test) {
-        list($name, $type) = $test;
-        switch ($type) {
-        case namespace\TYPE_CLASS:
-            $class = namespace\_discover_class($state, $logger, $name);
-            if ($class) {
-                namespace\_run_tests(
-                    $state, $logger, $class, $arglist, $run_id, $targets
-                );
-            }
-            break;
-
-        case namespace\TYPE_FUNCTION:
-            $function->name = $name;
-            $function->test = $name;
-            namespace\_run_tests(
-                $state, $logger, $function, $arglist, $run_id, $targets
+    if ($targets) {
+        foreach ($targets as $target) {
+            namespace\_run_file_test(
+                $state, $logger, $file, $target->name, $arglist, $run_id, $target->targets
             );
-            break;
-
-        default:
-            // #BC(5.4): Omit description from assert
-            \assert(false); // "Unknown file test type: $type"
-            break;
+        }
+    }
+    else {
+        foreach ($file->tests as $test => $_) {
+            namespace\_run_file_test(
+                $state, $logger, $file, $test, $arglist, $run_id
+            );
         }
     }
 
@@ -1009,13 +1298,52 @@ function _run_file_tests(
 }
 
 
+function _run_file_test(
+    State $state, Logger $logger, FileTest $file, $test,
+    $arglist = null, array $run_id = null, array $targets = null
+) {
+    $info = $file->tests[$test];
+    switch ($info->type) {
+    case namespace\TYPE_CLASS:
+        $test = namespace\_discover_class($state, $logger, $info);
+        break;
+
+    case namespace\TYPE_FUNCTION:
+        $test = new FunctionTest();
+        $test->file = $info->filename;
+        $test->namespace = $info->namespace;
+        $test->function = $info->name;
+        $test->name = $info->name;
+        $test->test = $info->name;
+        if ($file->setup_function) {
+            $test->setup_name = $file->setup_function_name;
+            $test->setup = $file->setup_function;
+        }
+        if ($file->teardown_function) {
+            $test->teardown_name = $file->teardown_function_name;
+            $test->teardown = $file->teardown_function;
+        }
+        break;
+
+    default:
+        // #BC(5.4): Omit description from assert
+        \assert(false); // "Unknown file test type: $type"
+        break;
+    }
+
+    if ($test) {
+        namespace\_run_tests(
+            $state, $logger, $test, $arglist, $run_id, $targets
+        );
+    }
+}
+
+
+
 function _run_class_tests(
-    Logger $logger, ClassTest $class,
+    State $state, Logger $logger, ClassTest $class,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
-    // #BC(5.4): Omit description from assert
-    \assert(!$targets); // class test targets aren't supported
-
     $logger = namespace\start_buffering($logger, $class->name);
     $object = namespace\_instantiate_test($logger, $class->name, $arglist);
     $logger = namespace\end_buffering($logger);
@@ -1029,26 +1357,22 @@ function _run_class_tests(
         $name = "{$class->name}::{$class->setup}{$run_name}";
         $method = array($object, $class->setup);
         $logger = namespace\start_buffering($logger, $name);
-        list($success,) = namespace\_run_setup($logger, $name, $method);
+        list($result,) = namespace\_run_setup($logger, $name, $method);
         $logger = namespace\end_buffering($logger);
-        if (!$success) {
+        if (namespace\RESULT_PASS !== $result) {
             return;
         }
     }
 
-    $test = new FunctionTest();
-    if ($class->setup_function) {
-        $test->setup = array($object, $class->setup_function);
-        $test->setup_name = $class->setup_function;
+    if ($targets) {
+        foreach ($targets as $test) {
+            namespace\_run_class_test($state, $logger, $class, $object, $test, $run_id);
+        }
     }
-    if ($class->teardown_function) {
-        $test->teardown = array($object, $class->teardown_function);
-        $test->teardown_name = $class->teardown_function;
-    }
-    foreach ($class->tests as $method) {
-        $test->name = "{$class->name}::{$method}";
-        $test->test = array($object, $method);
-        namespace\_run_function_test($logger, $test, null, $run_id);
+    else {
+        foreach ($class->tests as $test) {
+            namespace\_run_class_test($state, $logger, $class, $object, $test, $run_id);
+        }
     }
 
     if ($class->teardown) {
@@ -1058,6 +1382,29 @@ function _run_class_tests(
         namespace\_run_teardown($logger, $name, $method);
         $logger = namespace\end_buffering($logger);
     }
+}
+
+
+function _run_class_test(
+    State $state, Logger $logger, ClassTest $class, $object, $method,
+    array $run_id = null, array $targets = null
+) {
+    $test = new FunctionTest();
+    $test->file = $class->file;
+    $test->namespace = $class->namespace;
+    $test->class = $class->name;
+    $test->function =  $method;
+    $test->name = "{$class->name}::{$method}";
+    $test->test = array($object, $method);
+    if ($class->setup_function) {
+        $test->setup = array($object, $class->setup_function);
+        $test->setup_name = $class->setup_function;
+    }
+    if ($class->teardown_function) {
+        $test->teardown = array($object, $class->teardown_function);
+        $test->teardown_name = $class->teardown_function;
+    }
+    namespace\_run_function_test($state, $logger, $test, null, $run_id);
 }
 
 
@@ -1083,7 +1430,7 @@ function _instantiate_test(Logger $logger, $class, $args) {
 
 
 function _run_function_test(
-    Logger $logger, FunctionTest $test,
+    State $state, Logger $logger, FunctionTest $test,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
     // #BC(5.4): Omit description from assert
@@ -1091,42 +1438,52 @@ function _run_function_test(
 
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
     $test_name = "{$test->name}{$run_name}";
-    $success = true;
+    $result = namespace\RESULT_PASS;
 
     if ($test->setup) {
         $name = "{$test->setup_name} for {$test_name}";
         $logger = namespace\start_buffering($logger, $name);
-        list($success, $arglist) = namespace\_run_setup(
+        list($result, $arglist) = namespace\_run_setup(
             $logger, $name, $test->setup, $arglist
         );
-        if (!$success) {
-            $logger = namespace\end_buffering($logger);
-            return;
+    }
+
+    if (namespace\RESULT_PASS === $result) {
+        $logger = namespace\start_buffering($logger, $test_name);
+        $context = new Context($state, $logger, $test, $run_name);
+        $result = namespace\_run_test_function(
+            $logger, $test_name, $test->test, $context, $arglist
+        );
+
+        foreach($context->teardowns() as $teardown) {
+            $result |= namespace\_run_teardown($logger, $test_name, $teardown);
         }
-    }
-
-    $logger = namespace\start_buffering($logger, $test_name);
-    $context = new Context($logger, $test_name);
-    $success = namespace\_run_test_function(
-        $logger, $test_name, $test->test, $context, $arglist
-    );
-
-    foreach($context->teardowns() as $teardown) {
-        $success = namespace\_run_teardown($logger, $test_name, $teardown)
-                && $success;
-    }
-    if ($test->teardown) {
-        $name = "{$test->teardown_name} for {$test_name}";
-        $logger = namespace\start_buffering($logger, $name);
-        if(!namespace\_run_teardown($logger, $name, $test->teardown, $arglist)) {
-            $logger = namespace\end_buffering($logger);
-            return;
+        if ($test->teardown) {
+            $name = "{$test->teardown_name} for {$test_name}";
+            $logger = namespace\start_buffering($logger, $name);
+            $result |= namespace\_run_teardown($logger, $name, $test->teardown, $arglist);
         }
     }
 
     $logger = namespace\end_buffering($logger);
-    if ($success) {
+    if (namespace\RESULT_POSTPONE === $result) {
+        return;
+    }
+    if (!isset($state->results[$test->name])) {
+        $state->results[$test->name] = array('' => true);
+    }
+    $overall_result = $state->results[$test->name][''];
+    if (namespace\RESULT_PASS === $result) {
         $logger->log_pass($test_name);
+        $state->results[$test->name][$run_name] = true;
+        $state->results[$test->name][''] = true && $overall_result;
+    }
+    elseif (namespace\RESULT_FAIL & $result) {
+        $state->results[$test->name][$run_name] = false;
+        $state->results[$test->name][''] = false && $overall_result;
+        if (namespace\RESULT_POSTPONE & $result) {
+            unset($state->depends[$test->name]);
+        }
     }
 }
 
@@ -1141,7 +1498,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             $result = \call_user_func($callable);
         }
-        return array(true, $result);
+        return array(namespace\RESULT_PASS, $result);
     }
     catch (Skip $e) {
         $logger->log_skip($name, $e);
@@ -1153,7 +1510,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
     catch (\Exception $e) {
         $logger->log_error($name, $e);
     }
-    return array(false, null);
+    return array(namespace\RESULT_FAIL, null);
 }
 
 
@@ -1170,26 +1527,34 @@ function _run_test_function(
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             \call_user_func($callable, $context);
         }
-        return $context->succeeded();
+        $result = $context->result();
     }
     catch (\AssertionError $e) {
         $logger->log_failure($name, $e);
+        $result = namespace\RESULT_FAIL;
     }
     // #BC(5.6): Catch Failure
     catch (Failure $e) {
         $logger->log_failure($name, $e);
+        $result = namespace\RESULT_FAIL;
     }
     catch (Skip $e) {
         $logger->log_skip($name, $e);
+        $result = namespace\RESULT_FAIL;
+    }
+    catch (Postpone $_) {
+        $result = namespace\RESULT_POSTPONE;
     }
     catch (\Throwable $e) {
         $logger->log_error($name, $e);
+        $result = namespace\RESULT_FAIL;
     }
     // #BC(5.6): Catch Exception
     catch (\Exception $e) {
         $logger->log_error($name, $e);
+        $result = namespace\RESULT_FAIL;
     }
-    return false;
+    return $result;
 }
 
 
@@ -1201,7 +1566,7 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null) {
                 // #BC(5.3): Invoke (possible) object method using
                 // call_user_func()
                 \call_user_func($callable, $args);
-                return true;
+                return namespace\RESULT_PASS;
             }
             $args = $args[0];
         }
@@ -1214,7 +1579,7 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             \call_user_func($callable);
         }
-        return true;
+        return namespace\RESULT_PASS;
     }
     catch (\Throwable $e) {
         $logger->log_error($name, $e);
@@ -1223,5 +1588,44 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null) {
     catch (\Exception $e) {
         $logger->log_error($name, $e);
     }
-    return false;
+    return namespace\RESULT_FAIL;
+}
+
+
+function _resolve_dependencies(State $state, Logger $logger) {
+    $graph = new DependencyGraph($state, $logger);
+    $dependencies = $graph->sort();
+    if (!$dependencies) {
+        return null;
+    }
+
+    $targets = array();
+    $current = new Target();
+    foreach ($dependencies as $dependency) {
+        if ($current->name !== $dependency->file) {
+            if ($current->name) {
+                $targets[] = $current;
+            }
+            $current = new Target();
+            $current->name = $dependency->file;
+        }
+        if ($dependency->class) {
+            $name = "class {$dependency->class}";
+            $target = \end($current->targets);
+            if ($target && $target->name === $name) {
+                $target->targets[] = new Target($dependency->function);
+                continue;
+            }
+            $target = new Target();
+            $target->name = $name;
+            $target->targets[] = new Target($dependency->function);
+            $current->targets[] = $target;
+        }
+        else {
+            $target = new Target("function {$dependency->function}");
+            $current->targets[] = $target;
+        }
+    }
+    $targets[] = $current;
+    return $targets;
 }

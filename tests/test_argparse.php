@@ -6,6 +6,17 @@
 // LICENSE.txt file.
 
 class TestArgParse {
+    private function args_to_targets(array $args) {
+        $targets = array();
+        foreach ($args as $arg) {
+            $target = new easytest\Target();
+            $target->name = $arg;
+            $targets[] = $target;
+        }
+        return $targets;
+    }
+
+
     public function test_parses_empty_argv() {
         // argv[0] is always the current executable name
         $argv = array('foo');
@@ -34,8 +45,8 @@ class TestArgParse {
             $opts,
             "Options weren't parsed correctly"
         );
-        easytest\assert_identical(
-            array('one', 'two'),
+        easytest\assert_equal(
+            $this->args_to_targets(array('one', 'two')),
             $args,
             "Arguments weren't parsed correctly"
         );
@@ -106,8 +117,8 @@ class TestArgParse {
             $opts,
             "Options weren't parsed correctly"
         );
-        easytest\assert_identical(
-            array('bar', '--verbose'),
+        easytest\assert_equal(
+            $this->args_to_targets(array('bar', '--verbose')),
             $args,
             "Arguments weren't parsed correctly"
         );
@@ -124,8 +135,8 @@ class TestArgParse {
             $opts,
             "Options weren't parsed correctly"
         );
-        easytest\assert_identical(
-            array('-', '--verbose'),
+        easytest\assert_equal(
+            $this->args_to_targets(array('-', '--verbose')),
             $args,
             "Arguments weren't parsed correctly"
         );
@@ -142,8 +153,8 @@ class TestArgParse {
             $opts,
             "Options weren't parsed correctly"
         );
-        easytest\assert_identical(
-            array('--verbose'),
+        easytest\assert_equal(
+            $this->args_to_targets(array('--verbose')),
             $args,
             "Arguments weren't parsed correctly"
         );
