@@ -32,7 +32,10 @@ class TestDependencies {
                 $targets[] = $target;
             }
         }
-        easytest\discover_tests($this->logger, $targets);
+        easytest\discover_tests(
+            new easytest\BufferingLogger($this->logger),
+            $targets
+        );
         assert_events($expected, $this->logger);
     }
 

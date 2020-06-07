@@ -187,7 +187,10 @@ function main($argc, $argv) {
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-    namespace\discover_tests(new LiveUpdatingLogger($logger) , $tests);
+    namespace\discover_tests(
+        new BufferingLogger(new LiveUpdatingLogger($logger)),
+        $tests
+    );
     $end = namespace\_microtime();
 
 

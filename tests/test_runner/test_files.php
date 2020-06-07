@@ -25,7 +25,10 @@ class TestFiles {
             $target->name = $this->path;
             $this->path = $target;
         }
-        easytest\discover_tests($this->logger, array($this->path));
+        easytest\discover_tests(
+            new easytest\BufferingLogger($this->logger),
+            array($this->path)
+        );
         assert_events($expected, $this->logger);
     }
 

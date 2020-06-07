@@ -31,7 +31,10 @@ class TestDirectories {
 
 
     private function assert_events($directories, easytest\Context $context) {
-        easytest\discover_tests($this->logger, $this->paths_to_targets());
+        easytest\discover_tests(
+            new easytest\BufferingLogger($this->logger),
+            $this->paths_to_targets()
+        );
 
         $root = null;
         $current = null;
@@ -202,7 +205,10 @@ class TestDirectories {
 
 
     private function assert_log($expected) {
-        easytest\discover_tests($this->logger, $this->paths_to_targets());
+        easytest\discover_tests(
+            new easytest\BufferingLogger($this->logger),
+            $this->paths_to_targets()
+        );
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event) {
