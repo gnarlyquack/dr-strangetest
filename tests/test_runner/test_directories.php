@@ -505,6 +505,8 @@ class TestDirectories {
                 'dir_params\\setup_directory',
                 $path,
             ),
+
+
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (0, 0)',
@@ -517,16 +519,6 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\test_function (0, 1)',
-                '4 2',
-            ),
-            array(
-                easytest\EVENT_PASS,
-                'dir_params\\test_function (0, 1)',
-                null,
-            ),
-            array(
-                easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (0, 0)',
                 '2 4',
             ),
@@ -535,6 +527,17 @@ class TestDirectories {
                 'dir_params\\TestClass::test (0, 0)',
                 null,
             ),
+
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\test_function (0, 1)',
+                '4 2',
+            ),
+            array(
+                easytest\EVENT_PASS,
+                'dir_params\\test_function (0, 1)',
+                null,
+            ),
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (0, 1)',
@@ -545,11 +548,15 @@ class TestDirectories {
                 'dir_params\\TestClass::test (0, 1)',
                 null,
             ),
+
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_file (0)',
                 '2 4 4 2',
             ),
+
+
+
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (1, 0)',
@@ -562,16 +569,6 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\test_function (1, 1)',
-                '16 8',
-            ),
-            array(
-                easytest\EVENT_PASS,
-                'dir_params\\test_function (1, 1)',
-                null,
-            ),
-            array(
-                easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (1, 0)',
                 '8 16',
             ),
@@ -580,6 +577,17 @@ class TestDirectories {
                 'dir_params\\TestClass::test (1, 0)',
                 null,
             ),
+
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\test_function (1, 1)',
+                '16 8',
+            ),
+            array(
+                easytest\EVENT_PASS,
+                'dir_params\\test_function (1, 1)',
+                null,
+            ),
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\TestClass::test (1, 1)',
@@ -590,11 +598,14 @@ class TestDirectories {
                 'dir_params\\TestClass::test (1, 1)',
                 null,
             ),
+
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_file (1)',
                 '8 16 16 8',
             ),
+
+
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_directory',
@@ -849,6 +860,92 @@ class TestDirectories {
                 easytest\EVENT_OUTPUT,
                 'param_target\\teardown_directory',
                 $path,
+            ),
+        );
+        $this->assert_log($expected);
+    }
+
+
+    function test_generators() {
+        // BC(5.4): Check if generators are supported
+        if (\version_compare(\PHP_VERSION, '5.5', '<')) {
+            easytest\skip('PHP 5.5 introduced generators');
+        }
+
+
+        $this->path .= 'generator';
+        $path = $this->path;
+
+        $expected = array(
+            array(
+                easytest\EVENT_OUTPUT,
+                'generator\\setup_directory',
+                'generator\\setup_directory',
+            ),
+
+
+            array(
+                easytest\EVENT_OUTPUT,
+                'generator\\setup_file (0)',
+                'generator\\setup_file',
+            ),
+
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_one (0, 0)',
+                null,
+            ),
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_two (0, 0)',
+                null,
+            ),
+
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_one (0, 1)',
+                null,
+            ),
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_two (0, 1)',
+                null,
+            ),
+
+
+            array(
+                easytest\EVENT_OUTPUT,
+                'generator\\setup_file (1)',
+                'generator\\setup_file',
+            ),
+
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_one (1, 0)',
+                null,
+            ),
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_two (1, 0)',
+                null,
+            ),
+
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_one (1, 1)',
+                null,
+            ),
+            array(
+                easytest\EVENT_PASS,
+                'generator\\test_two (1, 1)',
+                null,
+            ),
+
+
+            array(
+                easytest\EVENT_OUTPUT,
+                'generator\\teardown_directory',
+                'generator\\teardown_directory',
             ),
         );
         $this->assert_log($expected);

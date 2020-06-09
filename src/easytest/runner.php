@@ -51,6 +51,33 @@ final class DirectoryTest extends struct {
     public $setup;
     public $teardown;
     public $tests = array();
+
+
+    public function setup(
+        BufferingLogger $logger,
+        $args = null,
+        $run = null
+    ) {
+        return namespace\_run_directory_setup($logger, $this, $args, $run);
+    }
+
+
+    public function teardown(
+        State $state,
+        BufferingLogger $logger,
+        $args = null,
+        $run = null
+    ) {
+        namespace\_run_directory_teardown($logger, $this, $args, $run);
+    }
+
+
+    public function run(
+        State $state, BufferingLogger $logger,
+        array $args = null, array $run = null, array $targets = null
+    ) {
+        namespace\_run_directory_tests($state, $logger, $this, $args, $run, $targets);
+    }
 }
 
 
@@ -64,6 +91,33 @@ final class FileTest extends struct {
     public $setup_function_name;
     public $teardown_function;
     public $teardown_function_name;
+
+
+    public function setup(
+        BufferingLogger $logger,
+        array $args = null,
+        $run = null
+    ) {
+        return namespace\_run_file_setup($logger, $this, $args, $run);
+    }
+
+
+    public function teardown(
+        State $state,
+        BufferingLogger $logger,
+        $args = null,
+        $run = null
+    ) {
+        namespace\_run_file_teardown($logger, $this, $args, $run);
+    }
+
+
+    public function run(
+        State $state, BufferingLogger $logger,
+        array $args = null, array $run = null, array $targets = null
+    ) {
+        namespace\_run_file_tests($state, $logger, $this, $args, $run, $targets);
+    }
 }
 
 
@@ -72,12 +126,41 @@ final class ClassTest extends struct {
     public $namespace;
 
     public $name;
+    public $object;
     public $setup;
     public $teardown;
 
     public $setup_function;
     public $teardown_function;
     public $tests = array();
+
+
+    public function setup(
+        BufferingLogger $logger,
+        array $args = null,
+        $run = null
+    ) {
+        return namespace\_run_class_setup($logger, $this, $args, $run);
+    }
+
+
+    public function teardown(
+        State $state,
+        BufferingLogger $logger,
+        array $args = null,
+        $run = null
+    ) {
+        \assert(!$args);
+        namespace\_run_class_teardown($logger, $this, $run);
+    }
+
+
+    public function run(
+        State $state, BufferingLogger $logger,
+        array $args = null, array $run = null, array $targets = null
+    ) {
+        namespace\_run_class_tests($state, $logger, $this, $args, $run, $targets);
+    }
 }
 
 
@@ -91,9 +174,37 @@ final class FunctionTest extends struct {
     public $setup;
     public $teardown;
     public $test;
+    public $result;
 
     public $setup_name;
     public $teardown_name;
+
+
+    public function setup(
+        BufferingLogger $logger,
+        array $args = null,
+        $run = null
+    ) {
+        return namespace\_run_function_setup($logger, $this, $args, $run);
+    }
+
+
+    public function teardown(
+        State $state,
+        BufferingLogger $logger,
+        array $args = null,
+        $run = null
+    ) {
+        namespace\_run_function_teardown($state, $logger, $this, $args, $run);
+    }
+
+
+    public function run(
+        State $state, BufferingLogger $logger,
+        array $args = null, array $run = null, array $targets = null
+    ) {
+        namespace\_run_function_test($state, $logger, $this, $args, $run, $targets);
+    }
 }
 
 
@@ -397,14 +508,14 @@ function discover_tests(BufferingLogger $logger, array $paths) {
         return;
     }
 
-    namespace\_run_tests($state, $logger, $directory, null, null, $paths);
+    namespace\_run_test($state, $logger, $directory, null, null, $paths);
     while ($state->depends) {
         $targets = namespace\_resolve_dependencies($state, $logger);
         if (!$targets) {
             break;
         }
         $state->depends = array();
-        namespace\_run_tests($state, $logger, $directory, null, null, $targets);
+        namespace\_run_test($state, $logger, $directory, null, null, $targets);
     }
 }
 
@@ -1020,9 +1131,9 @@ function _discover_class(State $state, Logger $logger, TestInfo $info) {
 }
 
 
-function _run_tests(
+function _run_test(
     State $state, BufferingLogger $logger, $test,
-    $params = null, array $run_id = null, array $targets = null
+    $args = null, array $run_id = null, array $targets = null
 ) {
     if ($targets) {
         $type = \get_class($test);
@@ -1046,11 +1157,19 @@ function _run_tests(
         }
     }
 
-    if ($params instanceof ArgumentLists) {
-        $arglists = $params->arglists();
+    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    list($result, $args) = $test->setup($logger, $args, $run_name);
+    if (namespace\RESULT_PASS !== $result) {
+        return;
+    }
+
+    $update_run = false;
+    if ($args instanceof ArgumentLists) {
+        $arglists = $args->arglists();
+        $update_run = true;
     }
     else {
-        $arglists = array($params);
+        $arglists = array($args);
     }
 
     foreach ($arglists as $i => $arglist) {
@@ -1073,42 +1192,14 @@ function _run_tests(
         }
 
         $this_run_id = $run_id;
-        if (\count($arglists) > 1) {
+        if ($update_run) {
             $this_run_id[] = $i;
         }
 
-        $type = \get_class($test);
-        switch ($type) {
-        case 'easytest\\DirectoryTest':
-            namespace\_run_directory_tests(
-                $state, $logger, $test, $arglist, $this_run_id, $targets
-            );
-            break;
-
-        case 'easytest\\FileTest':
-            namespace\_run_file_tests(
-                $state, $logger, $test, $arglist, $this_run_id, $targets
-            );
-            break;
-
-        case 'easytest\\ClassTest':
-            namespace\_run_class_tests(
-                $state, $logger, $test, $arglist, $this_run_id, $targets
-            );
-            break;
-
-        case 'easytest\\FunctionTest':
-            namespace\_run_function_test(
-                $state, $logger, $test, $arglist, $this_run_id, $targets
-            );
-            break;
-
-        default:
-            // #BC(5.4): Omit description from assert
-            \assert(false); // "Unknown test type $type"
-            break;
-        }
+        $test->run($state, $logger, $arglist, $this_run_id, $targets);
     }
+
+    $test->teardown($state, $logger, $args, $run_name);
 }
 
 
@@ -1187,23 +1278,36 @@ function _find_class_targets(Logger $logger, ClassTest $test, array $targets) {
 }
 
 
+function _run_directory_setup(
+    BufferingLogger $logger,
+    DirectoryTest $directory,
+    $args = null,
+    $run = null
+) {
+    \assert(
+        null === $args
+        || \is_array($args)
+        || ($args instanceof ArgumentLists)
+    );
+
+    if ($directory->setup) {
+        $name = "{$directory->setup}{$run}";
+        namespace\start_buffering($logger, $name);
+        $result = namespace\_run_setup($logger, $name, $directory->setup, $args);
+        namespace\end_buffering($logger);
+    }
+    else {
+        $result = array(namespace\RESULT_PASS, $args);
+    }
+    return $result;
+}
+
+
 function _run_directory_tests(
     State $state, BufferingLogger $logger, DirectoryTest $directory,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-
-    if ($directory->setup) {
-        $name = "{$directory->setup}{$run_name}";
-        namespace\start_buffering($logger, $name);
-        list($result, $arglist) = namespace\_run_setup(
-            $logger, $name, $directory->setup, $arglist);
-        namespace\end_buffering($logger);
-        if (namespace\RESULT_PASS !== $result) {
-            return;
-        }
-        $arglist = namespace\_normalize_arglists($arglist, $name);
-    }
 
     if ($targets) {
         foreach ($targets as $target) {
@@ -1219,13 +1323,6 @@ function _run_directory_tests(
                 $state, $logger, $directory, $test, $arglist, $run_id
             );
         }
-    }
-
-    if ($directory->teardown) {
-        $name = "{$directory->teardown}{$run_name}";
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $directory->teardown, $arglist);
-        namespace\end_buffering($logger);
     }
 }
 
@@ -1251,8 +1348,48 @@ function _run_directory_test(
     }
 
     if ($test) {
-        namespace\_run_tests($state, $logger, $test, $arglist, $run_id, $targets);
+        namespace\_run_test($state, $logger, $test, $arglist, $run_id, $targets);
     }
+}
+
+
+function _run_directory_teardown(
+    BufferingLogger $logger,
+    DirectoryTest $directory,
+    $args = null,
+    $run = null
+) {
+    \assert(
+        null === $args
+        || \is_array($args)
+        || ($args instanceof ArgumentLists)
+    );
+
+    if ($directory->teardown) {
+        $name = "{$directory->teardown}{$run}";
+        namespace\start_buffering($logger, $name);
+        namespace\_run_teardown($logger, $name, $directory->teardown, $args);
+        namespace\end_buffering($logger);
+    }
+}
+
+
+function _run_file_setup(
+    BufferingLogger $logger,
+    FileTest $file,
+    array $args = null,
+    $run = null
+) {
+    if ($file->setup) {
+        $name = "{$file->setup}{$run}";
+        namespace\start_buffering($logger, $name);
+        $result = namespace\_run_setup($logger, $name, $file->setup, $args);
+        namespace\end_buffering($logger);
+    }
+    else {
+        $result = array(namespace\RESULT_PASS, $args);
+    }
+    return $result;
 }
 
 
@@ -1261,18 +1398,6 @@ function _run_file_tests(
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-
-    if ($file->setup) {
-        $name = "{$file->setup}{$run_name}";
-        namespace\start_buffering($logger, $name);
-        list($result, $arglist) = namespace\_run_setup(
-            $logger, $name, $file->setup, $arglist);
-        namespace\end_buffering($logger);
-        if (namespace\RESULT_PASS !== $result) {
-            return;
-        }
-        $arglist = namespace\_normalize_arglists($arglist, $name);
-    }
 
     if ($targets) {
         foreach ($targets as $target) {
@@ -1287,13 +1412,6 @@ function _run_file_tests(
                 $state, $logger, $file, $test, $arglist, $run_id
             );
         }
-    }
-
-    if ($file->teardown) {
-        $name = "{$file->teardown}{$run_name}";
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $file->teardown, $arglist);
-        namespace\end_buffering($logger);
     }
 }
 
@@ -1332,61 +1450,78 @@ function _run_file_test(
     }
 
     if ($test) {
-        namespace\_run_tests(
+        namespace\_run_test(
             $state, $logger, $test, $arglist, $run_id, $targets
         );
     }
 }
 
 
-
-function _run_class_tests(
-    State $state, BufferingLogger $logger, ClassTest $class,
-    array $arglist = null, array $run_id = null, array $targets = null
+function _run_file_teardown(
+    BufferingLogger $logger,
+    FileTest $file,
+    $args = null,
+    $run = null
 ) {
-    namespace\start_buffering($logger, $class->name);
-    $object = namespace\_instantiate_test($logger, $class->name, $arglist);
-    namespace\end_buffering($logger);
-    if (!$object) {
-        return;
-    }
+    \assert(
+        null === $args
+        || \is_array($args)
+        || ($args instanceof ArgumentLists)
+    );
 
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-
-    if ($class->setup) {
-        $name = "{$class->name}::{$class->setup}{$run_name}";
-        $method = array($object, $class->setup);
+    if ($file->teardown) {
+        $name = "{$file->teardown}{$run}";
         namespace\start_buffering($logger, $name);
-        list($result,) = namespace\_run_setup($logger, $name, $method);
-        namespace\end_buffering($logger);
-        if (namespace\RESULT_PASS !== $result) {
-            return;
-        }
-    }
-
-    if ($targets) {
-        foreach ($targets as $test) {
-            namespace\_run_class_test($state, $logger, $class, $object, $test, $run_id);
-        }
-    }
-    else {
-        foreach ($class->tests as $test) {
-            namespace\_run_class_test($state, $logger, $class, $object, $test, $run_id);
-        }
-    }
-
-    if ($class->teardown) {
-        $name = "{$class->name}::{$class->teardown}{$run_name}";
-        $method = array($object, $class->teardown);
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $method);
+        namespace\_run_teardown($logger, $name, $file->teardown, $args);
         namespace\end_buffering($logger);
     }
 }
 
 
+function _run_class_setup(
+    BufferingLogger $logger,
+    ClassTest $class,
+    array $args = null,
+    $run = null
+) {
+    namespace\start_buffering($logger, $class->name);
+    $class->object = namespace\_instantiate_test($logger, $class->name, $args);
+    namespace\end_buffering($logger);
+    if (!$class->object) {
+        return array(namespace\RESULT_FAIL, null);
+    }
+
+    $result = array(namespace\RESULT_PASS, null);
+    if ($class->setup) {
+        $name = "{$class->name}::{$class->setup}{$run}";
+        $method = array($class->object, $class->setup);
+        namespace\start_buffering($logger, $name);
+        list($result[0],) = namespace\_run_setup($logger, $name, $method);
+        namespace\end_buffering($logger);
+    }
+    return $result;
+}
+
+
+function _run_class_tests(
+    State $state, BufferingLogger $logger, ClassTest $class,
+    array $arglist = null, array $run_id = null, array $targets = null
+) {
+    if ($targets) {
+        foreach ($targets as $test) {
+            namespace\_run_class_test($state, $logger, $class, $test, $run_id);
+        }
+    }
+    else {
+        foreach ($class->tests as $test) {
+            namespace\_run_class_test($state, $logger, $class, $test, $run_id);
+        }
+    }
+}
+
+
 function _run_class_test(
-    State $state, BufferingLogger $logger, ClassTest $class, $object, $method,
+    State $state, BufferingLogger $logger, ClassTest $class, $method,
     array $run_id = null, array $targets = null
 ) {
     $test = new FunctionTest();
@@ -1395,16 +1530,16 @@ function _run_class_test(
     $test->class = $class->name;
     $test->function =  $method;
     $test->name = "{$class->name}::{$method}";
-    $test->test = array($object, $method);
+    $test->test = array($class->object, $method);
     if ($class->setup_function) {
-        $test->setup = array($object, $class->setup_function);
+        $test->setup = array($class->object, $class->setup_function);
         $test->setup_name = $class->setup_function;
     }
     if ($class->teardown_function) {
-        $test->teardown = array($object, $class->teardown_function);
+        $test->teardown = array($class->object, $class->teardown_function);
         $test->teardown_name = $class->teardown_function;
     }
-    namespace\_run_function_test($state, $logger, $test, null, $run_id);
+    namespace\_run_test($state, $logger, $test, null, $run_id);
 }
 
 
@@ -1429,59 +1564,93 @@ function _instantiate_test(Logger $logger, $class, $args) {
 }
 
 
+function _run_class_teardown(BufferingLogger $logger, ClassTest $class, $run) {
+    if ($class->teardown) {
+        $name = "{$class->name}::{$class->teardown}{$run}";
+        $method = array($class->object, $class->teardown);
+        namespace\start_buffering($logger, $name);
+        namespace\_run_teardown($logger, $name, $method);
+        namespace\end_buffering($logger);
+    }
+}
+
+
+function _run_function_setup(
+    BufferingLogger $logger,
+    FunctionTest $test,
+    array $args = null,
+    $run = null
+) {
+    if ($test->setup) {
+        $name = "{$test->setup_name} for {$test->name}{$run}";
+        namespace\start_buffering($logger, $name);
+        $result = namespace\_run_setup($logger, $name, $test->setup, $args);
+        if (namespace\RESULT_PASS !== $result[0]) {
+            namespace\end_buffering($logger);
+        }
+    }
+    else {
+        $result = array(namespace\RESULT_PASS, $args);
+    }
+    $test->result = $result[0];
+    return $result;
+}
+
+
 function _run_function_test(
     State $state, BufferingLogger $logger, FunctionTest $test,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
     // #BC(5.4): Omit description from assert
     \assert(!$targets); // function tests can't have targets
+    \assert($test->result === namespace\RESULT_PASS);
 
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
     $test_name = "{$test->name}{$run_name}";
-    $result = namespace\RESULT_PASS;
 
-    if ($test->setup) {
-        $name = "{$test->setup_name} for {$test_name}";
+    namespace\start_buffering($logger, $test_name);
+    $context = new Context($state, $logger, $test, $run_name);
+    $test->result = namespace\_run_test_function(
+        $logger, $test_name, $test->test, $context, $arglist
+    );
+
+    foreach($context->teardowns() as $teardown) {
+        $test->result |= namespace\_run_teardown($logger, $test_name, $teardown);
+    }
+}
+
+
+function _run_function_teardown(
+    State $state,
+    BufferingLogger $logger,
+    FunctionTest $test,
+    array $args = null,
+    $run = null
+) {
+    $test_name = "{$test->name}{$run}";
+
+    if ($test->teardown) {
+        $name = "{$test->teardown_name} for {$test_name}";
         namespace\start_buffering($logger, $name);
-        list($result, $arglist) = namespace\_run_setup(
-            $logger, $name, $test->setup, $arglist
-        );
+        $test->result |= namespace\_run_teardown($logger, $name, $test->teardown, $args);
     }
-
-    if (namespace\RESULT_PASS === $result) {
-        namespace\start_buffering($logger, $test_name);
-        $context = new Context($state, $logger, $test, $run_name);
-        $result = namespace\_run_test_function(
-            $logger, $test_name, $test->test, $context, $arglist
-        );
-
-        foreach($context->teardowns() as $teardown) {
-            $result |= namespace\_run_teardown($logger, $test_name, $teardown);
-        }
-        if ($test->teardown) {
-            $name = "{$test->teardown_name} for {$test_name}";
-            namespace\start_buffering($logger, $name);
-            $result |= namespace\_run_teardown($logger, $name, $test->teardown, $arglist);
-        }
-    }
-
     namespace\end_buffering($logger);
-    if (namespace\RESULT_POSTPONE === $result) {
+
+    if (namespace\RESULT_POSTPONE === $test->result) {
         return;
     }
     if (!isset($state->results[$test->name])) {
         $state->results[$test->name] = array('' => true);
     }
-    $overall_result = $state->results[$test->name][''];
-    if (namespace\RESULT_PASS === $result) {
+    if (namespace\RESULT_PASS === $test->result) {
         $logger->log_pass($test_name);
-        $state->results[$test->name][$run_name] = true;
-        $state->results[$test->name][''] = true && $overall_result;
+        $state->results[$test->name][$run] = true;
+        $state->results[$test->name][''] = $state->results[$test->name][''];
     }
-    elseif (namespace\RESULT_FAIL & $result) {
-        $state->results[$test->name][$run_name] = false;
-        $state->results[$test->name][''] = false && $overall_result;
-        if (namespace\RESULT_POSTPONE & $result) {
+    elseif (namespace\RESULT_FAIL & $test->result) {
+        $state->results[$test->name][$run] = false;
+        $state->results[$test->name][''] = false;
+        if (namespace\RESULT_POSTPONE & $test->result) {
             unset($state->depends[$test->name]);
         }
     }
@@ -1560,24 +1729,17 @@ function _run_test_function(
 
 function _run_teardown(Logger $logger, $name, $callable, $args = null) {
     try {
-        if ($args instanceof ArgumentLists) {
-            $args = $args->arglists();
-            if (\count($args) > 1) {
-                // #BC(5.3): Invoke (possible) object method using
-                // call_user_func()
-                \call_user_func($callable, $args);
-                return namespace\RESULT_PASS;
-            }
-            $args = $args[0];
-        }
-
-        if ($args) {
-            // #BC(5.5): Use proxy function for argument unpacking
-            namespace\_unpack_function($callable, $args);
-        }
-        else {
+        if (!$args) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             \call_user_func($callable);
+        }
+        elseif ($args instanceof ArgumentLists) {
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable, $args->arglists());
+        }
+        else {
+            // #BC(5.5): Use proxy function for argument unpacking
+            namespace\_unpack_function($callable, $args);
         }
         return namespace\RESULT_PASS;
     }

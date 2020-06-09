@@ -79,22 +79,19 @@ class TestDependencies {
 
         $this->assert_events(array(
             array(easytest\EVENT_PASS, 'depends_params\\test_one (0)', null),
-            array(easytest\EVENT_PASS, 'depends_params\\test_one (1)', null),
             array(easytest\EVENT_PASS, 'depends_params\\test::test_one (0)', null),
+
+            array(easytest\EVENT_PASS, 'depends_params\\test_one (1)', null),
             array(easytest\EVENT_PASS, 'depends_params\\test::test_one (1)', null),
 
             array(
                 easytest\EVENT_FAIL, 'depends_params\\test_two (0)',
                 "Assertion \"\$expected === \$actual\" failed\n\n- \$expected\n+ \$actual\n\n- 2\n+ 1"
             ),
-            array(easytest\EVENT_PASS, 'depends_params\\test_two (1)', null),
-
             array(
                 easytest\EVENT_SKIP, 'depends_params\\test_three (0)',
                 "This test depends on 'depends_params\\test_two (0)', which did not pass"
             ),
-            array(easytest\EVENT_PASS, 'depends_params\\test_three (1)', null),
-
             array(
                 easytest\EVENT_FAIL, 'depends_params\\test::test_two (0)',
                 "Assertion \"\$expected === \$actual\" failed\n\n- \$expected\n+ \$actual\n\n- 2\n+ 1"
@@ -104,6 +101,8 @@ class TestDependencies {
                 "This test depends on 'depends_params\\test::test_two (0)', which did not pass"
             ),
 
+            array(easytest\EVENT_PASS, 'depends_params\\test_two (1)', null),
+            array(easytest\EVENT_PASS, 'depends_params\\test_three (1)', null),
             array(easytest\EVENT_PASS, 'depends_params\\test::test_two (1)', null),
             array(easytest\EVENT_PASS, 'depends_params\\test::test_three (1)', null),
         ));
@@ -225,20 +224,26 @@ class TestDependencies {
             array(easytest\EVENT_FAIL, 'param_xdepend\\nonparam\\test_six', 'I fail'),
 
             array(easytest\EVENT_SKIP, 'param_xdepend\\param\\test_five (0)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
-            array(easytest\EVENT_SKIP, 'param_xdepend\\param\\test_five (1)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
             array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_one (0)', null),
+
+            array(easytest\EVENT_SKIP, 'param_xdepend\\param\\test_five (1)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
             array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_one (1)', null),
+
+
             array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_two (0)', null),
             array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_two (1)', null),
             array(easytest\EVENT_PASS, 'param_xdepend\\nonparam\\test_two', null),
+
+
             array(
                 easytest\EVENT_FAIL,
                 'param_xdepend\\param\\test_three (0)',
                 "Assertion \"\$expected === \$actual\" failed\n\n- \$expected\n+ \$actual\n\n- 14\n+ 10",
             ),
-            array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_three (1)', null),
             array(easytest\EVENT_SKIP, 'param_xdepend\\param\\test_four (0)', "This test depends on 'param_xdepend\\param\\test_three (0)', which did not pass"),
+            array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_three (1)', null),
             array(easytest\EVENT_PASS, 'param_xdepend\\param\\test_four (1)', null),
+
 
             array(easytest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_three', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
             array(easytest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_four', "This test depends on 'param_xdepend\\param\\test_four (0)', which did not pass"),

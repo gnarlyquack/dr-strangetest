@@ -74,10 +74,6 @@ Release
     -   File target processing should collapse class tests
     -   Just treat functions as a string, rather than as a new target object?
 
--   Do we want to reverse the order of the test and arglists loops?
-    -   Right now it's: foreach test, foreach arglist, run the test
-    -   Maybe we prefer: foreach arglist, foreach test, run test ?
-
 -   Fix run names so that they don't have to start with a space
 
 -   Implement iterable checks as a conditionally-defined function
@@ -85,6 +81,13 @@ Release
 -   Change setup/teardown_function to just setup/teardown
 
 -   Support tearing down individual parameterized test runs
+
+-   Either both or neither of log_skip and log_output should have a default
+    $during_error?
+
+-   Ensure each individual arglist is an array
+
+-   Cleanup parameters to setup(), teardown(), run() test methods
 
 
 Future

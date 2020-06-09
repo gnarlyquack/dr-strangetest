@@ -140,12 +140,11 @@ final class Target extends struct {
 
 
 final class ArgumentLists {
-    public $source;
     private $arglists;
 
 
     public function __construct($arglists) {
-        // #BC(7.0): don't use iterable type hint to $arglists is iterable
+        // #BC(7.0): don't use iterable type hint for $arglists
         if (!(\is_array($arglists) || $arglists instanceof \Traversable)) {
             \trigger_error(
                 '$arglists must be an iterable of iterables',
@@ -164,15 +163,6 @@ final class ArgumentLists {
 
 function arglists($arglists) {
     return new ArgumentLists($arglists);
-}
-
-
-function _normalize_arglists($arglists, $source) {
-    if (!($arglists instanceof namespace\ArgumentLists)) {
-        $arglists = new ArgumentLists(array($arglists));
-    }
-    $arglists->source = $source;
-    return $arglists;
 }
 
 

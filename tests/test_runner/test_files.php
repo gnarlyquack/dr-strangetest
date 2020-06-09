@@ -711,12 +711,11 @@ class TestFiles {
 
         $this->assert_events(array(
             array(easytest\EVENT_PASS, 'multiple_runs\\test_one (0)', null),
-            array(easytest\EVENT_PASS, 'multiple_runs\\test_one (1)', null),
-
             array(easytest\EVENT_PASS, 'multiple_runs\\test_two (0)', null),
-            array(easytest\EVENT_PASS, 'multiple_runs\\test_two (1)', null),
-
             array(easytest\EVENT_PASS, 'multiple_runs\\test::test_one (0)', null),
+
+            array(easytest\EVENT_PASS, 'multiple_runs\\test_one (1)', null),
+            array(easytest\EVENT_PASS, 'multiple_runs\\test_two (1)', null),
             array(easytest\EVENT_PASS, 'multiple_runs\\test::test_one (1)', null),
 
             array(
