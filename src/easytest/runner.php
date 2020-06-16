@@ -935,7 +935,7 @@ function _discover_directory_setup(
 function _is_directory_setup_function(
     DirectoryTest $directory, &$error, $namespace, $function, $fullname
 ) {
-    if (\preg_match('~^(setup|teardown)_?(directory|run)~i', $function, $matches)) {
+    if (\preg_match('~^(setup|teardown)_?(run)?~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
             if ($directory->setup) {
                 $error |= namespace\ERROR_SETUP;
@@ -943,17 +943,17 @@ function _is_directory_setup_function(
             $directory->setup[] = $fullname;
         }
         else {
-            if (0 === \strcasecmp('directory', $matches[2])) {
-                if ($directory->teardown) {
-                    $error |= namespace\ERROR_TEARDOWN;
-                }
-                $directory->teardown[] = $fullname;
-            }
-            else {
+            if (isset($matches[2])) {
                 if ($directory->teardown_run) {
                     $error |= namespace\ERROR_TEARDOWN_RUN;
                 }
                 $directory->teardown_run[] = $fullname;
+            }
+            else {
+                if ($directory->teardown) {
+                    $error |= namespace\ERROR_TEARDOWN;
+                }
+                $directory->teardown[] = $fullname;
             }
         }
         return true;
@@ -1074,9 +1074,9 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
         return true;
     }
 
-    if (\preg_match('~^(setup|teardown)_?(file|function|run)~i', $function, $matches)) {
+    if (\preg_match('~^(setup|teardown)_?(file|run)?~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
-            if (0 === \strcasecmp('file', $matches[2])) {
+            if (isset($matches[2]) && 0 === \strcasecmp('file', $matches[2])) {
                 if ($file->setup) {
                     $error |= namespace\ERROR_SETUP;
                 }
@@ -1091,24 +1091,24 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
             }
         }
         else {
-            if (0 === \strcasecmp('file', $matches[2])) {
-                if ($file->teardown) {
-                    $error |= namespace\ERROR_TEARDOWN;
-                }
-                $file->teardown[] = $fullname;
-            }
-            elseif (0 === \strcasecmp('run', $matches[2])) {
-                if ($file->teardown_run) {
-                    $error |= namespace\ERROR_TEARDOWN_RUN;
-                }
-                $file->teardown_run[] = $fullname;
-            }
-            else {
+            if (!isset($matches[2])) {
                 if ($file->teardown_function) {
                     $error |= namespace\ERROR_TEARDOWN_FUNCTION;
                 }
                 $file->teardown_function[] = $fullname;
                 $file->teardown_function_name = $function;
+            }
+            elseif (0 === \strcasecmp('file', $matches[2])) {
+                if ($file->teardown) {
+                    $error |= namespace\ERROR_TEARDOWN;
+                }
+                $file->teardown[] = $fullname;
+            }
+            else {
+                if ($file->teardown_run) {
+                    $error |= namespace\ERROR_TEARDOWN_RUN;
+                }
+                $file->teardown_run[] = $fullname;
             }
         }
         return true;

@@ -55,13 +55,13 @@ class TestFiles {
         $this->path .= 'fixtures/test.php';
 
         $this->assert_events(array(
-            array(easytest\EVENT_OUTPUT, 'setup_function for file_fixtures\\test_one', '2 4'),
+            array(easytest\EVENT_OUTPUT, 'setup for file_fixtures\\test_one', '2 4'),
             array(easytest\EVENT_OUTPUT, 'file_fixtures\\test_one', "teardown 1\nteardown 2"),
-            array(easytest\EVENT_OUTPUT, 'teardown_function for file_fixtures\\test_one', '2 4'),
+            array(easytest\EVENT_OUTPUT, 'teardown for file_fixtures\\test_one', '2 4'),
             array(easytest\EVENT_PASS, 'file_fixtures\\test_one', null),
 
-            array(easytest\EVENT_OUTPUT, 'setup_function for file_fixtures\\test_two', '2 4'),
-            array(easytest\EVENT_OUTPUT, 'teardown_function for file_fixtures\\test_two', '2 4'),
+            array(easytest\EVENT_OUTPUT, 'setup for file_fixtures\\test_two', '2 4'),
+            array(easytest\EVENT_OUTPUT, 'teardown for file_fixtures\\test_two', '2 4'),
             array(easytest\EVENT_PASS, 'file_fixtures\\test_two', null),
 
             array(easytest\EVENT_OUTPUT, 'file_fixtures\\test::setup_object', '2 4'),

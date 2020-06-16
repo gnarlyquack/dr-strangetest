@@ -1,10 +1,10 @@
 <?php
 
-function setup_directory_discovery() {
+function setup() {
     echo __DIR__;
 }
 
 
-function teardown_directory_discovery() {
+function teardown() {
     echo __DIR__;
 }

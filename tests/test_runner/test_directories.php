@@ -92,7 +92,7 @@ class TestDirectories {
                 break;
 
             case easytest\EVENT_OUTPUT:
-                if (\preg_match('~setup_?directory~i', $source)) {
+                if (false !== \stripos($source, 'setup')) {
                     if ($current && !isset($directory['dirs'][$reason])) {
                         easytest\fail(
                             \sprintf(
@@ -130,7 +130,7 @@ class TestDirectories {
                     }
                 }
 
-                elseif (\preg_match('~teardown_?directory~i', $source)) {
+                elseif (false !== \stripos($source, 'teardown')) {
                     if (!$current) {
                         easytest\fail(
                             \sprintf(

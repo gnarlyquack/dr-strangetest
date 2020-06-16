@@ -14,12 +14,12 @@ function teardown_file($one, $two) {
 }
 
 
-function setup_function($one, $two) {
+function setup($one, $two) {
     echo "$one $two";
     return array($one, $two);
 }
 
-function teardown_function($one, $two) {
+function teardown($one, $two) {
     echo "$one $two";
 }
 

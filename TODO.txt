@@ -80,8 +80,6 @@ Release
 
 -   Implement iterable checks as a conditionally-defined function
 
--   Change setup/teardown_function to just setup/teardown
-
 -   Either both or neither of log_skip and log_output should have a default
     $during_error?
 
