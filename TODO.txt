@@ -78,8 +78,6 @@ Release
 
 -   Fix run names so that they don't have to start with a space
 
--   Implement iterable checks as a conditionally-defined function
-
 -   Either both or neither of log_skip and log_output should have a default
     $during_error?
 

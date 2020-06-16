@@ -1238,10 +1238,7 @@ function _run_test(
     }
 
     foreach ($arglists as $i => $arglist) {
-        if ($arglist
-            // #BC(7.0): don't use is_iterable to check if iterable
-            && !(\is_array($arglist) || $arglist instanceof \Traversable)
-        ) {
+        if ($arglist && !\is_iterable($arglist)) {
             // $arglists can only be invalid if $params is an instance of
             // ArgumentLists
             $type = \is_object($arglist)

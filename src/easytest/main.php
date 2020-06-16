@@ -145,7 +145,7 @@ final class ArgumentLists {
 
     public function __construct($arglists) {
         // #BC(7.0): don't use iterable type hint for $arglists
-        if (!(\is_array($arglists) || $arglists instanceof \Traversable)) {
+        if (!\is_iterable($arglists)) {
             \trigger_error(
                 '$arglists must be an iterable of iterables',
                 \E_USER_WARNING
@@ -273,6 +273,10 @@ function _load_easytest() {
     }
     else {
         $files[] = 'unpack';
+    }
+    // #BC(7.0): Include implementation for is_iterable()
+    if (!\function_exists('is_iterable')) {
+        $files[] = 'is_iterable';
     }
     foreach ($files as $file) {
         require \sprintf('%s%s%s.php', __DIR__, \DIRECTORY_SEPARATOR, $file);
