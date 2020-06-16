@@ -43,19 +43,21 @@ Release
 
     -   What if all targets are invalid?
 
+    -   Accessing unset dependency state
+
 -   How to format (and/or diff) identical objects that are different
     instances?
 
 -   If getcwd() is 'foo' and it has two test directories 'test1' and 'test2',
     and we run 'easytest', then 'test1' and 'test2' are discovered and tested.
-    If we run 'easytest test1 test2', then 'test2' is flagged as error for not
-    being in 'test1', since 'test1' is determined to be the test root. So, we
-    need to resolve this inconsistency
+    If we run 'easytest test1 test2', then 'test2' is flagged as an error for
+    not being in 'test1', since 'test1' is determined to be the test root. So,
+    we need to resolve this inconsistency
 
--   Also, if given a path that is a directory, EasyTest searches it for tests
+-   If given a path that is a directory, EasyTest searches it for tests
     regardless of whether or not it begins with 'test'. However, if given a
     path that is a file, EasyTest will only search it if its name begins with
-    'test'.  Is this an issue?
+    'test'. Is this an issue?
 
 -   Implement Context::assert()?
 
@@ -80,14 +82,16 @@ Release
 
 -   Change setup/teardown_function to just setup/teardown
 
--   Support tearing down individual parameterized test runs
-
 -   Either both or neither of log_skip and log_output should have a default
     $during_error?
 
 -   Ensure each individual arglist is an array
 
 -   Cleanup parameters to setup(), teardown(), run() test methods
+
+-   Ensure ClassTest instances are deleted
+
+-   Set maximum PHP constraint in composer.json
 
 
 Future
@@ -102,15 +106,12 @@ Future
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
--   Allow test functions and function fixtures to be moved into a class and
-    "just work"?
-
 -   Implement individual Context assertions instead of dynamically searching
     for them? Or cache looked-up names for performance?
 
 
-Wishlist / Someday
-------------------
+Wishlist / Someday / Maybe
+--------------------------
 -   Improve diff algorithm
     -   "a high-performance library in multiple languages that manipulates
         plain text"
@@ -125,3 +126,8 @@ Wishlist / Someday
 
 -   diff: Limit number of lines that are reported before and after the
     differing portion of text
+
+-   Allow targeting of a specific parameterized test run?
+
+-   Allow test functions and function fixtures to be moved into a class and
+    "just work"?

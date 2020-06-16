@@ -527,6 +527,11 @@ class TestDirectories {
                 'dir_params\\TestClass::test (0, 0)',
                 null,
             ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\teardown_run_for_file (0, 0)',
+                '2 4',
+            ),
 
             array(
                 easytest\EVENT_OUTPUT,
@@ -547,6 +552,11 @@ class TestDirectories {
                 easytest\EVENT_PASS,
                 'dir_params\\TestClass::test (0, 1)',
                 null,
+            ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\teardown_run_for_file (0, 1)',
+                '4 2',
             ),
 
             array(
@@ -554,6 +564,11 @@ class TestDirectories {
                 'dir_params\\teardown_file (0)',
                 '2 4 4 2',
             ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\teardown_run_for_directory (0)',
+                '2 4',
+            ),
 
 
 
@@ -577,6 +592,11 @@ class TestDirectories {
                 'dir_params\\TestClass::test (1, 0)',
                 null,
             ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\teardown_run_for_file (1, 0)',
+                '8 16',
+            ),
 
             array(
                 easytest\EVENT_OUTPUT,
@@ -597,12 +617,22 @@ class TestDirectories {
                 easytest\EVENT_PASS,
                 'dir_params\\TestClass::test (1, 1)',
                 null,
+            ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\teardown_run_for_file (1, 1)',
+                '16 8',
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\teardown_file (1)',
                 '8 16 16 8',
+            ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\teardown_run_for_directory (1)',
+                '8 16',
             ),
 
 

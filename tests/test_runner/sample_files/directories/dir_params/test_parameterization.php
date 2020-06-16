@@ -20,6 +20,9 @@ function teardown_file($arglists) {
     echo \implode(' ', $args);
 }
 
+function teardown_run_for_file($one, $two) {
+    echo "$one $two";
+}
 
 
 function test_function($one, $two) {

@@ -8,10 +8,11 @@
 namespace easytest;
 
 
-const ERROR_SETUP             = 0x1;
-const ERROR_TEARDOWN          = 0x2;
-const ERROR_SETUP_FUNCTION    = 0x4;
-const ERROR_TEARDOWN_FUNCTION = 0x8;
+const ERROR_SETUP             = 0x01;
+const ERROR_TEARDOWN          = 0x02;
+const ERROR_SETUP_FUNCTION    = 0x04;
+const ERROR_TEARDOWN_FUNCTION = 0x08;
+const ERROR_TEARDOWN_RUN      = 0x10;
 
 const TYPE_DIRECTORY = 1;
 const TYPE_FILE      = 2;
@@ -50,6 +51,7 @@ final class DirectoryTest extends struct {
     public $name;
     public $setup;
     public $teardown;
+    public $teardown_run;
     public $tests = array();
 
 
@@ -72,6 +74,16 @@ final class DirectoryTest extends struct {
     }
 
 
+    public function teardown_run(
+        BufferingLogger $logger,
+        $args = null,
+        $run_id = null
+    ) {
+        $run = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+        namespace\_run_directory_teardown_run($logger, $this, $args, $run);
+    }
+
+
     public function run(
         State $state, BufferingLogger $logger,
         array $args = null, array $run = null, array $targets = null
@@ -85,6 +97,7 @@ final class FileTest extends struct {
     public $name;
     public $setup;
     public $teardown;
+    public $teardown_run;
     public $tests = array();
 
     public $setup_function;
@@ -109,6 +122,16 @@ final class FileTest extends struct {
         $run = null
     ) {
         namespace\_run_file_teardown($logger, $this, $args, $run);
+    }
+
+
+    public function teardown_run(
+        BufferingLogger $logger,
+        $args = null,
+        $run_id = null
+    ) {
+        $run = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+        namespace\_run_file_teardown_run($logger, $this, $args, $run);
     }
 
 
@@ -155,6 +178,9 @@ final class ClassTest extends struct {
     }
 
 
+    public function teardown_run() {}
+
+
     public function run(
         State $state, BufferingLogger $logger,
         array $args = null, array $run = null, array $targets = null
@@ -197,6 +223,9 @@ final class FunctionTest extends struct {
     ) {
         namespace\_run_function_teardown($state, $logger, $this, $args, $run);
     }
+
+
+    public function teardown_run() {}
 
 
     public function run(
@@ -883,11 +912,22 @@ function _discover_directory_setup(
                 )
             );
         }
+        if ($error & namespace\ERROR_TEARDOWN_RUN) {
+            $logger->log_error(
+                $filepath,
+                \sprintf(
+                    "Multiple teardown fixtures found:\n\t%s",
+                    \implode("\n\t", $directory->teardown_run)
+                )
+            );
+        }
         return false;
     }
 
     $directory->setup = $directory->setup ? $directory->setup[0] : null;
     $directory->teardown = $directory->teardown ? $directory->teardown[0] : null;
+    $directory->teardown_run
+        = $directory->teardown_run ? $directory->teardown_run[0] : null;
     return $directory;
 }
 
@@ -895,18 +935,26 @@ function _discover_directory_setup(
 function _is_directory_setup_function(
     DirectoryTest $directory, &$error, $namespace, $function, $fullname
 ) {
-    if (\preg_match('~^(setup|teardown)_?directory~i', $function, $matches)) {
-        if ('setup' === \strtolower($matches[1])) {
+    if (\preg_match('~^(setup|teardown)_?(directory|run)~i', $function, $matches)) {
+        if (0 === \strcasecmp('setup', $matches[1])) {
             if ($directory->setup) {
                 $error |= namespace\ERROR_SETUP;
             }
             $directory->setup[] = $fullname;
         }
         else {
-            if ($directory->teardown) {
-                $error |= namespace\ERROR_TEARDOWN;
+            if (0 === \strcasecmp('directory', $matches[2])) {
+                if ($directory->teardown) {
+                    $error |= namespace\ERROR_TEARDOWN;
+                }
+                $directory->teardown[] = $fullname;
             }
-            $directory->teardown[] = $fullname;
+            else {
+                if ($directory->teardown_run) {
+                    $error |= namespace\ERROR_TEARDOWN_RUN;
+                }
+                $directory->teardown_run[] = $fullname;
+            }
         }
         return true;
     }
@@ -961,6 +1009,15 @@ function _discover_file(State $state, BufferingLogger $logger, $filepath) {
                 )
             );
         }
+        if ($error & namespace\ERROR_TEARDOWN_RUN) {
+            $logger->log_error(
+                $filepath,
+                \sprintf(
+                    "Multiple teardown fixtures found:\n\t%s",
+                    \implode("\n\t", $directory->teardown_run)
+                )
+            );
+        }
         if ($error & namespace\ERROR_TEARDOWN_FUNCTION) {
             $logger->log_error(
                 $filepath,
@@ -979,6 +1036,8 @@ function _discover_file(State $state, BufferingLogger $logger, $filepath) {
     else {
         $file->setup = $file->setup ? $file->setup[0] : null;
         $file->teardown = $file->teardown ? $file->teardown[0] : null;
+        $file->teardown_run
+            = $file->teardown_run ? $file->teardown_run[0] : null;
         $file->setup_function
             = $file->setup_function ? $file->setup_function[0] : null;
         $file->teardown_function
@@ -1015,7 +1074,7 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
         return true;
     }
 
-    if (\preg_match('~^(setup|teardown)_?(file|function)~i', $function, $matches)) {
+    if (\preg_match('~^(setup|teardown)_?(file|function|run)~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
             if (0 === \strcasecmp('file', $matches[2])) {
                 if ($file->setup) {
@@ -1037,6 +1096,12 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
                     $error |= namespace\ERROR_TEARDOWN;
                 }
                 $file->teardown[] = $fullname;
+            }
+            elseif (0 === \strcasecmp('run', $matches[2])) {
+                if ($file->teardown_run) {
+                    $error |= namespace\ERROR_TEARDOWN_RUN;
+                }
+                $file->teardown_run[] = $fullname;
             }
             else {
                 if ($file->teardown_function) {
@@ -1197,6 +1262,7 @@ function _run_test(
         }
 
         $test->run($state, $logger, $arglist, $this_run_id, $targets);
+        $test->teardown_run($logger, $arglist, $this_run_id);
     }
 
     $test->teardown($state, $logger, $args, $run_name);
@@ -1353,6 +1419,23 @@ function _run_directory_test(
 }
 
 
+function _run_directory_teardown_run(
+    BufferingLogger $logger,
+    DirectoryTest $directory,
+    $args = null,
+    $run = null
+) {
+    \assert(null === $args || \is_array($args));
+
+    if ($directory->teardown_run) {
+        $name = "{$directory->teardown_run}{$run}";
+        namespace\start_buffering($logger, $name);
+        namespace\_run_teardown($logger, $name, $directory->teardown_run, $args);
+        namespace\end_buffering($logger);
+    }
+}
+
+
 function _run_directory_teardown(
     BufferingLogger $logger,
     DirectoryTest $directory,
@@ -1453,6 +1536,23 @@ function _run_file_test(
         namespace\_run_test(
             $state, $logger, $test, $arglist, $run_id, $targets
         );
+    }
+}
+
+
+function _run_file_teardown_run(
+    BufferingLogger $logger,
+    FileTest $file,
+    $args = null,
+    $run = null
+) {
+    \assert(null === $args || \is_array($args));
+
+    if ($file->teardown_run) {
+        $name = "{$file->teardown_run}{$run}";
+        namespace\start_buffering($logger, $name);
+        namespace\_run_teardown($logger, $name, $file->teardown_run, $args);
+        namespace\end_buffering($logger);
     }
 }
 
