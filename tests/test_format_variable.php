@@ -85,19 +85,27 @@ EXPECTED;
 
     public function test_formats_empty_object() {
         $variable = new stdClass();
+        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        $id = \version_compare(\PHP_VERSION, '7.2', '<')
+            ? \spl_object_hash($variable)
+            : \spl_object_id($variable);
         $actual = easytest\format_variable($variable);
-        easytest\assert_identical('stdClass {}', $actual);
+        easytest\assert_identical("stdClass #$id {}", $actual);
     }
 
 
     public function test_formats_object() {
         $variable = new InheritFormat();
-        $expected = <<<'EXPECTED'
-InheritFormat {
-    $one = 'child public';
-    $two = 'child protected';
-    $three = 'child private';
-    ObjectFormat::$three = 'parent private';
+        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        $id = \version_compare(\PHP_VERSION, '7.2', '<')
+            ? \spl_object_hash($variable)
+            : \spl_object_id($variable);
+        $expected = <<<EXPECTED
+InheritFormat #$id {
+    \$one = 'child public';
+    \$two = 'child protected';
+    \$three = 'child private';
+    ObjectFormat::\$three = 'parent private';
 }
 EXPECTED;
         $actual = easytest\format_variable($variable);
@@ -166,16 +174,26 @@ EXPECTED;
         $variable->one->one = $variable;
         $variable->one->six = &$variable->one;
 
-        $expected = <<<'EXPECTED'
-ObjectFormat {
-    $one = ObjectFormat {
-        $one = ObjectFormat;
-        $two = 'parent protected';
-        $three = 'parent private';
-        $six = &ObjectFormat->$one;
+        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        if (\version_compare(\PHP_VERSION, '7.2', '<')) {
+            $id1 = \spl_object_hash($variable);
+            $id2 = \spl_object_hash($variable->one);
+        }
+        else {
+            $id1 = \spl_object_id($variable);
+            $id2 = \spl_object_id($variable->one);
+        }
+
+        $expected = <<<EXPECTED
+ObjectFormat #$id1 {
+    \$one = ObjectFormat #$id2 {
+        \$one = ObjectFormat;
+        \$two = 'parent protected';
+        \$three = 'parent private';
+        \$six = &ObjectFormat->\$one;
     };
-    $two = 'parent protected';
-    $three = 'parent private';
+    \$two = 'parent protected';
+    \$three = 'parent private';
 }
 EXPECTED;
         $actual = easytest\format_variable($variable);
@@ -185,11 +203,15 @@ EXPECTED;
 
     function test_formats_integer_object_properties() {
         $variable = new IntegerProperties();
+        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        $id = \version_compare(\PHP_VERSION, '7.2', '<')
+            ? \spl_object_hash($variable)
+            : \spl_object_id($variable);
 
-        $expected = <<<'EXPECTED'
-IntegerProperties {
-    $0 = 'zero';
-    $1 = 'one';
+        $expected = <<<EXPECTED
+IntegerProperties #$id {
+    \$0 = 'zero';
+    \$1 = 'one';
 }
 EXPECTED;
         $actual = easytest\format_variable($variable);

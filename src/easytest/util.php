@@ -176,6 +176,10 @@ function _format_object(&$var, $name, &$seen, $sentinels, $indent) {
     $out = '';
 
     $class = \get_class($var);
+    // #BC(7.1): use spl_object_hash instead of spl_object_id
+    $id = \version_compare(\PHP_VERSION, '7.2', '<')
+        ? \spl_object_hash($var)
+        : \spl_object_id($var);
     $values = (array)$var;
     if ($values) {
         foreach ($values as $key => &$value) {
@@ -205,7 +209,7 @@ function _format_object(&$var, $name, &$seen, $sentinels, $indent) {
         }
         $out .= "\n$baseline";
     }
-    return "$class {{$out}}";
+    return "$class #$id {{$out}}";
 }
 
 

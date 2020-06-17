@@ -45,9 +45,6 @@ Release
 
     -   Accessing unset dependency state
 
--   How to format (and/or diff) identical objects that are different
-    instances?
-
 -   If getcwd() is 'foo' and it has two test directories 'test1' and 'test2',
     and we run 'easytest', then 'test1' and 'test2' are discovered and tested.
     If we run 'easytest test1 test2', then 'test2' is flagged as an error for
