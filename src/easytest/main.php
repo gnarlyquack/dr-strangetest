@@ -13,17 +13,24 @@ const PROGRAM_VERSION = '0.3.0';
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
 
+
+const ERROR_SETUP             = 0x01;
+const ERROR_TEARDOWN          = 0x02;
+const ERROR_SETUP_FUNCTION    = 0x04;
+const ERROR_TEARDOWN_FUNCTION = 0x08;
+const ERROR_TEARDOWN_RUN      = 0x10;
+
 const EVENT_PASS   = 1;
 const EVENT_FAIL   = 2;
 const EVENT_ERROR  = 3;
 const EVENT_SKIP   = 4;
 const EVENT_OUTPUT = 5;
 
-const LOG_QUIET =  0x0;
-const LOG_PASS =   0x01;
-const LOG_SKIP =   0x02;
+const LOG_QUIET  = 0x0;
+const LOG_PASS   = 0x01;
+const LOG_SKIP   = 0x02;
 const LOG_OUTPUT = 0x04;
-// #BC(5.5): Use define() to define constants
+// #BC(5.5): Use define() to define constant expressions
 define('easytest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
 // Right now just used for debugging
 define('easytest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
@@ -136,6 +143,17 @@ final class Error extends \ErrorException {
 final class Target extends struct {
     public $name;
     public $targets = array();
+}
+
+
+final class State extends struct {
+    public $seen = array();
+    public $directories = array();
+    public $files = array();
+    public $classes = array();
+    public $results = array();
+    public $depends = array();
+    public $fixture = array();
 }
 
 
@@ -260,8 +278,18 @@ function _try_loading_composer() {
 
 
 function _load_easytest() {
-    $files = array('assertions', 'buffer', 'exceptions', 'log', 'output',
-        'runner', 'util');
+    $files = array(
+        'assertions',
+        'buffer',
+        'dependency',
+        'discover',
+        'exceptions',
+        'log',
+        'output',
+        'run',
+        'tests',
+        'util',
+    );
     // #BC(5.5): Implement proxy functions for argument unpacking
     // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
     // versions, so we need to include version-dependent proxy functions to do

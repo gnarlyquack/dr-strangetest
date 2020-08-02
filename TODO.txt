@@ -72,6 +72,7 @@ Release
 -   Clean up targets:
     -   File target processing should collapse class tests
     -   Just treat functions as a string, rather than as a new target object?
+    -   Deduplicate user-provided targets
 
 -   Fix run names so that they don't have to start with a space
 
@@ -86,9 +87,8 @@ Release
 
 -   Set maximum PHP constraint in composer.json
 
+-   Allow user to specify test classes, methods, and functions
 
-Future
-------
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)
@@ -102,9 +102,19 @@ Future
 -   Implement individual Context assertions instead of dynamically searching
     for them? Or cache looked-up names for performance?
 
+-   Migrate from Travis to GitHub Actions
 
-Wishlist / Someday / Maybe
---------------------------
+-   Test PHP 8 support
+
+-   Simplify "struct" class
+
+-   Replace switches with if statements (to enforce strict comparison)
+
+-   Just (conditionally) define is_iterable in main.php
+
+
+Future / Wishlist
+-----------------
 -   Improve diff algorithm
     -   "a high-performance library in multiple languages that manipulates
         plain text"
