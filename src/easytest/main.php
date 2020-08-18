@@ -37,7 +37,6 @@ define('easytest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
 
 
 
-
 interface Log {
     public function pass_count();
 
@@ -140,12 +139,6 @@ final class Error extends \ErrorException {
 }
 
 
-final class Target extends struct {
-    public $name;
-    public $targets = array();
-}
-
-
 final class State extends struct {
     public $seen = array();
     public $directories = array();
@@ -190,14 +183,21 @@ function main($argc, $argv) {
     namespace\_try_loading_composer();
     namespace\_load_easytest();
 
-    list($options, $tests) = namespace\_parse_arguments($argc, $argv);
-    $logger = new BasicLogger($options['verbose']);
+    list($options, $args) = namespace\_parse_arguments($argc, $argv);
+    list($root, $targets) = namespace\process_user_targets($args, $errors);
+    if ($errors) {
+        foreach ($errors as $error) {
+            \fwrite(\STDERR, "{$error}\n");
+        }
+        exit(namespace\EXIT_FAILURE);
+    }
 
+    $logger = new BasicLogger($options['verbose']);
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
     namespace\discover_tests(
         new BufferingLogger(new LiveUpdatingLogger($logger)),
-        $tests
+        $root, $targets
     );
     $end = namespace\_microtime();
 
@@ -287,6 +287,7 @@ function _load_easytest() {
         'log',
         'output',
         'run',
+        'targets',
         'tests',
         'util',
     );
@@ -348,12 +349,6 @@ function _parse_arguments($argc, $argv) {
         else {
             break;
         }
-    }
-
-    foreach ($args as $i => $arg) {
-        $target = new Target();
-        $target->name = $arg;
-        $args[$i] = $target;
     }
 
     return array($opts, $args);

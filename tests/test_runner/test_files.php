@@ -20,14 +20,12 @@ class TestFiles {
     // helper assertions
 
     private function assert_events($expected) {
-        if (!($this->path instanceof easytest\Target)) {
-            $target = new easytest\Target();
-            $target->name = $this->path;
-            $this->path = $target;
-        }
+        list($root, $targets) = easytest\process_user_targets((array)$this->path, $errors);
+        easytest\assert_falsy($errors);
+
         easytest\discover_tests(
             new easytest\BufferingLogger($this->logger),
-            array($this->path)
+            $root, $targets
         );
         assert_events($expected, $this->logger);
     }
@@ -128,15 +126,6 @@ class TestFiles {
             array(easytest\EVENT_PASS, 'ns01\\ns1\\TestNamespaces::test', null),
             array(easytest\EVENT_PASS, 'ns01\\ns2\\TestNamespaces::test', null),
             array(easytest\EVENT_PASS, 'TestNamespaces::test', null),
-        ));
-    }
-
-
-    public function test_logs_error_for_nonexistent_file() {
-        $this->path .= 'foo.php';
-
-        $this->assert_events(array(
-            array(easytest\EVENT_ERROR, $this->path, 'No such file or directory'),
         ));
     }
 
@@ -745,21 +734,12 @@ class TestFiles {
 
 
     function test_runs_only_targeted_tests() {
-        $this->path .= 'targets/test.php';
-
-        $target = new easytest\Target();
-        $target->name = $this->path;
-        $target->targets = array(
-            new easytest\Target('function targets\\test_two'),
-            new easytest\Target(
-                'class targets\\test',
-                array(
-                    new easytest\Target('test_two'),
-                )
-            ),
-            new easytest\Target('function targets\\test_one'),
+        $this->path = array(
+            "{$this->path}targets/test.php",
+            '--function=targets\\test_two',
+            '--class=targets\\test::test_two',
+            '--function=targets\\test_one',
         );
-        $this->path = $target;
 
         $this->assert_events(array(
             array(easytest\EVENT_PASS, 'targets\\test_two', null),

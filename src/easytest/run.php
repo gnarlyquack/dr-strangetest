@@ -272,7 +272,7 @@ function _find_directory_targets(Logger $logger, DirectoryTest $test, array $tar
 
         if (isset($test->tests[$name])) {
             $parent = $name;
-            $target = $target->targets;
+            $target = $target->subtargets;
         }
         elseif (0 === \substr_compare($name, $test->name, 0, \strlen($test->name))) {
             // $target is in a subdirectory of the current directory.
@@ -321,7 +321,7 @@ function _find_file_targets(Logger $logger, FileTest $test, array $targets) {
 function _find_class_targets(Logger $logger, ClassTest $test, array $targets) {
     $methods = array();
     foreach ($targets as $target) {
-        \assert(!$target->targets);
+        \assert(!$target->subtargets);
         $method = $target->name;
         if (!\method_exists($test->name, $method)) {
             $logger->log_error($test->name, "Invalid test requested: $method");
@@ -474,7 +474,7 @@ function run_file_tests(
     if ($targets) {
         foreach ($targets as $target) {
             namespace\_run_file_test(
-                $state, $logger, $file, $target->name, $arglist, $run_id, $target->targets
+                $state, $logger, $file, $target->name, $arglist, $run_id, $target->subtargets
             );
         }
     }

@@ -20,21 +20,12 @@ class TestDependencies {
     // helper assertions
 
     private function assert_events($expected) {
-        $paths = $this->path;
-        if (!\is_array($paths)) {
-            $paths = array($paths);
-        }
-        $targets = array();
-        foreach ($paths as $path) {
-            if (!($path instanceof easytest\Target)) {
-                $target = new easytest\Target();
-                $target->name = $path;
-                $targets[] = $target;
-            }
-        }
+        list($root, $targets) = easytest\process_user_targets((array)$this->path, $errors);
+        easytest\assert_falsy($errors);
+
         easytest\discover_tests(
             new easytest\BufferingLogger($this->logger),
-            $targets
+            $root, $targets
         );
         assert_events($expected, $this->logger);
     }

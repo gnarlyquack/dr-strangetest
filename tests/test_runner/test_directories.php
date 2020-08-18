@@ -19,21 +19,14 @@ class TestDirectories {
 
     // helper assertions
 
-    private function paths_to_targets() {
-        $targets = array();
-        foreach ((array)$this->path as $path) {
-            $target = new easytest\Target();
-            $target->name = $path;
-            $targets[] = $target;
-        }
-        return $targets;
-    }
-
-
     private function assert_events($directories, easytest\Context $context) {
+        list($root, $targets) = easytest\process_user_targets((array)$this->path, $errors);
+        easytest\assert_falsy($errors);
+
         easytest\discover_tests(
             new easytest\BufferingLogger($this->logger),
-            $this->paths_to_targets()
+            $root,
+            $targets
         );
 
         $root = null;
@@ -205,9 +198,12 @@ class TestDirectories {
 
 
     private function assert_log($expected) {
+        list($root, $targets) = easytest\process_user_targets((array)$this->path, $errors);
+        easytest\assert_falsy($errors);
+
         easytest\discover_tests(
             new easytest\BufferingLogger($this->logger),
-            $this->paths_to_targets()
+            $root, $targets
         );
 
         $actual = $this->logger->get_log()->get_events();
@@ -358,21 +354,6 @@ class TestDirectories {
             ),
             $context
         );
-    }
-
-
-    public function test_nonexistent_directory() {
-        // This actually tests a file, but perhaps we should check for a
-        // nonexistent directory too?
-        $this->path .= 'foobar.php';
-
-        $this->assert_log(array(
-            array(
-                easytest\EVENT_ERROR,
-                $this->path,
-                'No such file or directory'
-            ),
-        ));
     }
 
 

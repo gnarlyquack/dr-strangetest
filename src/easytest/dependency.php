@@ -132,30 +132,30 @@ function resolve_dependencies(State $state, Logger $logger) {
     }
 
     $targets = array();
-    $current = new Target();
+    $current = new _Target();
     foreach ($dependencies as $dependency) {
         if ($current->name !== $dependency->file) {
             if ($current->name) {
                 $targets[] = $current;
             }
-            $current = new Target();
+            $current = new _Target();
             $current->name = $dependency->file;
         }
         if ($dependency->class) {
             $name = "class {$dependency->class}";
-            $target = \end($current->targets);
+            $target = \end($current->subtargets);
             if ($target && $target->name === $name) {
-                $target->targets[] = new Target($dependency->function);
+                $target->subtargets[] = new _Target($dependency->function);
                 continue;
             }
-            $target = new Target();
+            $target = new _Target();
             $target->name = $name;
-            $target->targets[] = new Target($dependency->function);
-            $current->targets[] = $target;
+            $target->subtargets[] = new _Target($dependency->function);
+            $current->subtargets[] = $target;
         }
         else {
-            $target = new Target("function {$dependency->function}");
-            $current->targets[] = $target;
+            $target = new _Target("function {$dependency->function}");
+            $current->subtargets[] = $target;
         }
     }
     $targets[] = $current;

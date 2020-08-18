@@ -8,19 +8,14 @@
 namespace easytest;
 
 
-function discover_tests(BufferingLogger $logger, array $paths) {
-    list($root, $paths) = namespace\_process_paths($logger, $paths);
-    if (!$paths) {
-        return;
-    }
-
+function discover_tests(BufferingLogger $logger, $dirpath, array $targets) {
     $state = new State();
-    $directory = namespace\discover_directory($state, $logger, $root);
+    $directory = namespace\discover_directory($state, $logger, $dirpath);
     if (!$directory) {
         return;
     }
 
-    namespace\run_test($state, $logger, $directory, null, null, $paths);
+    namespace\run_test($state, $logger, $directory, null, null, $targets);
     while ($state->depends) {
         $targets = namespace\resolve_dependencies($state, $logger);
         if (!$targets) {
@@ -29,65 +24,6 @@ function discover_tests(BufferingLogger $logger, array $paths) {
         $state->depends = array();
         namespace\run_test($state, $logger, $directory, null, null, $targets);
     }
-}
-
-
-function _process_paths(Logger $logger, array $paths) {
-    if (!$paths) {
-        $path = \getcwd();
-        $root = namespace\_determine_root($path);
-
-        $target = new Target();
-        $target->name = $path . \DIRECTORY_SEPARATOR;
-        $paths[] = $target;
-        return array($root, $paths);
-    }
-
-    $root = null;
-    $targets = array();
-    foreach ($paths as $path) {
-        $realpath = \realpath($path->name);
-        if (!$realpath) {
-            $logger->log_error($path->name, 'No such file or directory');
-            continue;
-        }
-
-        if (!$root) {
-            $root = namespace\_determine_root($realpath);
-        }
-
-        if (\is_dir($realpath)) {
-            $realpath .= \DIRECTORY_SEPARATOR;
-        }
-
-        $path->name = $realpath;
-        $targets[] = $path;
-    }
-    return array($root, $targets);
-}
-
-
-function _determine_root($path) {
-    // Determine a path's root test directory
-    //
-    // The root test directory is the highest directory above $path whose
-    // case-insensitive name begins with 'test' or, if $path is a directory,
-    // $path itself or, if $path is file, the dirname of $path. This is done to
-    // ensure that directory fixtures are properly discovered when testing
-    // individual subpaths within a test suite; discovery will begin at the
-    // root directory and descend towards the specified path.
-    if (\is_dir($path)) {
-        $root = $parent = $path;
-    }
-    else {
-        $root = $parent = \dirname($path);
-    }
-
-    while (0 === \substr_compare(\basename($parent), 'test', 0, 4, true)) {
-        $root = $parent;
-        $parent = \dirname($parent);
-    }
-    return $root . \DIRECTORY_SEPARATOR;
 }
 
 
