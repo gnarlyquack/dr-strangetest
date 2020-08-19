@@ -330,3 +330,30 @@ function find_class_targets(Logger $logger, ClassTest $test, array $targets) {
     }
     return array($error, $result);
 }
+
+
+function build_targets_from_dependencies(array $dependencies) {
+    $targets = array();
+    $current_file = $current_class = null;
+    foreach ($dependencies as $dependency) {
+        if (!isset($current_file) || $current_file->name !== $dependency->file) {
+            $current_class = null;
+            $current_file = new _Target($dependency->file);
+            $targets[] = $current_file;
+        }
+        if ($dependency->class) {
+            $class = "class {$dependency->class}";
+            if (!isset($current_class) || $current_class->name !== $class) {
+                $current_class = new _Target($class);
+                $current_file->subtargets[] = $current_class;
+            }
+            $current_class->subtargets[] = new _Target($dependency->function);
+        }
+        else {
+            $current_class = null;
+            $function = "function {$dependency->function}";
+            $current_file->subtargets[] = new _Target($function);
+        }
+    }
+    return $targets;
+}

@@ -55,10 +55,6 @@ Release
     -   Actually, replace it altogether with Context::assert?
 
 -   Clean up targets:
-    -   Processing targets from dependencies should collapse consecutive tests
-        that are within a common "container", e.g., within the same file or
-        class (this may currently only be an issue with classes)
-
     -   find_class_target: don't use 'method_exists' to check if a target
         exists because this will cause non-test methods to be found as targets
 

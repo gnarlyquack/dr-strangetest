@@ -126,38 +126,5 @@ final class _DependencyGraph {
 
 function resolve_dependencies(State $state, Logger $logger) {
     $graph = new _DependencyGraph($state, $logger);
-    $dependencies = $graph->sort();
-    if (!$dependencies) {
-        return null;
-    }
-
-    $targets = array();
-    $current = new _Target();
-    foreach ($dependencies as $dependency) {
-        if ($current->name !== $dependency->file) {
-            if ($current->name) {
-                $targets[] = $current;
-            }
-            $current = new _Target();
-            $current->name = $dependency->file;
-        }
-        if ($dependency->class) {
-            $name = "class {$dependency->class}";
-            $target = \end($current->subtargets);
-            if ($target && $target->name === $name) {
-                $target->subtargets[] = new _Target($dependency->function);
-                continue;
-            }
-            $target = new _Target();
-            $target->name = $name;
-            $target->subtargets[] = new _Target($dependency->function);
-            $current->subtargets[] = $target;
-        }
-        else {
-            $target = new _Target("function {$dependency->function}");
-            $current->subtargets[] = $target;
-        }
-    }
-    $targets[] = $current;
-    return $targets;
+    return $graph->sort();
 }

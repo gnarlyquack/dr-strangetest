@@ -17,10 +17,11 @@ function discover_tests(BufferingLogger $logger, $dirpath, array $targets) {
 
     namespace\run_test($state, $logger, $directory, null, null, $targets);
     while ($state->depends) {
-        $targets = namespace\resolve_dependencies($state, $logger);
-        if (!$targets) {
+        $dependencies = namespace\resolve_dependencies($state, $logger);
+        if (!$dependencies) {
             break;
         }
+        $targets = namespace\build_targets_from_dependencies($dependencies);
         $state->depends = array();
         namespace\run_test($state, $logger, $directory, null, null, $targets);
     }
