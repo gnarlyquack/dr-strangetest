@@ -249,3 +249,84 @@ function _determine_test_root($path) {
     }
     return $path . \DIRECTORY_SEPARATOR;
 }
+
+
+function find_directory_targets(Logger $logger, DirectoryTest $test, array $targets) {
+    $error = false;
+    $result = array();
+    $current = null;
+    $testnamelen = \strlen($test->name);
+    foreach ($targets as $target) {
+        if ($target->name === $test->name) {
+            \assert(!$result);
+            \assert(!$error);
+            break;
+        }
+
+        $i = \strpos($target->name, \DIRECTORY_SEPARATOR, $testnamelen);
+        if (false === $i) {
+            $childpath = $target->name;
+        }
+        else {
+            $childpath = \substr($target->name, 0, $i + 1);
+        }
+
+        if (!isset($test->tests[$childpath])) {
+            $error = true;
+            $logger->log_error(
+                $target->name,
+                'This path is not a valid test ' . (\is_dir($target->name) ? 'directory' : 'file')
+            );
+        }
+        elseif ($childpath === $target->name) {
+            $result[] = $target;
+            $current = null;
+        }
+        else {
+            if (!isset($current) || $current->name !== $childpath) {
+                $current = new _Target($childpath);
+                $result[] = $current;
+            }
+            $current->subtargets[] = $target;
+        }
+    }
+    return array($error, $result);
+}
+
+
+function find_file_targets(Logger $logger, FileTest $test, array $targets) {
+    $error = false;
+    $result = array();
+    foreach ($targets as $target) {
+        if (isset($test->tests[$target->name])) {
+            $result[] = $target;
+        }
+        else {
+            $error = true;
+            $logger->log_error(
+                $target->name,
+                "This identifier is not a valid test in {$test->name}"
+            );
+        }
+    }
+    return array($error, $result);
+}
+
+
+function find_class_targets(Logger $logger, ClassTest $test, array $targets) {
+    $error = false;
+    $result = array();
+    foreach ($targets as $target) {
+        if (\method_exists($test->name, $target->name)) {
+            $result[] = $target->name;
+        }
+        else {
+            $error = true;
+            $logger->log_error(
+                $target->name,
+                "This identifier is not a valid test method in class {$test->name}"
+            );
+        }
+    }
+    return array($error, $result);
+}

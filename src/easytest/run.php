@@ -196,21 +196,25 @@ function run_test(
         $type = \get_class($test);
         switch ($type) {
         case 'easytest\\DirectoryTest':
-            $targets = namespace\_find_directory_targets($logger, $test, $targets);
+            $targets = namespace\find_directory_targets($logger, $test, $targets);
             break;
 
         case 'easytest\\FileTest':
-            $targets = namespace\_find_file_targets($logger, $test, $targets);
+            $targets = namespace\find_file_targets($logger, $test, $targets);
             break;
 
         case 'easytest\\ClassTest':
-            $targets = namespace\_find_class_targets($logger, $test, $targets);
+            $targets = namespace\find_class_targets($logger, $test, $targets);
             break;
 
         default:
             // #BC(5.4): Omit description from assert
             \assert(false); // "Test type '$type' can't have targets"
             break;
+        }
+        list($error, $targets) = $targets;
+        if (!$targets && $error) {
+            return;
         }
     }
 
@@ -258,81 +262,6 @@ function run_test(
 }
 
 
-function _find_directory_targets(Logger $logger, DirectoryTest $test, array $targets) {
-    $current = null;
-    $parents = array();
-    $children = array();
-    foreach ($targets as $target) {
-        $name = $target->name;
-        if ($name === $test->name) {
-            // The entire directory is a target, so test the entire path. Any
-            // other targets are just duplicates, which we can skip
-            return null;
-        }
-
-        if (isset($test->tests[$name])) {
-            $parent = $name;
-            $target = $target->subtargets;
-        }
-        elseif (0 === \substr_compare($name, $test->name, 0, \strlen($test->name))) {
-            // $target is in a subdirectory of the current directory.
-            // $i = the location of the directory separator, which we want
-            // to include in the subdirectory name
-            $i = \strpos($name, \DIRECTORY_SEPARATOR, \strlen($test->name));
-            $parent = \substr($name, 0, $i+1);
-            $target = array($target);
-        }
-        else {
-            $logger->log_error($test->name, "Invalid test requested: $name");
-            continue;
-        }
-
-        if ($parent === $current) {
-            $children = \array_merge($children, $target);
-        }
-        else {
-            if ($current) {
-                $parents[] = array($current, $children);
-            }
-            $current = $parent;
-            $children = $target;
-        }
-    }
-    if ($current) {
-        $parents[] = array($current, $children);
-    }
-    return $parents;
-}
-
-
-function _find_file_targets(Logger $logger, FileTest $test, array $targets) {
-    $tests = array();
-    foreach ($targets as $target) {
-        if (!isset($test->tests[$target->name])) {
-            $logger->log_error($test->name, "Invalid test requested: $target->name");
-            continue;
-        }
-        $tests[] = $target;
-    }
-    return $tests;
-}
-
-
-function _find_class_targets(Logger $logger, ClassTest $test, array $targets) {
-    $methods = array();
-    foreach ($targets as $target) {
-        \assert(!$target->subtargets);
-        $method = $target->name;
-        if (!\method_exists($test->name, $method)) {
-            $logger->log_error($test->name, "Invalid test requested: $method");
-            continue;
-        }
-        $methods[] = $method;
-    }
-    return $methods;
-}
-
-
 function run_directory_setup(
     BufferingLogger $logger,
     DirectoryTest $directory,
@@ -366,9 +295,8 @@ function run_directory_tests(
 
     if ($targets) {
         foreach ($targets as $target) {
-            list($test, $targets) = $target;
             namespace\_run_directory_test(
-                $state, $logger, $directory, $test, $arglist, $run_id, $targets
+                $state, $logger, $directory, $target->name, $arglist, $run_id, $target->subtargets
             );
         }
     }

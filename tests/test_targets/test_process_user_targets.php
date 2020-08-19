@@ -68,7 +68,7 @@ function test_uses_cwd_as_default_target(Context $context) {
     namespace\set_cwd($context, __DIR__);
     $actual = easytest\process_user_targets(array(), $errors);
 
-    $root = \dirname(__DIR__) . \DIRECTORY_SEPARATOR;
+    $root = \dirname(\dirname(__DIR__)) . \DIRECTORY_SEPARATOR;
     $targets = array(
         __DIR__ . \DIRECTORY_SEPARATOR => array(
             'name' => __DIR__ . \DIRECTORY_SEPARATOR,

@@ -39,10 +39,6 @@ Release
             ArgumentLists
         -   each arglist in ArgumentLists must be an iterable
 
-    -   Handling targets that don't match a test pattern
-
-    -   What if all targets are invalid?
-
     -   Accessing unset dependency state
 
 -   Implement Context::assert()?
@@ -59,7 +55,21 @@ Release
     -   Actually, replace it altogether with Context::assert?
 
 -   Clean up targets:
-    -   File target processing should collapse class tests
+    -   Processing targets from dependencies should collapse consecutive tests
+        that are within a common "container", e.g., within the same file or
+        class (this may currently only be an issue with classes)
+
+    -   find_class_target: don't use 'method_exists' to check if a target
+        exists because this will cause non-test methods to be found as targets
+
+    -   Allow namespaces for user-provided function and class targets to be
+        automatically discovered so they don't need to be specified on the
+        command line. This will probably require saving the list of declared
+        namespaces within a file test
+
+    -   User targets only need to be found/validated once during discovery and
+        not every time a test is run. Targets built from dependencies should
+        never need to be found/validated since they should always be valid
 
 -   Fix run names so that they don't have to start with a space
 
