@@ -34,7 +34,7 @@ function target_to_array(Target $target) {
 
 function assert_targets(
     Context $context, array $actual, array $actual_errors,
-    $expected_root, array $expected_targets, array $expected_errors
+    $expected_root, $expected_targets, array $expected_errors
 ) {
     $context->assert_identical(
         $expected_root,
@@ -43,8 +43,10 @@ function assert_targets(
     );
 
     $targets = $actual[1];
-    foreach ($targets as $key => $value) {
-        $targets[$key] = namespace\target_to_array($value);
+    if ($targets) {
+        foreach ($targets as $key => $value) {
+            $targets[$key] = namespace\target_to_array($value);
+        }
     }
     $context->assert_identical(
         $expected_targets,
@@ -63,12 +65,16 @@ function assert_targets(
 // tests
 
 function test_uses_cwd_as_default_target(Context $context) {
-    $root = __DIR__ . \DIRECTORY_SEPARATOR;
-
     namespace\set_cwd($context, __DIR__);
     $actual = easytest\process_user_targets(array(), $errors);
 
-    $targets = array($root => array('name' => $root, 'subtargets' => array()));
+    $root = \dirname(__DIR__) . \DIRECTORY_SEPARATOR;
+    $targets = array(
+        __DIR__ . \DIRECTORY_SEPARATOR => array(
+            'name' => __DIR__ . \DIRECTORY_SEPARATOR,
+            'subtargets' => array()
+        )
+    );
     namespace\assert_targets($context, $actual, $errors, $root, $targets, array());
 }
 
@@ -349,6 +355,8 @@ function test_overrides_targets_in_file_with_file_target(Context $context) {
         '--class=cat::one,two',
         '--class=foo,bar',
         '--class=cat',
+        'test2.php',
+        'test1.php',
     );
 
     namespace\set_cwd($context, $root);
@@ -357,20 +365,11 @@ function test_overrides_targets_in_file_with_file_target(Context $context) {
     $targets = array(
         "{$root}test1.php" => array(
             'name' => "{$root}test1.php",
-            'subtargets' => array(
-                'class foo' => array(
-                    'name' => 'class foo',
-                    'subtargets' => array(),
-                ),
-                'class bar' => array(
-                    'name' => 'class bar',
-                    'subtargets' => array(),
-                ),
-                'class cat' => array(
-                    'name' => 'class cat',
-                    'subtargets' => array(),
-                ),
-            ),
+            'subtargets' => array(),
+        ),
+        "{$root}test2.php" => array(
+            'name' => "{$root}test2.php",
+            'subtargets' => array(),
         ),
     );
     namespace\assert_targets($context, $actual, $errors, $root, $targets, array());
@@ -412,4 +411,131 @@ function test_eliminates_duplicate_path_targets(Context $context) {
         ),
     );
     namespace\assert_targets($context, $actual, $errors, $root, $targets, array());
+}
+
+
+function test_reports_error_for_nonexistent_paths(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array(
+        'foo.php',
+        'test1.php',
+        'foo_dir',
+    );
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    namespace\assert_targets($context, $actual, $errors, null, null, array(
+        "Path 'foo.php' does not exist",
+        "Path 'foo_dir' does not exist",
+    ));
+}
+
+
+function test_reports_error_for_missing_function_name(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array(
+        'test1.php',
+        '--function=',
+        '--function=one,,two',
+        '--function=,,,',
+    );
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    namespace\assert_targets($context, $actual, $errors, null, null, array(
+        "Test target '--function=' requires a function name",
+        "Test target '--function=one,,two' is missing one or more function names",
+        "Test target '--function=,,,' is missing one or more function names",
+    ));
+}
+
+
+function test_reports_error_for_missing_class_name(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array(
+        'test1.php',
+        '--class=',
+        '--class=one,,two',
+        '--class=foo,bar,::one,,two,',
+        '--class=::one,two',
+        '--class=,,,',
+    );
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    namespace\assert_targets($context, $actual, $errors, null, null, array(
+        "Test target '--class=' requires a class name",
+        "Test target '--class=one,,two' is missing one or more class names",
+        "Test target '--class=foo,bar,::one,,two,' is missing one or more class names",
+        "Test target '--class=::one,two' requires a class name",
+        "Test target '--class=,,,' is missing one or more class names",
+    ));
+}
+
+
+function test_reports_error_for_missing_method_name(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array(
+        'test1.php',
+        '--class=one,two::',
+        '--class=foo,bar::one,,two',
+        '--class=foo,bar::,,,',
+    );
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    namespace\assert_targets($context, $actual, $errors, null, null, array(
+        "Test target '--class=one,two::' requires a method name",
+        "Test target '--class=foo,bar::one,,two' is missing one or more method names",
+        "Test target '--class=foo,bar::,,,' is missing one or more method names",
+    ));
+}
+
+
+function test_determines_correct_test_root_from_directory(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array('test_dir/test_subdir', 'test_dir1');
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    $targets = array();
+    foreach ($args as $arg) {
+        $target = $root . $arg . \DIRECTORY_SEPARATOR;
+        $targets[$target] = array('name' => $target, 'subtargets' => array());
+    }
+    namespace\assert_targets($context, $actual, $errors, $root, $targets, array());
+}
+
+
+function test_determines_correct_test_root_from_file(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array('test_dir1/test2.php', 'test1.php');
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    $targets = array();
+    foreach ($args as $arg) {
+        $target = $root . $arg;
+        $targets[$target] = array('name' => $target, 'subtargets' => array());
+    }
+    namespace\assert_targets($context, $actual, $errors, $root, $targets, array());
+}
+
+
+function test_reports_error_for_path_outside_test_root(Context $context) {
+    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $args = array('test1.php', __FILE__);
+
+    namespace\set_cwd($context, $root);
+    $actual = easytest\process_user_targets($args, $errors);
+
+    namespace\assert_targets($context, $actual, $errors, null, null, array(
+        \sprintf("Path '%s' is outside the test root directory '$root'", __FILE__),
+    ));
 }

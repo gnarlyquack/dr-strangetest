@@ -38,11 +38,11 @@ function process_user_targets(array $args, &$errors) {
                                   0, namespace\_TARGET_CLASS_LEN, true)
         ) {
             $class = \substr($arg, namespace\_TARGET_CLASS_LEN);
-            if (!$class) {
+            if (!\strlen($class)) {
                 $errors[] = "Test target '$arg' requires a class name";
                 continue;
             }
-            if (!$file) {
+            if (!isset($file)) {
                 $errors[] = "Test target '$arg' must be specified for a file";
                 continue;
             }
@@ -54,11 +54,11 @@ function process_user_targets(array $args, &$errors) {
                                       0, namespace\_TARGET_FUNCTION_LEN, true)
         ) {
             $function = \substr($arg, namespace\_TARGET_FUNCTION_LEN);
-            if (!$function) {
+            if (!\strlen($function)) {
                 $errors[] = "Test target '$arg' requires a function name";
                 continue;
             }
-            if (!$file) {
+            if (!isset($file)) {
                 $errors[] = "Test target '$arg' must be specified for a file";
                 continue;
             }
@@ -67,12 +67,19 @@ function process_user_targets(array $args, &$errors) {
             }
         }
         else {
+            if ($subtarget_count > 0
+                && \count($targets[$file]->subtargets) === $subtarget_count
+            ) {
+                $targets[$file]->subtargets = array();
+            }
+            $file = $subtarget_count = null;
+
             $path = $arg;
             if (0 === \substr_compare($path, namespace\_TARGET_PATH,
                                       0, namespace\_TARGET_PATH_LEN, true)
             ) {
                 $path = \substr($path, namespace\_TARGET_PATH_LEN);
-                if (!$path) {
+                if (!\strlen($path)) {
                     $errors[] = "Test target '$arg' requires a directory or file name";
                     continue;
                 }
@@ -80,6 +87,15 @@ function process_user_targets(array $args, &$errors) {
             list($file, $subtarget_count)
                 = namespace\_process_path_target($targets, $root, $path, $errors);
         }
+    }
+    if ($subtarget_count > 0
+        && \count($targets[$file]->subtargets) === $subtarget_count
+    ) {
+        $targets[$file]->subtargets = array();
+    }
+
+    if ($errors) {
+        return array(null, null);
     }
 
     $keys = \array_keys($targets);
@@ -102,15 +118,11 @@ function process_user_targets(array $args, &$errors) {
             $key = \next($keys);
         }
     }
-
-    if ($errors) {
-        return array(null, null);
-    }
     return array($root, $targets);
 }
 
 
-function _process_class_target(array &$targets, $target, &$errors) {
+function _process_class_target(array &$targets, $target, array &$errors) {
     $split = \strpos($target, '::');
     if (false === $split) {
         $classes = $target;
@@ -119,12 +131,12 @@ function _process_class_target(array &$targets, $target, &$errors) {
     else {
         $classes = \substr($target, 0, $split);
         $methods = \substr($target, $split + 2);
-        if (!$methods) {
-            $errors[] = "Class test target '$target' has no methods specified after '::'";
+        if (!\strlen($classes)) {
+            $errors[] = "Test target '--class=$target' requires a class name";
             return;
         }
-        if (!$classes) {
-            $errors[] = "Class test target '$target' has no classes specified before '::'";
+        if (!\strlen($methods)) {
+            $errors[] = "Test target '--class=$target' requires a method name";
             return;
         }
     }
@@ -133,6 +145,11 @@ function _process_class_target(array &$targets, $target, &$errors) {
     $max_index = \count($classes) - 1;
     foreach ($classes as $index => $class) {
         // functions and classes with identical names can coexist!
+        if (!\strlen($class)) {
+            $errors[] = "Test target '--class=$target' is missing one or more class names";
+            return;
+        }
+
         $class = "class $class";
         if (!isset($targets[$class])) {
             $targets[$class] = new _Target($class);
@@ -149,6 +166,11 @@ function _process_class_target(array &$targets, $target, &$errors) {
     if ($methods && $subtarget_count) {
         $targets = &$targets[$class]->subtargets;
         foreach (\explode(',', $methods) as $method) {
+            if (!\strlen($method)) {
+                $errors[] = "Test target '--class=$target' is missing one or more method names";
+                return;
+            }
+
             if (!isset($targets[$method])) {
                 $targets[$method] = new _Target($method);
             }
@@ -160,8 +182,13 @@ function _process_class_target(array &$targets, $target, &$errors) {
 }
 
 
-function _process_function_target(array &$targets, $functions, &$errors) {
+function _process_function_target(array &$targets, $functions, array &$errors) {
     foreach (\explode(',', $functions) as $function) {
+        if (!\strlen($function)) {
+            $errors[] = "Test target '--function=$functions' is missing one or more function names";
+            return;
+        }
+
         // functions and classes with identical names can coexist!
         $function = "function $function";
         if (!isset($targets[$function])) {
@@ -171,7 +198,7 @@ function _process_function_target(array &$targets, $functions, &$errors) {
 }
 
 
-function _process_path_target(array &$targets, &$root, $path, &$errors) {
+function _process_path_target(array &$targets, &$root, $path, array &$errors) {
     $realpath = \realpath($path);
     $file = null;
     if (!$realpath) {
@@ -186,8 +213,12 @@ function _process_path_target(array &$targets, &$root, $path, &$errors) {
         return array($realpath, \count($targets[$realpath]->subtargets));
     }
 
-    if (!$root) {
-        $root = namespace\_determine_root($realpath);
+    if (!isset($root)) {
+        $root = namespace\_determine_test_root($realpath);
+    }
+    elseif (0 !== \substr_compare($realpath, $root, 0, \strlen($root))) {
+        $errors[] = "Path '$path' is outside the test root directory '$root'";
+        return array(null, null);
     }
 
     if (\is_dir($realpath)) {
@@ -202,25 +233,19 @@ function _process_path_target(array &$targets, &$root, $path, &$errors) {
 }
 
 
-function _determine_root($path) {
-    // Determine a path's root test directory
-    //
-    // The root test directory is the highest directory above $path whose
-    // case-insensitive name begins with 'test' or, if $path is a directory,
-    // $path itself or, if $path is file, the dirname of $path. This is done to
-    // ensure that directory fixtures are properly discovered when testing
-    // individual subpaths within a test suite; discovery will begin at the
-    // root directory and descend towards the specified path.
-    if (\is_dir($path)) {
-        $root = $parent = $path;
-    }
-    else {
-        $root = $parent = \dirname($path);
+function _determine_test_root($path) {
+    // The test root directory is the first directory above $path whose
+    // case-insensitive name does not begin with 'test'. If $path is a
+    // directory, this could be $path itself. This is done to ensure that
+    // directory fixtures are properly discovered when testing individual
+    // subpaths within a test suite; discovery will begin at the root directory
+    // and descend towards the specified path.
+    if (!\is_dir($path)) {
+        $path = \dirname($path);
     }
 
-    while (0 === \substr_compare(\basename($parent), 'test', 0, 4, true)) {
-        $root = $parent;
-        $parent = \dirname($parent);
+    while (0 === \substr_compare(\basename($path), 'test', 0, 4, true)) {
+        $path = \dirname($path);
     }
-    return $root . \DIRECTORY_SEPARATOR;
+    return $path . \DIRECTORY_SEPARATOR;
 }

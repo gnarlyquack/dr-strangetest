@@ -45,17 +45,6 @@ Release
 
     -   Accessing unset dependency state
 
--   If getcwd() is 'foo' and it has two test directories 'test1' and 'test2',
-    and we run 'easytest', then 'test1' and 'test2' are discovered and tested.
-    If we run 'easytest test1 test2', then 'test2' is flagged as an error for
-    not being in 'test1', since 'test1' is determined to be the test root. So,
-    we need to resolve this inconsistency
-
--   If given a path that is a directory, EasyTest searches it for tests
-    regardless of whether or not it begins with 'test'. However, if given a
-    path that is a file, EasyTest will only search it if its name begins with
-    'test'. Is this an issue?
-
 -   Implement Context::assert()?
 
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
@@ -71,8 +60,6 @@ Release
 
 -   Clean up targets:
     -   File target processing should collapse class tests
-    -   Just treat functions as a string, rather than as a new target object?
-    -   Deduplicate user-provided targets
 
 -   Fix run names so that they don't have to start with a space
 
