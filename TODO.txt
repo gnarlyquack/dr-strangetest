@@ -80,8 +80,6 @@ Release
 
 -   Set maximum PHP constraint in composer.json
 
--   Allow user to specify test classes, methods, and functions
-
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)

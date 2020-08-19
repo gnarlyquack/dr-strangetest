@@ -196,15 +196,15 @@ function run_test(
         $type = \get_class($test);
         switch ($type) {
         case 'easytest\\DirectoryTest':
-            $targets = namespace\find_directory_targets($logger, $test, $targets);
+            $result = namespace\find_directory_targets($logger, $test, $targets);
             break;
 
         case 'easytest\\FileTest':
-            $targets = namespace\find_file_targets($logger, $test, $targets);
+            $result = namespace\find_file_targets($logger, $test, $targets);
             break;
 
         case 'easytest\\ClassTest':
-            $targets = namespace\find_class_targets($logger, $test, $targets);
+            $result = namespace\find_class_targets($logger, $test, $targets);
             break;
 
         default:
@@ -212,7 +212,7 @@ function run_test(
             \assert(false); // "Test type '$type' can't have targets"
             break;
         }
-        list($error, $targets) = $targets;
+        list($error, $targets) = $result;
         if (!$targets && $error) {
             return;
         }
