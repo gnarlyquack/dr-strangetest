@@ -296,7 +296,7 @@ function run_directory_tests(
     if ($targets) {
         foreach ($targets as $target) {
             namespace\_run_directory_test(
-                $state, $logger, $directory, $target->name, $arglist, $run_id, $target->subtargets
+                $state, $logger, $directory, $target->name(), $arglist, $run_id, $target->subtargets()
             );
         }
     }
@@ -402,7 +402,7 @@ function run_file_tests(
     if ($targets) {
         foreach ($targets as $target) {
             namespace\_run_file_test(
-                $state, $logger, $file, $target->name, $arglist, $run_id, $target->subtargets
+                $state, $logger, $file, $target->name(), $arglist, $run_id, $target->subtargets()
             );
         }
     }

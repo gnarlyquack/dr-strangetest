@@ -16,12 +16,23 @@ const _TARGET_PATH     = '--path=';
 \define('easytest\\_TARGET_PATH_LEN', \strlen(namespace\_TARGET_PATH));
 
 
-interface Target {}
+interface Target {
+    public function name();
+    public function subtargets();
+}
 
 
 final class _Target extends struct implements Target {
     public $name;
     public $subtargets = array();
+
+    public function name() {
+        return $this->name;
+    }
+
+    public function subtargets() {
+        return $this->subtargets;
+    }
 }
 
 
