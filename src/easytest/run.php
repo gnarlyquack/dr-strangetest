@@ -31,39 +31,149 @@ final class Context {
     }
 
 
-    public function __call($name, $args) {
-        // This works, and will automatically pick up new assertions, but it'd
-        // probably be best to implement actual class methods
-        if ('assert' === \substr($name, 0, 6)
-            && \function_exists("easytest\\$name"))
-        {
-            try {
-                // #BC(5.5): Use proxy function for argument unpacking
-                $value = namespace\_unpack_function("easytest\\$name", $args);
-                return array(namespace\RESULT_PASS, $value);
+    public function assert($assertion, $description = null) {
+        return $this->do_assert(
+            function() use ($assertion, $description) {
+                if (!$assertion) {
+                    throw new Failure(
+                        namespace\format_failure_message($assertion, $description)
+                    );
+                }
             }
-            catch (\AssertionError $e) {
-                $this->logger->log_failure($this->test->name, $e);
-            }
-            // #BC(5.6): Catch Failure
-            catch (Failure $e) {
-                $this->logger->log_failure($this->test->name, $e);
-            }
-            $this->result = namespace\RESULT_FAIL;
-            return array(namespace\RESULT_FAIL, null);
-        }
-
-        throw new \Exception(
-            \sprintf('Call to undefined method %s::%s()', __CLASS__, $name)
         );
     }
 
 
-    public function subtest($callable) {
+    public function assert_different($expected, $actual, $description = null) {
+        return $this->do_assert(
+            function() use ($expected, $actual, $description) {
+                namespace\assert_different($expected, $actual, $description);
+            }
+        );
+    }
+
+
+    public function assert_equal($expected, $actual, $description = null) {
+        return $this->do_assert(
+            function() use ($expected, $actual, $description) {
+                namespace\assert_equal($expected, $actual, $description);
+            }
+        );
+    }
+
+
+    function assert_false($actual, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $description) {
+                namespace\assert_false($actual, $description);
+            }
+        );
+    }
+
+
+    function assert_falsy($actual, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $description) {
+                namespace\assert_falsy($actual, $description);
+            }
+        );
+    }
+
+
+    function assert_greater($actual, $min, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $min, $description) {
+                namespace\assert_greater($actual, $min, $description);
+            }
+        );
+    }
+
+
+    function assert_greater_or_equal($actual, $min, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $min, $description) {
+                namespace\assert_greater_or_equal($actual, $min, $description);
+            }
+        );
+    }
+
+
+    function assert_identical($expected, $actual, $description = null) {
+        return $this->do_assert(
+            function() use ($expected, $actual, $description) {
+                namespace\assert_identical($expected, $actual, $description);
+            }
+        );
+    }
+
+
+    function assert_less($actual, $max, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $max, $description) {
+                namespace\assert_less($actual, $max, $description);
+            }
+        );
+    }
+
+
+    function assert_less_or_equal($actual, $max, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $max, $description) {
+                namespace\assert_less_or_equal($actual, $max, $description);
+            }
+        );
+    }
+
+
+    function assert_throws($expected, $callback, $description = null, &$result = null) {
+        return $this->do_assert(
+            function() use ($expected, $callback, $description, &$result) {
+                $result = namespace\assert_throws($expected, $callback, $description);
+            }
+        );
+    }
+
+
+    function assert_true($actual, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $description) {
+                namespace\assert_true($actual, $description);
+            }
+        );
+    }
+
+
+    function assert_truthy($actual, $description = null) {
+        return $this->do_assert(
+            function() use ($actual, $description) {
+                namespace\assert_truthy($actual, $description);
+            }
+        );
+    }
+
+
+    function assert_unequal($expected, $actual, $description = null) {
+        return $this->do_assert(
+            function() use ($expected, $actual, $description) {
+                namespace\assert_unequal($expected, $actual, $description);
+            }
+        );
+    }
+
+
+    function fail($reason) {
+        return $this->do_assert(
+            function() use ($reason) {
+                namespace\fail($reason);
+            }
+        );
+    }
+
+
+    private function do_assert($assert) {
         try {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
-            $value = \call_user_func($callable);
-            return array(namespace\RESULT_PASS, $value);
+            $assert();
+            return true;
         }
         catch (\AssertionError $e) {
             $this->logger->log_failure($this->test->name, $e);
@@ -73,7 +183,7 @@ final class Context {
             $this->logger->log_failure($this->test->name, $e);
         }
         $this->result = namespace\RESULT_FAIL;
-        return array(namespace\RESULT_FAIL, null);
+        return false;
     }
 
 

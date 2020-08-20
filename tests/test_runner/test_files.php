@@ -716,23 +716,6 @@ class TestFiles {
     }
 
 
-    function test_supports_subtests() {
-        $this->path .= 'subtests/test.php';
-
-        $this->assert_events(array(
-            array(easytest\EVENT_FAIL, 'subtests\\test_one', 'I fail'),
-            array(easytest\EVENT_FAIL, 'subtests\\test_one', 'I fail again'),
-
-            array(easytest\EVENT_PASS, 'subtests\\test_two', null),
-
-            array(easytest\EVENT_FAIL, 'subtests\\test::test_one', 'I fail'),
-            array(easytest\EVENT_FAIL, 'subtests\\test::test_one', 'I fail again'),
-
-            array(easytest\EVENT_PASS, 'subtests\\test::test_two', null),
-        ));
-    }
-
-
     function test_runs_only_targeted_tests() {
         $this->path = array(
             "{$this->path}targets/test.php",

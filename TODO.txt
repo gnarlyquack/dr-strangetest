@@ -41,18 +41,7 @@ Release
 
     -   Accessing unset dependency state
 
--   Implement Context::assert()?
-
 -   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
-
--   Maybe reconsider Context::subtest() return argument. Currently it makes it
-    hard to do simple conditional checks on whether or not the subtest passed
-    or failed. Instead, we may just want to return true or false and then add
-    an optional reference parameter in which to return the value of the
-    subtest $callable. If we do this, we will need to explicitly implement at
-    least assert_throws() on the Context class in order to handle returning
-    the thrown exception.
-    -   Actually, replace it altogether with Context::assert?
 
 -   Clean up targets:
     -   find_class_target: don't use 'method_exists' to check if a target
@@ -89,9 +78,6 @@ Release
 
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
-
--   Implement individual Context assertions instead of dynamically searching
-    for them? Or cache looked-up names for performance?
 
 -   Migrate from Travis to GitHub Actions
 
