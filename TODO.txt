@@ -41,15 +41,13 @@ Release
 
     -   Accessing unset dependency state
 
--   Implement "loose" diff/variable formatting for "loose" (==) comparisons?
-
 -   Clean up targets:
     -   find_class_target: don't use 'method_exists' to check if a target
         exists because this will cause non-test methods to be found as targets
 
     -   Allow namespaces for user-provided function and class targets to be
         automatically discovered so they don't need to be specified on the
-        command line. This will probably require saving the list of declared
+        command line. This will probably require caching the list of declared
         namespaces within a file test
 
     -   User targets only need to be found/validated once during discovery and
@@ -86,6 +84,49 @@ Release
 -   Simplify "struct" class
 
 -   Replace switches with if statements (to enforce strict comparison)
+
+-   Clean up diff and formatting
+
+    -   The code seems to work, but it's hella inefficient. As one example,
+        the LCS matrix is calculated twice when comparing composite
+        sub-values: once to determine the LCS for the comparison and again to
+        generate the diff. Many things like this can probably be cleaned up
+        and made more efficient, and the code can perhaps be better organized
+
+        -   Do we want to split up formatting and diff (and perhaps additional
+            "utility" functions) into separate files?
+
+    -   Since we're now diffing values directly instead of using a string
+        representation, formatting needs more robust testing and review. At
+        the very least, we want to ensure that the formatting of whole,
+        composite values by format_variable() matches how individual elements
+        are formatted when appearing within a diff
+
+        -   Are we happy with how strings are formatted? Formatting them after
+            breaking them into multiple lines means that each line is now
+            enclosed in quotes. This seems unpleasantly noisy, but offhand,
+            it's now clear how we can avoid this. Also, we should probably
+            take a closer look at how strings are formatted when inside
+            another container (i.e., as a class property or array element)
+
+        -   We lost the commas that separate array elements. Do we want them
+            back?
+
+        -   We need to take a closer look at how classes are formatted
+
+    -   Implement "loose" (==) comparison
+
+    -   By default, don't treat numerical array keys as significant when
+        comparing arrays. This can give us cleaner diffs, since an insert or
+        deletion won't cause all the subsequent, reindexed elements to show as
+        having been changed. The user should be able to override this so that
+        keys are always considered significant
+
+    -   Since we can now support loose comparison, can we incorporate
+        the fact that array key order isn't significant without explicitly
+        ordering the array? Even if we can't, do we want arrays to be
+        automatically sorted as part of generating the diff instead of
+        depending on having sorted arrays passed in?
 
 
 Future / Wishlist

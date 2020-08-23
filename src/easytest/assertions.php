@@ -36,11 +36,7 @@ function assert_equal($expected, $actual, $description = null) {
     $message = namespace\format_failure_message(
         'Assertion "$expected == $actual" failed',
         $description,
-        namespace\diff(
-            namespace\format_variable($expected),
-            namespace\format_variable($actual),
-            '$expected', '$actual'
-        )
+        namespace\diff($expected, $actual, '$expected', '$actual')
     );
     throw new Failure($message);
 }
@@ -110,11 +106,7 @@ function assert_identical($expected, $actual, $description = null) {
     $message = namespace\format_failure_message(
         'Assertion "$expected === $actual" failed',
         $description,
-        namespace\diff(
-            namespace\format_variable($expected),
-            namespace\format_variable($actual),
-            '$expected', '$actual'
-        )
+        namespace\diff($expected, $actual, '$expected', '$actual')
     );
     throw new Failure($message);
 }
@@ -218,11 +210,7 @@ function assert_unequal($expected, $actual, $description = null) {
     $message = namespace\format_failure_message(
         'Assertion "$expected != $actual" failed',
         $description,
-        namespace\diff(
-            namespace\format_variable($expected),
-            namespace\format_variable($actual),
-            '$expected', '$actual'
-        )
+        namespace\diff($expected, $actual, '$expected', '$actual')
     );
     throw new Failure($message);
 }

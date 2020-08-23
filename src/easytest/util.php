@@ -8,62 +8,305 @@
 namespace easytest;
 
 
-// Generate a unified diff between two strings
-//
-// This is a basic implementation of the longest common subsequence algorithm.
-
 function diff($from, $to, $from_name, $to_name) {
-    $diff = namespace\_diff_array(
-        '' === $from ? array() : \explode("\n", $from),
-        '' === $to   ? array() : \explode("\n", $to)
+    if ($from_name === $to_name) {
+        throw new \Exception('Parameters $from_name and $to_name must be different');
+    }
+
+    $diff = array();
+    namespace\_diff_variables(
+        namespace\_process_variable($from),
+        namespace\_process_variable($to),
+        $diff
     );
-    $diff = \implode("\n", $diff);
+
+    $diff = \implode("\n", \array_reverse($diff));
     return "- $from_name\n+ $to_name\n\n$diff";
 }
 
 
-function _diff_array($from, $to) {
+
+const _FORMAT_INDENT = '    ';
+
+
+final class _DiffCopy {
+    public $value;
+
+    public function __construct($value) {
+        $this->value = $value;
+    }
+
+    public function __toString() {
+        return "  {$this->value}";
+    }
+}
+
+
+final class _DiffInsert {
+    public $value;
+
+    public function __construct($value) {
+        $this->value = $value;
+    }
+
+    public function __toString() {
+        return "+ {$this->value}";
+    }
+}
+
+
+final class _DiffDelete {
+    public $value;
+
+    public function __construct($value) {
+        $this->value = $value;
+    }
+
+    public function __toString() {
+        return "- {$this->value}";
+    }
+}
+
+
+final class _Edit extends struct {
+    public $flen;
+    public $tlen;
+    public $m;
+}
+
+
+class _Variable extends struct {
+    public $key;
+    public $value;
+    public $cost = 1;
+    public $substructure = array();
+}
+
+
+
+function _process_variable($var, $key = null) {
+    if (\is_string($var)) {
+        $result = new _Variable($key, $var, 0);
+        foreach (\explode("\n", $var) as $line) {
+            ++$result->cost;
+            $result->substructure[] = new _Variable(null, $line);
+        }
+        return $result;
+    }
+
+    if (\is_array($var)) {
+        $result = new _Variable($key, $var);
+        foreach ($var as $key => $value) {
+            $value = namespace\_process_variable($value, $key);
+            $result->substructure[] = $value;
+            $result->cost += $value->cost;
+        }
+        return $result;
+    }
+
+    if (\is_object($var)) {
+        $result = new _Variable($key, $var);
+        foreach ((array)$var as $key => $value) {
+            $value = namespace\_process_variable($value, $key);
+            $result->substructure[] = $value;
+            $result->cost += $value->cost;
+        }
+        return $result;
+    }
+
+    return new _Variable($key, $var);
+}
+
+
+function _lcs_array(array $from, array $to) {
+    $m = array();
     $flen = \count($from);
     $tlen = \count($to);
-    $m = array();
 
-    for ($i = 0; $i <= $flen; ++$i) {
-        for ($j = 0; $j <= $tlen; ++$j) {
-            if (0 === $i || 0 === $j) {
-                $m[$i][$j] = 0;
+    for ($f = 0; $f <= $flen; ++$f) {
+        for ($t = 0; $t <= $tlen; ++$t) {
+            if (!$f || !$t) {
+                $m[$f][$t] = 0;
+                continue;
             }
-            elseif ($from[$i-1] === $to[$j-1]) {
-                $m[$i][$j] = $m[$i-1][$j-1] + 1;
+
+            $fvalue = $from[$f-1];
+            $tvalue = $to[$t-1];
+            if (namespace\_lcs_variables($fvalue, $tvalue, $lcs)){
+                $lcs += $m[$f-1][$t-1];
             }
             else {
-                $m[$i][$j] = \max($m[$i][$j-1], $m[$i-1][$j]);
+                $lcs += \max($m[$f-1][$t], $m[$f][$t-1]);
             }
+            $m[$f][$t] = $lcs;
         }
     }
+    return new _Edit($flen, $tlen, $m);
+}
 
-    $i = $flen;
-    $j = $tlen;
-    $diff = array();
-    while ($i > 0 || $j > 0) {
-        if ($i > 0 && $j > 0 && $from[$i-1] === $to[$j-1]) {
-            --$i;
-            --$j;
-            \array_unshift($diff, '  ' . $to[$j]);
-        }
-        elseif ($j > 0 && (0 === $i || $m[$i][$j-1] >= $m[$i-1][$j])) {
-            --$j;
-            \array_unshift($diff, '+ ' . $to[$j]);
-        }
-        elseif ($i > 0 && (0 === $j || $m[$i][$j-1] < $m[$i-1][$j])) {
-            --$i;
-            \array_unshift($diff, '- ' . $from[$i]);
+
+function _diff_variables(_Variable $from, _Variable $to, array &$diff, $indent = '') {
+    if (\is_array($from->value) && \is_array($to->value)) {
+        if (0 === \count($from->value) || 0 === \count($to->value)) {
+            namespace\_insert_value($diff, $to, $indent);
+            namespace\_delete_value($diff, $from, $indent);
         }
         else {
-            throw new \Exception('Reached unexpected branch');
+            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+            namespace\_copy_string($diff, "{$indent})");
+            namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $diff, $indent . namespace\_FORMAT_INDENT);
+            namespace\_copy_string($diff, "{$indent}array(");
+        }
+    }
+    elseif (\is_string($from->value) && \is_string($to->value)) {
+        if (1 === $from->cost && 1 === $to->cost) {
+            namespace\_insert_value($diff, $to, $indent);
+            namespace\_delete_value($diff, $from, $indent);
+        }
+        else {
+            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+            namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $diff, $indent);
+        }
+    }
+    else {
+        namespace\_insert_value($diff, $to, $indent);
+        namespace\_delete_value($diff, $from, $indent);
+    }
+}
+
+
+function _lcs_variables(_Variable $from, _Variable $to, &$lcs) {
+    if (namespace\_compare_variables($from, $to)) {
+        $lcs = \max($from->cost, $to->cost);
+        return true;
+    }
+
+    $lcs = 0;
+    if (\is_string($from->value) && \is_string($to->value)) {
+        if ($from->cost > 1 && $to->cost > 1) {
+            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+            $lcs = $edit->m[$edit->flen][$edit->tlen];
+        }
+    }
+    elseif (\is_array($from->value) && \is_array($to->value)) {
+        if (\count($from->value) > 0 && \count($to->value) > 0) {
+            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+            $lcs = $edit->m[$edit->flen][$edit->tlen];
         }
     }
 
-    return $diff;
+    return false;
+}
+
+
+function _compare_variables(_Variable $from, _Variable $to) {
+    return $from->key === $to->key && $from->value === $to->value;
+}
+
+
+
+function _build_diff_from_edit(array $from, array $to, _Edit $edit, array &$diff, $indent) {
+    $m = $edit->m;
+    $f = $edit->flen;
+    $t = $edit->tlen;
+
+    while ($f || $t) {
+        if ($f > 0 && $t > 0) {
+            if (namespace\_compare_variables($from[$f-1], $to[$t-1])) {
+                --$f;
+                --$t;
+                namespace\_copy_value($diff, $from[$f], $indent);
+            }
+            elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t]) {
+                --$f;
+                --$t;
+                namespace\_diff_variables($from[$f], $to[$t], $diff, $indent);
+            }
+            elseif ($m[$f][$t-1] >= $m[$f-1][$t]) {
+                --$t;
+                namespace\_insert_value($diff, $to[$t], $indent);
+            }
+            else {
+                --$f;
+                namespace\_delete_value($diff, $from[$f], $indent);
+            }
+        }
+        elseif ($f) {
+            --$f;
+            namespace\_delete_value($diff, $from[$f], $indent);
+        }
+        else {
+            --$t;
+            namespace\_insert_value($diff, $to[$t], $indent);
+        }
+    }
+}
+
+
+
+function _copy_value(array &$diff, _Variable $value, $indent) {
+    if (isset($value->key)) {
+        $key = "{$value->key} => ";
+    }
+    else {
+        $key = '';
+    }
+
+    namespace\_copy_string(
+        $diff,
+        "{$indent}{$key}" . namespace\_format_variable_indented($value->value, $indent)
+    );
+}
+
+
+function _insert_value(array &$diff, _Variable $value, $indent) {
+    if (isset($value->key)) {
+        $key = "{$value->key} => ";
+    }
+    else {
+        $key = '';
+    }
+
+    namespace\_insert_string(
+        $diff,
+        "{$indent}{$key}" . namespace\_format_variable_indented($value->value, $indent)
+    );
+}
+
+
+function _delete_value(array &$diff, _Variable $value, $indent) {
+    if (isset($value->key)) {
+        $key = "{$value->key} => ";
+    }
+    else {
+        $key = '';
+    }
+
+    namespace\_delete_string(
+        $diff,
+        "{$indent}{$key}" . namespace\_format_variable_indented($value->value, $indent)
+    );
+}
+
+
+function _copy_string(array &$diff, $string) {
+    foreach (\array_reverse(\explode("\n", $string)) as $v) {
+        $diff[] = new _DiffCopy($v);
+    }
+}
+
+
+function _insert_string(array &$diff, $string) {
+    foreach (\array_reverse(\explode("\n", $string)) as $v) {
+        $diff[] = new _DiffInsert($v);
+    }
+}
+
+
+function _delete_string(array &$diff, $string) {
+    foreach (\array_reverse(\explode("\n", $string)) as $v) {
+        $diff[] = new _DiffDelete($v);
+    }
 }
 
 
@@ -94,17 +337,22 @@ function format_failure_message($assertion, $description = null, $detail = null)
 // handles recursive references.
 
 function format_variable(&$var) {
+    return namespace\_format_variable_indented($var);
+}
+
+
+function _format_variable_indented(&$var, $indent = '') {
     $name = \is_object($var) ? \get_class($var) : \gettype($var);
     $seen = array('byval' => array(), 'byref' => array());
     // We'd really like to make this a constant static variable, but PHP won't
     // let us do that with an object instance. As a mitigation, we'll just
     // create the sentinels once at the start and then pass it around
     $sentinels = array('byref' => null, 'byval' => new \stdClass());
-    return namespace\_format_recursive_variable($var, $name, $seen, $sentinels);
+    return namespace\_format_recursive_variable($var, $name, $seen, $sentinels, $indent);
 }
 
 
-function _format_recursive_variable(&$var, $name, &$seen, $sentinels, $indent = 0) {
+function _format_recursive_variable(&$var, $name, &$seen, $sentinels, $indent) {
     $reference = namespace\_check_reference($var, $name, $seen, $sentinels);
     if ($reference) {
         return $reference;
@@ -141,18 +389,16 @@ function _format_resource(&$var) {
 }
 
 
-function _format_array(&$var, $name, &$seen, $sentinels, $indent) {
-    $baseline = \str_repeat(' ', $indent);
-    $indent += 4;
-    $padding = \str_repeat(' ', $indent);
+function _format_array(&$var, $name, &$seen, $sentinels, $padding) {
+    $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
     if ($var) {
         foreach ($var as $key => &$value) {
             $key = \var_export($key, true);
             $out .= \sprintf(
-                "\n%s%s => %s,",
-                $padding,
+                "\n%s%s => %s",
+                $indent,
                 $key,
                 namespace\_format_recursive_variable(
                     $value,
@@ -163,16 +409,14 @@ function _format_array(&$var, $name, &$seen, $sentinels, $indent) {
                 )
             );
         }
-        $out .= "\n$baseline";
+        $out .= "\n$padding";
     }
     return "array($out)";
 }
 
 
-function _format_object(&$var, $name, &$seen, $sentinels, $indent) {
-    $baseline = \str_repeat(' ', $indent);
-    $indent += 4;
-    $padding = \str_repeat(' ', $indent);
+function _format_object(&$var, $name, &$seen, $sentinels, $padding) {
+    $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
     $class = \get_class($var);
@@ -196,7 +440,7 @@ function _format_object(&$var, $name, &$seen, $sentinels, $indent) {
             }
             $out .= \sprintf(
                 "\n%s%s = %s;",
-                $padding,
+                $indent,
                 $property,
                 namespace\_format_recursive_variable(
                     $value,
@@ -207,7 +451,7 @@ function _format_object(&$var, $name, &$seen, $sentinels, $indent) {
                 )
             );
         }
-        $out .= "\n$baseline";
+        $out .= "\n$padding";
     }
     return "$class #$id {{$out}}";
 }

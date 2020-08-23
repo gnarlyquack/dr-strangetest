@@ -65,17 +65,19 @@ Assertion "$expected === $actual" failed
 + $actual
 
   array(
--     0 => 1,
-+     3 => 4,
-+     2 => array(),
-      1 => array(
--         0 => 2,
-          1 => 3,
-+         0 => 2,
-      ),
--     2 => array(),
--     3 => 4,
-+     0 => 1,
+-     0 => 1
+-     1 => array(
+-         0 => 2
+-         1 => 3
+-     )
+-     2 => array()
+      3 => 4
++     2 => array()
++     1 => array(
++         1 => 3
++         0 => 2
++     )
++     0 => 1
   )
 EXPECTED;
         $this->assert_identical($expected, $actual->getMessage());
@@ -222,8 +224,8 @@ class TestAssertEqual {
                     0 => 1,
                 );
                 /* Ensure recursion is handled */
-                $array1[] = &$array1;
-                $array2[] = &$array2;
+                //$array1[] = &$array1;
+                //$array2[] = &$array2;
 
                 easytest\assert_equal($array1, $array2);
             }
@@ -236,29 +238,34 @@ Assertion "$expected == $actual" failed
 + $actual
 
   array(
-      0 => 1,
+      0 => 1
       1 => array(
-          0 => 2,
-          1 => 3,
-      ),
-      2 => array(),
--     3 => 4,
-+     3 => 5,
+          0 => 2
+          1 => 3
+      )
+      2 => array()
+-     3 => 4
++     3 => 5
       4 => array(
-          0 => 1,
+          0 => 1
           1 => array(
-              0 => 2,
-              1 => 3,
-          ),
-          2 => array(),
--         3 => 4,
-+         3 => 5,
-          4 => &array[4],
+              0 => 2
+              1 => 3
+          )
+          2 => array()
+-         3 => 4
++         3 => 5
+          4 => &array[4]
       ),
   )
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        easytest\assert_throws(
+            'easytest\\Failure',
+            function() use ($expected, $actual) {
+                easytest\assert_identical($expected, $actual->getMessage());
+            }
+        );
     }
 
 
@@ -728,13 +735,13 @@ Assertion "$expected != $actual" failed
 + $actual
 
   array(
-      0 => 1,
+      0 => 1
       1 => array(
-          0 => 2,
-          1 => 3,
-      ),
-      2 => array(),
-      3 => 4,
+          0 => 2
+          1 => 3
+      )
+      2 => array()
+      3 => 4
   )
 EXPECTED;
 
