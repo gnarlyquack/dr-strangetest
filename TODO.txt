@@ -95,8 +95,9 @@ Release
             "utility" functions) into separate files?
 
     -   Since we're now diffing values directly instead of using a string
-        representation, formatting needs more robust testing and review. At
-        the very least, we want to ensure that the formatting of whole,
+        representation, formatting needs more robust testing and review (we
+        should now test every type of variable we handle, not just strings).
+        At the very least, we want to ensure that the formatting of whole,
         composite values by format_variable() matches how individual elements
         are formatted when appearing within a diff
 
@@ -112,6 +113,13 @@ Release
 
         -   We need to take a closer look at how classes are formatted
 
+        -   Fix reference formatting. Right now, an extra level of recursion
+            is printed because values call a general-purpose formatting
+            function, which needs to see (and thus format) the value once
+            before detecting the recursion. The probable fix is: once we've
+            processed the values, we know what we have, and so we can
+            specialize formatting based on the type of value
+
     -   Implement "loose" (==) comparison
 
     -   By default, don't treat numerical array keys as significant when
@@ -125,6 +133,9 @@ Release
         ordering the array? Even if we can't, do we want arrays to be
         automatically sorted as part of generating the diff instead of
         depending on having sorted arrays passed in?
+
+    -   Composite types of the same type should probably have an LCS of at
+        least 1?
 
 
 Future / Wishlist

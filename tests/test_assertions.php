@@ -224,8 +224,8 @@ class TestAssertEqual {
                     0 => 1,
                 );
                 /* Ensure recursion is handled */
-                //$array1[] = &$array1;
-                //$array2[] = &$array2;
+                $array1[] = &$array1;
+                $array2[] = &$array2;
 
                 easytest\assert_equal($array1, $array2);
             }
@@ -254,18 +254,32 @@ Assertion "$expected == $actual" failed
           )
           2 => array()
 -         3 => 4
+-         4 => array(
+-             0 => 1
+-             1 => array(
+-                 0 => 2
+-                 1 => 3
+-             )
+-             2 => array()
+-             3 => 4
+-             4 => &$expected[4]
+-         )
 +         3 => 5
-          4 => &array[4]
-      ),
++         4 => array(
++             0 => 1
++             1 => array(
++                 0 => 2
++                 1 => 3
++             )
++             2 => array()
++             3 => 5
++             4 => &$actual[4]
++         )
+      )
   )
 EXPECTED;
 
-        easytest\assert_throws(
-            'easytest\\Failure',
-            function() use ($expected, $actual) {
-                easytest\assert_identical($expected, $actual->getMessage());
-            }
-        );
+        easytest\assert_identical($expected, $actual->getMessage());
     }
 
 
