@@ -15,7 +15,13 @@ final class Dependency extends struct {
     public $file;
     public $class;
     public $function;
-    public $dependees;
+    public $dependees = array();
+
+    public function __construct($file, $class, $function) {
+        $this->file = $file;
+        $this->class = $class;
+        $this->function = $function;
+    }
 }
 
 

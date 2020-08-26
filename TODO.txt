@@ -81,8 +81,6 @@ Release
 
 -   Test PHP 8 support
 
--   Simplify "struct" class
-
 -   Replace switches with if statements (to enforce strict comparison)
 
 -   Clean up diff and formatting

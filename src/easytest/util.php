@@ -72,14 +72,26 @@ final class _Edit extends struct {
     public $flen;
     public $tlen;
     public $m;
+
+    public function __construct($flen, $tlen, $m) {
+        $this->flen = $flen;
+        $this->tlen = $tlen;
+        $this->m = $m;
+    }
 }
 
 
 class _Variable extends struct {
     public $key;
     public $value;
-    public $cost = 1;
+    public $cost;
     public $substructure = array();
+
+    public function __construct($key, $value, $cost = 1) {
+        $this->key = $key;
+        $this->value = $value;
+        $this->cost = $cost;
+    }
 }
 
 
@@ -98,8 +110,8 @@ function _process_variable($var, $key = null) {
         $result = new _Variable($key, $var);
         foreach ($var as $key => $value) {
             $value = namespace\_process_variable($value, $key);
-            $result->substructure[] = $value;
             $result->cost += $value->cost;
+            $result->substructure[] = $value;
         }
         return $result;
     }
@@ -108,8 +120,8 @@ function _process_variable($var, $key = null) {
         $result = new _Variable($key, $var);
         foreach ((array)$var as $key => $value) {
             $value = namespace\_process_variable($value, $key);
-            $result->substructure[] = $value;
             $result->cost += $value->cost;
+            $result->substructure[] = $value;
         }
         return $result;
     }

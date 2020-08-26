@@ -208,10 +208,11 @@ final class Context {
 
         if ($dependees) {
             if (!isset($this->state->depends[$this->test->name])) {
-                $dependency = new Dependency();
-                $dependency->file = $this->test->file;
-                $dependency->class = $this->test->class;
-                $dependency->function = $this->test->function;
+                $dependency = new Dependency(
+                    $this->test->file,
+                    $this->test->class,
+                    $this->test->function
+                );
                 $this->state->depends[$this->test->name] = $dependency;
             }
             else {

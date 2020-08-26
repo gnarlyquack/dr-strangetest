@@ -26,6 +26,10 @@ final class _Target extends struct implements Target {
     public $name;
     public $subtargets = array();
 
+    public function __construct($name) {
+        $this->name = $name;
+    }
+
     public function name() {
         return $this->name;
     }
