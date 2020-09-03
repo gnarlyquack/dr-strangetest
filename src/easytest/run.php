@@ -338,26 +338,32 @@ function run_test(
     $update_run = false;
     if ($args instanceof ArgumentLists) {
         $arglists = $args->arglists();
-        $update_run = true;
+        if (\is_iterable($arglists)) {
+            $update_run = true;
+        }
+        else {
+            $arglists = array($arglists);
+        }
     }
     else {
         $arglists = array($args);
     }
 
     foreach ($arglists as $i => $arglist) {
-        if ($arglist && !\is_iterable($arglist)) {
-            // $arglists can only be invalid if $params is an instance of
-            // ArgumentLists
-            $type = \is_object($arglist)
-                ? \sprintf('instance of %s', \get_class($arglist) )
-                : \sprintf(
-                    '%s %s',
-                    \gettype($arglist), \var_export($arglist, true));
-            $logger->log_error(
-                $params->source,
-                "Each argument list must be iterable, instead got $type"
-            );
-            continue;
+        if (isset($arglist)) {
+            if (\is_iterable($arglist)) {
+                if (!\is_array($arglist)) {
+                    $arglist = \iterator_to_array($arglist);
+                }
+            }
+            else {
+                $message = "'{$test->setup}' returned a non-iterable argument list";
+                if ($update_run) {
+                    $message .= "\nfor argument list '{$i}'";
+                }
+                $logger->log_error($test->name, $message);
+                continue;
+            }
         }
 
         $this_run_id = $run_id;
@@ -591,12 +597,6 @@ function run_file_teardown(
     $args = null,
     $run = null
 ) {
-    \assert(
-        null === $args
-        || \is_array($args)
-        || ($args instanceof ArgumentLists)
-    );
-
     if ($file->teardown) {
         $name = "{$file->teardown}{$run}";
         namespace\start_buffering($logger, $name);
@@ -857,17 +857,21 @@ function _run_test_function(
 
 function _run_teardown(Logger $logger, $name, $callable, $args = null) {
     try {
-        if (!$args) {
+        if (!isset($args)) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             \call_user_func($callable);
+        }
+        elseif(\is_array($args)) {
+            // #BC(5.5): Use proxy function for argument unpacking
+            namespace\_unpack_function($callable, $args);
         }
         elseif ($args instanceof ArgumentLists) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
             \call_user_func($callable, $args->arglists());
         }
         else {
-            // #BC(5.5): Use proxy function for argument unpacking
-            namespace\_unpack_function($callable, $args);
+            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            \call_user_func($callable, $args);
         }
         return namespace\RESULT_PASS;
     }

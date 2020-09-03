@@ -5,6 +5,15 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+namespace test\run\file;
+
+use easytest;
+use easytest\BasicLogger;
+use easytest\BufferingLogger;
+use easytest\FileTest;
+use easytest\Logger;
+use easytest\State;
+
 
 class TestFiles {
     private $logger;
@@ -731,4 +740,85 @@ class TestFiles {
         ));
 
     }
+}
+
+
+
+// helper functions
+
+function filepath($name) {
+    $ds = \DIRECTORY_SEPARATOR;
+    return  __DIR__ . "{$ds}support{$ds}{$name}";
+}
+
+
+
+// helper assertions
+
+
+function assert_run_file($filepath, $events) {
+    $state = new State();
+    $logger = new BasicLogger(easytest\LOG_ALL);
+    $buffed_logger = new BufferingLogger($logger);
+
+    $file = easytest\discover_file($state, $buffed_logger, $filepath);
+    easytest\assert_identical(array(), $logger->get_log()->get_events());
+    easytest\assert_true($file instanceof FileTest);
+
+    easytest\run_test($state, $buffed_logger, $file);
+    \assert_events($events, $logger);
+}
+
+
+
+// tests
+
+function test_logs_error_if_arglist_isnt_iterable() {
+    $file = namespace\filepath('test_noniterable_arglist.php');
+    $error = "'noniterable_arglist\\setup_file' returned a non-iterable argument list";
+    $events = array(
+        array(easytest\EVENT_ERROR, $file, $error),
+        array(easytest\EVENT_OUTPUT, 'noniterable_arglist\\teardown_file', '.'),
+    );
+
+    namespace\assert_run_file($file, $events);
+}
+
+
+function test_logs_error_if_arglists_arent_iterable() {
+    $file = namespace\filepath('test_noniterable_arglists.php');
+    $error = "'noniterable_arglists\\setup_file' returned a non-iterable argument list";
+    $events = array(
+        array(easytest\EVENT_ERROR, $file, $error),
+        array(easytest\EVENT_OUTPUT, 'noniterable_arglists\\teardown_file', '.'),
+    );
+
+    namespace\assert_run_file($file, $events);
+}
+
+
+function test_logs_error_if_any_arglist_isnt_iterable() {
+    $file = namespace\filepath('test_any_noniterable_arglist.php');
+    $error = "'any_noniterable_arglist\\setup_file' returned a non-iterable argument list\nfor argument list '%d'";
+    $events = array(
+        array(easytest\EVENT_ERROR, $file, \sprintf($error, 0)),
+        array(easytest\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
+        array(easytest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run (1)', '.'),
+        array(easytest\EVENT_ERROR, $file, \sprintf($error, 2)),
+        array(easytest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_file', '.'),
+    );
+
+    namespace\assert_run_file($file, $events);
+}
+
+
+function test_converts_arglist_to_array() {
+    $file = namespace\filepath('test_converts_arglist.php');
+    $events = array(
+        array(easytest\EVENT_PASS, 'converts_arglist\\test_one', null),
+        array(easytest\EVENT_PASS, 'converts_arglist\\test_two', null),
+        array(easytest\EVENT_OUTPUT, 'converts_arglist\\teardown_file', '.'),
+    );
+
+    namespace\assert_run_file($file, $events);
 }

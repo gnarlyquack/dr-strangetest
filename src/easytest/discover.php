@@ -266,12 +266,12 @@ function _read_file(BufferingLogger $logger, $filepath) {
         $source = \file_get_contents($filepath);
     }
     catch (\Throwable $e) {
-        $logger->log_error($filename, $e);
+        $logger->log_error($filepath, $e);
         return false;
     }
     // #(BC 5.6): Catch Exception
     catch (\Exception $e) {
-        $logger->log_error($filename, $e);
+        $logger->log_error($filepath, $e);
         return false;
     }
 
@@ -279,7 +279,7 @@ function _read_file(BufferingLogger $logger, $filepath) {
         // file_get_contents() can return false if it fails. Presumably an
         // error would have been generated and already handled above, but the
         // documentation isn't explicit
-        $logger->log_error($filename, "Failed to read file (no error was raised)");
+        $logger->log_error($filepath, "Failed to read file (no error was raised)");
     }
     return $source;
 }
@@ -403,49 +403,19 @@ function discover_file(State $state, BufferingLogger $logger, $filepath) {
     }
     elseif ($error) {
         if ($error & namespace\ERROR_SETUP) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple setup fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->setup)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $file->setup);
         }
         if ($error & namespace\ERROR_SETUP_FUNCTION) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple setup fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->setup_function)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $file->setup_function);
         }
         if ($error & namespace\ERROR_TEARDOWN) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->teardown)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $file->teardown);
         }
         if ($error & namespace\ERROR_TEARDOWN_RUN) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->teardown_run)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $file->teardown_run);
         }
         if ($error & namespace\ERROR_TEARDOWN_FUNCTION) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->teardown_function)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $file->teardown_function);
         }
         $file = false;
     }
@@ -466,6 +436,16 @@ function discover_file(State $state, BufferingLogger $logger, $filepath) {
 
     $state->files[$filepath] = $file;
     return $file;
+}
+
+
+function _log_fixture_error(Logger $logger, $source, $fixtures) {
+    $message = 'Multiple conflicting fixture functions found:';
+    foreach ($fixtures as $i => $fixture) {
+        ++$i;
+        $message .= "\n    {$i}) {$fixture}";
+    }
+    $logger->log_error($source, $message);
 }
 
 

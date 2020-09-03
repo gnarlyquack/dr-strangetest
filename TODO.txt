@@ -34,12 +34,9 @@ Release
         one or more directories in the hierarchy are parameterized with
         multiple argument lists
 
-    -   Error-checking for argument lists:
-        -   setup fixtures must either return an iterable or an instance of
-            ArgumentLists
-        -   each arglist in ArgumentLists must be an iterable
-
     -   Accessing unset dependency state
+
+    -   Test argument lists returned by setup_directory()
 
 -   Clean up targets:
     -   find_class_target: don't use 'method_exists' to check if a target
@@ -58,8 +55,6 @@ Release
 
 -   Either both or neither of log_skip and log_output should have a default
     $during_error?
-
--   Ensure each individual arglist is an array
 
 -   Cleanup parameters to setup(), teardown(), run() test methods
 
@@ -136,6 +131,17 @@ Release
 
     -   Composite types of the same type should probably have an LCS of at
         least 1?
+
+-   Do we want/need to implement a UserError exception? E.g., we could throw
+    an error from arglists() or from the ArgumentLists constructor if the
+    argument is not an iterable, however the resulting error backtrace will
+    originate from easytest code. A UserError would need to remove calls
+    within EasyTest from the generated backtrace (like Failure and Skip do)
+
+-   Any event that is logged using a string as the reason (as opposed to using
+    an exception as the reason) will not have a backtrace identifying the
+    source file name and line number. To the extent that it's possible, we
+    probably want to always log an event using an exception as the reason.
 
 
 Future / Wishlist

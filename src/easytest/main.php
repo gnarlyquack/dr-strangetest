@@ -125,13 +125,6 @@ final class ArgumentLists {
 
 
     public function __construct($arglists) {
-        // #BC(7.0): don't use iterable type hint for $arglists
-        if (!\is_iterable($arglists)) {
-            \trigger_error(
-                '$arglists must be an iterable of iterables',
-                \E_USER_WARNING
-            );
-        }
         $this->arglists = $arglists;
     }
 
