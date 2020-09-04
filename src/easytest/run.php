@@ -424,9 +424,7 @@ function _run_directory_test(
         break;
 
     default:
-        // #BC(5.4): Omit description from assert
-        \assert(false); // "Unknown directory test type: $type"
-        break;
+        throw new \Exception("Unkown directory test type: {$type}");
     }
 
     if ($test) {
@@ -543,9 +541,7 @@ function _run_file_test(
         break;
 
     default:
-        // #BC(5.4): Omit description from assert
-        \assert(false); // "Unknown file test type: $type"
-        break;
+        throw new \Exception("Unknown file test type {$info->type}");
     }
 
     if ($test) {
@@ -663,11 +659,11 @@ function _instantiate_test(Logger $logger, $class, $args) {
             return new $class();
         }
     }
-    catch (\Throwable $e) {
-        $logger->log_error($class, $e);
-    }
     // #BC(5.6): Catch Exception
     catch (\Exception $e) {
+        $logger->log_error($class, $e);
+    }
+    catch (\Throwable $e) {
         $logger->log_error($class, $e);
     }
     return false;
@@ -782,11 +778,11 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
     catch (Skip $e) {
         $logger->log_skip($name, $e);
     }
-    catch (\Throwable $e) {
-        $logger->log_error($name, $e);
-    }
     // #BC(5.6): Catch Exception
     catch (\Exception $e) {
+        $logger->log_error($name, $e);
+    }
+    catch (\Throwable $e) {
         $logger->log_error($name, $e);
     }
     return array(namespace\RESULT_FAIL, null);
@@ -824,12 +820,12 @@ function _run_test_function(
     catch (Postpone $_) {
         $result = namespace\RESULT_POSTPONE;
     }
-    catch (\Throwable $e) {
+    // #BC(5.6): Catch Exception
+    catch (\Exception $e) {
         $logger->log_error($name, $e);
         $result = namespace\RESULT_FAIL;
     }
-    // #BC(5.6): Catch Exception
-    catch (\Exception $e) {
+    catch (\Throwable $e) {
         $logger->log_error($name, $e);
         $result = namespace\RESULT_FAIL;
     }
@@ -857,11 +853,11 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null) {
         }
         return namespace\RESULT_PASS;
     }
-    catch (\Throwable $e) {
-        $logger->log_error($name, $e);
-    }
     // #BC(5.6): Catch Exception
     catch (\Exception $e) {
+        $logger->log_error($name, $e);
+    }
+    catch (\Throwable $e) {
         $logger->log_error($name, $e);
     }
     return namespace\RESULT_FAIL;

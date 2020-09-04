@@ -144,9 +144,9 @@ function assert_throws($expected, $callback, $description = null) {
     try {
         $callback();
     }
-    catch (\Throwable $e) {}
     // #BC(5.6): Catch Exception
     catch (\Exception $e) {}
+    catch (\Throwable $e) {}
 
     if (!isset($e)) {
         $message = namespace\format_failure_message(

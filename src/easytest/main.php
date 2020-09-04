@@ -360,17 +360,14 @@ function _parse_option($opt, $args, $opts) {
         case 'version':
             namespace\output(namespace\_get_version());
             exit(namespace\EXIT_SUCCESS);
-            break;
 
         case 'help':
             namespace\output(namespace\_get_help());
             exit(namespace\EXIT_SUCCESS);
-            break;
 
         default:
             fwrite(\STDERR, "Unknown option: $opt\nPlease see 'easytest --help'\n");
             exit(namespace\EXIT_FAILURE);
-            break;
     }
 
     return array($opts, $args);
