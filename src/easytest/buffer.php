@@ -64,7 +64,7 @@ final class BufferingLogger implements Logger {
     }
 
 
-    public function log_output($source, $output, $during_error) {
+    public function log_output($source, $output, $during_error = false) {
         if ($this->buffer) {
             $this->queued[] = array(namespace\EVENT_OUTPUT, $source, $output);
         }

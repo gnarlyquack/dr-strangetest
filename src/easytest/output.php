@@ -39,7 +39,7 @@ final class LiveUpdatingLogger implements Logger {
     }
 
 
-    public function log_output($source, $reason, $during_error) {
+    public function log_output($source, $reason, $during_error = false) {
         namespace\output_output();
         $this->logger->log_output($source, $reason, $during_error);
     }

@@ -113,7 +113,7 @@ final class BasicLogger implements Logger {
     }
 
 
-    public function log_output($source, $reason, $during_error) {
+    public function log_output($source, $reason, $during_error = false) {
         ++$this->count[namespace\EVENT_OUTPUT];
         if (($this->verbose & namespace\LOG_OUTPUT) || $during_error) {
             $this->events[] = array(namespace\EVENT_OUTPUT, $source, $reason);

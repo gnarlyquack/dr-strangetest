@@ -39,6 +39,7 @@ Release
     -   Test argument lists returned by setup_directory()
 
 -   Clean up targets:
+
     -   find_class_target: don't use 'method_exists' to check if a target
         exists because this will cause non-test methods to be found as targets
 
@@ -51,10 +52,18 @@ Release
         not every time a test is run. Targets built from dependencies should
         never need to be found/validated since they should always be valid
 
--   Fix run names so that they don't have to start with a space
+    -   Show a notice when duplicate user-provided targets are removed?
 
--   Either both or neither of log_skip and log_output should have a default
-    $during_error?
+    -   Currently, invalid class and function targets can be ignored if it's
+        determined they would just be duplicates. However, we may want to at
+        least parse and validate them and exit on any errors
+
+    -   Class and function targets should be found without regard to case
+        since PHP identifiers are case-insensitive. Presumably, this isn't an
+        issue with paths since we're validating all user-provided paths with
+        realpath()?
+
+-   Fix run names so that they don't have to start with a space
 
 -   Cleanup parameters to setup(), teardown(), run() test methods
 

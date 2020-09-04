@@ -62,9 +62,9 @@ interface Logger {
 
     public function log_error($source, $reason);
 
-    public function log_skip($source, $reason, $during_error);
+    public function log_skip($source, $reason, $during_error = false);
 
-    public function log_output($source, $reason, $during_error);
+    public function log_output($source, $reason, $during_error = false);
 }
 
 
@@ -284,7 +284,7 @@ function _microtime() {
     // #BC(7.2): Use microtime for timing
     else {
         list($usec, $sec) = \explode(' ', \microtime());
-        return 1000000 * $sec + 1000000 * $usec;
+        return 1000000 * (int)$sec + (int)(1000000 * (float)$usec);
     }
 }
 

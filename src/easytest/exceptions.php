@@ -99,10 +99,10 @@ final class Skip extends \Exception {
         if (!$this->string) {
             $prev = $this->getPrevious();
             if ($prev) {
-                $message = "$prev->message\n$this->message";
-                $file = $prev->file;
-                $line = $prev->line;
-                $trace = $prev->trace;
+                $message = $prev->getMessage() . "\n{$this->message}";
+                $file = $prev->getFile();
+                $line = $prev->getLine();
+                $trace = $prev->getTrace();
             }
             else {
                 $message = $this->message;
