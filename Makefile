@@ -12,6 +12,11 @@ analyse:
 	./phpstan.phar analyse
 
 
+.PHONY: baseline
+baseline:
+	./phpstan.phar analyse --generate-baseline
+
+
 .PHONY: build
 build:
 	./bin/makephar

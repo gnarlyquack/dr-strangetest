@@ -157,6 +157,23 @@ Release
     then we probably want to allow the phar version to be installable with
     Composer (a la psalm/phar)
 
+-   Add typehints:
+    -   assertions.php
+    -   buffer.php
+    -   dependency.php
+    -   discover.php
+    -   exceptions.php
+    -   is_iterable.php
+    -   log.php
+    -   main.php
+    -   output.php
+    -   run.php
+    -   targets.php
+    -   tests.php
+    -   unpack5.5.php
+    -   unpack.php
+    -   util.php
+
 
 Future / Wishlist
 -----------------

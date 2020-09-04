@@ -1,0 +1,3452 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Function easytest\\\\assert_different\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_different\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_different\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_different\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_equal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_equal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_equal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_equal\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_false\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_false\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_false\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_falsy\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_falsy\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_falsy\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater\\(\\) has parameter \\$min with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater_or_equal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater_or_equal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater_or_equal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_greater_or_equal\\(\\) has parameter \\$min with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_identical\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_identical\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_identical\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_identical\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less\\(\\) has parameter \\$max with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less_or_equal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less_or_equal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less_or_equal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_less_or_equal\\(\\) has parameter \\$max with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_throws\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_throws\\(\\) has parameter \\$callback with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_throws\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_throws\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_true\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_true\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_true\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_truthy\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_truthy\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_truthy\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_unequal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_unequal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_unequal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Function easytest\\\\assert_unequal\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/assertions.php
+
+		-
+			message: "#^Property easytest\\\\BufferingLogger\\:\\:\\$logger has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Property easytest\\\\BufferingLogger\\:\\:\\$buffer has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Property easytest\\\\BufferingLogger\\:\\:\\$error has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Property easytest\\\\BufferingLogger\\:\\:\\$ob_level_current has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Property easytest\\\\BufferingLogger\\:\\:\\$ob_level_start has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Property easytest\\\\BufferingLogger\\:\\:\\$queued has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_pass\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_pass\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_failure\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_failure\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_failure\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_error\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_error\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_skip\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_skip\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_skip\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_skip\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_output\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_output\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_output\\(\\) has parameter \\$output with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Method easytest\\\\BufferingLogger\\:\\:log_output\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Function easytest\\\\start_buffering\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Function easytest\\\\start_buffering\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Function easytest\\\\end_buffering\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Function easytest\\\\_reset_buffer\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Function easytest\\\\_format_buffer\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Function easytest\\\\_format_buffer\\(\\) has parameter \\$buffer with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/buffer.php
+
+		-
+			message: "#^Property easytest\\\\Dependency\\:\\:\\$file has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\Dependency\\:\\:\\$class has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\Dependency\\:\\:\\$function has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\Dependency\\:\\:\\$dependees has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\Dependency\\:\\:__construct\\(\\) has parameter \\$class with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\Dependency\\:\\:__construct\\(\\) has parameter \\$file with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\Dependency\\:\\:__construct\\(\\) has parameter \\$function with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\_DependencyGraph\\:\\:\\$state has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\_DependencyGraph\\:\\:\\$logger has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\_DependencyGraph\\:\\:\\$postorder has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\_DependencyGraph\\:\\:\\$marked has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Property easytest\\\\_DependencyGraph\\:\\:\\$stack has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:sort\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:postorder\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:postorder\\(\\) has parameter \\$from with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:postorder\\(\\) has parameter \\$runs with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:check_run_results\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:check_run_results\\(\\) has parameter \\$from with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Method easytest\\\\_DependencyGraph\\:\\:check_run_results\\(\\) has parameter \\$runs with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Function easytest\\\\resolve_dependencies\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/dependency.php
+
+		-
+			message: "#^Function easytest\\\\discover_tests\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_tests\\(\\) has parameter \\$dirpath with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_tests\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_directory\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_directory\\(\\) has parameter \\$path with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_discover_directory_setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_discover_directory_setup\\(\\) has parameter \\$filepath with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_discover_directory_setup\\(\\) has parameter \\$seen with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_directory_setup_function\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_directory_setup_function\\(\\) has parameter \\$error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_directory_setup_function\\(\\) has parameter \\$fullname with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_directory_setup_function\\(\\) has parameter \\$function with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_directory_setup_function\\(\\) has parameter \\$namespace with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_file\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_file\\(\\) has parameter \\$checks with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_file\\(\\) has parameter \\$filepath with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_file\\(\\) has parameter \\$seen with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_read_file\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_read_file\\(\\) has parameter \\$filepath with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_include_file\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_include_file\\(\\) has parameter \\$file with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_guard_include\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_guard_include\\(\\) has parameter \\$file with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_identifier\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_identifier\\(\\) has parameter \\$i with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_identifier\\(\\) has parameter \\$tokens with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_namespace\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_namespace\\(\\) has parameter \\$current_ns with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_namespace\\(\\) has parameter \\$i with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_parse_namespace\\(\\) has parameter \\$tokens with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_file\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_file\\(\\) has parameter \\$filepath with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_log_fixture_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_log_fixture_error\\(\\) has parameter \\$fixtures with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_log_fixture_error\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_class\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_class\\(\\) has parameter \\$class with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_class\\(\\) has parameter \\$fullname with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_class\\(\\) has parameter \\$namespace with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_function\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_function\\(\\) has parameter \\$error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_function\\(\\) has parameter \\$fullname with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_function\\(\\) has parameter \\$function with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\_is_test_function\\(\\) has parameter \\$namespace with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\discover_class\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Function easytest\\\\skip\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\skip\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\fail\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\fail\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Property easytest\\\\Failure\\:\\:\\$string has no typehint specified\\.$#"
+			count: 2
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Property easytest\\\\Failure\\:\\:\\$trace has no typehint specified\\.$#"
+			count: 2
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Property easytest\\\\Skip\\:\\:\\$string has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Property easytest\\\\Skip\\:\\:\\$trace has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_find_client_call_site\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_format_exception_string\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_format_exception_string\\(\\) has parameter \\$file with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_format_exception_string\\(\\) has parameter \\$format with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_format_exception_string\\(\\) has parameter \\$line with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_format_exception_string\\(\\) has parameter \\$message with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function easytest\\\\_format_exception_string\\(\\) has parameter \\$trace with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Function is_iterable\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/is_iterable.php
+
+		-
+			message: "#^Function is_iterable\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/is_iterable.php
+
+		-
+			message: "#^Property easytest\\\\BasicLog\\:\\:\\$megabytes_used has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Property easytest\\\\BasicLog\\:\\:\\$seconds_elapsed has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Property easytest\\\\BasicLog\\:\\:\\$count has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Property easytest\\\\BasicLog\\:\\:\\$events has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:__construct\\(\\) has parameter \\$count with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:__construct\\(\\) has parameter \\$events with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:pass_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:failure_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:error_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:skip_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:output_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:seconds_elapsed\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:memory_used\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLog\\:\\:get_events\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Property easytest\\\\BasicLogger\\:\\:\\$count has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Property easytest\\\\BasicLogger\\:\\:\\$events has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Property easytest\\\\BasicLogger\\:\\:\\$verbose has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:__construct\\(\\) has parameter \\$verbose with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_pass\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_pass\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_failure\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_failure\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_failure\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_error\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_error\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_skip\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_skip\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_skip\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_skip\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_output\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_output\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_output\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:log_output\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\BasicLogger\\:\\:get_log\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/log.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:pass_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:failure_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:error_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:skip_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:output_count\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:seconds_elapsed\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:memory_used\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Log\\:\\:get_events\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_pass\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_pass\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_failure\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_failure\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_failure\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_error\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_error\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_skip\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_skip\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_skip\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_skip\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_output\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_output\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_output\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Logger\\:\\:log_output\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\struct\\:\\:__set\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\struct\\:\\:__set\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\struct\\:\\:__set\\(\\) has parameter \\$value with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\struct\\:\\:__get\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\struct\\:\\:__get\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Error\\:\\:__construct\\(\\) has parameter \\$file with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\Error\\:\\:__construct\\(\\) has parameter \\$line with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\Error\\:\\:\\$string has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$seen has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$directories has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$files has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$classes has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$results has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$depends has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\State\\:\\:\\$fixture has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Property easytest\\\\ArgumentLists\\:\\:\\$arglists has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\ArgumentLists\\:\\:__construct\\(\\) has parameter \\$arglists with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\ArgumentLists\\:\\:arglists\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\arglists\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\arglists\\(\\) has parameter \\$arglists with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\main\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\main\\(\\) has parameter \\$argc with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\main\\(\\) has parameter \\$argv with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_enable_error_handling\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_assertion\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_assertion\\(\\) has parameter \\$code with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_assertion\\(\\) has parameter \\$desc with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_assertion\\(\\) has parameter \\$file with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_assertion\\(\\) has parameter \\$line with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_error\\(\\) has parameter \\$errfile with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_error\\(\\) has parameter \\$errline with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_error\\(\\) has parameter \\$errno with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_handle_error\\(\\) has parameter \\$errstr with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_try_loading_composer\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_load_easytest\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_microtime\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_arguments\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_arguments\\(\\) has parameter \\$argc with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_arguments\\(\\) has parameter \\$argv with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_long_option\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_long_option\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_long_option\\(\\) has parameter \\$opts with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_short_option\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_short_option\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_short_option\\(\\) has parameter \\$opts with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_option\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_option\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_option\\(\\) has parameter \\$opt with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_parse_option\\(\\) has parameter \\$opts with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_get_version\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Function easytest\\\\_get_help\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/main.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_pass\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_pass\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_failure\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_failure\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_failure\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_error\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_error\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_skip\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_skip\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_skip\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_skip\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_output\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_output\\(\\) has parameter \\$during_error with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_output\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Method easytest\\\\LiveUpdatingLogger\\:\\:log_output\\(\\) has parameter \\$source with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Property easytest\\\\LiveUpdatingLogger\\:\\:\\$logger has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output\\(\\) has parameter \\$text with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_header\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_header\\(\\) has parameter \\$text with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_pass\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_error\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_failure\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_skip\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_output\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Function easytest\\\\output_log\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/output.php
+
+		-
+			message: "#^Property easytest\\\\Context\\:\\:\\$state has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Property easytest\\\\Context\\:\\:\\$logger has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Property easytest\\\\Context\\:\\:\\$test has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Property easytest\\\\Context\\:\\:\\$run has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Property easytest\\\\Context\\:\\:\\$result has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Property easytest\\\\Context\\:\\:\\$teardowns has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:__construct\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert\\(\\) has parameter \\$assertion with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_different\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_different\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_different\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_different\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_equal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_equal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_equal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_equal\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_false\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_false\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_false\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_falsy\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_falsy\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_falsy\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater\\(\\) has parameter \\$min with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater_or_equal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater_or_equal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater_or_equal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_greater_or_equal\\(\\) has parameter \\$min with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_identical\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_identical\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_identical\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_identical\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less\\(\\) has parameter \\$max with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less_or_equal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less_or_equal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less_or_equal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_less_or_equal\\(\\) has parameter \\$max with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_throws\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_throws\\(\\) has parameter \\$callback with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_throws\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_throws\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_throws\\(\\) has parameter \\$result with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_true\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_true\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_true\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_truthy\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_truthy\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_truthy\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_unequal\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_unequal\\(\\) has parameter \\$actual with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_unequal\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:assert_unequal\\(\\) has parameter \\$expected with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:fail\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:fail\\(\\) has parameter \\$reason with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:do_assert\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:do_assert\\(\\) has parameter \\$assert with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:teardown\\(\\) has parameter \\$callable with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:depends\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:depends\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:set\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:set\\(\\) has parameter \\$value with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:get\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:get\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:result\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:teardowns\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:normalize_name\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Context\\:\\:normalize_name\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_test\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_test\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_test\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_test\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_test\\(\\) has parameter \\$test with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_setup\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_tests\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_tests\\(\\) has parameter \\$arglist with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_tests\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_tests\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_directory_test\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_directory_test\\(\\) has parameter \\$arglist with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_directory_test\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_directory_test\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_directory_test\\(\\) has parameter \\$test with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_teardown\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_directory_teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_tests\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_tests\\(\\) has parameter \\$arglist with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_tests\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_tests\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_file_test\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_file_test\\(\\) has parameter \\$arglist with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_file_test\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_file_test\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_file_test\\(\\) has parameter \\$test with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_teardown\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_file_teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_tests\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_tests\\(\\) has parameter \\$arglist with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_tests\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_tests\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_class_test\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_class_test\\(\\) has parameter \\$method with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_class_test\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_class_test\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_instantiate_test\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_instantiate_test\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_instantiate_test\\(\\) has parameter \\$class with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_class_teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_test\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_test\\(\\) has parameter \\$arglist with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_test\\(\\) has parameter \\$run_id with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_test\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_teardown\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\run_function_teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_setup\\(\\) has parameter \\$callable with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_setup\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_test_function\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_test_function\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_test_function\\(\\) has parameter \\$callable with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_test_function\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_teardown\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_teardown\\(\\) has parameter \\$callable with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Function easytest\\\\_run_teardown\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Method easytest\\\\Target\\:\\:name\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Method easytest\\\\Target\\:\\:subtargets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Property easytest\\\\_Target\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Property easytest\\\\_Target\\:\\:\\$subtargets has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Method easytest\\\\_Target\\:\\:__construct\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Method easytest\\\\_Target\\:\\:name\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Method easytest\\\\_Target\\:\\:subtargets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\process_user_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\process_user_targets\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\process_user_targets\\(\\) has parameter \\$errors with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_class_target\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_class_target\\(\\) has parameter \\$errors with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_class_target\\(\\) has parameter \\$target with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_class_target\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_function_target\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_function_target\\(\\) has parameter \\$errors with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_function_target\\(\\) has parameter \\$functions with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_function_target\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_path_target\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_path_target\\(\\) has parameter \\$errors with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_path_target\\(\\) has parameter \\$path with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_path_target\\(\\) has parameter \\$root with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_process_path_target\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_determine_test_root\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\_determine_test_root\\(\\) has parameter \\$path with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\find_directory_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\find_directory_targets\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\find_file_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\find_file_targets\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\find_class_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\find_class_targets\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\build_targets_from_dependencies\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Function easytest\\\\build_targets_from_dependencies\\(\\) has parameter \\$dependencies with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/targets.php
+
+		-
+			message: "#^Property easytest\\\\TestInfo\\:\\:\\$type has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\TestInfo\\:\\:\\$filename has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\TestInfo\\:\\:\\$namespace has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\TestInfo\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$setup has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$teardown has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$teardown_run has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$tests has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:find_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:find_targets\\(\\) has parameter \\$targets with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:setup\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown_run\\(\\) has parameter \\$run_id with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:run\\(\\) has parameter \\$run with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\DirectoryTest\\:\\:run\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown_run has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$tests has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup_function has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup_function_name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown_function has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown_function_name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:find_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:find_targets\\(\\) has parameter \\$targets with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:teardown\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:teardown_run\\(\\) has parameter \\$run_id with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:run\\(\\) has parameter \\$run with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FileTest\\:\\:run\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$file has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$namespace has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$object has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$setup has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$teardown has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$setup_function has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$teardown_function has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\ClassTest\\:\\:\\$tests has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:find_targets\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:find_targets\\(\\) has parameter \\$targets with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:teardown\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:run\\(\\) has parameter \\$run with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\ClassTest\\:\\:run\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$file has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$namespace has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$class has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$function has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$setup has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$teardown has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$test has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$result has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$setup_name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Property easytest\\\\FunctionTest\\:\\:\\$teardown_name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:setup\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:setup\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:teardown\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:teardown\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:run\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:run\\(\\) has parameter \\$run with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Method easytest\\\\FunctionTest\\:\\:run\\(\\) has parameter \\$targets with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/tests.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_function\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$callable with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_construct\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$class with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_function\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack5.5.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack5.5.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$callable with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack5.5.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_construct\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack5.5.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack5.5.php
+
+		-
+			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$class with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/unpack5.5.php
+
+		-
+			message: "#^Function easytest\\\\diff\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\diff\\(\\) has parameter \\$from with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\diff\\(\\) has parameter \\$from_name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\diff\\(\\) has parameter \\$to with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\diff\\(\\) has parameter \\$to_name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_DiffState\\:\\:\\$diff has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_DiffState\\:\\:\\$seen has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_DiffState\\:\\:\\$sentinels has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_DiffCopy\\:\\:\\$value has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_DiffCopy\\:\\:__construct\\(\\) has parameter \\$value with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_DiffInsert\\:\\:\\$value has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_DiffInsert\\:\\:__construct\\(\\) has parameter \\$value with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_DiffDelete\\:\\:\\$value has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_DiffDelete\\:\\:__construct\\(\\) has parameter \\$value with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Edit\\:\\:\\$flen has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Edit\\:\\:\\$tlen has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Edit\\:\\:\\$m has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Edit\\:\\:__construct\\(\\) has parameter \\$flen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Edit\\:\\:__construct\\(\\) has parameter \\$m with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Edit\\:\\:__construct\\(\\) has parameter \\$tlen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Variable\\:\\:\\$name has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Variable\\:\\:\\$key has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Variable\\:\\:\\$value has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Variable\\:\\:\\$cost has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Property easytest\\\\_Variable\\:\\:\\$substructure has no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$cost with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$key with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$value with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_process_variable\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_process_variable\\(\\) has parameter \\$key with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_process_variable\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_process_variable\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_diff_variables\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_diff_variables\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_compare_variables\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_lcs_array\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_lcs_array\\(\\) has parameter \\$from with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_lcs_array\\(\\) has parameter \\$to with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_lcs_variables\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_lcs_variables\\(\\) has parameter \\$lcs with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_build_diff_from_edit\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_build_diff_from_edit\\(\\) has parameter \\$from with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_build_diff_from_edit\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_build_diff_from_edit\\(\\) has parameter \\$to with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_copy_value\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_copy_value\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_copy_value\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_insert_value\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_insert_value\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_insert_value\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_delete_value\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_delete_value\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_delete_value\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_copy_string\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_copy_string\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_copy_string\\(\\) has parameter \\$string with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_insert_string\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_insert_string\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_insert_string\\(\\) has parameter \\$string with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_delete_string\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_delete_string\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_delete_string\\(\\) has parameter \\$string with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\format_failure_message\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\format_failure_message\\(\\) has parameter \\$assertion with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\format_failure_message\\(\\) has parameter \\$description with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\format_failure_message\\(\\) has parameter \\$detail with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\format_variable\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\format_variable\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has parameter \\$indent with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has parameter \\$seen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has parameter \\$sentinels with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_scalar\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_scalar\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_resource\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_resource\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_array\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_array\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_array\\(\\) has parameter \\$padding with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_array\\(\\) has parameter \\$seen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_array\\(\\) has parameter \\$sentinels with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_array\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_object\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_object\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_object\\(\\) has parameter \\$padding with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_object\\(\\) has parameter \\$seen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_object\\(\\) has parameter \\$sentinels with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_format_object\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_check_reference\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_check_reference\\(\\) has parameter \\$name with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_check_reference\\(\\) has parameter \\$seen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_check_reference\\(\\) has parameter \\$sentinels with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_check_reference\\(\\) has parameter \\$var with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\ksort_recursive\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\ksort_recursive\\(\\) has parameter \\$array with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\ksort_recursive\\(\\) has parameter \\$seen with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
