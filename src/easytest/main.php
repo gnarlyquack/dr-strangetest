@@ -189,13 +189,13 @@ function _enable_error_handling() {
             \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
             exit(namespace\EXIT_FAILURE);
         }
-        \ini_set('zend.assertions', 1);
+        \ini_set('zend.assertions', '1');
 
         // #BC(7.1): Check whether or not to enable assert.exception
         // Since PHP 7.2 deprecates calling assert() with a string assertion,
         // there seems to be no reason to keep assert's legacy behavior enabled
         if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
-            \ini_set('assert.exception', 1);
+            \ini_set('assert.exception', '1');
         }
     }
     // Although the documentation discourages using these configuration
