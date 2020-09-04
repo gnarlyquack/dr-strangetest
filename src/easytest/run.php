@@ -199,7 +199,7 @@ final class Context {
             list($name, $run) = $this->normalize_name($name);
 
             if (!isset($this->state->results[$name][$run])) {
-                $dependees[] = $name;
+                $dependees[] = array($name, $run);
             }
             elseif (!$this->state->results[$name][$run]) {
                 throw new Skip("This test depends on '{$name}{$run}', which did not pass");
@@ -220,10 +220,11 @@ final class Context {
             }
 
             foreach ($dependees as $dependee) {
-                if (!isset($dependency->dependees[$dependee])) {
-                    $dependency->dependees[$dependee] = array();
+                list($name, $run) = $dependee;
+                if (!isset($dependency->dependees[$name])) {
+                    $dependency->dependees[$name] = array();
                 }
-                $dependency->dependees[$dependee][] = $run;
+                $dependency->dependees[$name][] = $run;
             }
 
             throw new Postpone();
@@ -304,26 +305,7 @@ function run_test(
     $args = null, array $run_id = null, array $targets = null
 ) {
     if ($targets) {
-        $type = \get_class($test);
-        switch ($type) {
-        case 'easytest\\DirectoryTest':
-            $result = namespace\find_directory_targets($logger, $test, $targets);
-            break;
-
-        case 'easytest\\FileTest':
-            $result = namespace\find_file_targets($logger, $test, $targets);
-            break;
-
-        case 'easytest\\ClassTest':
-            $result = namespace\find_class_targets($logger, $test, $targets);
-            break;
-
-        default:
-            // #BC(5.4): Omit description from assert
-            \assert(false); // "Test type '$type' can't have targets"
-            break;
-        }
-        list($error, $targets) = $result;
+        list($error, $targets) = $test->find_targets($logger, $targets);
         if (!$targets && $error) {
             return;
         }

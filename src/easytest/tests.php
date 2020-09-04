@@ -30,6 +30,11 @@ final class DirectoryTest extends struct {
     public $tests = array();
 
 
+    public function find_targets(Logger $logger, $targets) {
+        return namespace\find_directory_targets($logger, $this, $targets);
+    }
+
+
     public function setup(
         BufferingLogger $logger,
         $args = null,
@@ -79,6 +84,11 @@ final class FileTest extends struct {
     public $setup_function_name;
     public $teardown_function;
     public $teardown_function_name;
+
+
+    public function find_targets(Logger $logger, $targets) {
+        return namespace\find_file_targets($logger, $this, $targets);
+    }
 
 
     public function setup(
@@ -131,6 +141,11 @@ final class ClassTest extends struct {
     public $setup_function;
     public $teardown_function;
     public $tests = array();
+
+
+    public function find_targets(Logger $logger, $targets) {
+        return namespace\find_class_targets($logger, $this, $targets);
+    }
 
 
     public function setup(

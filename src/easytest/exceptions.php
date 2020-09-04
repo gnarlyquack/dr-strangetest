@@ -31,8 +31,10 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
 
         public function __construct($message) {
             parent::__construct($message);
-            list($this->file, $this->line, $this->trace)
-                = namespace\_find_client_call_site();
+            $result = namespace\_find_client_call_site();
+            if ($result) {
+                list($this->file, $this->line, $this->trace) = $result;
+            }
         }
 
 
@@ -57,8 +59,10 @@ else {
 
         public function __construct($message) {
             parent::__construct($message);
-            list($this->file, $this->line, $this->trace)
-                = namespace\_find_client_call_site();
+            $result = namespace\_find_client_call_site();
+            if ($result) {
+                list($this->file, $this->line, $this->trace) = $result;
+            }
         }
 
 
@@ -84,8 +88,10 @@ final class Skip extends \Exception {
 
     public function __construct($message, Skip $previous = null) {
         parent::__construct($message, 0, $previous);
-        list($this->file, $this->line, $this->trace)
-            = namespace\_find_client_call_site();
+        $result = namespace\_find_client_call_site();
+        if ($result) {
+            list($this->file, $this->line, $this->trace) = $result;
+        }
     }
 
 
@@ -121,9 +127,9 @@ final class Skip extends \Exception {
 function _find_client_call_site() {
     // Find the first call in a backtrace that's outside of easytest
     // #BC(5.3): Pass false for debug_backtrace() $option parameter
-    $trace = \version_compare(\PHP_VERSION, '5.3.6', '<')
-           ? \debug_backtrace(false)
-           : \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    $trace = \defined('DEBUG_BACKTRACE_IGNORE_ARGS')
+           ? \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS)
+           : \debug_backtrace(false);
     foreach ($trace as $i => $frame) {
         // Apparently there's no file if we were thrown from the error
         // handler
@@ -134,13 +140,16 @@ function _find_client_call_site() {
         }
     }
 
-    return array(
-        $frame['file'],
-        $frame['line'],
-        // Advance the trace index ($i) so the trace array provides a backtrace
-        // from the call site
-        \array_slice($trace, $i + 1),
-    );
+    if (isset($i, $frame['file'], $frame['line'])) {
+        return array(
+            $frame['file'],
+            $frame['line'],
+            // Advance the trace index ($i) so the trace array provides a
+            // backtrace from the call site
+            \array_slice($trace, $i + 1),
+        );
+    }
+    return null;
 }
 
 

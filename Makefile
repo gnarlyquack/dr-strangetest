@@ -1,7 +1,15 @@
+.PHONY: check
+check: test analyse
+
+
 .PHONY: test
 test:
 	./bin/easytest
-	./phpstan.phar analyse src bin
+
+
+.PHONY: analyse
+analyse:
+	./phpstan.phar analyse
 
 
 .PHONY: build

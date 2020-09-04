@@ -143,6 +143,11 @@ Release
     source file name and line number. To the extent that it's possible, we
     probably want to always log an event using an exception as the reason.
 
+-   Should we strip assert() calls when building the phar? Since easytest
+    requires assertions to be enabled, they will always be executed. If so,
+    then we probably want to allow the phar version to be installable with
+    Composer (a la psalm/phar)
+
 
 Future / Wishlist
 -----------------

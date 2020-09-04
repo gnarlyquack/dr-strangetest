@@ -158,6 +158,8 @@ function _process_class_target(array &$targets, $target, array &$errors) {
 
     $classes = \explode(',', $classes);
     $max_index = \count($classes) - 1;
+    $subtarget_count = 0;
+    $class = null;
     foreach ($classes as $index => $class) {
         // functions and classes with identical names can coexist!
         if (!\strlen($class)) {
@@ -178,6 +180,8 @@ function _process_class_target(array &$targets, $target, array &$errors) {
         }
     }
 
+    \assert(isset($class));
+    \assert(isset($targets[$class]));
     if ($methods && $subtarget_count) {
         $targets = &$targets[$class]->subtargets;
         foreach (\explode(',', $methods) as $method) {
