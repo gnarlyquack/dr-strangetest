@@ -781,16 +781,6 @@ parameters:
 			path: src/easytest/exceptions.php
 
 		-
-			message: "#^Function is_iterable\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/is_iterable.php
-
-		-
-			message: "#^Function is_iterable\\(\\) has parameter \\$var with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/is_iterable.php
-
-		-
 			message: "#^Property easytest\\\\BasicLog\\:\\:\\$megabytes_used has no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/log.php
@@ -3449,4 +3439,3 @@ parameters:
 			message: "#^Function easytest\\\\ksort_recursive\\(\\) has parameter \\$seen with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
-

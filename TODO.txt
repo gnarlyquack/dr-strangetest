@@ -163,7 +163,6 @@ Release
     -   dependency.php
     -   discover.php
     -   exceptions.php
-    -   is_iterable.php
     -   log.php
     -   main.php
     -   output.php

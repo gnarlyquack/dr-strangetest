@@ -7,6 +7,10 @@
 
 // #BC(7.0): Provide implementation of is_iterable
 
+/**
+ * @param mixed $var
+ * @return bool
+ */
 function is_iterable($var) {
     return \is_array($var) || ($var instanceof \Traversable);
 }
