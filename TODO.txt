@@ -67,8 +67,6 @@ Release
 
 -   Cleanup parameters to setup(), teardown(), run() test methods
 
--   Ensure ClassTest instances are deleted
-
 -   Set maximum PHP constraint in composer.json
 
 -   Add support for config files(?)

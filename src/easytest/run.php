@@ -668,6 +668,7 @@ function run_class_teardown(BufferingLogger $logger, ClassTest $class, $run) {
         namespace\_run_teardown($logger, $name, $method);
         namespace\end_buffering($logger);
     }
+    $class->object = null;
 }
 
 
