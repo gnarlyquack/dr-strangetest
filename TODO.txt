@@ -158,7 +158,6 @@ Release
     Composer (a la psalm/phar)
 
 -   Add typehints:
-    -   assertions.php
     -   buffer.php
     -   dependency.php
     -   discover.php

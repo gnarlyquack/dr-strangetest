@@ -10,6 +10,13 @@ namespace easytest;
 
 // The functions in this file comprise EasyTest's assertion API
 
+/**
+ * @param mixed $expected
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_different($expected, $actual, $description = null) {
     if ($expected !== $actual) {
         return;
@@ -24,6 +31,13 @@ function assert_different($expected, $actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $expected
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_equal($expected, $actual, $description = null) {
     if ($expected == $actual) {
         return;
@@ -42,6 +56,12 @@ function assert_equal($expected, $actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_false($actual, $description = null) {
     if ($actual === false) {
         return;
@@ -56,6 +76,12 @@ function assert_false($actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_falsy($actual, $description = null) {
     if (!$actual) {
         return;
@@ -70,6 +96,13 @@ function assert_falsy($actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param mixed $min
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_greater($actual, $min, $description = null) {
     if ($actual > $min) {
         return;
@@ -84,6 +117,13 @@ function assert_greater($actual, $min, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param mixed $min
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_greater_or_equal($actual, $min, $description = null) {
     if ($actual >= $min) {
         return;
@@ -98,6 +138,13 @@ function assert_greater_or_equal($actual, $min, $description = null) {
 }
 
 
+/**
+ * @param mixed $expected
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_identical($expected, $actual, $description = null) {
     if ($expected === $actual) {
         return;
@@ -112,6 +159,13 @@ function assert_identical($expected, $actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param mixed $max
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_less($actual, $max, $description = null) {
     if ($actual < $max) {
         return;
@@ -126,6 +180,13 @@ function assert_less($actual, $max, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param mixed $max
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_less_or_equal($actual, $max, $description = null) {
     if ($actual <= $max) {
         return;
@@ -140,6 +201,14 @@ function assert_less_or_equal($actual, $max, $description = null) {
 }
 
 
+/**
+ * @template T of \Throwable
+ * @param class-string<T> $expected
+ * @param callable $callback
+ * @param ?string $description
+ * @return T
+ * @throws Failure|\Exception
+ */
 function assert_throws($expected, $callback, $description = null) {
     try {
         $callback();
@@ -168,6 +237,12 @@ function assert_throws($expected, $callback, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_true($actual, $description = null) {
     if ($actual === true) {
         return;
@@ -182,6 +257,12 @@ function assert_true($actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_truthy($actual, $description = null) {
     if ($actual) {
         return;
@@ -196,6 +277,13 @@ function assert_truthy($actual, $description = null) {
 }
 
 
+/**
+ * @param mixed $expected
+ * @param mixed $actual
+ * @param ?string $description
+ * @return void
+ * @throws Failure
+ */
 function assert_unequal($expected, $actual, $description = null) {
     if ($expected != $actual) {
         return;
