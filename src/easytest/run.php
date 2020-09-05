@@ -364,15 +364,9 @@ function run_test(
 function run_directory_setup(
     BufferingLogger $logger,
     DirectoryTest $directory,
-    $args = null,
+    array $args = null,
     $run = null
 ) {
-    \assert(
-        null === $args
-        || \is_array($args)
-        || ($args instanceof ArgumentLists)
-    );
-
     if ($directory->setup) {
         $name = "{$directory->setup}{$run}";
         namespace\start_buffering($logger, $name);
@@ -436,11 +430,9 @@ function _run_directory_test(
 function run_directory_teardown_run(
     BufferingLogger $logger,
     DirectoryTest $directory,
-    $args = null,
+    array $args = null,
     $run = null
 ) {
-    \assert(null === $args || \is_array($args));
-
     if ($directory->teardown_run) {
         $name = "{$directory->teardown_run}{$run}";
         namespace\start_buffering($logger, $name);
@@ -555,11 +547,9 @@ function _run_file_test(
 function run_file_teardown_run(
     BufferingLogger $logger,
     FileTest $file,
-    $args = null,
+    array $args = null,
     $run = null
 ) {
-    \assert(null === $args || \is_array($args));
-
     if ($file->teardown_run) {
         $name = "{$file->teardown_run}{$run}";
         namespace\start_buffering($logger, $name);

@@ -111,7 +111,7 @@ function end_buffering(BufferingLogger $logger) {
         );
     }
     else {
-        $output = \ob_get_clean();
+        $output = (string)\ob_get_clean();
         if (\strlen($output)) {
             $logger->log_output(
                 $logger->buffer,
@@ -183,7 +183,7 @@ function _reset_buffer(BufferingLogger $logger) {
         }
     }
 
-    $output = \ob_get_contents();
+    $output = (string)\ob_get_contents();
     \ob_clean();
     if (\strlen($output)) {
         $logger->log_output(

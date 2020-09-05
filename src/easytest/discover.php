@@ -196,6 +196,10 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
 
     $ns = '';
     $tokens = \token_get_all($source);
+    $exists = array(
+        \T_CLASS => 'class_exists',
+        \T_FUNCTION => 'function_exists',
+    );
     // Start with $i = 2 since all PHP code starts with '<?php' followed by
     // whitespace
     for ($i = 2, $c = \count($tokens); $i < $c; ++$i) {
@@ -222,7 +226,6 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
             $fullname = "$ns$name";
             // functions and classes with identical names can coexist!
             $seenname = "$token_name $fullname";
-            $exists = "{$token_name}_exists";
             // Handle conditionally-defined identifiers, i.e., we found the
             // identifier in the file, but it wasn't actually defined due to
             // some failed conditional. The identifier could have still been
@@ -233,7 +236,7 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
             // only keep track of identifiers we've seen in files we've parsed,
             // however it seems like somebody would have to be doing something
             // very bizarre for us to have a false positive here
-            if (isset($seen[$seenname]) || !$exists($fullname)) {
+            if (isset($seen[$seenname]) || !$exists[$token_type]($fullname)) {
                 break;
             }
 

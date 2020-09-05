@@ -1886,7 +1886,7 @@ parameters:
 			path: src/easytest/run.php
 
 		-
-			message: "#^Function easytest\\\\run_directory_setup\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			message: "#^Function easytest\\\\run_directory_setup\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/easytest/run.php
 
@@ -1946,7 +1946,7 @@ parameters:
 			path: src/easytest/run.php
 
 		-
-			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/easytest/run.php
 
@@ -2036,7 +2036,7 @@ parameters:
 			path: src/easytest/run.php
 
 		-
-			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
+			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/easytest/run.php
 
