@@ -67,8 +67,6 @@ Release
 
 -   Cleanup parameters to setup(), teardown(), run() test methods
 
--   Set maximum PHP constraint in composer.json
-
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)
