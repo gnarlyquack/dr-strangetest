@@ -14,11 +14,23 @@ namespace easytest;
 // eliminated and we can just use the argument unpacking syntax directly at the
 // call site.
 
-function _unpack_function($callable, $args) {
+/**
+ * @template T
+ * @param callable(mixed...): T $callable
+ * @param mixed[] $args
+ * @return T
+ */
+function unpack_function($callable, array $args) {
     return $callable(...$args);
 }
 
 
-function _unpack_construct($class, $args) {
+/**
+ * @template T of object
+ * @param class-string<T> $class
+ * @param mixed[] $args
+ * @return T
+ */
+function unpack_construct($class, array $args) {
     return new $class(...$args);
 }

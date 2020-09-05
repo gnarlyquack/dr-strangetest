@@ -643,7 +643,7 @@ function _instantiate_test(Logger $logger, $class, $args) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
-            return namespace\_unpack_construct($class, $args);
+            return namespace\unpack_construct($class, $args);
         }
         else {
             return new $class();
@@ -757,7 +757,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
     try {
         if ($args) {
             // #BC(5.5): Use proxy function for argument unpacking
-            $result = namespace\_unpack_function($callable, $args);
+            $result = namespace\unpack_function($callable, $args);
         }
         else {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
@@ -786,7 +786,7 @@ function _run_test_function(
         if ($args) {
             $args[] = $context;
             // #BC(5.5): Use proxy function for argument unpacking
-            namespace\_unpack_function($callable, $args);
+            namespace\unpack_function($callable, $args);
         }
         else {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
@@ -831,7 +831,7 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null) {
         }
         elseif(\is_array($args)) {
             // #BC(5.5): Use proxy function for argument unpacking
-            namespace\_unpack_function($callable, $args);
+            namespace\unpack_function($callable, $args);
         }
         elseif ($args instanceof ArgumentLists) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()

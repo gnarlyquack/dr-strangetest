@@ -2121,6 +2121,11 @@ parameters:
 			path: src/easytest/run.php
 
 		-
+			message: "#^Unable to resolve the template type T in call to function easytest\\\\unpack_construct$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
 			message: "#^Function easytest\\\\run_class_teardown\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
@@ -2866,66 +2871,6 @@ parameters:
 			path: src/easytest/tests.php
 
 		-
-			message: "#^Function easytest\\\\_unpack_function\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$args with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$callable with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_construct\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$args with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$class with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_function\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack5.5.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$args with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack5.5.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_function\\(\\) has parameter \\$callable with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack5.5.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_construct\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack5.5.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$args with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack5.5.php
-
-		-
-			message: "#^Function easytest\\\\_unpack_construct\\(\\) has parameter \\$class with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/unpack5.5.php
-
-		-
 			message: "#^Function easytest\\\\diff\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
@@ -3439,3 +3384,4 @@ parameters:
 			message: "#^Function easytest\\\\ksort_recursive\\(\\) has parameter \\$seen with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
+
