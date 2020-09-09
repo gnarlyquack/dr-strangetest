@@ -94,24 +94,28 @@ Release
         -   Do we want to split up formatting and diff (and perhaps additional
             "utility" functions) into separate files?
 
-    -   Since we're now diffing values directly instead of using a string
-        representation, formatting needs more robust testing and review (we
-        should now test every type of variable we handle, not just strings).
-        At the very least, we want to ensure that the formatting of whole,
-        composite values by format_variable() matches how individual elements
-        are formatted when appearing within a diff
+    -   Fix diff formatting:
 
-        -   Are we happy with how strings are formatted? Formatting them after
-            breaking them into multiple lines means that each line is now
-            enclosed in quotes. This seems unpleasantly noisy, but offhand,
-            it's now clear how we can avoid this. Also, we should probably
-            take a closer look at how strings are formatted when inside
-            another container (i.e., as a class property or array element)
+        -   Ensure that values formatted in whole by format_variable() match
+            how values are formatted when individual elements are diffed
 
-        -   We lost the commas that separate array elements. Do we want them
-            back?
+        -   Fix string formatting:
+            -   Don't show diffed, multiline strings as individual strings
+            -   String formatting within other composite values is broken:
+                -   Keys are not shown
+                -   Indentation is wrong
 
-        -   We need to take a closer look at how classes are formatted
+        -   Review/fix array formatting:
+            -   We lost the commas that separate array elements. Do we want
+                them back?
+            -   Diffing an empty to a non-empty array shows an empty array
+                removed and a non-empty array inserted. Do we want to (and can
+                we) instead show just the insertion of elements?
+
+        -   Fix object formatting:
+            -   Equal but non-identical objects need to show an instance id
+            -   Objects whose individual elements have been diffed are
+                formatted like arrays
 
         -   Fix reference formatting. Right now, an extra level of recursion
             is printed because values call a general-purpose formatting
@@ -134,8 +138,14 @@ Release
         automatically sorted as part of generating the diff instead of
         depending on having sorted arrays passed in?
 
-    -   Composite types of the same type should probably have an LCS of at
-        least 1?
+    -   When formatting array and class "headers", it seems we could have a
+        non-compact diff if both the keys of the header and initial values are
+        different:
+            - 1 => array(
+            + 2 => array(
+            -   1 => 'foo',
+            +   1 => 'bar',
+        Is this something we want to try to "fix"?
 
 -   Do we want/need to implement a UserError exception? E.g., we could throw
     an error from arglists() or from the ArgumentLists constructor if the
@@ -148,10 +158,11 @@ Release
     source file name and line number. To the extent that it's possible, we
     probably want to always log an event using an exception as the reason.
 
--   Should we strip assert() calls when building the phar? Since easytest
-    requires assertions to be enabled, they will always be executed. If so,
-    then we probably want to allow the phar version to be installable with
-    Composer (a la psalm/phar)
+-   Should we strip assert() calls (and potentially other debug activity) when
+    building the phar? Since easytest requires assertions to be enabled, they
+    will always be executed even though we would never expect them to trigger
+    in a production release. If so, then we probably want to allow the phar
+    version to be installable with Composer (a la psalm/phar, for example)
 
 -   Add typehints:
     -   buffer.php
@@ -165,6 +176,13 @@ Release
     -   targets.php
     -   tests.php
     -   util.php
+
+-   The comparison assertions ('<', '<=', '>', '>=') can operate
+    (successfully) on (some) composite values. What implications does this
+    have on formatting failure messages?
+    https://www.php.net/manual/en/language.operators.comparison.php
+
+-   Don't trim displayed output that is captured during testing
 
 
 Future / Wishlist

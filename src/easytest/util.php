@@ -165,6 +165,10 @@ function _diff_variables(_Variable $from, _Variable $to, _DiffState $state, $ind
         namespace\_insert_value($state->diff, $to, $indent);
         namespace\_delete_value($state->diff, $from, $indent);
     }
+    elseif (\is_string($from->value) && \is_string($to->value)) {
+        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+        namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent);
+    }
     elseif (\is_array($from->value) && \is_array($to->value)) {
         if (1 === $from->cost || 1 === $to->cost
             || ($from->cost < 2 && $to->cost < 2)
@@ -203,9 +207,49 @@ function _diff_variables(_Variable $from, _Variable $to, _DiffState $state, $ind
             }
         }
     }
+    elseif(\is_object($from->value) && \is_object($to->value)) {
+        $class = \get_class($from->value);
+        if ($class === \get_class($to->value)) {
+            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+            namespace\_copy_string($state->diff, $indent . '}');
+            namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent . namespace\_FORMAT_INDENT);
+            if ($from->key === $to->key) {
+                if (isset($from->key)) {
+                    $key = "{$from->key} => ";
+                }
+                else {
+                    $key = '';
+                }
+                namespace\_copy_string(
+                    $state->diff,
+                    \sprintf('%s%s%s {', $indent, $key, $class)
+                );
+            }
+            else {
+                if (isset($from->key)) {
+                    $from_key = "{$from->key} => ";
+                }
+                else {
+                    $from_key = '';
+                }
+                if (isset($to->key)) {
+                    $to_key = "{$to->key} => ";
+                }
+                else {
+                    $to_key = '';
+                }
+                namespace\_insert_string($state->diff, "{$indent}{$to_key}{$class} {");
+                namespace\_delete_string($state->diff, "{$indent}{$from_key}{$class} {");
+            }
+        }
+        else {
+            namespace\_insert_value($state->diff, $to, $indent);
+            namespace\_delete_value($state->diff, $from, $indent);
+        }
+    }
     else {
-        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-        namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent);
+        namespace\_insert_value($state->diff, $to, $indent);
+        namespace\_delete_value($state->diff, $from, $indent);
     }
 }
 
@@ -229,11 +273,15 @@ function _lcs_array(array $from, array $to) {
 
             $fvalue = $from[$f-1];
             $tvalue = $to[$t-1];
-            if (namespace\_lcs_variables($fvalue, $tvalue, $lcs)){
+            if (namespace\_lcs_variables($fvalue, $tvalue, $lcs)) {
                 $lcs += $m[$f-1][$t-1];
             }
             else {
-                $lcs += \max($m[$f-1][$t], $m[$f][$t-1]);
+                $max = \max($m[$f-1][$t], $m[$f][$t-1]);
+                if ($lcs) {
+                    $max = \max($max, $m[$f-1][$t-1] + $lcs);
+                }
+                $lcs = $max;
             }
             $m[$f][$t] = $lcs;
         }
@@ -256,10 +304,18 @@ function _lcs_variables(_Variable $from, _Variable $to, &$lcs) {
         }
     }
     elseif (\is_array($from->value) && \is_array($to->value)) {
+        $lcs = 1;
         if (\count($from->value) > 0 && \count($to->value) > 0) {
             $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-            $lcs = $edit->m[$edit->flen][$edit->tlen];
+            $lcs += $edit->m[$edit->flen][$edit->tlen];
         }
+    }
+    elseif (\is_object($from->value) && \is_object($to->value)
+        && \get_class($from->value) === \get_class($to->value)
+    ) {
+        $lcs = 1;
+        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+        $lcs += $edit->m[$edit->flen][$edit->tlen];
     }
 
     return false;

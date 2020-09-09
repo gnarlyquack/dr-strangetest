@@ -66,17 +66,15 @@ Assertion "$expected === $actual" failed
 
   array(
 -     0 => 1
--     1 => array(
--         0 => 2
--         1 => 3
--     )
--     2 => array()
-      3 => 4
++     3 => 4
 +     2 => array()
-+     1 => array(
-+         1 => 3
+      1 => array(
+-         0 => 2
+          1 => 3
 +         0 => 2
-+     )
+      )
+-     2 => array()
+-     3 => 4
 +     0 => 1
   )
 EXPECTED;
@@ -254,6 +252,7 @@ Assertion "$expected == $actual" failed
           )
           2 => array()
 -         3 => 4
++         3 => 5
 -         4 => array(
 -             0 => 1
 -             1 => array(
@@ -264,7 +263,6 @@ Assertion "$expected == $actual" failed
 -             3 => 4
 -             4 => &$expected[4]
 -         )
-+         3 => 5
 +         4 => array(
 +             0 => 1
 +             1 => array(

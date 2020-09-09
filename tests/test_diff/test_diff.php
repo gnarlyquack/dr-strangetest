@@ -5,6 +5,9 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+
+// Some tests to see if the basic algorithm seems to be working correctly
+
 class TestDiff {
     // This is used to ensure that text editors don't trim trailing whitespace
     // from the expected output strings in the tests
