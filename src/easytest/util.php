@@ -139,7 +139,8 @@ function _process_variable(&$var, $name, _DiffState $state, $key = null) {
         foreach ($lines as $i => &$line) {
             ++$result->cost;
             $subname = \sprintf('%s[%d]', $name, $i);
-            $result->substructure[] = new _Variable($subname, null, $line, _Variable::TYPE_STRING);
+            $subkey = $i ? null : $key;
+            $result->substructure[] = new _Variable($subname, $subkey, $line, _Variable::TYPE_STRING);
         }
         return $result;
     }

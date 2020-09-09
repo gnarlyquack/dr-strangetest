@@ -102,7 +102,6 @@ Release
         -   Fix string formatting:
             -   Don't show diffed, multiline strings as individual strings
             -   String formatting within other composite values is broken:
-                -   Keys are not shown
                 -   Indentation is wrong
 
         -   Review/fix array formatting:

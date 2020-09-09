@@ -172,7 +172,7 @@ function test_diffs_different_arrays() {
         array(2, 3),
         2,
         array(1 => 3, 2 => 4, 3 => array(5, 6)),
-        "An old pond\nA gator slides in\nand lurks silently",
+        "An old pond\nA frog jumps in\nThe water's sound",
         (object)array('two' => 2, 'three' => 4),
     );
     $expected = <<<'EXPECTED'
@@ -195,10 +195,10 @@ function test_diffs_different_arrays() {
 +             1 => 6
 +         )
 +     )
-      'An old pond'
--     'A frog jumps in'
-+     'A gator slides in'
-+     'and lurks silently'
+-     4 => 'An old pond'
++     5 => 'An old pond'
+      'A frog jumps in'
++     'The water\'s sound'
 -     5 => stdClass {
 +     6 => stdClass {
 -         one => 1
@@ -246,7 +246,7 @@ function test_diffs_different_objects() {
         'three' => array(2, 3),
         'four' => 2,
         'five' => array(1 => 3, 2 => 4, 3 => array(5, 6)),
-        'six' => "An old pond\nA gator slides in\nand lurks silently",
+        'six' => "An old pond\nA frog jumps in\nThe water's sound",
         'seven' => (object)array('two' => 2, 'three' => 4),
     );
     $expected = <<<'EXPECTED'
@@ -269,10 +269,10 @@ function test_diffs_different_objects() {
 +             1 => 6
 +         )
 +     )
-      'An old pond'
--     'A frog jumps in'
-+     'A gator slides in'
-+     'and lurks silently'
+-     five => 'An old pond'
++     six => 'An old pond'
+      'A frog jumps in'
++     'The water\'s sound'
 -     six => stdClass {
 +     seven => stdClass {
 -         one => 1
