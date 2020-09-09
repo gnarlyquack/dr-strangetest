@@ -57,10 +57,10 @@ TO;
 + actual
 
 - ''
-+ 'This is the first line.'
-+ 'This is the second line.'
-+ 'This is the third line.'
-+ 'This is the fourth line.'
++ 'This is the first line.
++ This is the second line.
++ This is the third line.
++ This is the fourth line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -79,10 +79,10 @@ TO;
 - expected
 + actual
 
-- 'This is the first line.'
-- 'This is the second line.'
-- 'This is the third line.'
-- 'This is the fourth line.'
+- 'This is the first line.
+- This is the second line.
+- This is the third line.
+- This is the fourth line.'
 + ''
 EXPECTED;
 

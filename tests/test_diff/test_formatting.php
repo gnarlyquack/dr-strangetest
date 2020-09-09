@@ -338,11 +338,10 @@ function test_diffs_empty_array_to_array() {
     $from = array();
     $to = array(1, 2);
     $expected = <<<'EXPECTED'
-- array()
-+ array(
+  array(
 +     0 => 1
 +     1 => 2
-+ )
+  )
 EXPECTED;
     namespace\assert_diff($from, $to, $expected);
 }

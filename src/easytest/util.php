@@ -94,16 +94,31 @@ final class _Edit extends struct {
 
 
 class _Variable extends struct {
+    const TYPE_ARRAY = 1;
+    const TYPE_OBJECT = 2;
+    const TYPE_REFERENCE = 3;
+    const TYPE_SCALAR = 4;
+    const TYPE_STRING = 5;
+
     public $name;
     public $key;
     public $value;
     public $cost;
+
+    /** @var self::TYPE_* */
+    public $type;
+
     public $substructure = array();
 
-    public function __construct($name, $key, &$value, $cost = 1) {
+
+    /**
+     * @param self::TYPE_* $type
+     */
+    public function __construct($name, $key, &$value, $type, $cost = 1) {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
+        $this->type = $type;
         $this->cost = $cost;
     }
 }
@@ -113,24 +128,24 @@ class _Variable extends struct {
 function _process_variable(&$var, $name, _DiffState $state, $key = null) {
     $reference = namespace\_check_reference($var, $name, $state->seen, $state->sentinels);
     if ($reference) {
-        $result = new _Variable(\ltrim($reference, '&'), $key, $var);
+        $result = new _Variable(\ltrim($reference, '&'), $key, $var, _Variable::TYPE_REFERENCE);
         return $result;
     }
 
     if (\is_string($var)) {
-        $result = new _Variable($name, $key, $var, 0);
+        $result = new _Variable($name, $key, $var, _Variable::TYPE_STRING, 0);
         #BC(5.4): explode() into a variable in order to create references
         $lines = \explode("\n", $var);
         foreach ($lines as $i => &$line) {
             ++$result->cost;
             $subname = \sprintf('%s[%d]', $name, $i);
-            $result->substructure[] = new _Variable($subname, null, $line);
+            $result->substructure[] = new _Variable($subname, null, $line, _Variable::TYPE_STRING);
         }
         return $result;
     }
 
     if (\is_array($var)) {
-        $result = new _Variable($name, $key, $var);
+        $result = new _Variable($name, $key, $var, _Variable::TYPE_ARRAY);
         foreach ($var as $key => &$value) {
             $subname = \sprintf('%s[%s]', $name, \var_export($key, true));
             $subvalue = namespace\_process_variable($value, $subname, $state, $key);
@@ -141,7 +156,7 @@ function _process_variable(&$var, $name, _DiffState $state, $key = null) {
     }
 
     if (\is_object($var)) {
-        $result = new _Variable($name, $key, $var);
+        $result = new _Variable($name, $key, $var, _Variable::TYPE_OBJECT);
         #BC(5.4): use variable for array cast in order to create references
         $values = (array)$var;
         foreach ($values as $key => &$value) {
@@ -153,103 +168,61 @@ function _process_variable(&$var, $name, _DiffState $state, $key = null) {
         return $result;
     }
 
-    return new _Variable($name, $key, $var);
+    return new _Variable($name, $key, $var, _Variable::TYPE_SCALAR);
 }
 
 
 function _diff_variables(_Variable $from, _Variable $to, _DiffState $state, $indent = '') {
-    if (namespace\_compare_variables($from, $to)) {
+    if (namespace\_lcs_variables($from, $to, $lcs)) {
         namespace\_copy_value($state->diff, $from, $indent);
     }
-    elseif(1 === $from->cost && 1 === $to->cost) {
+    elseif (0 === $lcs) {
         namespace\_insert_value($state->diff, $to, $indent);
         namespace\_delete_value($state->diff, $from, $indent);
     }
-    elseif (\is_string($from->value) && \is_string($to->value)) {
+    elseif (_Variable::TYPE_STRING === $from->type) {
         $edit = namespace\_lcs_array($from->substructure, $to->substructure);
         namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent);
     }
-    elseif (\is_array($from->value) && \is_array($to->value)) {
-        if (1 === $from->cost || 1 === $to->cost
-            || ($from->cost < 2 && $to->cost < 2)
-        ) {
-            namespace\_insert_value($state->diff, $to, $indent);
-            namespace\_delete_value($state->diff, $from, $indent);
-        }
-        else {
-            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-            namespace\_copy_string($state->diff, "{$indent})");
-            namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent . namespace\_FORMAT_INDENT);
-            if ($from->key === $to->key) {
-                if (isset($from->key)) {
-                    $key = "{$from->key} => ";
-                }
-                else {
-                    $key = '';
-                }
-                namespace\_copy_string($state->diff, "{$indent}{$key}array(");
-            }
-            else {
-                if (isset($from->key)) {
-                    $from_key = "{$from->key} => ";
-                }
-                else {
-                    $from_key = '';
-                }
-                if (isset($to->key)) {
-                    $to_key = "{$to->key} => ";
-                }
-                else {
-                    $to_key = '';
-                }
-                namespace\_insert_string($state->diff, "{$indent}{$to_key}array(");
-                namespace\_delete_string($state->diff, "{$indent}{$from_key}array(");
-            }
-        }
-    }
-    elseif(\is_object($from->value) && \is_object($to->value)) {
-        $class = \get_class($from->value);
-        if ($class === \get_class($to->value)) {
-            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-            namespace\_copy_string($state->diff, $indent . '}');
-            namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent . namespace\_FORMAT_INDENT);
-            if ($from->key === $to->key) {
-                if (isset($from->key)) {
-                    $key = "{$from->key} => ";
-                }
-                else {
-                    $key = '';
-                }
-                namespace\_copy_string(
-                    $state->diff,
-                    \sprintf('%s%s%s {', $indent, $key, $class)
-                );
-            }
-            else {
-                if (isset($from->key)) {
-                    $from_key = "{$from->key} => ";
-                }
-                else {
-                    $from_key = '';
-                }
-                if (isset($to->key)) {
-                    $to_key = "{$to->key} => ";
-                }
-                else {
-                    $to_key = '';
-                }
-                namespace\_insert_string($state->diff, "{$indent}{$to_key}{$class} {");
-                namespace\_delete_string($state->diff, "{$indent}{$from_key}{$class} {");
-            }
-        }
-        else {
-            namespace\_insert_value($state->diff, $to, $indent);
-            namespace\_delete_value($state->diff, $from, $indent);
-        }
-    }
     else {
-        namespace\_insert_value($state->diff, $to, $indent);
-        namespace\_delete_value($state->diff, $from, $indent);
+        if (_Variable::TYPE_ARRAY === $from->type) {
+            namespace\_copy_string($state->diff, "{$indent})");
+        }
+        else {
+            namespace\_copy_string($state->diff, "{$indent}}");
+        }
+        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+        namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state, $indent . namespace\_FORMAT_INDENT);
+
+        $open = _Variable::TYPE_ARRAY === $from->type
+            ? 'array('
+            : \sprintf('%s {', \get_class($from->value));
+
+        if ($from->key === $to->key) {
+            if (isset($from->key)) {
+                $key = "{$from->key} => ";
+            }
+            else {
+                $key = '';
+            }
+            namespace\_copy_string($state->diff, $indent . $key . $open);
+        }
+        else {
+            if (isset($from->key)) {
+                $from_key = "{$from->key} => ";
+            }
+            else {
+                $from_key = '';
+            }
+            if (isset($to->key)) {
+                $to_key = "{$to->key} => ";
+            }
+            else {
+                $to_key = '';
+            }
+            namespace\_insert_string($state->diff, $indent . $to_key . $open);
+            namespace\_delete_string($state->diff, $indent . $from_key . $open);
+        }
     }
 }
 
@@ -297,25 +270,24 @@ function _lcs_variables(_Variable $from, _Variable $to, &$lcs) {
     }
 
     $lcs = 0;
-    if (\is_string($from->value) && \is_string($to->value)) {
-        if ($from->cost > 1 && $to->cost > 1) {
-            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-            $lcs = $edit->m[$edit->flen][$edit->tlen];
+    if ($from->type === $to->type) {
+        if (_Variable::TYPE_STRING === $from->type) {
+            if ($from->cost > 1 || $to->cost > 1) {
+                $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+                $lcs = $edit->m[$edit->flen][$edit->tlen];
+            }
         }
-    }
-    elseif (\is_array($from->value) && \is_array($to->value)) {
-        $lcs = 1;
-        if (\count($from->value) > 0 && \count($to->value) > 0) {
-            $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-            $lcs += $edit->m[$edit->flen][$edit->tlen];
+        elseif (
+            _Variable::TYPE_ARRAY === $from->type
+            || (_Variable::TYPE_OBJECT === $from->type
+                && \get_class($from->value) === \get_class($to->value))
+        ) {
+            ++$lcs;
+            if ($from->cost > 1 && $to->cost > 1) {
+                $edit = namespace\_lcs_array($from->substructure, $to->substructure);
+                $lcs += $edit->m[$edit->flen][$edit->tlen];
+            }
         }
-    }
-    elseif (\is_object($from->value) && \is_object($to->value)
-        && \get_class($from->value) === \get_class($to->value)
-    ) {
-        $lcs = 1;
-        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-        $lcs += $edit->m[$edit->flen][$edit->tlen];
     }
 
     return false;

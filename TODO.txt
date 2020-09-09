@@ -108,9 +108,6 @@ Release
         -   Review/fix array formatting:
             -   We lost the commas that separate array elements. Do we want
                 them back?
-            -   Diffing an empty to a non-empty array shows an empty array
-                removed and a non-empty array inserted. Do we want to (and can
-                we) instead show just the insertion of elements?
 
         -   Fix object formatting:
             -   Equal but non-identical objects need to show an instance id
