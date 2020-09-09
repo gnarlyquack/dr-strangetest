@@ -113,13 +113,6 @@ Release
             -   Objects whose individual elements have been diffed are
                 formatted like arrays
 
-        -   Fix reference formatting. Right now, an extra level of recursion
-            is printed because values call a general-purpose formatting
-            function, which needs to see (and thus format) the value once
-            before detecting the recursion. The probable fix is: once we've
-            processed the values, we know what we have, and so we can
-            specialize formatting based on the type of value
-
     -   Implement "loose" (==) comparison
 
     -   By default, don't treat numerical array keys as significant when

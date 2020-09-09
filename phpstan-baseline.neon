@@ -2806,11 +2806,6 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_diff_variables\\(\\) has parameter \\$indent with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
 			message: "#^Function easytest\\\\_compare_variables\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
@@ -2851,11 +2846,6 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_build_diff_from_edit\\(\\) has parameter \\$indent with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
 			message: "#^Function easytest\\\\_build_diff_from_edit\\(\\) has parameter \\$to with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/easytest/util.php
@@ -2871,11 +2861,6 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_copy_value\\(\\) has parameter \\$indent with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
 			message: "#^Function easytest\\\\_insert_value\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
@@ -2886,22 +2871,12 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_insert_value\\(\\) has parameter \\$indent with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
 			message: "#^Function easytest\\\\_delete_value\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
 			message: "#^Function easytest\\\\_delete_value\\(\\) has parameter \\$diff with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_delete_value\\(\\) has parameter \\$indent with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
