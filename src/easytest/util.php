@@ -15,9 +15,9 @@ function diff(&$from, &$to, $from_name, $to_name) {
 
     $state = new _DiffState();
 
-    namespace\_diff_variables(
-        namespace\_process_variable($from, $from_name, $state),
-        namespace\_process_variable($to, $to_name, $state),
+    namespace\_diff_values(
+        namespace\_process_value($from, $from_name, $state),
+        namespace\_process_value($to, $to_name, $state),
         $state
     );
 
@@ -93,116 +93,123 @@ final class _Edit extends struct {
 }
 
 
-class _Variable extends struct {
-    const TYPE_ARRAY = 1;
-    const TYPE_OBJECT = 2;
-    const TYPE_REFERENCE = 3;
-    const TYPE_SCALAR = 4;
-    const TYPE_STRING = 5;
-    const TYPE_RESOURCE = 6;
+final class _DiffPosition {
+    const NONE = 0;
+    const START = 1;
+    const MIDDLE = 2;
+    const END = 3;
+}
 
-    public $name;
-    public $key;
-    public $value;
-    public $cost;
 
-    /** @var self::TYPE_* */
-    public $type;
+final class _ValueType {
+    const ARRAY = 1;
+    const OBJECT = 2;
+    const REFERENCE = 3;
+    const SCALAR = 4;
+    const STRING = 5;
+    const STRING_PART = 6;
+    const RESOURCE = 7;
+}
+
+
+final class _Value extends struct {
+    /** @var _ValueType::* */
+    private $type;
+
+    /** @var ?string */
+    private $name;
+
+    /** @var null|int|string */
+    private $key;
+
+    /** @var mixed */
+    private $value;
 
     /** @var int */
-    public $scope;
+    private $scope;
 
-    public $substructure = array();
+    /** @var int */
+    private $cost;
+
+    /** @var ?_Value[] */
+    private $subvalues;
 
 
     /**
-     * @param self::TYPE_* $type
+     * @param _ValueType::* $type
+     * @param ?string $name
+     * @param null|int|string $key
+     * @param mixed $value
      * @param int $scope
+     * @param int $cost
+     * @param ?_Value[] $subvalues
      */
-    public function __construct($name, $key, &$value, $type, $scope, $cost = 1) {
+    public function __construct(
+        $type, $name, $key, &$value, $scope = 0, $cost = 1, array $subvalues = null
+    ) {
+        $this->type = $type;
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
-        $this->type = $type;
-        $this->cost = $cost;
         $this->scope = $scope;
+        $this->cost = $cost;
+        $this->subvalues = $subvalues;
     }
 
 
     /**
-     * @return string
+     * @return _ValueType::*
      */
-    public function format() {
-        $indent = \str_repeat(namespace\_FORMAT_INDENT, $this->scope);
-        $result = $indent;
-
-        if (isset($this->key)) {
-            $result .= "{$this->key} => ";
-        }
-
-        if (_Variable::TYPE_ARRAY === $this->type) {
-            $seen = array('byval' => array(), 'byref' => array());
-            $sentinels = array('byref' => null, 'byval' => new \stdClass());
-            $result .= namespace\_format_array($this->value, $this->name, $seen, $sentinels, $indent);
-        }
-        elseif (_Variable::TYPE_OBJECT === $this->type) {
-            $seen = array('byval' => array(), 'byref' => array());
-            $sentinels = array('byref' => null, 'byval' => new \stdClass());
-            $result .= namespace\_format_object($this->value, $this->name, $seen, $sentinels, $indent);
-        }
-        elseif (_Variable::TYPE_REFERENCE === $this->type) {
-            $result .= $this->name;
-        }
-        elseif (_Variable::TYPE_RESOURCE === $this->type) {
-            $result .= namespace\_format_resource($this->value);
-        }
-        else {
-            $result .= namespace\_format_scalar($this->value);
-        }
-
-        return $result;
+    public function type() {
+        return $this->type;
     }
 
 
     /**
-     * @return string
+     * @return ?string
      */
-    public function format_open() {
-        if (_Variable::TYPE_ARRAY === $this->type) {
-            $result = \str_repeat(namespace\_FORMAT_INDENT, $this->scope);
-            if (isset($this->key)) {
-                $result .= "{$this->key} => ";
-            }
-            $result .= 'array(';
-            return $result;
-        }
-        elseif (_Variable::TYPE_OBJECT === $this->type) {
-            $result = \str_repeat(namespace\_FORMAT_INDENT, $this->scope);
-            if (isset($this->key)) {
-                $result .= "{$this->key} => ";
-            }
-            $result .= \get_class($this->value) . ' {';
-            return $result;
-        }
-        else {
-            throw new \Exception('Cannot format open on non-container value');
-        }
+    public function name() {
+        return $this->name;
     }
 
 
     /**
-     * @return string
+     * @return null|int|string
      */
-    public function format_close() {
-        if (_Variable::TYPE_ARRAY === $this->type) {
-            return \str_repeat(namespace\_FORMAT_INDENT, $this->scope) . ')';
-        }
-        elseif (_Variable::TYPE_OBJECT === $this->type) {
-            return \str_repeat(namespace\_FORMAT_INDENT, $this->scope) . '}';
-        }
-        else {
-            throw new \Exception('Cannot format close on non-container value');
-        }
+    public function key() {
+        return $this->key;
+    }
+
+
+    /**
+     * @return mixed
+     */
+    public function &value() {
+        return $this->value;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function cost() {
+        return $this->cost;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function scope() {
+        return $this->scope;
+    }
+
+
+    /**
+     * @return ?_Value[]
+     */
+    public function subvalues() {
+        return $this->subvalues;
     }
 }
 
@@ -210,89 +217,113 @@ class _Variable extends struct {
 /**
  * @param int $scope
  */
-function _process_variable(&$var, $name, _DiffState $state, $key = null, $scope = 0) {
+function _process_value(&$var, $name, _DiffState $state, $key = null, $scope = 0) {
     $reference = namespace\_check_reference($var, $name, $state->seen, $state->sentinels);
     if ($reference) {
-        $result = new _Variable($reference, $key, $var, _Variable::TYPE_REFERENCE, $scope);
-        return $result;
+        return new _Value(_ValueType::REFERENCE, $reference, $key, $var, $scope);
     }
 
     if (\is_resource($var)) {
-        return new _Variable($name, $key, $var, _Variable::TYPE_RESOURCE, $scope);
+        return new _Value(_ValueType::RESOURCE, $name, $key, $var, $scope);
     }
 
     if (\is_string($var)) {
-        $result = new _Variable($name, $key, $var, _Variable::TYPE_STRING, $scope, 0);
-        // #BC(5.4): explode() into a variable in order to create references
         $lines = \explode("\n", $var);
-        foreach ($lines as $i => &$line) {
-            ++$result->cost;
-            $subname = \sprintf('%s[%d]', $name, $i);
-            $subkey = $i ? null : $key;
-            $result->substructure[] = new _Variable($subname, $subkey, $line, _Variable::TYPE_STRING, $scope);
+        $cost = \count($lines);
+        $subvalues = array();
+        $subvalues[] = new _Value(_ValueType::STRING_PART, null, $key, $lines[0], $scope);
+        for ($i = 1; $i < $cost; ++$i) {
+            $subvalues[] = new _Value(_ValueType::STRING_PART, null, null, $lines[$i]);
         }
-        return $result;
+        return new _Value(_ValueType::STRING, $name, $key, $var, $scope, $cost, $subvalues);
     }
 
     if (\is_array($var)) {
-        $result = new _Variable($name, $key, $var, _Variable::TYPE_ARRAY, $scope);
-        foreach ($var as $key => &$value) {
-            $subname = \sprintf('%s[%s]', $name, \var_export($key, true));
-            $subvalue = namespace\_process_variable($value, $subname, $state, $key, $scope + 1);
-            $result->cost += $subvalue->cost;
-            $result->substructure[] = $subvalue;
+        $cost = 1;
+        $subvalues = array();
+        foreach ($var as $k => &$v) {
+            $subname = \sprintf('%s[%s]', $name, \var_export($k, true));
+            $subvalue = namespace\_process_value($v, $subname, $state, $k, $scope + 1);
+            $cost += $subvalue->cost();
+            $subvalues[] = $subvalue;
         }
-        return $result;
+        return new _Value(_ValueType::ARRAY, $name, $key, $var, $scope, $cost, $subvalues);
     }
 
     if (\is_object($var)) {
-        $result = new _Variable($name, $key, $var, _Variable::TYPE_OBJECT, $scope);
+        $cost = 1;
+        $subvalues = array();
         // #BC(5.4): use variable for array cast in order to create references
         $values = (array)$var;
-        foreach ($values as $key => &$value) {
-            $subname = \sprintf('%s->%s', $name, $key);
-            $subvalue = namespace\_process_variable($value, $subname, $state, $key, $scope + 1);
-            $result->cost += $subvalue->cost;
-            $result->substructure[] = $subvalue;
+        foreach ($values as $k => &$v) {
+            $subname = \sprintf('%s->%s', $name, $k);
+            $subvalue = namespace\_process_value($v, $subname, $state, $k, $scope + 1);
+            $cost += $subvalue->cost();
+            $subvalues[] = $subvalue;
         }
-        return $result;
+        return new _Value(_ValueType::OBJECT, $name, $key, $var, $scope, $cost, $subvalues);
     }
 
-    return new _Variable($name, $key, $var, _Variable::TYPE_SCALAR, $scope);
+    return new _Value(_ValueType::SCALAR, $name, $key, $var, $scope);
 }
 
 
-function _diff_variables(_Variable $from, _Variable $to, _DiffState $state) {
-    if (namespace\_lcs_variables($from, $to, $lcs)) {
+function _diff_values(_Value $from, _Value $to, _DiffState $state) {
+    if (namespace\_lcs_values($from, $to, $lcs)) {
         namespace\_copy_value($state->diff, $from);
     }
     elseif (0 === $lcs) {
         namespace\_insert_value($state->diff, $to);
         namespace\_delete_value($state->diff, $from);
     }
-    elseif (_Variable::TYPE_STRING === $from->type) {
-        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-        namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state);
+    elseif (_ValueType::STRING === $from->type()) {
+        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+        namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
     }
     else {
-        namespace\_copy_string($state->diff, $from->format_close());
+        namespace\_copy_string($state->diff, namespace\_end_value($from));
 
-        $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-        namespace\_build_diff_from_edit($from->substructure, $to->substructure, $edit, $state);
+        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+        namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
-        if ($from->key === $to->key) {
-            namespace\_copy_string($state->diff, $from->format_open());
+        if ($from->key() === $to->key()) {
+            namespace\_copy_string($state->diff, namespace\_start_value($from));
         }
         else {
-            namespace\_insert_string($state->diff, $to->format_open());
-            namespace\_delete_string($state->diff, $from->format_open());
+            namespace\_insert_string($state->diff, namespace\_start_value($to));
+            namespace\_delete_string($state->diff, namespace\_start_value($from));
         }
     }
 }
 
 
-function _compare_variables(_Variable $from, _Variable $to) {
-    return $from->key === $to->key && $from->value === $to->value;
+function _lcs_values(_Value $from, _Value $to, &$lcs) {
+    if (namespace\_compare_values($from, $to)) {
+        $lcs = \max($from->cost(), $to->cost());
+        return true;
+    }
+
+    $lcs = 0;
+    if ($from->type() === $to->type()) {
+        if (_ValueType::STRING === $from->type()) {
+            if ($from->cost() > 1 || $to->cost() > 1) {
+                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+                $lcs = $edit->m[$edit->flen][$edit->tlen];
+            }
+        }
+        elseif (
+            _ValueType::ARRAY === $from->type()
+            || (_ValueType::OBJECT === $from->type()
+                && \get_class($from->value()) === \get_class($to->value()))
+        ) {
+            $lcs = 1;
+            if ($from->cost() > 1 && $to->cost() > 1) {
+                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+                $lcs += $edit->m[$edit->flen][$edit->tlen];
+            }
+        }
+    }
+    return false;
 }
 
 
@@ -310,7 +341,7 @@ function _lcs_array(array $from, array $to) {
 
             $fvalue = $from[$f-1];
             $tvalue = $to[$t-1];
-            if (namespace\_lcs_variables($fvalue, $tvalue, $lcs)) {
+            if (namespace\_lcs_values($fvalue, $tvalue, $lcs)) {
                 $lcs += $m[$f-1][$t-1];
             }
             else {
@@ -327,34 +358,8 @@ function _lcs_array(array $from, array $to) {
 }
 
 
-function _lcs_variables(_Variable $from, _Variable $to, &$lcs) {
-    if (namespace\_compare_variables($from, $to)) {
-        $lcs = \max($from->cost, $to->cost);
-        return true;
-    }
-
-    $lcs = 0;
-    if ($from->type === $to->type) {
-        if (_Variable::TYPE_STRING === $from->type) {
-            if ($from->cost > 1 || $to->cost > 1) {
-                $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-                $lcs = $edit->m[$edit->flen][$edit->tlen];
-            }
-        }
-        elseif (
-            _Variable::TYPE_ARRAY === $from->type
-            || (_Variable::TYPE_OBJECT === $from->type
-                && \get_class($from->value) === \get_class($to->value))
-        ) {
-            ++$lcs;
-            if ($from->cost > 1 && $to->cost > 1) {
-                $edit = namespace\_lcs_array($from->substructure, $to->substructure);
-                $lcs += $edit->m[$edit->flen][$edit->tlen];
-            }
-        }
-    }
-
-    return false;
+function _compare_values(_Value $from, _Value $to) {
+    return $from->key() === $to->key() && $from->value() === $to->value();
 }
 
 
@@ -365,50 +370,109 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
 
     while ($f || $t) {
         if ($f > 0 && $t > 0) {
-            if (namespace\_compare_variables($from[$f-1], $to[$t-1])) {
+            if (namespace\_compare_values($from[$f-1], $to[$t-1])) {
+                if ($f === 1 && $t === 1) {
+                    $pos = _DiffPosition::START;
+                }
+                elseif ($f === $edit->flen && $t === $edit->tlen) {
+                    $pos = _DiffPosition::END;
+                }
+                else {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+
                 --$f;
                 --$t;
-                namespace\_copy_value($state->diff, $from[$f]);
+                namespace\_copy_value($state->diff, $from[$f], $pos);
             }
             elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t]) {
                 --$f;
                 --$t;
-                namespace\_diff_variables($from[$f], $to[$t], $state);
+                namespace\_diff_values($from[$f], $to[$t], $state);
             }
             elseif ($m[$f][$t-1] >= $m[$f-1][$t]) {
+                if ($t === 1) {
+                    $pos = _DiffPosition::START;
+                }
+                elseif ($t === $edit->tlen) {
+                    $pos = _DiffPosition::END;
+                }
+                else {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+
                 --$t;
-                namespace\_insert_value($state->diff, $to[$t]);
+                namespace\_insert_value($state->diff, $to[$t], $pos);
             }
             else {
+                if ($f === 1) {
+                    $pos = _DiffPosition::START;
+                }
+                elseif ($f === $edit->flen) {
+                    $pos = _DiffPosition::END;
+                }
+                else {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+
                 --$f;
-                namespace\_delete_value($state->diff, $from[$f]);
+                namespace\_delete_value($state->diff, $from[$f], $pos);
             }
         }
         elseif ($f) {
+            if ($f === 1) {
+                $pos = _DiffPosition::START;
+            }
+            elseif ($f === $edit->flen) {
+                $pos = _DiffPosition::END;
+            }
+            else {
+                $pos = _DiffPosition::MIDDLE;
+            }
+
             --$f;
-            namespace\_delete_value($state->diff, $from[$f]);
+            namespace\_delete_value($state->diff, $from[$f], $pos);
         }
         else {
+            if ($t === 1) {
+                $pos = _DiffPosition::START;
+            }
+            elseif ($t === $edit->tlen) {
+                $pos = _DiffPosition::END;
+            }
+            else {
+                $pos = _DiffPosition::MIDDLE;
+            }
+
             --$t;
-            namespace\_insert_value($state->diff, $to[$t]);
+            namespace\_insert_value($state->diff, $to[$t], $pos);
         }
     }
 }
 
 
 
-function _copy_value(array &$diff, _Variable $value) {
-    namespace\_copy_string($diff, $value->format());
+/**
+ * @param _DiffPosition::* $pos
+ */
+function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
+    namespace\_copy_string($diff, namespace\_format_value($value, $pos));
 }
 
 
-function _insert_value(array &$diff, _Variable $value) {
-    namespace\_insert_string($diff, $value->format());
+/**
+ * @param _DiffPosition::* $pos
+ */
+function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
+    namespace\_insert_string($diff, namespace\_format_value($value, $pos));
 }
 
 
-function _delete_value(array &$diff, _Variable $value) {
-    namespace\_delete_string($diff, $value->format());
+/**
+ * @param _DiffPosition::* $pos
+ */
+function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
+    namespace\_delete_string($diff, namespace\_format_value($value, $pos));
 }
 
 
@@ -429,6 +493,111 @@ function _insert_string(array &$diff, $string) {
 function _delete_string(array &$diff, $string) {
     foreach (\array_reverse(\explode("\n", $string)) as $v) {
         $diff[] = new _DiffDelete($v);
+    }
+}
+
+
+/**
+ * @param _Value $value
+ * @param _DiffPosition::* $pos
+ * @return string
+ */
+function _format_value(_Value $value, $pos) {
+    $indent = \str_repeat(namespace\_FORMAT_INDENT, $value->scope());
+    $result = $indent;
+
+    $key = $value->key();
+    if ($key !== null) {
+        $result .= "{$key} => ";
+    }
+
+
+    $type = $value->type();
+    if (_ValueType::ARRAY === $type) {
+        $seen = array('byval' => array(), 'byref' => array());
+        $sentinels = array('byref' => null, 'byval' => new \stdClass());
+        $result .= namespace\_format_array($value->value(), $value->name(), $seen, $sentinels, $indent);
+    }
+    elseif (_ValueType::OBJECT === $type) {
+        $seen = array('byval' => array(), 'byref' => array());
+        $sentinels = array('byref' => null, 'byval' => new \stdClass());
+        $result .= namespace\_format_object($value->value(), $value->name(), $seen, $sentinels, $indent);
+    }
+    elseif (_ValueType::REFERENCE === $type) {
+        $result .= $value->name();
+    }
+    elseif (_ValueType::RESOURCE === $type) {
+        $result .= namespace\_format_resource($value->value());
+    }
+    elseif (_ValueType::STRING_PART === $type) {
+        $formatted = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $value->value());
+        if (_DiffPosition::START === $pos) {
+            $result .= "'{$formatted}";
+        }
+        elseif (_DiffPosition::MIDDLE === $pos) {
+            $result .= $formatted;
+        }
+        elseif (_DiffPosition::END === $pos) {
+            $result .= "{$formatted}'";
+        }
+        else {
+            throw new \Exception("Unexpected position {$pos} for type STRING_PART");
+        }
+    }
+    else {
+        $result .= namespace\_format_scalar($value->value());
+    }
+
+    return $result;
+}
+
+
+/**
+ * @param _Value $value
+ * @return string
+ */
+function _start_value(_Value $value) {
+    $type = $value->type();
+    if (_ValueType::ARRAY === $type) {
+        $result = \str_repeat(namespace\_FORMAT_INDENT, $value->scope());
+        if ($value->key() !== null) {
+            $result .= "{$value->key()} => ";
+        }
+        $result .= 'array(';
+        return $result;
+    }
+    elseif (_ValueType::OBJECT === $type) {
+        $result = \str_repeat(namespace\_FORMAT_INDENT, $value->scope());
+        if ($value->key() !== null) {
+            $result .= "{$value->key()} => ";
+        }
+        $result .= \get_class($value->value()) . ' {';
+        return $result;
+    }
+    else {
+        throw new \Exception(
+            \sprintf('Trying to start non-container value of type %d', $type)
+        );
+    }
+}
+
+
+/**
+ * @param _Value $value
+ * @return string
+ */
+function _end_value(_Value $value) {
+    $type = $value->type();
+    if (_ValueType::ARRAY === $type) {
+        return \str_repeat(namespace\_FORMAT_INDENT, $value->scope()) . ')';
+    }
+    elseif (_ValueType::OBJECT === $type) {
+        return \str_repeat(namespace\_FORMAT_INDENT, $value->scope()) . '}';
+    }
+    else {
+        throw new \Exception(
+            \sprintf('Trying to end non-container value of type %d', $type)
+        );
     }
 }
 

@@ -99,11 +99,6 @@ Release
         -   Ensure that values formatted in whole by format_variable() match
             how values are formatted when individual elements are diffed
 
-        -   Fix string formatting:
-            -   Don't show diffed, multiline strings as individual strings
-            -   String formatting within other composite values is broken:
-                -   Indentation is wrong
-
         -   Review/fix array formatting:
             -   We lost the commas that separate array elements. Do we want
                 them back?

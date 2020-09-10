@@ -195,10 +195,10 @@ function test_diffs_different_arrays() {
 +             1 => 6
 +         )
 +     )
--     4 => 'An old pond'
-+     5 => 'An old pond'
-      'A frog jumps in'
-+     'The water\'s sound'
+-     4 => 'An old pond
++     5 => 'An old pond
+  A frog jumps in
++ The water\'s sound'
 -     5 => stdClass {
 +     6 => stdClass {
 -         one => 1
@@ -269,10 +269,10 @@ function test_diffs_different_objects() {
 +             1 => 6
 +         )
 +     )
--     five => 'An old pond'
-+     six => 'An old pond'
-      'A frog jumps in'
-+     'The water\'s sound'
+-     five => 'An old pond
++     six => 'An old pond
+  A frog jumps in
++ The water\'s sound'
 -     six => stdClass {
 +     seven => stdClass {
 -         one => 1
@@ -300,9 +300,9 @@ function test_diffs_single_line_string_to_multiline_string() {
     $from = 'A frog jumps in';
     $to = "An old pond\nA frog jumps in\nThe water's sound";
     $expected = <<<'EXPECTED'
-+ 'An old pond'
-  'A frog jumps in'
-+ 'The water\'s sound'
++ 'An old pond
+  A frog jumps in
++ The water\'s sound'
 EXPECTED;
     namespace\assert_diff($from, $to, $expected);
 }

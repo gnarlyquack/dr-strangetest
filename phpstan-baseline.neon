@@ -2736,77 +2736,57 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Property easytest\\\\_Variable\\:\\:\\$name has no typehint specified\\.$#"
+			message: "#^Function easytest\\\\_process_value\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
-			message: "#^Property easytest\\\\_Variable\\:\\:\\$key has no typehint specified\\.$#"
+			message: "#^Function easytest\\\\_process_value\\(\\) has parameter \\$key with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
-			message: "#^Property easytest\\\\_Variable\\:\\:\\$value has no typehint specified\\.$#"
+			message: "#^Function easytest\\\\_process_value\\(\\) has parameter \\$name with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
-			message: "#^Property easytest\\\\_Variable\\:\\:\\$cost has no typehint specified\\.$#"
+			message: "#^Function easytest\\\\_process_value\\(\\) has parameter \\$var with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
-			message: "#^Property easytest\\\\_Variable\\:\\:\\$substructure has no typehint specified\\.$#"
+			message: "#^Function easytest\\\\_diff_values\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
-			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$cost with no typehint specified\\.$#"
+			message: "#^Parameter \\#1 \\$from of function easytest\\\\_lcs_array expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
+			count: 4
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#2 \\$to of function easytest\\\\_lcs_array expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
+			count: 4
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#1 \\$from of function easytest\\\\_build_diff_from_edit expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
+			count: 2
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#2 \\$to of function easytest\\\\_build_diff_from_edit expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
+			count: 2
+			path: src/easytest/util.php
+
+		-
+			message: "#^Function easytest\\\\_lcs_values\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
 		-
-			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$key with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$name with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Method easytest\\\\_Variable\\:\\:__construct\\(\\) has parameter \\$value with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_variable\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_variable\\(\\) has parameter \\$key with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_variable\\(\\) has parameter \\$name with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_variable\\(\\) has parameter \\$var with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_diff_variables\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_compare_variables\\(\\) has no return typehint specified\\.$#"
+			message: "#^Function easytest\\\\_lcs_values\\(\\) has parameter \\$lcs with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
@@ -2826,12 +2806,7 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_lcs_variables\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_lcs_variables\\(\\) has parameter \\$lcs with no typehint specified\\.$#"
+			message: "#^Function easytest\\\\_compare_values\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php
 
@@ -2922,6 +2897,26 @@ parameters:
 
 		-
 			message: "#^Function easytest\\\\_delete_string\\(\\) has parameter \\$string with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_array is passed by reference, so it expects variables only\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_object is passed by reference, so it expects variables only\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_resource is passed by reference, so it expects variables only\\.$#"
+			count: 1
+			path: src/easytest/util.php
+
+		-
+			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_scalar is passed by reference, so it expects variables only\\.$#"
 			count: 1
 			path: src/easytest/util.php
 

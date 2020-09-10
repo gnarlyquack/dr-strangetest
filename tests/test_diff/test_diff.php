@@ -109,12 +109,12 @@ TO;
 - expected
 + actual
 
-+ 'This is an extra line.'
-+ 'This is another extra line.'
-  'This is the first line.'
-  'This is the second line.'
-  'This is the third line.'
-  'This is the fourth line.'
++ 'This is an extra line.
++ This is another extra line.
+  This is the first line.
+  This is the second line.
+  This is the third line.
+  This is the fourth line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -140,12 +140,12 @@ TO;
 - expected
 + actual
 
-- 'This is an extra line.'
-- 'This is another extra line.'
-  'This is the first line.'
-  'This is the second line.'
-  'This is the third line.'
-  'This is the fourth line.'
+- 'This is an extra line.
+- This is another extra line.
+  This is the first line.
+  This is the second line.
+  This is the third line.
+  This is the fourth line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -171,12 +171,12 @@ TO;
 - expected
 + actual
 
-  'This is the first line.'
-  'This is the second line.'
-  'This is the third line.'
-  'This is the fourth line.'
-+ 'This is an extra line.'
-+ 'This is another extra line.'
+  'This is the first line.
+  This is the second line.
+  This is the third line.
+  This is the fourth line.
++ This is an extra line.
++ This is another extra line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -202,12 +202,12 @@ TO;
 - expected
 + actual
 
-  'This is the first line.'
-  'This is the second line.'
-  'This is the third line.'
-  'This is the fourth line.'
-- 'This is an extra line.'
-- 'This is another extra line.'
+  'This is the first line.
+  This is the second line.
+  This is the third line.
+  This is the fourth line.
+- This is an extra line.
+- This is another extra line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -233,12 +233,12 @@ TO;
 - expected
 + actual
 
-  'This is the first line.'
-  'This is the second line.'
-+ 'This is an extra line.'
-+ 'This is another extra line.'
-  'This is the third line.'
-  'This is the fourth line.'
+  'This is the first line.
+  This is the second line.
++ This is an extra line.
++ This is another extra line.
+  This is the third line.
+  This is the fourth line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -264,12 +264,12 @@ TO;
 - expected
 + actual
 
-  'This is the first line.'
-  'This is the second line.'
-- 'This is an extra line.'
-- 'This is another extra line.'
-  'This is the third line.'
-  'This is the fourth line.'
+  'This is the first line.
+  This is the second line.
+- This is an extra line.
+- This is another extra line.
+  This is the third line.
+  This is the fourth line.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -301,15 +301,15 @@ TO;
 - expected
 + actual
 
-- 'a'
-- 'g'
-  't'
-  'a'
-- 'c'
-+ 't'
-  'g'
-  'c'
-- 'a'
+- 'a
+- g
+  t
+  a
+- c
++ t
+  g
+  c
+- a'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -377,42 +377,42 @@ TO;
 - expected
 + actual
 
-+ 'This is an important'
-+ 'notice! It should'
-+ 'therefore be located at'
-+ 'the beginning of this'
-+ 'document!'
-+ '$this->ws'
-  'This part of the'
-  'document has stayed the'
-  'same from version to'
-  'version.  It shouldn\'t'
-  'be shown if it doesn\'t'
-  'change.  Otherwise, that'
-  'would not be helping to'
-- 'compress the size of the'
-- 'changes.'
-- '$this->ws'
-- 'This paragraph contains'
-- 'text that is outdated.'
-- 'It will be deleted in the'
-- 'near future.'
-+ 'compress anything.'
-  '$this->ws'
-  'It is important to spell'
-- 'check this dokument. On'
-+ 'check this document. On'
-  'the other hand, a'
-  'misspelled word isn\'t'
-  'the end of the world.'
-  'Nothing in the rest of'
-  'this paragraph needs to'
-  'be changed. Things can'
-  'be added after it.'
-+ '$this->ws'
-+ 'This paragraph contains'
-+ 'important new additions'
-+ 'to this document.'
++ 'This is an important
++ notice! It should
++ therefore be located at
++ the beginning of this
++ document!
++ $this->ws
+  This part of the
+  document has stayed the
+  same from version to
+  version.  It shouldn\'t
+  be shown if it doesn\'t
+  change.  Otherwise, that
+  would not be helping to
+- compress the size of the
+- changes.
+- $this->ws
+- This paragraph contains
+- text that is outdated.
+- It will be deleted in the
+- near future.
++ compress anything.
+  $this->ws
+  It is important to spell
+- check this dokument. On
++ check this document. On
+  the other hand, a
+  misspelled word isn\'t
+  the end of the world.
+  Nothing in the rest of
+  this paragraph needs to
+  be changed. Things can
+  be added after it.
++ $this->ws
++ This paragraph contains
++ important new additions
++ to this document.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -460,24 +460,24 @@ TO;
 - expected
 + actual
 
-- 'a'
-- 'g'
-  't'
-  'a'
-- 'c'
-+ 't'
-  'g'
-  'c'
-- 'a'
-- 'a'
-- 'g'
-  't'
-  'a'
-- 'c'
-+ 't'
-  'g'
-  'c'
-- 'a'
+- 'a
+- g
+  t
+  a
+- c
++ t
+  g
+  c
+- a
+- a
+- g
+  t
+  a
+- c
++ t
+  g
+  c
+- a'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
@@ -599,79 +599,79 @@ TO;
 - expected
 + actual
 
-+ 'This is an important'
-+ 'notice! It should'
-+ 'therefore be located at'
-+ 'the beginning of this'
-+ 'document!'
-+ '$this->ws'
-  'This part of the'
-  'document has stayed the'
-  'same from version to'
-  'version.  It shouldn\'t'
-  'be shown if it doesn\'t'
-  'change.  Otherwise, that'
-  'would not be helping to'
-- 'compress the size of the'
-- 'changes.'
-- '$this->ws'
-- 'This paragraph contains'
-- 'text that is outdated.'
-- 'It will be deleted in the'
-- 'near future.'
-+ 'compress anything.'
-  '$this->ws'
-  'It is important to spell'
-- 'check this dokument. On'
-+ 'check this document. On'
-  'the other hand, a'
-  'misspelled word isn\'t'
-  'the end of the world.'
-  'Nothing in the rest of'
-  'this paragraph needs to'
-  'be changed. Things can'
-  'be added after it.'
-+ '$this->ws'
-+ 'This paragraph contains'
-+ 'important new additions'
-+ 'to this document.'
-+ '$this->ws'
-+ 'This is an important'
-+ 'notice! It should'
-+ 'therefore be located at'
-+ 'the beginning of this'
-+ 'document!'
-  '$this->ws'
-  'This part of the'
-  'document has stayed the'
-  'same from version to'
-  'version.  It shouldn\'t'
-  'be shown if it doesn\'t'
-  'change.  Otherwise, that'
-  'would not be helping to'
-- 'compress the size of the'
-- 'changes.'
-- '$this->ws'
-- 'This paragraph contains'
-- 'text that is outdated.'
-- 'It will be deleted in the'
-- 'near future.'
-+ 'compress anything.'
-  '$this->ws'
-  'It is important to spell'
-- 'check this dokument. On'
-+ 'check this document. On'
-  'the other hand, a'
-  'misspelled word isn\'t'
-  'the end of the world.'
-  'Nothing in the rest of'
-  'this paragraph needs to'
-  'be changed. Things can'
-  'be added after it.'
-+ '$this->ws'
-+ 'This paragraph contains'
-+ 'important new additions'
-+ 'to this document.'
++ 'This is an important
++ notice! It should
++ therefore be located at
++ the beginning of this
++ document!
++ $this->ws
+  This part of the
+  document has stayed the
+  same from version to
+  version.  It shouldn\'t
+  be shown if it doesn\'t
+  change.  Otherwise, that
+  would not be helping to
+- compress the size of the
+- changes.
+- $this->ws
+- This paragraph contains
+- text that is outdated.
+- It will be deleted in the
+- near future.
++ compress anything.
+  $this->ws
+  It is important to spell
+- check this dokument. On
++ check this document. On
+  the other hand, a
+  misspelled word isn\'t
+  the end of the world.
+  Nothing in the rest of
+  this paragraph needs to
+  be changed. Things can
+  be added after it.
++ $this->ws
++ This paragraph contains
++ important new additions
++ to this document.
++ $this->ws
++ This is an important
++ notice! It should
++ therefore be located at
++ the beginning of this
++ document!
+  $this->ws
+  This part of the
+  document has stayed the
+  same from version to
+  version.  It shouldn\'t
+  be shown if it doesn\'t
+  change.  Otherwise, that
+  would not be helping to
+- compress the size of the
+- changes.
+- $this->ws
+- This paragraph contains
+- text that is outdated.
+- It will be deleted in the
+- near future.
++ compress anything.
+  $this->ws
+  It is important to spell
+- check this dokument. On
++ check this document. On
+  the other hand, a
+  misspelled word isn\'t
+  the end of the world.
+  Nothing in the rest of
+  this paragraph needs to
+  be changed. Things can
+  be added after it.
++ $this->ws
++ This paragraph contains
++ important new additions
++ to this document.'
 EXPECTED;
 
         $this->assert_diff($from, $to, $expected);
