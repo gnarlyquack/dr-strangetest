@@ -94,19 +94,10 @@ Release
         -   Do we want to split up formatting and diff (and perhaps additional
             "utility" functions) into separate files?
 
-    -   Fix diff formatting:
+    -   Ensure that values formatted in whole by format_variable() match
+        how values are formatted when individual elements are diffed
 
-        -   Ensure that values formatted in whole by format_variable() match
-            how values are formatted when individual elements are diffed
-
-        -   Review/fix array formatting:
-            -   We lost the commas that separate array elements. Do we want
-                them back?
-
-        -   Fix object formatting:
-            -   Equal but non-identical objects need to show an instance id
-            -   Objects whose individual elements have been diffed are
-                formatted like arrays
+    -   Equal but non-identical objects need to show an instance id
 
     -   Implement "loose" (==) comparison
 
@@ -130,6 +121,9 @@ Release
             -   1 => 'foo',
             +   1 => 'bar',
         Is this something we want to try to "fix"?
+
+    -   If the only difference between two composite values is their key, then
+        we only need to diff the first line of each and can then copy the rest
 
 -   Do we want/need to implement a UserError exception? E.g., we could throw
     an error from arglists() or from the ArgumentLists constructor if the

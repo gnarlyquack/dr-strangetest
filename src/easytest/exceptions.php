@@ -123,6 +123,9 @@ final class Skip extends \Exception {
 }
 
 
+final class InvalidCodePath extends \Exception {}
+
+
 
 function _find_client_call_site() {
     // Find the first call in a backtrace that's outside of easytest

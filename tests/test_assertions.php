@@ -65,17 +65,17 @@ Assertion "$expected === $actual" failed
 + $actual
 
   array(
--     0 => 1
-+     3 => 4
-+     2 => array()
+-     0 => 1,
++     3 => 4,
++     2 => array(),
       1 => array(
--         0 => 2
-          1 => 3
-+         0 => 2
-      )
--     2 => array()
--     3 => 4
-+     0 => 1
+-         0 => 2,
+          1 => 3,
++         0 => 2,
+      ),
+-     2 => array(),
+-     3 => 4,
++     0 => 1,
   )
 EXPECTED;
         $this->assert_identical($expected, $actual->getMessage());
@@ -236,26 +236,26 @@ Assertion "$expected == $actual" failed
 + $actual
 
   array(
-      0 => 1
+      0 => 1,
       1 => array(
-          0 => 2
-          1 => 3
-      )
-      2 => array()
--     3 => 4
-+     3 => 5
+          0 => 2,
+          1 => 3,
+      ),
+      2 => array(),
+-     3 => 4,
++     3 => 5,
       4 => array(
-          0 => 1
+          0 => 1,
           1 => array(
-              0 => 2
-              1 => 3
-          )
-          2 => array()
--         3 => 4
--         4 => &$expected[4]
-+         3 => 5
-+         4 => &$actual[4]
-      )
+              0 => 2,
+              1 => 3,
+          ),
+          2 => array(),
+-         3 => 4,
+-         4 => &$expected[4],
++         3 => 5,
++         4 => &$actual[4],
+      ),
   )
 EXPECTED;
 
@@ -729,13 +729,13 @@ Assertion "$expected != $actual" failed
 + $actual
 
   array(
-      0 => 1
+      0 => 1,
       1 => array(
-          0 => 2
-          1 => 3
-      )
-      2 => array()
-      3 => 4
+          0 => 2,
+          1 => 3,
+      ),
+      2 => array(),
+      3 => 4,
   )
 EXPECTED;
 

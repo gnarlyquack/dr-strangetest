@@ -2736,48 +2736,8 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_process_value\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_value\\(\\) has parameter \\$key with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_value\\(\\) has parameter \\$name with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_process_value\\(\\) has parameter \\$var with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
 			message: "#^Function easytest\\\\_diff_values\\(\\) has no return typehint specified\\.$#"
 			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#1 \\$from of function easytest\\\\_lcs_array expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
-			count: 4
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#2 \\$to of function easytest\\\\_lcs_array expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
-			count: 4
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#1 \\$from of function easytest\\\\_build_diff_from_edit expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
-			count: 2
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#2 \\$to of function easytest\\\\_build_diff_from_edit expects array, array\\<easytest\\\\_Value\\>\\|null given\\.$#"
-			count: 2
 			path: src/easytest/util.php
 
 		-
@@ -2897,26 +2857,6 @@ parameters:
 
 		-
 			message: "#^Function easytest\\\\_delete_string\\(\\) has parameter \\$string with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_array is passed by reference, so it expects variables only\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_object is passed by reference, so it expects variables only\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_resource is passed by reference, so it expects variables only\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Parameter \\#1 \\$var of function easytest\\\\_format_scalar is passed by reference, so it expects variables only\\.$#"
 			count: 1
 			path: src/easytest/util.php
 

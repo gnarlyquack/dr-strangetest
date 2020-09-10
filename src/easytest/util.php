@@ -16,8 +16,8 @@ function diff(&$from, &$to, $from_name, $to_name) {
     $state = new _DiffState();
 
     namespace\_diff_values(
-        namespace\_process_value($from, $from_name, $state),
-        namespace\_process_value($to, $to_name, $state),
+        namespace\_process_value($state, $from_name, new _NullKey(), $from),
+        namespace\_process_value($state, $to_name, new _NullKey(), $to),
         $state
     );
 
@@ -101,6 +101,116 @@ final class _DiffPosition {
 }
 
 
+interface _Key {
+    /**
+     * @return null|int|string
+     */
+    public function key();
+
+    /**
+     * @return string
+     */
+    public function format_key();
+
+    /**
+     * @return string
+     */
+    public function line_end();
+}
+
+
+final class _NullKey extends struct implements _Key {
+    /**
+     * @return null;
+     */
+    public function key() {
+        return null;
+    }
+
+    /**
+     * @return ''
+     */
+    public function format_key() {
+        return '';
+    }
+
+    /**
+     * @return ''
+     */
+    public function line_end() {
+        return '';
+    }
+}
+
+
+final class _ArrayIndex extends struct implements _Key {
+    /** @var int|string */
+    private $index;
+
+    /**
+     * @param int|string $index
+     */
+    public function __construct($index) {
+        $this->index = $index;
+    }
+
+    /**
+     * @return int|string
+     */
+    public function key() {
+        return $this->index;
+    }
+
+    /**
+     * @return string
+     */
+    public function format_key() {
+        return \sprintf('%s => ', \var_export($this->index, true));
+    }
+
+    /**
+     * @return string
+     */
+    public function line_end() {
+        return ',';
+    }
+}
+
+
+final class _PropertyName extends struct implements _Key {
+    /** @var int|string */
+    private $name;
+
+    /**
+     * @param int|string $name
+     */
+    public function __construct($name) {
+        $this->name = $name;
+    }
+
+    /**
+     * @return int|string
+     */
+    public function key() {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function format_key() {
+        return "\${$this->name} = ";
+    }
+
+    /**
+     * @return string
+     */
+    public function line_end() {
+        return ';';
+    }
+}
+
+
 final class _ValueType {
     const ARRAY = 1;
     const OBJECT = 2;
@@ -112,82 +222,107 @@ final class _ValueType {
 }
 
 
-final class _Value extends struct {
-    /** @var _ValueType::* */
-    private $type;
+interface _Value {
+    /**
+     * @return _ValueType::*
+     */
+    public function type();
 
-    /** @var ?string */
+    /**
+     * @return null|int|string
+     */
+    public function key();
+
+    /**
+     * @return mixed
+     */
+    public function &value();
+
+    /**
+     * @return int
+     */
+    public function cost();
+
+    /**
+     * @return _Value[]
+     */
+    public function subvalues();
+
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos);
+
+    /**
+     * @return string
+     */
+    public function start_value();
+
+    /**
+     * @return string
+     */
+    public function end_value();
+}
+
+
+final class _Array extends struct implements _Value {
+    /** @var string */
     private $name;
 
-    /** @var null|int|string */
+    /** @var _Key */
     private $key;
 
-    /** @var mixed */
+    /** @var mixed[] */
     private $value;
 
     /** @var int */
-    private $scope;
+    private $indent_level;
 
     /** @var int */
     private $cost;
 
-    /** @var ?_Value[] */
+    /** @var _Value[] */
     private $subvalues;
 
-
     /**
-     * @param _ValueType::* $type
-     * @param ?string $name
-     * @param null|int|string $key
-     * @param mixed $value
-     * @param int $scope
+     * @param string $name
+     * @param _Key $key
+     * @param mixed[] $value
+     * @param int $indent_level
      * @param int $cost
-     * @param ?_Value[] $subvalues
+     * @param _Value[] $subvalues
      */
-    public function __construct(
-        $type, $name, $key, &$value, $scope = 0, $cost = 1, array $subvalues = null
-    ) {
-        $this->type = $type;
+    public function __construct($name, _Key $key, &$value, $indent_level, $cost, array $subvalues) {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
-        $this->scope = $scope;
+        $this->indent_level = $indent_level;
         $this->cost = $cost;
         $this->subvalues = $subvalues;
     }
 
-
     /**
-     * @return _ValueType::*
+     * @return _ValueType::ARRAY
      */
     public function type() {
-        return $this->type;
+        return _ValueType::ARRAY;
     }
-
-
-    /**
-     * @return ?string
-     */
-    public function name() {
-        return $this->name;
-    }
-
 
     /**
      * @return null|int|string
      */
     public function key() {
-        return $this->key;
+        return $this->key->key();
     }
 
-
     /**
-     * @return mixed
+     * @return mixed[]
      */
     public function &value() {
         return $this->value;
     }
-
 
     /**
      * @return int
@@ -196,75 +331,666 @@ final class _Value extends struct {
         return $this->cost;
     }
 
+    /**
+     * @return _Value[]
+     */
+    public function subvalues() {
+        return $this->subvalues;
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $seen = array('byval' => array(), 'byref' => array());
+        $sentinels = array('byref' => null, 'byval' => new \stdClass());
+        $result = namespace\_format_array($this->value, $this->name, $seen, $sentinels, $indent);
+        return "{$indent}{$key}{$result}{$line_end}";
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        return "{$indent}{$key}array(";
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        $indent = namespace\_format_indent($this->indent_level);
+        $line_end = $this->key->line_end();
+        return "{$indent}){$line_end}";
+    }
+}
+
+
+final class _Object extends struct implements _Value {
+    /** @var string */
+    private $name;
+
+    /** @var _Key */
+    private $key;
+
+    /** @var object */
+    private $value;
+
+    /** @var int */
+    private $indent_level;
+
+    /** @var int */
+    private $cost;
+
+    /** @var _Value[] */
+    private $subvalues;
+
+    /**
+     * @param string $name
+     * @param _Key $key
+     * @param object $value
+     * @param int $indent_level
+     * @param int $cost
+     * @param _Value[] $subvalues
+     */
+    public function __construct($name, _Key $key, &$value, $indent_level, $cost, array $subvalues) {
+        $this->name = $name;
+        $this->key = $key;
+        $this->value = &$value;
+        $this->indent_level = $indent_level;
+        $this->cost = $cost;
+        $this->subvalues = $subvalues;
+    }
+
+    /**
+     * @return _ValueType::OBJECT
+     */
+    public function type() {
+        return _ValueType::OBJECT;
+    }
+
+    /**
+     * @return null|int|string
+     */
+    public function key() {
+        return $this->key->key();
+    }
+
+    /**
+     * @return object
+     */
+    public function &value() {
+        return $this->value;
+    }
 
     /**
      * @return int
      */
-    public function scope() {
-        return $this->scope;
+    public function cost() {
+        return $this->cost;
     }
 
-
     /**
-     * @return ?_Value[]
+     * @return _Value[]
      */
     public function subvalues() {
         return $this->subvalues;
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $seen = array('byval' => array(), 'byref' => array());
+        $sentinels = array('byref' => null, 'byval' => new \stdClass());
+        $result = namespace\_format_object($this->value, $this->name, $seen, $sentinels, $indent);
+        return "{$indent}{$key}{$result}{$line_end}";
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $class = \get_class($this->value);
+        return "{$indent}{$key}{$class} {";
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        $indent = namespace\_format_indent($this->indent_level);
+        $line_end = $this->key->line_end();
+        return "{$indent}}{$line_end}";
+    }
+}
+
+
+final class _Reference extends struct implements _Value {
+    /** @var string */
+    private $name;
+
+    /** @var _Key */
+    private $key;
+
+    /** @var mixed */
+    private $value;
+
+    /** @var int */
+    private $indent_level;
+
+    /**
+     * @param string $name
+     * @param _Key $key
+     * @param mixed $value
+     * @param int $indent_level
+     */
+    public function __construct($name, _Key $key, &$value, $indent_level) {
+        $this->name = $name;
+        $this->key = $key;
+        $this->value = &$value;
+        $this->indent_level = $indent_level;
+    }
+
+    /**
+     * @return _ValueType::REFERENCE
+     */
+    public function type() {
+        return _ValueType::REFERENCE;
+    }
+
+    /**
+     * @return null|int|string
+     */
+    public function key() {
+        return $this->key->key();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function &value() {
+        return $this->value;
+    }
+
+    /**
+     * @return 1
+     */
+    public function cost() {
+        return 1;
+    }
+
+    /**
+     * @return _Value[]
+     */
+    public function subvalues() {
+        throw new InvalidCodePath('References have no subvalues');
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $result = $this->name;
+        return "{$indent}{$key}{$result}{$line_end}";
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        throw new InvalidCodePath('Cannot start a non-container value');
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        throw new InvalidCodePath('Cannot end a non-container value');
+    }
+}
+
+
+final class _Resource extends struct implements _Value {
+    /** @var _Key */
+    private $key;
+
+    /** @var resource */
+    private $value;
+
+    /** @var int */
+    private $indent_level;
+
+    /**
+     * @param _Key $key
+     * @param resource $value
+     * @param int $indent_level
+     */
+    public function __construct(_Key $key, &$value, $indent_level) {
+        $this->key = $key;
+        $this->value = &$value;
+        $this->indent_level = $indent_level;
+    }
+
+    /**
+     * @return _ValueType::RESOURCE
+     */
+    public function type() {
+        return _ValueType::RESOURCE;
+    }
+
+    /**
+     * @return null|int|string
+     */
+    public function key() {
+        return $this->key->key();
+    }
+
+    /**
+     * @return resource
+     */
+    public function &value() {
+        return $this->value;
+    }
+
+    /**
+     * @return 1
+     */
+    public function cost() {
+        return 1;
+    }
+
+    /**
+     * @return _Value[]
+     */
+    public function subvalues() {
+        throw new InvalidCodePath('Resources have no subvalues');
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $result = namespace\_format_resource($this->value);
+        return "{$indent}{$key}{$result}{$line_end}";
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        throw new InvalidCodePath('Cannot start a non-container value');
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        throw new InvalidCodePath('Cannot end a non-container value');
+    }
+}
+
+
+final class _Scalar extends struct implements _Value {
+    /** @var _Key */
+    private $key;
+
+    /** @var bool|float|int|null */
+    private $value;
+
+    /** @var int */
+    private $indent_level;
+
+    /**
+     * @param _Key $key
+     * @param bool|float|int|null $value
+     * @param int $indent_level
+     */
+    public function __construct(_Key $key, &$value, $indent_level) {
+        $this->key = $key;
+        $this->value = &$value;
+        $this->indent_level = $indent_level;
+    }
+
+    /**
+     * @return _ValueType::SCALAR
+     */
+    public function type() {
+        return _ValueType::SCALAR;
+    }
+
+    /**
+     * @return null|int|string
+     */
+    public function key() {
+        return $this->key->key();
+    }
+
+    /**
+     * @return bool|float|int|null
+     */
+    public function &value() {
+        return $this->value;
+    }
+
+    /**
+     * @return 1
+     */
+    public function cost() {
+        return 1;
+    }
+
+    /**
+     * @return _Value[]
+     */
+    public function subvalues() {
+        throw new InvalidCodePath('Scalars have no subvalues');
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $result = namespace\_format_scalar($this->value);
+        return "{$indent}{$key}{$result}{$line_end}";
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        throw new InvalidCodePath('Cannot start a non-container value');
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        throw new InvalidCodePath('Cannot end a non-container value');
+    }
+}
+
+
+final class _String extends struct implements _Value {
+    /** @var _Key */
+    private $key;
+
+    /** @var string */
+    private $value;
+
+    /** @var int */
+    private $indent_level;
+
+    /** @var int */
+    private $cost;
+
+    /** @var _StringPart[] */
+    private $subvalues;
+
+    /**
+     * @param _Key $key
+     * @param string $value
+     * @param int $indent_level
+     * @param int $cost
+     * @param _StringPart[] $subvalues
+     */
+    public function __construct(_Key $key, &$value, $indent_level, $cost, array $subvalues) {
+        $this->key = $key;
+        $this->value = &$value;
+        $this->indent_level = $indent_level;
+        $this->cost = $cost;
+        $this->subvalues = $subvalues;
+    }
+
+    /**
+     * @return _ValueType::STRING
+     */
+    public function type() {
+        return _ValueType::STRING;
+    }
+
+    /**
+     * @return null|int|string
+     */
+    public function key() {
+        return $this->key->key();
+    }
+
+    /**
+     * @return string
+     */
+    public function &value() {
+        return $this->value;
+    }
+
+    /**
+     * @return int
+     */
+    public function cost() {
+        return $this->cost;
+    }
+
+    /**
+     * @return _StringPart[]
+     */
+    public function subvalues() {
+        return $this->subvalues;
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $result = namespace\_format_scalar($this->value);
+        return "{$indent}{$key}{$result}{$line_end}";
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        throw new InvalidCodePath('Cannot start a non-container value');
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        throw new InvalidCodePath('Cannot end a non-container value');
+    }
+}
+
+
+final class _StringPart extends struct implements _Value {
+    /** @var _Key */
+    private $key;
+
+    /** @var string */
+    private $value;
+
+    /** @var int */
+    private $indent_level;
+
+    /** @var int */
+    private $index;
+
+    /**
+     * @param _Key $key
+     * @param string $value
+     * @param int $indent_level
+     * @param int $index
+     */
+    public function __construct(_Key $key, &$value, $indent_level, $index) {
+        $this->key = $key;
+        $this->value = &$value;
+        $this->indent_level = $indent_level;
+        $this->index = $index;
+    }
+
+    /**
+     * @return _ValueType::STRING_PART
+     */
+    public function type() {
+        return _ValueType::STRING_PART;
+    }
+
+    /**
+     * @return null|int|string
+     */
+    public function key() {
+        return $this->index ? null : $this->key->key();
+    }
+
+    /**
+     * @return string
+     */
+    public function &value() {
+        return $this->value;
+    }
+
+    /**
+     * @return 1
+     */
+    public function cost() {
+        return 1;
+    }
+
+    /**
+     * @return _Value[]
+     */
+    public function subvalues() {
+        throw new InvalidCodePath('String parts have no subvalues');
+    }
+
+    /**
+     * @param _DiffPosition::* $pos
+     * @return string
+     */
+    public function format_value($pos) {
+        $indent = namespace\_format_indent($this->indent_level);
+        $key = $this->key->format_key();
+        $line_end = $this->key->line_end();
+
+        $result = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $this->value);
+        if (_DiffPosition::START === $pos) {
+            return "{$indent}{$key}'{$result}";
+        }
+        elseif (_DiffPosition::END === $pos) {
+            return "{$result}'{$line_end}";
+        }
+        else {
+            return $result;
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function start_value() {
+        throw new InvalidCodePath('Cannot start a non-container value');
+    }
+
+    /**
+     * @return string
+     */
+    public function end_value() {
+        throw new InvalidCodePath('Cannot end a non-container value');
     }
 }
 
 
 /**
- * @param int $scope
+ * @param _DiffState $state
+ * @param string $name
+ * @param _Key $key
+ * @param mixed $value
+ * @param int $indent_level
+ * @return _Value
  */
-function _process_value(&$var, $name, _DiffState $state, $key = null, $scope = 0) {
-    $reference = namespace\_check_reference($var, $name, $state->seen, $state->sentinels);
+function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_level = 0) {
+    $reference = namespace\_check_reference($value, $name, $state->seen, $state->sentinels);
     if ($reference) {
-        return new _Value(_ValueType::REFERENCE, $reference, $key, $var, $scope);
+        return new _Reference($reference, $key, $value, $indent_level);
     }
 
-    if (\is_resource($var)) {
-        return new _Value(_ValueType::RESOURCE, $name, $key, $var, $scope);
+    if (\is_resource($value)) {
+        return new _Resource($key, $value, $indent_level);
     }
 
-    if (\is_string($var)) {
-        $lines = \explode("\n", $var);
-        $cost = \count($lines);
+    if (\is_string($value)) {
+        $lines = \explode("\n", $value);
+        $cost = 0;
         $subvalues = array();
-        $subvalues[] = new _Value(_ValueType::STRING_PART, null, $key, $lines[0], $scope);
-        for ($i = 1; $i < $cost; ++$i) {
-            $subvalues[] = new _Value(_ValueType::STRING_PART, null, null, $lines[$i]);
+        foreach ($lines as $i => &$line) {
+            ++$cost;
+            $subvalues[] = new _StringPart($key, $line, $indent_level, $i);
         }
-        return new _Value(_ValueType::STRING, $name, $key, $var, $scope, $cost, $subvalues);
+        return new _String($key, $value, $indent_level, $cost, $subvalues);
     }
 
-    if (\is_array($var)) {
+    if (\is_array($value)) {
         $cost = 1;
         $subvalues = array();
-        foreach ($var as $k => &$v) {
+        foreach ($value as $k => &$v) {
             $subname = \sprintf('%s[%s]', $name, \var_export($k, true));
-            $subvalue = namespace\_process_value($v, $subname, $state, $k, $scope + 1);
+            $subkey = new _ArrayIndex($k);
+            $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Value(_ValueType::ARRAY, $name, $key, $var, $scope, $cost, $subvalues);
+        return new _Array($name, $key, $value, $indent_level, $cost, $subvalues);
     }
 
-    if (\is_object($var)) {
+    if (\is_object($value)) {
         $cost = 1;
         $subvalues = array();
         // #BC(5.4): use variable for array cast in order to create references
-        $values = (array)$var;
+        $values = (array)$value;
         foreach ($values as $k => &$v) {
             $subname = \sprintf('%s->%s', $name, $k);
-            $subvalue = namespace\_process_value($v, $subname, $state, $k, $scope + 1);
+            $subkey = new _PropertyName($k);
+            $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Value(_ValueType::OBJECT, $name, $key, $var, $scope, $cost, $subvalues);
+        return new _Object($name, $key, $value, $indent_level, $cost, $subvalues);
     }
 
-    return new _Value(_ValueType::SCALAR, $name, $key, $var, $scope);
+    return new _Scalar($key, $value, $indent_level);
 }
 
 
@@ -281,17 +1007,17 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
     }
     else {
-        namespace\_copy_string($state->diff, namespace\_end_value($from));
+        namespace\_copy_string($state->diff, $from->end_value());
 
         $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
         if ($from->key() === $to->key()) {
-            namespace\_copy_string($state->diff, namespace\_start_value($from));
+            namespace\_copy_string($state->diff, $from->start_value());
         }
         else {
-            namespace\_insert_string($state->diff, namespace\_start_value($to));
-            namespace\_delete_string($state->diff, namespace\_start_value($from));
+            namespace\_insert_string($state->diff, $to->start_value());
+            namespace\_delete_string($state->diff, $from->start_value());
         }
     }
 }
@@ -456,7 +1182,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
  * @param _DiffPosition::* $pos
  */
 function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
-    namespace\_copy_string($diff, namespace\_format_value($value, $pos));
+    namespace\_copy_string($diff, $value->format_value($pos));
 }
 
 
@@ -464,7 +1190,7 @@ function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
  * @param _DiffPosition::* $pos
  */
 function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
-    namespace\_insert_string($diff, namespace\_format_value($value, $pos));
+    namespace\_insert_string($diff, $value->format_value($pos));
 }
 
 
@@ -472,7 +1198,7 @@ function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) 
  * @param _DiffPosition::* $pos
  */
 function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
-    namespace\_delete_string($diff, namespace\_format_value($value, $pos));
+    namespace\_delete_string($diff, $value->format_value($pos));
 }
 
 
@@ -498,107 +1224,11 @@ function _delete_string(array &$diff, $string) {
 
 
 /**
- * @param _Value $value
- * @param _DiffPosition::* $pos
+ * @param int $indent_level
  * @return string
  */
-function _format_value(_Value $value, $pos) {
-    $indent = \str_repeat(namespace\_FORMAT_INDENT, $value->scope());
-    $result = $indent;
-
-    $key = $value->key();
-    if ($key !== null) {
-        $result .= "{$key} => ";
-    }
-
-
-    $type = $value->type();
-    if (_ValueType::ARRAY === $type) {
-        $seen = array('byval' => array(), 'byref' => array());
-        $sentinels = array('byref' => null, 'byval' => new \stdClass());
-        $result .= namespace\_format_array($value->value(), $value->name(), $seen, $sentinels, $indent);
-    }
-    elseif (_ValueType::OBJECT === $type) {
-        $seen = array('byval' => array(), 'byref' => array());
-        $sentinels = array('byref' => null, 'byval' => new \stdClass());
-        $result .= namespace\_format_object($value->value(), $value->name(), $seen, $sentinels, $indent);
-    }
-    elseif (_ValueType::REFERENCE === $type) {
-        $result .= $value->name();
-    }
-    elseif (_ValueType::RESOURCE === $type) {
-        $result .= namespace\_format_resource($value->value());
-    }
-    elseif (_ValueType::STRING_PART === $type) {
-        $formatted = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $value->value());
-        if (_DiffPosition::START === $pos) {
-            $result .= "'{$formatted}";
-        }
-        elseif (_DiffPosition::MIDDLE === $pos) {
-            $result .= $formatted;
-        }
-        elseif (_DiffPosition::END === $pos) {
-            $result .= "{$formatted}'";
-        }
-        else {
-            throw new \Exception("Unexpected position {$pos} for type STRING_PART");
-        }
-    }
-    else {
-        $result .= namespace\_format_scalar($value->value());
-    }
-
-    return $result;
-}
-
-
-/**
- * @param _Value $value
- * @return string
- */
-function _start_value(_Value $value) {
-    $type = $value->type();
-    if (_ValueType::ARRAY === $type) {
-        $result = \str_repeat(namespace\_FORMAT_INDENT, $value->scope());
-        if ($value->key() !== null) {
-            $result .= "{$value->key()} => ";
-        }
-        $result .= 'array(';
-        return $result;
-    }
-    elseif (_ValueType::OBJECT === $type) {
-        $result = \str_repeat(namespace\_FORMAT_INDENT, $value->scope());
-        if ($value->key() !== null) {
-            $result .= "{$value->key()} => ";
-        }
-        $result .= \get_class($value->value()) . ' {';
-        return $result;
-    }
-    else {
-        throw new \Exception(
-            \sprintf('Trying to start non-container value of type %d', $type)
-        );
-    }
-}
-
-
-/**
- * @param _Value $value
- * @return string
- */
-function _end_value(_Value $value) {
-    $type = $value->type();
-    if (_ValueType::ARRAY === $type) {
-        return \str_repeat(namespace\_FORMAT_INDENT, $value->scope()) . ')';
-    }
-    elseif (_ValueType::OBJECT === $type) {
-        return \str_repeat(namespace\_FORMAT_INDENT, $value->scope()) . '}';
-    }
-    else {
-        throw new \Exception(
-            \sprintf('Trying to end non-container value of type %d', $type)
-        );
-    }
+function _format_indent($indent_level) {
+    return \str_repeat(namespace\_FORMAT_INDENT, $indent_level);
 }
 
 
@@ -689,7 +1319,7 @@ function _format_array(&$var, $name, &$seen, $sentinels, $padding) {
         foreach ($var as $key => &$value) {
             $key = \var_export($key, true);
             $out .= \sprintf(
-                "\n%s%s => %s",
+                "\n%s%s => %s,",
                 $indent,
                 $key,
                 namespace\_format_recursive_variable(
