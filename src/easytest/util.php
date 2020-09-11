@@ -212,7 +212,8 @@ final class _PropertyName extends struct implements _Key {
 
 
 final class _ValueType {
-    const ARRAY = 1;
+    // @BC(5.6): Don't use ARRAY as an identifier to prevent parse error
+    const ARRAY_ = 1;
     const OBJECT = 2;
     const REFERENCE = 3;
     const SCALAR = 4;
@@ -304,10 +305,10 @@ final class _Array extends struct implements _Value {
     }
 
     /**
-     * @return _ValueType::ARRAY
+     * @return _ValueType::ARRAY_
      */
     public function type() {
-        return _ValueType::ARRAY;
+        return _ValueType::ARRAY_;
     }
 
     /**
@@ -1012,7 +1013,7 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
         $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
-        if (_ValueType::ARRAY === $from->type() && $from->key() === $to->key()) {
+        if (_ValueType::ARRAY_ === $from->type() && $from->key() === $to->key()) {
             namespace\_copy_string($state->diff, $from->start_value());
         }
         else {
@@ -1038,7 +1039,7 @@ function _lcs_values(_Value $from, _Value $to, &$lcs) {
             }
         }
         elseif (
-            _ValueType::ARRAY === $from->type()
+            _ValueType::ARRAY_ === $from->type()
             || (_ValueType::OBJECT === $from->type()
                 && \get_class($from->value()) === \get_class($to->value()))
         ) {
