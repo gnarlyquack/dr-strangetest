@@ -162,8 +162,6 @@ Release
     have on formatting failure messages?
     https://www.php.net/manual/en/language.operators.comparison.php
 
--   Don't trim displayed output that is captured during testing
-
 
 Future / Wishlist
 -----------------

@@ -107,12 +107,7 @@ function output_log(Log $log) {
                 break;
         }
 
-        \printf(
-            "\n\n\n%s: %s\n%s\n",
-            $event_types[$type],
-            $source,
-            \trim($message)
-        );
+        \printf("\n\n\n%s: %s\n%s\n", $event_types[$type], $source, $message);
     }
 
     $passed = $log->pass_count();
