@@ -465,8 +465,8 @@ final class _Object extends struct implements _Value {
     public function start_value() {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
-        $class = \get_class($this->value);
-        return "{$indent}{$key}{$class} {";
+        $class = namespace\_format_object_start($this->value);
+        return "{$indent}{$key}{$class}";
     }
 
     /**
@@ -1012,7 +1012,7 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
         $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
-        if ($from->key() === $to->key()) {
+        if (_ValueType::ARRAY === $from->type() && $from->key() === $to->key()) {
             namespace\_copy_string($state->diff, $from->start_value());
         }
         else {
@@ -1341,11 +1341,7 @@ function _format_object(&$var, $name, &$seen, $sentinels, $padding) {
     $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
-    $class = \get_class($var);
-    // #BC(7.1): use spl_object_hash instead of spl_object_id
-    $id = \version_compare(\PHP_VERSION, '7.2', '<')
-        ? \spl_object_hash($var)
-        : \spl_object_id($var);
+    $start = namespace\_format_object_start($var, $class);
     $values = (array)$var;
     if ($values) {
         foreach ($values as $key => &$value) {
@@ -1375,7 +1371,31 @@ function _format_object(&$var, $name, &$seen, $sentinels, $padding) {
         }
         $out .= "\n$padding";
     }
-    return "$class #$id {{$out}}";
+    $end = namespace\_format_object_end();
+    return "{$start}{$out}{$end}";
+}
+
+
+/**
+ * @param object $object
+ * @param ?string $class
+ * @return string
+ */
+function _format_object_start(&$object, &$class = null) {
+    $class = \get_class($object);
+    // #BC(7.1): use spl_object_hash instead of spl_object_id
+    $id = \function_exists('spl_object_id')
+        ? \spl_object_id($object)
+        : \spl_object_hash($object);
+    return "$class #$id {";
+}
+
+
+/**
+ * @return string
+ */
+function _format_object_end() {
+    return '}';
 }
 
 

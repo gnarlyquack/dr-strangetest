@@ -38,25 +38,33 @@ Release
 
     -   Test argument lists returned by setup_directory()
 
--   Clean up targets:
+-   Targets:
 
     -   find_class_target: don't use 'method_exists' to check if a target
-        exists because this will cause non-test methods to be found as targets
+        exists since this will cause non-test methods to be found as targets
 
     -   Allow namespaces for user-provided function and class targets to be
         automatically discovered so they don't need to be specified on the
         command line. This will probably require caching the list of declared
         namespaces within a file test
 
-    -   User targets only need to be found/validated once during discovery and
-        not every time a test is run. Targets built from dependencies should
-        never need to be found/validated since they should always be valid
+    -   Only user-provided targets need to be validated against discovered
+        test names and this validation only needs to happen once. Targets
+        built from dependencies should never need to be checked since they
+        should always be valid, we should just be able to run them.
 
     -   Show a notice when duplicate user-provided targets are removed?
 
-    -   Currently, invalid class and function targets can be ignored if it's
-        determined they would just be duplicates. However, we may want to at
-        least parse and validate them and exit on any errors
+    -   Currently, user-provided class and function target declarations may be
+        ignored if it's trivially determined that they're duplicates (e.g., we
+        know we're already testing the entire file they're in). However, that
+        means potentially-invalid target declarations won't cause an error. We
+        may want to parse and validate all target declarations and report (and
+        exit on) any errors. Although, a valid target declaration may still
+        contain invalid targets, e.g., a non-existent identifier or a non-test
+        identifier. These won't cause an error either since identifiers aren't
+        validated until source files are parsed, by which time we've discarded
+        any duplicate targets. Unless we want to hold them for validation?
 
     -   Class and function targets should be found without regard to case
         since PHP identifiers are case-insensitive. Presumably, this isn't an
@@ -71,7 +79,6 @@ Release
 
 -   Implement additional CLI options(?)
     -   specify a config file
-    -   reverse report output
     -   enable/disable autoloading, and specify an autoloader file location?
 
 -   Ensure we're UTF-8 conformant
@@ -79,25 +86,20 @@ Release
 
 -   Migrate from Travis to GitHub Actions
 
--   Test PHP 8 support
+-   Add PHP 8 support (once it's released)
 
 -   Replace switches with if statements (to enforce strict comparison)
 
--   Clean up diff and formatting
+-   Diffs and formatting
 
-    -   The code seems to work, but it's hella inefficient. As one example,
-        the LCS matrix is calculated twice when comparing composite
-        sub-values: once to determine the LCS for the comparison and again to
-        generate the diff. Many things like this can probably be cleaned up
-        and made more efficient, and the code can perhaps be better organized
+    -   Cache LCS matrices so they don't need to be recalculated when
+        generating the diff
 
-        -   Do we want to split up formatting and diff (and perhaps additional
-            "utility" functions) into separate files?
+    -   Split up formatting and diff (and perhaps additional "utility"
+        functions) into separate files
 
     -   Ensure that values formatted in whole by format_variable() match
         how values are formatted when individual elements are diffed
-
-    -   Equal but non-identical objects need to show an instance id
 
     -   Implement "loose" (==) comparison
 

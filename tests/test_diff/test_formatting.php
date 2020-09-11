@@ -175,7 +175,10 @@ function test_diffs_different_arrays() {
         "An old pond\nA frog jumps in\nThe water's sound",
         (object)array('two' => 2, 'three' => 4),
     );
-    $expected = <<<'EXPECTED'
+
+    $oid1 = namespace\get_oid($from[5]);
+    $oid2 = namespace\get_oid($to[6]);
+    $expected = <<<EXPECTED
   array(
       0 => 1,
 -     1 => 'foo',
@@ -199,12 +202,12 @@ function test_diffs_different_arrays() {
 +     5 => 'An old pond
   A frog jumps in
 + The water\'s sound',
--     5 => stdClass {
-+     6 => stdClass {
--         $one = 1;
-          $two = 2;
--         $three = 3;
-+         $three = 4;
+-     5 => stdClass #{$oid1} {
++     6 => stdClass #{$oid2} {
+-         \$one = 1;
+          \$two = 2;
+-         \$three = 3;
++         \$three = 4;
       },
   )
 EXPECTED;
@@ -219,11 +222,12 @@ function test_diffs_equal_objects() {
 
     $oid1 = namespace\get_oid($from);
     $oid2 = namespace\get_oid($to);
-    $expected = <<<'EXPECTED'
-  stdClass {
-      $one = 1;
-      $two = 2;
-      $three = 3;
+    $expected = <<<EXPECTED
+- stdClass #{$oid1} {
++ stdClass #{$oid2} {
+      \$one = 1;
+      \$two = 2;
+      \$three = 3;
   }
 EXPECTED;
 
@@ -249,19 +253,25 @@ function test_diffs_different_objects() {
         'six' => "An old pond\nA frog jumps in\nThe water's sound",
         'seven' => (object)array('two' => 2, 'three' => 4),
     );
-    $expected = <<<'EXPECTED'
-  stdClass {
-      $one = 1;
--     $two = 'foo';
--     $three = array();
-+     $two = 'bar';
--     $four = array(
-+     $three = array(
+
+    $oid1 = namespace\get_oid($from);
+    $oid2 = namespace\get_oid($to);
+    $oid3 = namespace\get_oid($from->six);
+    $oid4 = namespace\get_oid($to->seven);
+    $expected = <<<EXPECTED
+- stdClass #{$oid1} {
++ stdClass #{$oid2} {
+      \$one = 1;
+-     \$two = 'foo';
+-     \$three = array();
++     \$two = 'bar';
+-     \$four = array(
++     \$three = array(
           0 => 2,
           1 => 3,
       );
-+     $four = 2;
-+     $five = array(
++     \$four = 2;
++     \$five = array(
 +         1 => 3,
 +         2 => 4,
 +         3 => array(
@@ -269,16 +279,16 @@ function test_diffs_different_objects() {
 +             1 => 6,
 +         ),
 +     );
--     $five = 'An old pond
-+     $six = 'An old pond
+-     \$five = 'An old pond
++     \$six = 'An old pond
   A frog jumps in
 + The water\'s sound';
--     $six = stdClass {
-+     $seven = stdClass {
--         $one = 1;
-          $two = 2;
--         $three = 3;
-+         $three = 4;
+-     \$six = stdClass #{$oid3} {
++     \$seven = stdClass #{$oid4} {
+-         \$one = 1;
+          \$two = 2;
+-         \$three = 3;
++         \$three = 4;
       };
   }
 EXPECTED;
