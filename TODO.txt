@@ -101,19 +101,11 @@ Release
     -   Ensure that values formatted in whole by format_variable() match
         how values are formatted when individual elements are diffed
 
-    -   Implement "loose" (==) comparison
-
     -   By default, don't treat numerical array keys as significant when
         comparing arrays. This can give us cleaner diffs, since an insert or
         deletion won't cause all the subsequent, reindexed elements to show as
         having been changed. The user should be able to override this so that
         keys are always considered significant
-
-    -   Since we can now support loose comparison, can we incorporate
-        the fact that array key order isn't significant without explicitly
-        ordering the array? Even if we can't, do we want arrays to be
-        automatically sorted as part of generating the diff instead of
-        depending on having sorted arrays passed in?
 
     -   When formatting array and class "headers", it seems we could have a
         non-compact diff if both the keys of the header and initial values are
@@ -161,6 +153,11 @@ Release
     (successfully) on (some) composite values. What implications does this
     have on formatting failure messages?
     https://www.php.net/manual/en/language.operators.comparison.php
+
+-   Ensure items comprising EasyTest's API are tagged @api in their DocBlock
+
+-   Change backward compatibility annotations to a DocBlock style:
+        @bc <version> <description>
 
 
 Future / Wishlist

@@ -5,7 +5,7 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace test\diff\formatting;
+namespace test\diff\strict_formatting;
 
 use easytest;
 

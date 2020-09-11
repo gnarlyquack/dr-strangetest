@@ -2891,26 +2891,6 @@ parameters:
 			path: src/easytest/util.php
 
 		-
-			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has parameter \\$indent with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has parameter \\$name with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
-			message: "#^Function easytest\\\\_format_variable_indented\\(\\) has parameter \\$var with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/util.php
-
-		-
 			message: "#^Function easytest\\\\_format_recursive_variable\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/util.php

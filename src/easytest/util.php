@@ -7,13 +7,15 @@
 
 namespace easytest;
 
-
-function diff(&$from, &$to, $from_name, $to_name) {
+/**
+ * @param bool $strict
+ */
+function diff(&$from, &$to, $from_name, $to_name, $strict = true) {
     if ($from_name === $to_name) {
         throw new \Exception('Parameters $from_name and $to_name must be different');
     }
 
-    $state = new _DiffState();
+    $state = new _DiffState($strict);
 
     namespace\_diff_values(
         namespace\_process_value($state, $from_name, new _NullKey(), $from),
@@ -27,11 +29,17 @@ function diff(&$from, &$to, $from_name, $to_name) {
 
 
 final class _DiffState extends struct {
+    /** @var bool */
+    public $strict;
     public $diff = array();
     public $seen = array('byval' => array(), 'byref' => array());
     public $sentinels = array('byref' => null);
 
-    public function __construct() {
+    /**
+     * @param bool $strict
+     */
+    public function __construct($strict) {
+        $this->strict = $strict;
         $this->sentinels['byval'] = new \stdClass();
     }
 }
@@ -278,6 +286,9 @@ final class _Array extends struct implements _Value {
     /** @var mixed[] */
     private $value;
 
+    /** @var bool */
+    private $strict;
+
     /** @var int */
     private $indent_level;
 
@@ -291,14 +302,16 @@ final class _Array extends struct implements _Value {
      * @param string $name
      * @param _Key $key
      * @param mixed[] $value
+     * @param bool $strict
      * @param int $indent_level
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $indent_level, $cost, array $subvalues) {
+    public function __construct($name, _Key $key, &$value, $strict, $indent_level, $cost, array $subvalues) {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
+        $this->strict = $strict;
         $this->indent_level = $indent_level;
         $this->cost = $cost;
         $this->subvalues = $subvalues;
@@ -350,7 +363,7 @@ final class _Array extends struct implements _Value {
 
         $seen = array('byval' => array(), 'byref' => array());
         $sentinels = array('byref' => null, 'byval' => new \stdClass());
-        $result = namespace\_format_array($this->value, $this->name, $seen, $sentinels, $indent);
+        $result = namespace\_format_array($this->value, $this->name, $this->strict, $seen, $sentinels, $indent);
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
@@ -384,6 +397,9 @@ final class _Object extends struct implements _Value {
     /** @var object */
     private $value;
 
+    /** @var bool */
+    private $strict;
+
     /** @var int */
     private $indent_level;
 
@@ -397,14 +413,16 @@ final class _Object extends struct implements _Value {
      * @param string $name
      * @param _Key $key
      * @param object $value
+     * @param bool $strict
      * @param int $indent_level
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $indent_level, $cost, array $subvalues) {
+    public function __construct($name, _Key $key, &$value, $strict, $indent_level, $cost, array $subvalues) {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
+        $this->strict = $strict;
         $this->indent_level = $indent_level;
         $this->cost = $cost;
         $this->subvalues = $subvalues;
@@ -456,7 +474,7 @@ final class _Object extends struct implements _Value {
 
         $seen = array('byval' => array(), 'byref' => array());
         $sentinels = array('byref' => null, 'byval' => new \stdClass());
-        $result = namespace\_format_object($this->value, $this->name, $seen, $sentinels, $indent);
+        $result = namespace\_format_object($this->value, $this->name, $this->strict, $seen, $sentinels, $indent);
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
@@ -466,7 +484,7 @@ final class _Object extends struct implements _Value {
     public function start_value() {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
-        $class = namespace\_format_object_start($this->value);
+        $class = namespace\_format_object_start($this->value, $this->strict);
         return "{$indent}{$key}{$class}";
     }
 
@@ -964,6 +982,9 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
     }
 
     if (\is_array($value)) {
+        if (!$state->strict) {
+            \ksort($value);
+        }
         $cost = 1;
         $subvalues = array();
         foreach ($value as $k => &$v) {
@@ -973,7 +994,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Array($name, $key, $value, $indent_level, $cost, $subvalues);
+        return new _Array($name, $key, $value, $state->strict, $indent_level, $cost, $subvalues);
     }
 
     if (\is_object($value)) {
@@ -988,7 +1009,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Object($name, $key, $value, $indent_level, $cost, $subvalues);
+        return new _Object($name, $key, $value, $state->strict, $indent_level, $cost, $subvalues);
     }
 
     return new _Scalar($key, $value, $indent_level);
@@ -996,7 +1017,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
 
 
 function _diff_values(_Value $from, _Value $to, _DiffState $state) {
-    if (namespace\_lcs_values($from, $to, $lcs)) {
+    if (namespace\_lcs_values($from, $to, $state->strict, $lcs)) {
         namespace\_copy_value($state->diff, $from);
     }
     elseif (0 === $lcs) {
@@ -1004,16 +1025,18 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
         namespace\_delete_value($state->diff, $from);
     }
     elseif (_ValueType::STRING === $from->type()) {
-        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->strict);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
     }
     else {
         namespace\_copy_string($state->diff, $from->end_value());
 
-        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->strict);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
-        if (_ValueType::ARRAY_ === $from->type() && $from->key() === $to->key()) {
+        if ($from->key() === $to->key()
+            && (!$state->strict || _ValueType::ARRAY_ === $from->type())
+        ) {
             namespace\_copy_string($state->diff, $from->start_value());
         }
         else {
@@ -1024,8 +1047,11 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
 }
 
 
-function _lcs_values(_Value $from, _Value $to, &$lcs) {
-    if (namespace\_compare_values($from, $to)) {
+/**
+ * @param bool $strict
+ */
+function _lcs_values(_Value $from, _Value $to, $strict, &$lcs) {
+    if (namespace\_compare_values($from, $to, $strict)) {
         $lcs = \max($from->cost(), $to->cost());
         return true;
     }
@@ -1034,7 +1060,7 @@ function _lcs_values(_Value $from, _Value $to, &$lcs) {
     if ($from->type() === $to->type()) {
         if (_ValueType::STRING === $from->type()) {
             if ($from->cost() > 1 || $to->cost() > 1) {
-                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $strict);
                 $lcs = $edit->m[$edit->flen][$edit->tlen];
             }
         }
@@ -1045,7 +1071,7 @@ function _lcs_values(_Value $from, _Value $to, &$lcs) {
         ) {
             $lcs = 1;
             if ($from->cost() > 1 && $to->cost() > 1) {
-                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues());
+                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $strict);
                 $lcs += $edit->m[$edit->flen][$edit->tlen];
             }
         }
@@ -1054,7 +1080,10 @@ function _lcs_values(_Value $from, _Value $to, &$lcs) {
 }
 
 
-function _lcs_array(array $from, array $to) {
+/**
+ * @param bool $strict
+ */
+function _lcs_array(array $from, array $to, $strict) {
     $m = array();
     $flen = \count($from);
     $tlen = \count($to);
@@ -1068,7 +1097,7 @@ function _lcs_array(array $from, array $to) {
 
             $fvalue = $from[$f-1];
             $tvalue = $to[$t-1];
-            if (namespace\_lcs_values($fvalue, $tvalue, $lcs)) {
+            if (namespace\_lcs_values($fvalue, $tvalue, $strict, $lcs)) {
                 $lcs += $m[$f-1][$t-1];
             }
             else {
@@ -1085,8 +1114,20 @@ function _lcs_array(array $from, array $to) {
 }
 
 
-function _compare_values(_Value $from, _Value $to) {
-    return $from->key() === $to->key() && $from->value() === $to->value();
+/**
+ * @param bool $strict
+ */
+function _compare_values(_Value $from, _Value $to, $strict) {
+    $result = $from->key() === $to->key();
+    if ($result) {
+        if ($strict) {
+            $result = $from->value() === $to->value();
+        }
+        else {
+            $result = $from->value() == $to->value();
+        }
+    }
+    return $result;
 }
 
 
@@ -1097,7 +1138,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
 
     while ($f || $t) {
         if ($f > 0 && $t > 0) {
-            if (namespace\_compare_values($from[$f-1], $to[$t-1])) {
+            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->strict)) {
                 if ($f === 1 && $t === 1) {
                     $pos = _DiffPosition::START;
                 }
@@ -1261,21 +1302,19 @@ function format_failure_message($assertion, $description = null, $detail = null)
 
 function format_variable(&$var) {
     $name = \is_object($var) ? \get_class($var) : \gettype($var);
-    return namespace\_format_variable_indented($var, $name);
-}
-
-
-function _format_variable_indented(&$var, $name, $indent = '') {
     $seen = array('byval' => array(), 'byref' => array());
     // We'd really like to make this a constant static variable, but PHP won't
     // let us do that with an object instance. As a mitigation, we'll just
     // create the sentinels once at the start and then pass it around
     $sentinels = array('byref' => null, 'byval' => new \stdClass());
-    return namespace\_format_recursive_variable($var, $name, $seen, $sentinels, $indent);
+    return namespace\_format_recursive_variable($var, $name, true, $seen, $sentinels, '');
 }
 
 
-function _format_recursive_variable(&$var, $name, &$seen, $sentinels, $indent) {
+/**
+ * @param bool $strict
+ */
+function _format_recursive_variable(&$var, $name, $strict, &$seen, $sentinels, $indent) {
     $reference = namespace\_check_reference($var, $name, $seen, $sentinels);
     if ($reference) {
         return $reference;
@@ -1287,10 +1326,10 @@ function _format_recursive_variable(&$var, $name, &$seen, $sentinels, $indent) {
         return namespace\_format_resource($var);
     }
     if (\is_array($var)) {
-        return namespace\_format_array($var, $name, $seen, $sentinels, $indent);
+        return namespace\_format_array($var, $name, $strict, $seen, $sentinels, $indent);
     }
     if (\is_object($var)) {
-        return namespace\_format_object($var, $name, $seen, $sentinels, $indent);
+        return namespace\_format_object($var, $name, $strict, $seen, $sentinels, $indent);
     }
     throw new \Exception(
         \sprintf('Unexpected/unknown variable type: %s', \gettype($var))
@@ -1312,7 +1351,10 @@ function _format_resource(&$var) {
 }
 
 
-function _format_array(&$var, $name, &$seen, $sentinels, $padding) {
+/**
+ * @param bool $strict
+ */
+function _format_array(&$var, $name, $strict, &$seen, $sentinels, $padding) {
     $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
@@ -1326,6 +1368,7 @@ function _format_array(&$var, $name, &$seen, $sentinels, $padding) {
                 namespace\_format_recursive_variable(
                     $value,
                     \sprintf('%s[%s]', $name, $key),
+                    $strict,
                     $seen,
                     $sentinels,
                     $indent
@@ -1338,11 +1381,14 @@ function _format_array(&$var, $name, &$seen, $sentinels, $padding) {
 }
 
 
-function _format_object(&$var, $name, &$seen, $sentinels, $padding) {
+/**
+ * @param bool $strict
+ */
+function _format_object(&$var, $name, $strict, &$seen, $sentinels, $padding) {
     $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
-    $start = namespace\_format_object_start($var, $class);
+    $start = namespace\_format_object_start($var, $strict, $class);
     $values = (array)$var;
     if ($values) {
         foreach ($values as $key => &$value) {
@@ -1364,6 +1410,7 @@ function _format_object(&$var, $name, &$seen, $sentinels, $padding) {
                 namespace\_format_recursive_variable(
                     $value,
                     \sprintf('%s->%s', $name, $property),
+                    $strict,
                     $seen,
                     $sentinels,
                     $indent
@@ -1379,16 +1426,20 @@ function _format_object(&$var, $name, &$seen, $sentinels, $padding) {
 
 /**
  * @param object $object
+ * @param bool $strict
  * @param ?string $class
  * @return string
  */
-function _format_object_start(&$object, &$class = null) {
+function _format_object_start(&$object, $strict, &$class = null) {
     $class = \get_class($object);
-    // #BC(7.1): use spl_object_hash instead of spl_object_id
-    $id = \function_exists('spl_object_id')
-        ? \spl_object_id($object)
-        : \spl_object_hash($object);
-    return "$class #$id {";
+    if ($strict) {
+        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        $id = \function_exists('spl_object_id')
+            ? \spl_object_id($object)
+            : \spl_object_hash($object);
+        return "$class #$id {";
+    }
+    return "$class {";
 }
 
 

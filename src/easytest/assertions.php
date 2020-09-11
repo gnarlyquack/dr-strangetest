@@ -43,14 +43,10 @@ function assert_equal($expected, $actual, $description = null) {
         return;
     }
 
-    if (\is_array($expected) && \is_array($actual)) {
-        namespace\ksort_recursive($expected);
-        namespace\ksort_recursive($actual);
-    }
     $message = namespace\format_failure_message(
         'Assertion "$expected == $actual" failed',
         $description,
-        namespace\diff($expected, $actual, '$expected', '$actual')
+        namespace\diff($expected, $actual, '$expected', '$actual', false)
     );
     throw new Failure($message);
 }
@@ -290,7 +286,7 @@ function assert_unequal($expected, $actual, $description = null) {
     }
 
     // Since $expected and $actual may have differing (though equal) values,
-    // let's display a diff so as not to omit any information
+    // let's display a strict diff so as not to omit any information
     if (\is_array($expected) && \is_array($actual)) {
         namespace\ksort_recursive($expected);
         namespace\ksort_recursive($actual);
