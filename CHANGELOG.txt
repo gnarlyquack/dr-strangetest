@@ -1,3 +1,32 @@
+Unreleased
+==========
+
+Added
+-----
+- Provide EasyTest as a Phar.
+- Show the memory used during a test run.
+- Support test dependencies: a test can declare a dependency on other tests
+  and will only be run if all the tests it depends on pass.
+- Add 'teardown_run' to teardown each parameterized test run.
+- Allow limiting a test run to individual functions, classes, and/or methods
+  within a test suite.
+
+Changed
+-------
+- Match directory setup and teardown fixtures on just 'setup' and 'teardown'.
+- Match function setup and teardown fixtures on just 'setup' and 'teardown'.
+- Replace Context::subtest() with Context::assert()
+
+Fixed
+-----
+- Argument lists returned from directory and file setup functions can be any
+  iterable.
+- Show object instance IDs to distinguish equal but non-identical objects.
+- Generate accurate diffs for loosely-compared values.
+- Consistently determine the root test directory.
+
+
+
 0.3.0 (2020-05-12)
 ==================
 
@@ -48,12 +77,14 @@ Fixed
 - Report all errors found during discovery instead of just the first one.
 
 
+
 0.2.2 (2015-12-20)
 ==================
 
 Fixed
 -----
 - Output the correct version number.
+
 
 
 0.2.1 (2015-12-19)
@@ -63,6 +94,7 @@ Added
 -----
 - Support PHP 7.0.
 - Load Composer's autoload.php file.
+
 
 
 0.2.0 (2014-12-12)
@@ -76,6 +108,7 @@ Changed
 Fixed
 -----
 - Output is reported when it occurs in conjunction with an exception.
+
 
 
 0.1.0 (2014-12-10)

@@ -159,6 +159,8 @@ Release
 -   Change backward compatibility annotations to a DocBlock style:
         @bc <version> <description>
 
+-   Do we handle declaring a dependency on one's self?
+
 
 Future / Wishlist
 -----------------

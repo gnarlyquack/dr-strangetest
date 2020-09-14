@@ -1,11 +1,8 @@
-Welcome to EasyTest, a testing framework for PHP.
+EasyTest is a testing framework for PHP.
 
-This file is "Just the Facts". For a more illustrative example of how EasyTest
-works and its features, please refer to the wiki:
+In addition to this README, you may also want to refer to the wiki:
 https://github.com/gnarlyquack/easytest/wiki
 
-Although every effort is made to keep the wiki up-to-date, this README always
-has the most current information.
 
 
 Requirements
@@ -16,16 +13,45 @@ EasyTest supports PHP versions 5.3 through 7.4.
 For PHP 7, 'zend.assertions' must NOT be in production mode.
 
 
+
 Installation
 ============
+
+Phar (PHP Archive)
+------------------
+
+The recommended way to use EasyTest is to download a Phar from the following
+URL:
+https://github.com/gnarlyquack/easytest/releases/latest/download/easytest.phar
+
+Place the Phar in the root directory of your project. You can then run
+EasyTest as follows:
+
+    php easytest.phar
+
+If you make the Phar executable you can run it directly:
+
+    ./easytest.phar
+
+Note that PHP must have the Phar extension enabled for this to work.
+
+
+Composer
+--------
 
 Install EasyTest using Composer:
 
     composer require --dev easytest/easytest
 
-By default, Composer installs the 'easytest' executable in 'vendor/bin/'.
+Composer installs the 'easytest' executable in its 'bin-dir', which defaults
+to 'vendor/bin'. Assuming the default 'bin-dir', you can then run EasyTest as
+follows:
+
+    ./vendor/bin/easytest
+
 
 From hereon, references to 'easytest' refer to the location of the executable.
+
 
 
 Usage
@@ -33,10 +59,11 @@ Usage
 
 Run EasyTest from the command line:
 
-  easytest [OPTION]... [PATH]...
+  easytest [OPTION...] [TEST...]
 
-EasyTest accepts zero or more paths to files or directories to search for
-tests. If no path is provided, EasyTest defaults to the current directory.
+EasyTest accepts zero or more TEST specifiers (described later) to search for
+tests. If no test specifier is provided, EasyTest defaults to searching the
+current directory for tests.
 
 A "test" is any function or method whose name begins with 'test'. When such a
 function or method is found, it is run. A test "passes" unless an assertion
@@ -68,12 +95,70 @@ so your project is automatically visible to your tests.
 Any errors or test failures during the test run are reported upon completion
 of the run.
 
-Supported options:
+
+Specifying Tests
+----------------
+
+You can run individual tests or a subset of tests in your test suite by
+invoking EasyTest with one or more test specifiers.
+
+
+Path Specifiers
+
+Use a path specifier to run individual test directories or files.
+
+    [--path=]PATH
+
+PATH is a relative or absolute path to a file or directory. The leading
+'--path=' specifier is only necessary if the start of a path name conflicts
+with one of test specifiers described in this section. If the '--path=' prefix
+is used in the first test specifier, it must be preceded by '--' and a space
+to distinguish the test specifier from other options.
+
+A path specifier that corresponds to a file may be followed by a combination
+of function specifiers and class specifiers (described below). The file should
+contain the definitions of the functions and classes specified by the function
+and class specifiers. If a specified function and/or class is not found in the
+file, an error is reported.
+
+
+Function Specifiers
+
+Use a function specifier to run individual test functions within a test file.
+
+    --function=FUNCTION[,FUNCTION...]
+
+FUNCTION is a fully-qualified function name. Multiple functions may be
+specified by separating each name with a comma. A function specifier must be
+preceded by a file specifier as described above.
+
+
+Class Specifiers
+
+Use a class specifier to run individual test classes with a test file and
+individual test methods within a test class.
+
+    --class=CLASS[,CLASS...][::METHOD[,METHOD...]]
+
+CLASS is a fully-qualified class name. Multiple classes may be specified by
+separating each name with a comma. One or more methods may be specified for
+the last class in the list by separating the list of methods from the class
+name with '::'. Multiple methods may be specified by separating each name with
+a comma. A class specifier must be preceded by a file specifier as described
+above.
+
+
+
+Command Line Options
+--------------------
+
+The follow options are supported:
 
 --verbose
     Details about skipped tests and output during a test run are usually
     omitted unless they occur during an error or a failure. Enabling 'verbose'
     mode includes these details regardless of errors or failures.
+
 
 
 Making Assertions
@@ -106,11 +191,11 @@ easytest\assert_falsy(mixed $actual, [string $msg])
     Passes if $expected == false.
 
 
-easytest\assert_greater(mixed $actual, numeric $min, [string $msg])
+easytest\assert_greater(mixed $actual, mixed $min, [string $msg])
     Passes if $actual > $min.
 
 
-easytest\assert_greater_or_equal(mixed $actual, numeric $min, [string $msg])
+easytest\assert_greater_or_equal(mixed $actual, mixed $min, [string $msg])
     Passes if $actual >= $min.
 
 
@@ -118,11 +203,11 @@ easytest\assert_identical(mixed $expected, mixed $actual, [string $msg])
     Passes if $expected === $actual.
 
 
-easytest\assert_less(mixed $actual, numeric $max, [string $msg])
+easytest\assert_less(mixed $actual, mixed $max, [string $msg])
     Passes if $actual < $max.
 
 
-easytest\assert_less_or_equal(mixed $actual, numeric $max, [string $msg])
+easytest\assert_less_or_equal(mixed $actual, mixed $max, [string $msg])
     Passes if $actual <= $max.
 
 
@@ -234,13 +319,20 @@ of the version of PHP in use.
 The following functions are provided to help with writing custom assertions:
 
 
-easytest\diff(string $from, string $to, string $from_id, string $to_id)
+easytest\diff(mixed &$from, mixed &$to, string $from_id, string $to_id,
+[bool $strict = true])
     Returns a string displaying the difference between $from and $to. $from_id
-    and $to_id are used to identify the different strings in the diff output.
+    and $to_id are used to identify which values changed in the diff. If
+    $strict is set to false, then the diff is generated using loose comparison
+    (==) between $from and $to, otherwise the diff is generated using strict
+    comparison (===).
+
+    Note that $from and $to are received as references to detect recursive
+    values.
 
 
-easytest\format_failure_message(string $assertion, [string $reason], [string
-$detail])
+easytest\format_failure_message(string $assertion, [string $reason],
+[string $detail])
     Composes a string using the provided string arguments.
 
     $assertion, if not empty, is used on the first line.
@@ -260,17 +352,23 @@ easytest\format_variable(mixed &$variable)
     are formatted using PHP's var_export() function, but composite data types
     (arrays and objects) are formatted a bit more concisely.
 
+    Note that $variable is received as a reference in order to detect a
+    recursive value.
+
 
 Skipping Tests
 ==============
 
-Skipping a test may be useful if the test is incapable of being run, such as
-if a certain extension isn't loaded or a particular version requirement isn't
-met. Tests can be skipped by calling the following function:
+Tests can be skipped by calling the following function:
 
 easytest\skip(string $reason)
     Immediately stops execution of a test without failing it. $reason is
     required to explain why the test is being skipped.
+
+Skipping a test may be useful if the test is incapable of being run, such as
+if a certain extension isn't loaded or a particular version requirement isn't
+met. Typically you should make these checks at the beginning of a test and
+only continue if the necessary requirements are met.
 
 skip() may be used in test functions to skip individual tests and in fixture
 setup functions (described later) to skip an entire object, file, or directory
@@ -285,22 +383,91 @@ Context Objects
 ===============
 
 Every test function and method receives an easytest\Context object as its last
-parameter. This object provides the following interface:
+parameter. This object implements the following features:
 
 
-easytest\Context::subtest(callable $test)
-    Reports a failure for the current test if invoking $test() fails. Returns
-    a two-element array: the first element is true or false indicating if
-    $test passed, and the second element is the return value of $test or null.
+Subtests
+--------
 
-    easytest\Context also provides methods corresponding to each EasyTest
-    assertion. These assertion methods are identical to the assertion
-    functions described earlier but behave as if run inside
-    easytest\Context::subtest().
+Subtests allow you to make multiple assertions in a test and continue the test
+even if an assertion fails. The Context object mirrors EasyTest's assertions
+but returns true or false indicating success or failure.
 
-    These methods only guard against test failures. Other exceptions
-    (including skips) are not caught.
 
+easytest\Context::assert(mixed $assertion, [string $description])
+    Passes if $assertion is truthy.
+
+
+easytest\Context::assert_different(mixed $expected, mixed $actual,
+[string $description])
+    Passes if $expected !== $actual.
+
+
+easytest\Context::assert_equal(mixed $expected, mixed $actual,
+[string $description])
+    Passes if $expected == $actual.
+
+
+easytest\Context::assert_false(mixed $actual, [string $description])
+    Passes if $expected === false.
+
+
+easytest\Context::assert_falsy(mixed $actual, [string $description])
+    Passes if $expected == false.
+
+
+easytest\Context::assert_greater(mixed $actual, mixed $min,
+[string $description])
+    Passes if $actual > $min.
+
+
+easytest\Context::assert_greater_or_equal(mixed $actual, mixed $min,
+[string $description])
+    Passes if $actual >= $min.
+
+
+easytest\Context::assert_identical(mixed $expected, mixed $actual,
+[string $description])
+    Passes if $expected === $actual.
+
+
+easytest\Context::assert_less(mixed $actual, mixed $max, [string $description])
+    Passes if $actual < $max.
+
+
+easytest\Context::assert_less_or_equal(mixed $actual, mixed $max,
+[string $description])
+    Passes if $actual <= $max.
+
+
+easytest\Context::assert_throws(string $exception, callable $callable,
+[string $description], [object &$result])
+    - Passes if invoking $callable() throws an exception that is an instance
+      of $exception. The exception instance is saved in $result.
+    - Fails if invoking $callable() does not throw an exception.
+    - Throws an exception (signalling an error) if invoking $callable() throws
+      an exception that is not an instance of $exception.
+
+
+easytest\Context::assert_true(mixed $actual, [string $description])
+    Passes if $actual === true.
+
+
+easytest\Context::assert_truthy(mixed $actual, [string $description])
+    Passes if $actual == true.
+
+
+easytest\Context::assert_unequal(mixed $expected, mixed $actual,
+[string $description])
+    Passes if $expected != $actual.
+
+
+easytest\Context::fail(string $reason)
+    Unconditionally fail. $reason is required.
+
+
+Test-Specific Teardown
+----------------------
 
 easytest\Context::teardown(callable $teardown)
     Invokes $teardown() after the current test finishes execution.
@@ -308,6 +475,55 @@ easytest\Context::teardown(callable $teardown)
     This method may be called multiple times to register multiple callables.
     After the test completes, the callables are run in the order they were
     registered and prior to any other teardown function.
+
+
+Test Dependencies
+-----------------
+
+Test dependencies allow a test (the "dependent") to require one or more other
+tests ("requisites") to first pass before the dependent is executed.
+Dependencies should be declared at the beginning of a test. If a dependent is
+run before any of its requisites, it is postponed until all requisites have
+been run. If any requisites are not successful, the dependent is skipped.
+
+A dependent may declare its requisites by calling the following method:
+
+easytest\Context::depend_on(string $requisite, [string ...])
+    Declare a dependency on $requisite. Multiple requisites can be specified.
+    $requisite is the name of a test function or method. Methods are specified
+    by writing them as 'ClassName::methodName'. A parameterized test run
+    (described below) can be indicated by specifying the run name in
+    parenthesis after the function or method name, e.g., 'foo(run)'.
+
+    Although this method may be called multiple times for multiple requisites,
+    it is instead recommended to provide all requisites in one call.
+
+    If any provided name is not fully qualified, a fully qualified name is
+    determined as follows:
+    - If the name is a function name, it's assumed to be either a function in
+      the current namespace or a method in the current class.
+    - If the name is a method name with an unqualified class name, the class
+      is assumed to be in the current namespace.
+    - If called from a method, a function in the current namespace can be
+      specified by passing '::function_name'
+    - If no run is specified, the test is assumed to be a part of the current
+      run. A parameterized test may depend on a non-parameterized test by
+      using empty parenthesis, e.g., 'foo()'.
+    Note that, in order to specify a global name from within a namespace, the
+    name must start with a backslash.
+
+    If called with one requisite, this method returns the state saved by the
+    requisite or null. If called with multiple requisites, the state is
+    returned in an associative array indexed by the names used in the call. If
+    a requisite did not save any state it will not appear in the array.
+
+Requisites can save state for dependents to use by calling the following
+method. Requisites would typically call this at the end of the test.
+
+easytest\Context::set(mixed $state)
+    Make $state available to other tests for the rest of the test run.
+    Dependents retrieve $state by calling easytest\Context::depend_on().
+
 
 
 Test Fixtures
@@ -352,11 +568,11 @@ are ever found, an error is reported and the associated item is skipped.
 
 Function Setup and Teardown
 
-If a test file defines a function whose name begins with 'setup_function',
-that function is run before every test function.
+If a test file defines a function whose name begins with 'setup', that
+function is run before every test function.
 
-If a test file defines a function whose name begins with 'teardown_function',
-that function is run after every test function.
+If a test file defines a function whose name begins with 'teardown', that
+function is run after every test function.
 
 
 Method Setup and Teardown
@@ -386,22 +602,28 @@ class in the file.
 If test file defines a function whose name begins with 'teardown_file', that
 function is run after finishing all tests in the file.
 
+If test file defines a function whose name begins with 'teardown_run', that
+function is run after each parameterized test run (described below).
+
 
 Directory Setup and Teardown
 
 If a test directory contains a file named 'setup.php', EasyTest includes it
 before searching the directory for tests and including any other file.
 
-If 'setup.php' defines a function whose name begins with 'setup_directory',
-that function is run prior to continuing any more discovery in the directory.
+If 'setup.php' defines a function whose name begins with 'setup', that
+function is run prior to continuing any more discovery in the directory.
 
-If 'setup.php' defines a function whose name begins with 'teardown_directory',
-that function is run after completing all tests in the directory (as well as
-any subdirectories) and prior to ascending out of the directory.
+If 'setup.php' defines a function whose name begins with 'teardown', that
+function is run after completing all tests in the directory (as well as any
+subdirectories) and prior to ascending out of the directory.
+
+If 'setup.php' defines a function whose name begins with 'teardown_run', that
+function is run after each parameterized test run (described below).
 
 
-Providing Fixtures to Tests
----------------------------
+Providing Fixture to Tests
+--------------------------
 
 The fixture functions described above form a natural hierarchy in which to
 manage test state with directories at the top and individual tests at the
@@ -444,4 +666,6 @@ arguments are no longer unpacked when calling the corresponding directory or
 file teardown function. Since these functions are only called once per
 directory or file, the entire collection of arguments is passed to them.
 Whatever is passed to easytest\arglists() by a setup function is passed to its
-teardown function.
+teardown function. For this reason, the teardown_run functions are provided.
+These functions are called after each run and are passed the unpacked list of
+arguments used for the run.
