@@ -1261,21 +1261,6 @@ parameters:
 			path: src/easytest/run.php
 
 		-
-			message: "#^Method easytest\\\\Context\\:\\:assert\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Method easytest\\\\Context\\:\\:assert\\(\\) has parameter \\$assertion with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Method easytest\\\\Context\\:\\:assert\\(\\) has parameter \\$description with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
 			message: "#^Method easytest\\\\Context\\:\\:assert_different\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php

@@ -32,19 +32,6 @@ final class Context {
     }
 
 
-    public function assert($assertion, $description = null) {
-        return $this->do_assert(
-            function() use ($assertion, $description) {
-                if (!$assertion) {
-                    throw new Failure(
-                        namespace\format_failure_message($assertion, $description)
-                    );
-                }
-            }
-        );
-    }
-
-
     public function assert_different($expected, $actual, $description = null) {
         return $this->do_assert(
             function() use ($expected, $actual, $description) {

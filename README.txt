@@ -394,10 +394,6 @@ even if an assertion fails. The Context object mirrors EasyTest's assertions
 but returns true or false indicating success or failure.
 
 
-easytest\Context::assert(mixed $assertion, [string $description])
-    Passes if $assertion is truthy.
-
-
 easytest\Context::assert_different(mixed $expected, mixed $actual,
 [string $description])
     Passes if $expected !== $actual.

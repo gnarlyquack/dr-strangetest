@@ -23,36 +23,6 @@ function setup() {
 }
 
 
-function test_assert_passes(
-    Context $context, BasicLogger $logger, FunctionTest $test
-) {
-    $result = $context->assert(true, 'I pass?');
-
-    \assert_log(array(), $logger);
-    easytest\assert_identical(true, $result);
-    easytest\assert_identical(easytest\RESULT_PASS, $context->result());
-}
-
-
-function test_assert_fails(
-    Context $context, BasicLogger $logger, FunctionTest $test
-) {
-    $result = $context->assert(false, 'I fail?');
-
-    \assert_log(
-        array(
-            easytest\EVENT_FAIL => 1,
-            'events' => array(
-                array(easytest\EVENT_FAIL, $test->name, 'I fail?'),
-            ),
-        ),
-        $logger
-    );
-    easytest\assert_identical(false, $result);
-    easytest\assert_identical(easytest\RESULT_FAIL, $context->result());
-}
-
-
 function test_assert_throws_passes(
     Context $context, BasicLogger $logger, FunctionTest $test
 ) {

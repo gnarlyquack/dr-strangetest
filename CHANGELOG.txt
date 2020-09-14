@@ -15,7 +15,10 @@ Changed
 -------
 - Match directory setup and teardown fixtures on just 'setup' and 'teardown'.
 - Match function setup and teardown fixtures on just 'setup' and 'teardown'.
-- Replace Context::subtest() with Context::assert()
+
+Removed
+-------
+- Remove easytest\Context::subtest()
 
 Fixed
 -----
