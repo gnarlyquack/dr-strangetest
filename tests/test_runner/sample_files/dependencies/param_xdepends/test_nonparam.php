@@ -4,16 +4,15 @@ namespace param_xdepend\nonparam;
 use easytest;
 
 function test_two(easytest\Context $context) {
-    $context->depends('param_xdepend\\param\\test_two');
+    $context->depend_on('param_xdepend\\param\\test_two');
 }
 
 function test_three(easytest\Context $context) {
-    $context->depends('param_xdepend\\param\\test_four');
+    $context->depend_on('param_xdepend\\param\\test_four');
 }
 
 function test_four(easytest\Context $context) {
-    $context->depends('param_xdepend\\param\\test_four(0)');
-    $actual = $context->get('param_xdepend\\param\\test_four(0)');
+    $actual = $context->depend_on('param_xdepend\\param\\test_four(0)');
     easytest\assert_identical(18, $actual);
 }
 
@@ -23,12 +22,11 @@ function test_four(easytest\Context $context) {
 // isn't associated with non-parameterized test_one, otherwise test_five will
 // never complete since it will be waiting on a non-existent test run
 function test_five(easytest\Context $context) {
-    $context->depends(
+    $actual = $context->depend_on(
         'test_one',
         'param_xdepend\\param\\test_four(1)'
     );
-    $actual = $context->get('param_xdepend\\param\\test_four(1)');
-    easytest\assert_identical(22, $actual);
+    easytest\assert_identical(22, $actual['param_xdepend\\param\\test_four(1)']);
 }
 
 function test_one(easytest\Context $context) {

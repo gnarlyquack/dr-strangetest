@@ -1231,11 +1231,6 @@ parameters:
 			path: src/easytest/output.php
 
 		-
-			message: "#^Property easytest\\\\Context\\:\\:\\$state has no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
 			message: "#^Property easytest\\\\Context\\:\\:\\$logger has no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
@@ -1561,32 +1556,12 @@ parameters:
 			path: src/easytest/run.php
 
 		-
-			message: "#^Method easytest\\\\Context\\:\\:depends\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Method easytest\\\\Context\\:\\:depends\\(\\) has parameter \\$name with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
 			message: "#^Method easytest\\\\Context\\:\\:set\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
 
 		-
 			message: "#^Method easytest\\\\Context\\:\\:set\\(\\) has parameter \\$value with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Method easytest\\\\Context\\:\\:get\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Method easytest\\\\Context\\:\\:get\\(\\) has parameter \\$name with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
 

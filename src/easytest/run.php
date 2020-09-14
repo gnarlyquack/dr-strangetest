@@ -14,6 +14,7 @@ const RESULT_POSTPONE = 0x2;
 
 
 final class Context {
+    /** @var State */
     private $state;
     private $logger;
     private $test;
@@ -192,17 +193,30 @@ final class Context {
     }
 
 
-    public function depends($name) {
+    /**
+     * @param string... $name
+     * @return ?mixed[]
+     * @throws Postpone
+     */
+    public function depend_on($name) {
         $dependees = array();
+        $result = array();
+        $nnames = 0;
         // #BC(5.5): Use func_get_args instead of argument unpacking
-        foreach (\func_get_args() as $name) {
-            list($name, $run) = $this->normalize_name($name);
+        foreach (\func_get_args() as $nnames => $name) {
+            list($normalized, $run) = $this->normalize_name($name);
 
-            if (!isset($this->state->results[$name][$run])) {
-                $dependees[] = array($name, $run);
+            if (!isset($this->state->results[$normalized][$run])) {
+                $dependees[] = array($normalized, $run);
             }
-            elseif (!$this->state->results[$name][$run]) {
-                throw new Skip("This test depends on '{$name}{$run}', which did not pass");
+            elseif (!$this->state->results[$normalized][$run]) {
+                throw new Skip("This test depends on '{$normalized}{$run}', which did not pass");
+            }
+            elseif (
+                \array_key_exists($normalized, $this->state->fixture)
+                && \array_key_exists($run, $this->state->fixture[$normalized])
+            ) {
+                $result[$name] = $this->state->fixture[$normalized][$run];
             }
         }
 
@@ -229,17 +243,21 @@ final class Context {
 
             throw new Postpone();
         }
+
+        $nresults = \count($result);
+        ++$nnames;
+        if ($nresults) {
+            if (1 === $nresults && 1 === $nnames) {
+                return $result[$name];
+            }
+            return $result;
+        }
+        return null;
     }
 
 
     public function set($value) {
         $this->state->fixture[$this->test->name][$this->run] = $value;
-    }
-
-
-    public function get($name) {
-        list($name, $run) = $this->normalize_name($name);
-        return $this->state->fixture[$name][$run];
     }
 
 

@@ -5,20 +5,20 @@ use easytest;
 
 
 function test_one(easytest\Context $context) {
-    $context->depends('\foobar');
+    $context->depend_on('\foobar');
 }
 
 function test_two(easytest\Context $context) {
-    $context->depends('test_one');
+    $context->depend_on('test_one');
 }
 
 
 function test_three(easytest\Context $context) {
-    $context->depends('test1::test_one');
+    $context->depend_on('test1::test_one');
 }
 
 function test_four(easytest\Context $context) {
-    $context->depends('test_three');
+    $context->depend_on('test_three');
 }
 
 
@@ -27,7 +27,7 @@ function test_five() {
 }
 
 function test_six(easytest\Context $context) {
-    $context->depends('test_five');
+    $context->depend_on('test_five');
 }
 
 
@@ -47,20 +47,20 @@ class test1 {
 
 class test2 {
     function test_one(easytest\Context $context) {
-        $context->depends('\frobitz');
+        $context->depend_on('\frobitz');
     }
 
     function test_two(easytest\Context $context) {
-        $context->depends('test_one');
+        $context->depend_on('test_one');
     }
 
 
     function test_three(easytest\Context $context) {
-        $context->depends('test1::test_one');
+        $context->depend_on('test1::test_one');
     }
 
     function test_four(easytest\Context $context) {
-        $context->depends('test_three');
+        $context->depend_on('test_three');
     }
 
     public function test_five() {
@@ -68,6 +68,6 @@ class test2 {
     }
 
     public function test_six(easytest\Context $context) {
-        $context->depends('test_five');
+        $context->depend_on('test_five');
     }
 }

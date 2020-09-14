@@ -12,7 +12,7 @@ function teardown_function() {
 
 function test_one(easytest\Context $context) {
     test::$test = __FUNCTION__;
-    $context->depends('test_two');
+    $context->depend_on('test_two');
 }
 
 function test_two() {
@@ -32,7 +32,7 @@ class test {
 
     public function test_one(easytest\Context $context) {
         self::$test = __FUNCTION__;
-        $context->depends('test_two');
+        $context->depend_on('test_two');
     }
 
     public function test_two() {

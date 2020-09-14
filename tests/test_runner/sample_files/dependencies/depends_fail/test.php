@@ -5,11 +5,11 @@ use easytest;
 
 
 function test_three(easytest\Context $context) {
-    $context->depends('test_two');
+    $context->depend_on('test_two');
 }
 
 function test_two(easytest\Context $context) {
-    $context->depends('test_one');
+    $context->depend_on('test_one');
 }
 
 function test_one() {
@@ -19,11 +19,11 @@ function test_one() {
 
 class test {
     public function test_three(easytest\Context $context) {
-        $context->depends('test_two');
+        $context->depend_on('test_two');
     }
 
     public function test_two(easytest\Context $context) {
-        $context->depends('test_one');
+        $context->depend_on('test_one');
     }
 
     public function test_one() {

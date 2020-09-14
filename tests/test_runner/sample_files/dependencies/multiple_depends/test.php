@@ -5,15 +5,15 @@ use easytest;
 
 
 function test_one(easytest\Context $context) {
-    $context->depends('test::test_two', 'test_three', 'test::test_four');
+    $context->depend_on('test::test_two', 'test_three', 'test::test_four');
 }
 
 function test_three(easytest\Context $context) {
-    $context->depends('test::test_two', 'test_seven');
+    $context->depend_on('test::test_two', 'test_seven');
 }
 
 function test_five(easytest\Context $context) {
-    $context->depends('test::test_six', 'test::test_nine');
+    $context->depend_on('test::test_six', 'test::test_nine');
 }
 
 function test_seven() {}
@@ -28,11 +28,11 @@ class test {
     }
 
     public function test_two(easytest\Context $context) {
-        $context->depends('::test_five', 'test_six');
+        $context->depend_on('::test_five', 'test_six');
     }
 
     public function test_four(easytest\Context $context) {
-        $context->depends('test_eight', 'test_nine');
+        $context->depend_on('test_eight', 'test_nine');
     }
 
     public function test_six() {}
@@ -42,6 +42,6 @@ class test {
     }
 
     public function test_nine(easytest\Context $context) {
-        $context->depends('::test_ten');
+        $context->depend_on('::test_ten');
     }
 }

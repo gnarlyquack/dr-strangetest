@@ -13,14 +13,12 @@ function setup_file() {
 
 
 function test_three($arg, easytest\Context $context) {
-    $context->depends('test_two');
-    $actual = $context->get('test_two');
+    $actual = $context->depend_on('test_two');
     easytest\assert_identical(2 * $arg, $actual);
 }
 
 function test_two($arg, easytest\Context $context) {
-    $context->depends('test_one');
-    $actual = $context->get('test_one');
+    $actual = $context->depend_on('test_one');
     easytest\assert_identical(2, $actual);
     $context->set($actual + $arg);
 }
@@ -40,14 +38,12 @@ class test {
 
 
     public function test_three(easytest\Context $context) {
-        $context->depends('test_two');
-        $actual = $context->get('test_two');
+        $actual = $context->depend_on('test_two');
         easytest\assert_identical(2 * $this->arg, $actual);
     }
 
     public function test_two(easytest\Context $context) {
-        $context->depends('test_one');
-        $actual = $context->get('test_one');
+        $actual = $context->depend_on('test_one');
         easytest\assert_identical(2, $actual);
         $context->set($actual + $this->arg);
     }
