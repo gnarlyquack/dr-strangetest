@@ -71,6 +71,9 @@ Release
         issue with paths since we're validating all user-provided paths with
         realpath()?
 
+    -   Actually, the '--path=' specifier isn't necessary because any valid
+        test path needs to start with 'test'(?)
+
 -   Fix run names so that they don't have to start with a space
 
 -   Cleanup parameters to setup(), teardown(), run() test methods
@@ -159,7 +162,45 @@ Release
 -   Change backward compatibility annotations to a DocBlock style:
         @bc <version> <description>
 
--   Do we handle declaring a dependency on one's self?
+-   Dependencies:
+
+    -   Do we handle declaring a dependency on one's self?
+
+    -   We need to ensure a run name can never clobber the "cumulative" result
+        of a test, which it currently can if the name is an empty string
+
+    -   If we cannot find a function or class name in the current namespace,
+        should we try to fallback to the global namespace? Currently we
+        require an identifier in the global namespace to be explicitly
+        qualified if trying to depend on it from a namespaced function
+
+    -   What if parameterized tests depend on the non-parameterized result of
+        previous/other tests that are similarly parameterized? It's possible
+        this is handled correctly -- if it is, since all tests are run with
+        one set of parameters before advancing to the next set, it probably
+        means that after iterating through all parameters, progress will have
+        advanced by one test with any remaining subsequent tests postponed
+        again and needing to be re-resolved for another run -- but it seems
+        more likely this could result in a false "positive" since, assuming no
+        failures, the result might be determined by whatever the current
+        "cumulative" result is. Regardless, this needs more testing.
+
+    -   Similarly, what are we returning for state if depending on the total
+        outcome of a parameterized requisite, assuming the requisite saves
+        state?
+
+-   Change skip() (or add a skip_if()?) to take a boolean parameter indicating
+    whether or not a skip should be thrown? This could make code a bit cleaner
+    as you wouldn't need to write explicit if conditions. E.g.:
+        skip(
+            \version_compare(PHP_VERSION, '7.2', '<'),
+            'PHP 7.2 or greater required'
+        )
+
+-   'use function' statements, traits functions, and interface functions (and
+    others?) should not be discovered as test functions
+
+-   Turns out, we need a setup_run() for multiply-executed parameterized tests
 
 
 Future / Wishlist

@@ -24,8 +24,7 @@ The recommended way to use EasyTest is to download a Phar from the following
 URL:
 https://github.com/gnarlyquack/easytest/releases/latest/download/easytest.phar
 
-Place the Phar in the root directory of your project. You can then run
-EasyTest as follows:
+Place the Phar in the root directory of your project. Run EasyTest as follows:
 
     php easytest.phar
 
@@ -33,7 +32,7 @@ If you make the Phar executable you can run it directly:
 
     ./easytest.phar
 
-Note that PHP must have the Phar extension enabled for this to work.
+Note that PHP must have the Phar extension enabled.
 
 
 Composer
@@ -44,8 +43,7 @@ Install EasyTest using Composer:
     composer require --dev easytest/easytest
 
 Composer installs the 'easytest' executable in its 'bin-dir', which defaults
-to 'vendor/bin'. Assuming the default 'bin-dir', you can then run EasyTest as
-follows:
+to 'vendor/bin'. Assuming the default 'bin-dir', run EasyTest as follows:
 
     ./vendor/bin/easytest
 
@@ -61,7 +59,7 @@ Run EasyTest from the command line:
 
   easytest [OPTION...] [TEST...]
 
-EasyTest accepts zero or more TEST specifiers (described later) to search for
+EasyTest accepts zero or more TEST specifiers (described below) to search for
 tests. If no test specifier is provided, EasyTest defaults to searching the
 current directory for tests.
 
@@ -69,7 +67,7 @@ A "test" is any function or method whose name begins with 'test'. When such a
 function or method is found, it is run. A test "passes" unless an assertion
 fails or some other error occurs. Failures and errors are signalled by the
 throwing of an exception. This means a test typically ends immediately when a
-failure or an error happens, although you can use subtests (described later)
+failure or an error happens, although you can use subtests (described below)
 to continue testing after a failure.
 
 Test methods are organized into test classes, which is any class whose name
@@ -84,10 +82,10 @@ functions and/or test classes.
 
 Test files may be organized into test directories, which is any directory
 whose name begins with 'test'. When such a directory is found, it is searched
-for test files and also for subdirectories whose name also beings with 'test'.
+for test files and also for subdirectories whose name begins with 'test'.
 
 All names are matched case-insensitively. Names that don't match are ignored
-unless the name indicates a fixture function (described later).
+unless the name indicates a fixture function (described below).
 
 If your project uses Composer, EasyTest attempts to load Composer's autoloader
 so your project is automatically visible to your tests.
@@ -99,54 +97,27 @@ of the run.
 Specifying Tests
 ----------------
 
-You can run individual tests or a subset of tests in your test suite by
-invoking EasyTest with one or more test specifiers.
+You can run individual tests or a subset of tests by invoking EasyTest with
+one or more paths to directories or files in your test suite.
 
-
-Path Specifiers
-
-Use a path specifier to run individual test directories or files.
-
-    [--path=]PATH
-
-PATH is a relative or absolute path to a file or directory. The leading
-'--path=' specifier is only necessary if the start of a path name conflicts
-with one of test specifiers described in this section. If the '--path=' prefix
-is used in the first test specifier, it must be preceded by '--' and a space
-to distinguish the test specifier from other options.
-
-A path specifier that corresponds to a file may be followed by a combination
-of function specifiers and class specifiers (described below). The file should
-contain the definitions of the functions and classes specified by the function
-and class specifiers. If a specified function and/or class is not found in the
-file, an error is reported.
-
-
-Function Specifiers
-
-Use a function specifier to run individual test functions within a test file.
+To run specific tests within a file, follow a file path with one or more of
+the following test specifiers:
 
     --function=FUNCTION[,FUNCTION...]
 
-FUNCTION is a fully-qualified function name. Multiple functions may be
-specified by separating each name with a comma. A function specifier must be
-preceded by a file specifier as described above.
-
-
-Class Specifiers
-
-Use a class specifier to run individual test classes with a test file and
-individual test methods within a test class.
+FUNCTION is a fully-qualified function name that is defined in the file.
+Multiple functions may be specified by separating each name with a comma.
 
     --class=CLASS[,CLASS...][::METHOD[,METHOD...]]
 
-CLASS is a fully-qualified class name. Multiple classes may be specified by
-separating each name with a comma. One or more methods may be specified for
-the last class in the list by separating the list of methods from the class
-name with '::'. Multiple methods may be specified by separating each name with
-a comma. A class specifier must be preceded by a file specifier as described
-above.
+CLASS is a fully-qualified class name that is defined in the file. Multiple
+classes may be specified by separating each name with a comma.
 
+To run a specific method within a class, separate the class name and method
+name with '::'. Multiple methods may be specified by separating each name with
+a comma. If multiple classes are listed, methods are associated only with the
+last class in the list. To specify methods for multiple classes, use multiple
+class specifiers.
 
 
 Command Line Options
@@ -224,7 +195,7 @@ easytest\assert_throws(string $exception, callable $callable, [string $msg])
     Failed assertions are signalled by throwing an exception of type
     easytest\Failure. In PHP 7, this is a subclass of PHP's AssertionError.
 
-    Skipped tests (described later) are implemented by throwing an exception
+    Skipped tests (described below) are implemented by throwing an exception
     of type easytest\Skip.
 
 
@@ -321,10 +292,10 @@ The following functions are provided to help with writing custom assertions:
 
 easytest\diff(mixed &$from, mixed &$to, string $from_id, string $to_id,
 [bool $strict = true])
-    Returns a string displaying the difference between $from and $to. $from_id
+    Return a string displaying the difference between $from and $to. $from_id
     and $to_id are used to identify which values changed in the diff. If
-    $strict is set to false, then the diff is generated using loose comparison
-    (==) between $from and $to, otherwise the diff is generated using strict
+    $strict is set to false, the diff is generated using loose comparison (==)
+    between $from and $to, otherwise the diff is generated using strict
     comparison (===).
 
     Note that $from and $to are received as references to detect recursive
@@ -337,14 +308,14 @@ easytest\format_failure_message(string $assertion, [string $reason],
 
     $assertion, if not empty, is used on the first line.
 
-    $reason, if provided and not empty, is used on either the second or first
-    line, depending on whether or not $assertion is empty.
+    $reason, if provided and not empty, is used on the second or first line,
+    depending on whether or not $assertion is empty.
 
     If both $assertion and $reason are empty, the default message "Assertion
     failed" is used.
 
-    $detail, if provided and not empty, is used on either the third or fourth
-    line and below, i.e., it's double-spaced after $assertion and/or $reason.
+    $detail, if provided and not empty, is used on the third or fourth line
+    and below, i.e., it's double-spaced after $assertion and/or $reason.
 
 
 easytest\format_variable(mixed &$variable)
@@ -352,8 +323,9 @@ easytest\format_variable(mixed &$variable)
     are formatted using PHP's var_export() function, but composite data types
     (arrays and objects) are formatted a bit more concisely.
 
-    Note that $variable is received as a reference in order to detect a
-    recursive value.
+    Note that $variable is received as a reference in order to detect
+    recursive values.
+
 
 
 Skipping Tests
@@ -371,12 +343,13 @@ met. Typically you should make these checks at the beginning of a test and
 only continue if the necessary requirements are met.
 
 skip() may be used in test functions to skip individual tests and in fixture
-setup functions (described later) to skip an entire object, file, or directory
+setup functions (described below) to skip an entire object, file, or directory
 of tests. Calling skip() outside of a test or setup function is an error.
 
 Skipping a test does not generate a failure or an error in the test results.
 Although EasyTest indicates when tests are skipped, it does not report details
-unless run in 'verbose' mode (described earlier).
+unless run in 'verbose' mode (described above).
+
 
 
 Context Objects
@@ -437,7 +410,7 @@ easytest\Context::assert_less_or_equal(mixed $actual, mixed $max,
 
 
 easytest\Context::assert_throws(string $exception, callable $callable,
-[string $description], [object &$result])
+[string $description], [Throwable &$result])
     - Passes if invoking $callable() throws an exception that is an instance
       of $exception. The exception instance is saved in $result.
     - Fails if invoking $callable() does not throw an exception.
@@ -489,7 +462,7 @@ easytest\Context::depend_on(string $requisite, [string ...])
     $requisite is the name of a test function or method. Methods are specified
     by writing them as 'ClassName::methodName'. A parameterized test run
     (described below) can be indicated by specifying the run name in
-    parenthesis after the function or method name, e.g., 'foo(run)'.
+    parenthesis after the function or method name, e.g., 'foo(parameter)'.
 
     Although this method may be called multiple times for multiple requisites,
     it is instead recommended to provide all requisites in one call.
@@ -502,9 +475,9 @@ easytest\Context::depend_on(string $requisite, [string ...])
       is assumed to be in the current namespace.
     - If called from a method, a function in the current namespace can be
       specified by passing '::function_name'
-    - If no run is specified, the test is assumed to be a part of the current
-      run. A parameterized test may depend on a non-parameterized test by
-      using empty parenthesis, e.g., 'foo()'.
+    - If a parameterized run is not specified, the test is assumed to be a
+      part of the current run. A parameterized test may depend on a
+      non-parameterized test by using empty parenthesis, e.g., 'foo()'.
     Note that, in order to specify a global name from within a namespace, the
     name must start with a backslash.
 
