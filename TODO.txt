@@ -197,9 +197,6 @@ Release
             'PHP 7.2 or greater required'
         )
 
--   'use function' statements, traits functions, and interface functions (and
-    others?) should not be discovered as test functions
-
 -   Turns out, we need a setup_run() for multiply-executed parameterized tests
 
 

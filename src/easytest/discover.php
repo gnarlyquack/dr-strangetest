@@ -208,19 +208,17 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
         }
 
         list($token_type, $token_name, ) = $tokens[$i];
-        switch ($token_type) {
-        case \T_CLASS:
-        case \T_FUNCTION:
+        if (\T_CLASS === $token_type || \T_FUNCTION === $token_type) {
             // Always parse the identifier so we only match top-level
             // identifiers and not class methods, anonymous objects, etc.
             list($name, $i) = namespace\_parse_identifier($tokens, $i);
             if (!$name) {
-                // anonymous object, although this test might be unnecessary?
-                break;
+                // anonymous object, although this check may be unnecessary?
+                continue;
             }
             if (!isset($checks[$token_type])) {
                 // whatever we're parsing doesn't care about this identifier
-                break;
+                continue;
             }
 
             $fullname = "$ns$name";
@@ -237,7 +235,7 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
             // however it seems like somebody would have to be doing something
             // very bizarre for us to have a false positive here
             if (isset($seen[$seenname]) || !$exists[$token_type]($fullname)) {
-                break;
+                continue;
             }
 
             if ($checks[$token_type]($ns, $name, $fullname)) {
@@ -245,11 +243,22 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
                 // it to the "seen" list
                 $seen[$seenname] = true;
             }
-            break;
-
-        case \T_NAMESPACE:
+        }
+        elseif (\T_NAMESPACE === $token_type) {
             list($ns, $i) = namespace\_parse_namespace($tokens, $i, $ns);
-            break;
+        }
+        elseif (\T_USE === $token_type) {
+            // don't discover 'use function <function name>', etc.
+            $i = namespace\_consume_statement($tokens, $i);
+        }
+        elseif (
+            \T_INTERFACE === $token_type || \T_ABSTRACT === $token_type
+            // @bc 5.3 Check if T_TRAIT is defined
+            || (\defined('T_TRAIT') && \T_TRAIT === $token_type))
+        {
+            // don't discover non-instantiable classes or the functions of
+            // non-class definitions
+            $i = namespace\_consume_definition($tokens, $i);
         }
     }
     return true;
@@ -327,7 +336,17 @@ function _parse_identifier($tokens, $i) {
         }
     }
 
-    // advance token index to the end of the definition
+    $i = namespace\_consume_definition($tokens, $i);
+    return array($identifier, $i);
+}
+
+
+/**
+ * @param mixed[] $tokens
+ * @param int $i
+ * @return int
+ */
+function _consume_definition(array $tokens, $i) {
     while ('{' !== $tokens[$i++]);
     $scope = 1;
     while ($scope) {
@@ -339,8 +358,18 @@ function _parse_identifier($tokens, $i) {
             --$scope;
         }
     }
+    return $i;
+}
 
-    return array($identifier, $i);
+
+/**
+ * @param mixed[] $tokens
+ * @param int $i
+ * @return int
+ */
+function _consume_statement(array $tokens, $i) {
+    while($tokens[++$i] !== ';');
+    return ++$i;
 }
 
 
