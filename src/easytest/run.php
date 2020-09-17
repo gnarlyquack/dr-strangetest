@@ -323,8 +323,8 @@ function run_test(
     }
 
     $update_run = false;
-    if ($args instanceof ArgumentLists) {
-        $arglists = $args->arglists();
+    if ($args instanceof ArgumentSets) {
+        $arglists = $args->argsets();
         if (\is_iterable($arglists)) {
             $update_run = true;
         }
@@ -499,7 +499,7 @@ function run_directory_teardown(
     \assert(
         null === $args
         || \is_array($args)
-        || ($args instanceof ArgumentLists)
+        || ($args instanceof ArgumentSets)
     );
 
     if ($directory->teardown) {
@@ -908,9 +908,9 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null) {
             // #BC(5.5): Use proxy function for argument unpacking
             namespace\unpack_function($callable, $args);
         }
-        elseif ($args instanceof ArgumentLists) {
+        elseif ($args instanceof ArgumentSets) {
             // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable, $args->arglists());
+            \call_user_func($callable, $args->argsets());
         }
         else {
             // #BC(5.3): Invoke (possible) object method using call_user_func()

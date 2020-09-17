@@ -6,7 +6,7 @@ use easytest;
 
 
 function setup_file() {
-    return easytest\arglists(
+    return easytest\make_argument_sets(
         array(
             1,
             array(2, 3),

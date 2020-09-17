@@ -9,7 +9,7 @@ function setup_directory() {
         yield [1, 2];
         yield [2, 4];
     };
-    return easytest\arglists($generate());
+    return easytest\make_argument_sets($generate());
 }
 
 function teardown_directory() {

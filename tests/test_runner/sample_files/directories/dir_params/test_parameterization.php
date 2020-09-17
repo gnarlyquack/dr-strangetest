@@ -6,7 +6,7 @@ use easytest;
 
 
 function setup_file($one, $two) {
-    return easytest\arglists(array(
+    return easytest\make_argument_sets(array(
         array($one, 2 * $one),
         array($two, $two / 2)
     ));

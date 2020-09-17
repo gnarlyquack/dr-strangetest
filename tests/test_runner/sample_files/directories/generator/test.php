@@ -9,7 +9,7 @@ function setup_file($one, $two) {
         yield [$one, $two, 5, 6];
         yield [$one, $two, 7, 8];
     };
-    return easytest\arglists($generate());
+    return easytest\make_argument_sets($generate());
 }
 
 

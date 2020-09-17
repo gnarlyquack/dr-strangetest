@@ -7,7 +7,7 @@ use easytest;
 
 function setup_directory() {
     echo __DIR__;
-    return easytest\arglists(array(
+    return easytest\make_argument_sets(array(
         array(2, 4),
         array(8, 16)
     ));

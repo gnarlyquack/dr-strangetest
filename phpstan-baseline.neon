@@ -931,31 +931,6 @@ parameters:
 			path: src/easytest/main.php
 
 		-
-			message: "#^Property easytest\\\\ArgumentLists\\:\\:\\$arglists has no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
-			message: "#^Method easytest\\\\ArgumentLists\\:\\:__construct\\(\\) has parameter \\$arglists with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
-			message: "#^Method easytest\\\\ArgumentLists\\:\\:arglists\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
-			message: "#^Function easytest\\\\arglists\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
-			message: "#^Function easytest\\\\arglists\\(\\) has parameter \\$arglists with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
 			message: "#^Function easytest\\\\main\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/main.php

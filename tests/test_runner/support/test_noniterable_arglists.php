@@ -6,7 +6,7 @@ use easytest;
 
 
 function setup_file() {
-    return easytest\arglists(1);
+    return easytest\make_argument_sets(1);
 }
 
 function teardown_file($arg) {

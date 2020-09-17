@@ -233,4 +233,6 @@ Future / Wishlist
 
 -   Support "higher-level" dependencies, i.e., declaring a dependency on an
     entire class, file, or directory, all of whose tests must pass in order
-    for the dependency to be satisfied
+    for the dependency to be satisfied. This probably means we want setup
+    fixtures to be able to declare dependencies (and retrieve state), and
+    teardown fixtures to be able to set state.

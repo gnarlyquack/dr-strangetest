@@ -121,23 +121,38 @@ final class State extends struct {
 }
 
 
-final class ArgumentLists {
-    private $arglists;
+/**
+ * @api
+ */
+final class ArgumentSets {
+    /** @var mixed */
+    private $argsets;
 
 
-    public function __construct($arglists) {
-        $this->arglists = $arglists;
+    /**
+     * @param mixed $argsets
+     */
+    public function __construct($argsets) {
+        $this->argsets = $argsets;
     }
 
 
-    public function arglists() {
-        return $this->arglists;
+    /**
+     * @return mixed
+     */
+    public function argsets() {
+        return $this->argsets;
     }
 }
 
 
-function arglists($arglists) {
-    return new ArgumentLists($arglists);
+/**
+ * @api
+ * @param mixed $argsets
+ * @return ArgumentSets
+ */
+function make_argument_sets($argsets) {
+    return new ArgumentSets($argsets);
 }
 
 

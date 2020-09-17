@@ -4,7 +4,7 @@ namespace param_xdepend\param;
 use easytest;
 
 function setup_file() {
-    return easytest\arglists(array(array(2), array(4)));
+    return easytest\make_argument_sets(array(array(2), array(4)));
 }
 
 
