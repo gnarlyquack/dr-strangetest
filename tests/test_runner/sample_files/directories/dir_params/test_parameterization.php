@@ -20,6 +20,12 @@ function teardown_file($arglists) {
     echo \implode(' ', $args);
 }
 
+
+function setup_run_for_file($one, $two) {
+    echo "$one $two";
+    return array($one, $two);
+}
+
 function teardown_run_for_file($one, $two) {
     echo "$one $two";
 }

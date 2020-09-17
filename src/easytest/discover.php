@@ -121,37 +121,24 @@ function _discover_directory_setup(
 
     if ($error) {
         if ($error & namespace\ERROR_SETUP) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple setup fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->setup)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $directory->setup);
         }
         if ($error & namespace\ERROR_TEARDOWN) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->teardown)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $directory->teardown);
+        }
+        if ($error & namespace\ERROR_SETUP_RUN) {
+            namespace\_log_fixture_error($logger, $filepath, $directory->setup_run);
         }
         if ($error & namespace\ERROR_TEARDOWN_RUN) {
-            $logger->log_error(
-                $filepath,
-                \sprintf(
-                    "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $directory->teardown_run)
-                )
-            );
+            namespace\_log_fixture_error($logger, $filepath, $directory->teardown_run);
         }
         return false;
     }
 
     $directory->setup = $directory->setup ? $directory->setup[0] : null;
     $directory->teardown = $directory->teardown ? $directory->teardown[0] : null;
+    $directory->setup_run
+        = $directory->setup_run ? $directory->setup_run[0] : null;
     $directory->teardown_run
         = $directory->teardown_run ? $directory->teardown_run[0] : null;
     return $directory;
@@ -163,10 +150,18 @@ function _is_directory_setup_function(
 ) {
     if (\preg_match('~^(setup|teardown)_?(run)?~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
-            if ($directory->setup) {
-                $error |= namespace\ERROR_SETUP;
+            if (isset($matches[2])) {
+                if ($directory->setup_run) {
+                    $error |= namespace\ERROR_SETUP_RUN;
+                }
+                $directory->setup_run[] = $fullname;
             }
-            $directory->setup[] = $fullname;
+            else {
+                if ($directory->setup) {
+                    $error |= namespace\ERROR_SETUP;
+                }
+                $directory->setup[] = $fullname;
+            }
         }
         else {
             if (isset($matches[2])) {
@@ -437,6 +432,9 @@ function discover_file(State $state, BufferingLogger $logger, $filepath) {
         if ($error & namespace\ERROR_SETUP) {
             namespace\_log_fixture_error($logger, $filepath, $file->setup);
         }
+        if ($error & namespace\ERROR_SETUP_RUN) {
+            namespace\_log_fixture_error($logger, $filepath, $file->setup_run);
+        }
         if ($error & namespace\ERROR_SETUP_FUNCTION) {
             namespace\_log_fixture_error($logger, $filepath, $file->setup_function);
         }
@@ -458,6 +456,8 @@ function discover_file(State $state, BufferingLogger $logger, $filepath) {
     else {
         $file->setup = $file->setup ? $file->setup[0] : null;
         $file->teardown = $file->teardown ? $file->teardown[0] : null;
+        $file->setup_run
+            = $file->setup_run ? $file->setup_run[0] : null;
         $file->teardown_run
             = $file->teardown_run ? $file->teardown_run[0] : null;
         $file->setup_function
@@ -508,18 +508,24 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
 
     if (\preg_match('~^(setup|teardown)_?(file|run)?~i', $function, $matches)) {
         if (0 === \strcasecmp('setup', $matches[1])) {
-            if (isset($matches[2]) && 0 === \strcasecmp('file', $matches[2])) {
-                if ($file->setup) {
-                    $error |= namespace\ERROR_SETUP;
-                }
-                $file->setup[] = $fullname;
-            }
-            else {
+            if (!isset($matches[2])) {
                 if ($file->setup_function) {
                     $error |= namespace\ERROR_SETUP_FUNCTION;
                 }
                 $file->setup_function[] = $fullname;
                 $file->setup_function_name = $function;
+            }
+            elseif (0 === \strcasecmp('run', $matches[2])) {
+                if ($file->setup_run) {
+                    $error |= namespace\ERROR_SETUP_RUN;
+                }
+                $file->setup_run[] = $fullname;
+            }
+            else {
+                if ($file->setup) {
+                    $error |= namespace\ERROR_SETUP;
+                }
+                $file->setup[] = $fullname;
             }
         }
         else {
@@ -530,17 +536,17 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
                 $file->teardown_function[] = $fullname;
                 $file->teardown_function_name = $function;
             }
-            elseif (0 === \strcasecmp('file', $matches[2])) {
-                if ($file->teardown) {
-                    $error |= namespace\ERROR_TEARDOWN;
-                }
-                $file->teardown[] = $fullname;
-            }
-            else {
+            elseif (0 === \strcasecmp('run', $matches[2])) {
                 if ($file->teardown_run) {
                     $error |= namespace\ERROR_TEARDOWN_RUN;
                 }
                 $file->teardown_run[] = $fullname;
+            }
+            else {
+                if ($file->teardown) {
+                    $error |= namespace\ERROR_TEARDOWN;
+                }
+                $file->teardown[] = $fullname;
             }
         }
         return true;

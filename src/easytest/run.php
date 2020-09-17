@@ -358,6 +358,23 @@ function run_test(
             $this_run_id[] = $i;
         }
 
+        list($result, $arglist) = $test->setup_run($logger, $arglist, $this_run_id);
+        if (namespace\RESULT_PASS !== $result) {
+            continue;
+        }
+        if (\is_iterable($arglist)) {
+            if (!\is_array($arglist)) {
+                $arglist = \iterator_to_array($arglist);
+            }
+        }
+        elseif ($arglist !== null) {
+            $message = "'{$test->setup_run}' returned a non-iterable argument list";
+            if ($update_run) {
+                $message .= "\nfor argument list '{$i}'";
+            }
+            $logger->log_error($test->name, $message);
+            continue;
+        }
         $test->run($state, $logger, $arglist, $this_run_id, $targets);
         $test->teardown_run($logger, $arglist, $this_run_id);
     }
@@ -376,6 +393,32 @@ function run_directory_setup(
         $name = "{$directory->setup}{$run}";
         namespace\start_buffering($logger, $name);
         $result = namespace\_run_setup($logger, $name, $directory->setup, $args);
+        namespace\end_buffering($logger);
+    }
+    else {
+        $result = array(namespace\RESULT_PASS, $args);
+    }
+    return $result;
+}
+
+
+/**
+ * @param BufferingLogger $logger
+ * @param DirectoryTest $directory
+ * @param ?mixed[] $args
+ * @param string $run
+ * @return array{int, ?mixed[]}
+ */
+function run_directory_setup_run(
+    BufferingLogger $logger,
+    DirectoryTest $directory,
+    array $args = null,
+    $run = null
+) {
+    if ($directory->setup_run) {
+        $name = "{$directory->setup_run}{$run}";
+        namespace\start_buffering($logger, $name);
+        $result = namespace\_run_setup($logger, $name, $directory->setup_run, $args);
         namespace\end_buffering($logger);
     }
     else {
@@ -478,6 +521,32 @@ function run_file_setup(
         $name = "{$file->setup}{$run}";
         namespace\start_buffering($logger, $name);
         $result = namespace\_run_setup($logger, $name, $file->setup, $args);
+        namespace\end_buffering($logger);
+    }
+    else {
+        $result = array(namespace\RESULT_PASS, $args);
+    }
+    return $result;
+}
+
+
+/**
+ * @param BufferingLogger $logger
+ * @param FileTest $file
+ * @param ?mixed[] $args
+ * @param string $run
+ * @return array{int, ?mixed[]}
+ */
+function run_file_setup_run(
+    BufferingLogger $logger,
+    FileTest $file,
+    array $args = null,
+    $run = null
+) {
+    if ($file->setup_run) {
+        $name = "{$file->setup_run}{$run}";
+        namespace\start_buffering($logger, $name);
+        $result = namespace\_run_setup($logger, $name, $file->setup_run, $args);
         namespace\end_buffering($logger);
     }
     else {

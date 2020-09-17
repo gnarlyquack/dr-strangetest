@@ -19,6 +19,7 @@ const ERROR_TEARDOWN          = 0x02;
 const ERROR_SETUP_FUNCTION    = 0x04;
 const ERROR_TEARDOWN_FUNCTION = 0x08;
 const ERROR_TEARDOWN_RUN      = 0x10;
+const ERROR_SETUP_RUN         = 0x20;
 
 const EVENT_PASS   = 1;
 const EVENT_FAIL   = 2;

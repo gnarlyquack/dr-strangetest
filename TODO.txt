@@ -36,8 +36,6 @@ Release
 
     -   Accessing unset dependency state
 
-    -   Test argument lists returned by setup_directory()
-
 -   Targets:
 
     -   find_class_target: don't use 'method_exists' to check if a target
@@ -197,7 +195,18 @@ Release
             'PHP 7.2 or greater required'
         )
 
--   Turns out, we need a setup_run() for multiply-executed parameterized tests
+-   Test parameterization
+
+    -   Test validation of argument lists returned by directory setup
+
+    -   Test teardown_run for directories, including handling of multiple
+        teardown_run functions
+
+    -   Test setup_run for files, including handling of multiple setup_run
+        functions
+
+    -   Test setup_run for directories, including handing of multiple
+        setup_run functions
 
 
 Future / Wishlist

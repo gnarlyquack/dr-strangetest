@@ -464,12 +464,12 @@ class TestDirectories {
             array(
                 easytest\EVENT_ERROR,
                 "$path/setup.php",
-                "Multiple setup fixtures found:\n\tsetup_directory_multiple_fixtures\n\tSetupDirectoryMultipleFixtures",
+                "Multiple conflicting fixture functions found:\n    1) setup_directory_multiple_fixtures\n    2) SetupDirectoryMultipleFixtures",
             ),
             array(
                 easytest\EVENT_ERROR,
                 "$path/setup.php",
-                "Multiple teardown fixtures found:\n\tteardown_directory_multiple_fixtures\n\tTeardownDirectoryMultipleFixtures",
+                "Multiple conflicting fixture functions found:\n    1) teardown_directory_multiple_fixtures\n    2) TeardownDirectoryMultipleFixtures",
             ),
         );
         $this->assert_log($expected);
@@ -488,6 +488,11 @@ class TestDirectories {
             ),
 
 
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\setup_run_for_file (0, 0)',
+                '2 4',
+            ),
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (0, 0)',
@@ -514,6 +519,11 @@ class TestDirectories {
                 '2 4',
             ),
 
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\setup_run_for_file (0, 1)',
+                '4 2',
+            ),
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (0, 1)',
@@ -555,6 +565,11 @@ class TestDirectories {
 
             array(
                 easytest\EVENT_OUTPUT,
+                'dir_params\\setup_run_for_file (1, 0)',
+                '8 16',
+            ),
+            array(
+                easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (1, 0)',
                 '8 16',
             ),
@@ -579,6 +594,11 @@ class TestDirectories {
                 '8 16',
             ),
 
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\setup_run_for_file (1, 1)',
+                '16 8',
+            ),
             array(
                 easytest\EVENT_OUTPUT,
                 'dir_params\\test_function (1, 1)',

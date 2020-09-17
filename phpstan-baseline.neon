@@ -281,6 +281,11 @@ parameters:
 			path: src/easytest/discover.php
 
 		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$setup_run \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
 			message: "#^Function easytest\\\\_is_directory_setup_function\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/discover.php
@@ -407,6 +412,11 @@ parameters:
 
 		-
 			message: "#^Function easytest\\\\discover_file\\(\\) has parameter \\$filepath with no typehint specified\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup_run \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
 			path: src/easytest/discover.php
 
