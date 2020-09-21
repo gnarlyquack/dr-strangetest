@@ -7,7 +7,8 @@ Added
 - Show the memory used during a test run.
 - Support test dependencies: a test can declare a dependency on other tests
   and will only be run if all the tests it depends on pass.
-- Add 'teardown_run' to teardown each parameterized test run.
+- Add 'setup_run' and 'teardown_run' to manage test fixture for each
+  parameterized test run.
 - Allow limiting a test run to individual functions, classes, and/or methods
   within a test suite.
 
@@ -27,6 +28,7 @@ Fixed
 - Show object instance IDs to distinguish equal but non-identical objects.
 - Generate accurate diffs for loosely-compared values.
 - Consistently determine the root test directory.
+- File parsing handles non-class and non-function definitions and statements.
 
 
 

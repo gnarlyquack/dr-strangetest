@@ -291,10 +291,10 @@ The following functions are provided to help with writing custom assertions:
 
 
 easytest\diff(mixed &$from, mixed &$to, string $from_id, string $to_id,
-[bool $strict = true])
+[bool $loose = false])
     Return a string displaying the difference between $from and $to. $from_id
     and $to_id are used to identify which values changed in the diff. If
-    $strict is set to false, the diff is generated using loose comparison (==)
+    $loose is set to true, the diff is generated using loose comparison (==)
     between $from and $to, otherwise the diff is generated using strict
     comparison (===).
 
