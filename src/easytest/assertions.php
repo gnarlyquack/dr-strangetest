@@ -46,7 +46,7 @@ function assert_equal($expected, $actual, $description = null) {
     $message = namespace\format_failure_message(
         'Assertion "$expected == $actual" failed',
         $description,
-        namespace\diff($expected, $actual, '$expected', '$actual', false)
+        namespace\diff($expected, $actual, '$expected', '$actual', true)
     );
     throw new Failure($message);
 }

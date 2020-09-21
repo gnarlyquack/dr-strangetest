@@ -14,7 +14,7 @@ use easytest;
 
 function assert_diff(&$from, &$to, $expected) {
     $expected = "- from\n+ to\n\n" . $expected;
-    $actual = easytest\diff($from, $to, 'from', 'to', false);
+    $actual = easytest\diff($from, $to, 'from', 'to', true);
     easytest\assert_identical($expected, $actual);
 }
 
