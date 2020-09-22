@@ -1,3 +1,26 @@
+0.5.0 (2020-09-22)
+==================
+
+Added
+-----
+- Add fixture functions 'setup_runs' to initialize multiple arguments and
+  'teardown_runs' to clean them up.
+
+Changed
+-------
+- Directory and file fixture functions can no longer initialize and clean up
+  multiple arguments sets. Instead they are run once per argument set and can
+  manage arguments provided by 'setup_runs'.
+
+Removed
+-------
+- Remove 'setup_run' and 'teardown_run'. Use directory and file fixture
+  functions instead.
+- Remove 'easytest\make_argument_sets'. Only 'setup_runs' can return multiple
+  arguments sets and it can only return multiple argument sets.
+
+
+
 0.4.0 (2020-09-20)
 ==================
 

@@ -8,7 +8,7 @@
 namespace easytest;
 
 const PROGRAM_NAME    = 'EasyTest';
-const PROGRAM_VERSION = '0.4.0';
+const PROGRAM_VERSION = '0.5.0';
 
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
