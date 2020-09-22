@@ -27,8 +27,10 @@ final class DirectoryTest extends struct {
     public $setup;
     public $teardown;
     /** @var ?callable-string */
-    public $setup_run;
-    public $teardown_run;
+    public $setup_runs;
+
+    /** @var ?callable-string */
+    public $teardown_runs;
     public $tests = array();
 
 
@@ -59,26 +61,32 @@ final class DirectoryTest extends struct {
     /**
      * @param BufferingLogger $logger
      * @param ?mixed[] $args
-     * @param array<int|string> $run_id
-     * @return array{int, ?mixed[]}
+     * @param ?string $run_name
+     * @param ?bool $update_run
+     * @return array{int, array<?mixed[]>}
      */
-    public function setup_run(
+    public function setup_runs(
         BufferingLogger $logger,
         $args = null,
-        array $run_id = null
+        $run_name,
+        &$update_run
     ) {
-        $run = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-        return namespace\run_directory_setup_run($logger, $this, $args, $run);
+        return namespace\run_directory_setup_runs($logger, $this, $args, $run_name, $update_run);
     }
 
 
-    public function teardown_run(
+    /**
+     * @param BufferingLogger $logger
+     * @param mixed $args
+     * @param ?string $run_name
+     * @return void
+     */
+    public function teardown_runs(
         BufferingLogger $logger,
         $args = null,
-        $run_id = null
+        $run_name = null
     ) {
-        $run = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-        namespace\run_directory_teardown_run($logger, $this, $args, $run);
+        namespace\run_directory_teardown_runs($logger, $this, $args, $run_name);
     }
 
 
@@ -96,8 +104,10 @@ final class FileTest extends struct {
     public $setup;
     public $teardown;
     /** @var ?callable-string */
-    public $setup_run;
-    public $teardown_run;
+    public $setup_runs;
+
+    /** @var ?callable-string */
+    public $teardown_runs;
     public $tests = array();
 
     public $setup_function;
@@ -133,26 +143,32 @@ final class FileTest extends struct {
     /**
      * @param BufferingLogger $logger
      * @param ?mixed[] $args
-     * @param array<int|string> $run_id
-     * @return array{int, ?mixed[]}
+     * @param ?string $run_name
+     * @param ?bool $update_run
+     * @return array{int, array<?mixed[]>}
      */
-    public function setup_run(
+    public function setup_runs(
         BufferingLogger $logger,
         $args = null,
-        array $run_id = null
+        $run_name,
+        &$update_run
     ) {
-        $run = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-        return namespace\run_file_setup_run($logger, $this, $args, $run);
+        return namespace\run_file_setup_runs($logger, $this, $args, $run_name, $update_run);
     }
 
 
-    public function teardown_run(
+    /**
+     * @param BufferingLogger $logger
+     * @param ?mixed $args
+     * @param ?string $run_name
+     * @return void
+     */
+    public function teardown_runs(
         BufferingLogger $logger,
         $args = null,
-        $run_id = null
+        $run_name = null
     ) {
-        $run = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-        namespace\run_file_teardown_run($logger, $this, $args, $run);
+        namespace\run_file_teardown_runs($logger, $this, $args, $run_name);
     }
 
 
@@ -207,14 +223,24 @@ final class ClassTest extends struct {
     /**
      * @param BufferingLogger $logger
      * @param ?mixed[] $args
-     * @param array<int|string> $run_id
-     * @return array{int, ?mixed[]}
+     * @param ?string $run_name
+     * @param ?bool $update_run
+     * @return array{int, array<?mixed[]>}
      */
-    public function setup_run(BufferingLogger $logger, $args = null, array $run_id = null) {
-        return array(namespace\RESULT_PASS, $args);
+    public function setup_runs(
+        BufferingLogger $logger,
+        $args = null,
+        $run_name,
+        &$update_run
+    ) {
+        $update_run = false;
+        return array(namespace\RESULT_PASS, array($args));
     }
 
-    public function teardown_run() {}
+    /**
+     * @return void
+     */
+    public function teardown_runs() {}
 
 
     public function run(
@@ -264,14 +290,24 @@ final class FunctionTest extends struct {
     /**
      * @param BufferingLogger $logger
      * @param ?mixed[] $args
-     * @param ?array<int|string> $run_id
-     * @return array{int, ?mixed[]}
+     * @param ?string $run_name
+     * @param ?bool $update_run
+     * @return array{int, array<?mixed[]>}
      */
-    public function setup_run(BufferingLogger $logger, $args = null, array $run_id = null) {
-        return array(namespace\RESULT_PASS, $args);
+    public function setup_runs(
+        BufferingLogger $logger,
+        $args = null,
+        $run_name,
+        &$update_run
+    ) {
+        $update_run = false;
+        return array(namespace\RESULT_PASS, array($args));
     }
 
-    public function teardown_run() {}
+    /**
+     * @return void
+     */
+    public function teardown_runs() {}
 
 
     public function run(

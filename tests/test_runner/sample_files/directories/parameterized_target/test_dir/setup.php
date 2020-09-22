@@ -5,12 +5,15 @@ namespace param_target\dir;
 use easytest;
 
 
-function setup_directory($one) {
+function setup_runs_for_directory($one) {
     echo __DIR__;
-    return easytest\make_argument_sets(array(array($one), array(3)));
+    return array(
+        array($one),
+        array(3)
+    );
 }
 
 
-function teardown_directory($arglists) {
+function teardown_runs_for_directory($arglists) {
     echo __DIR__;
 }

@@ -317,69 +317,62 @@ function run_test(
     }
 
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-    list($result, $args) = $test->setup($logger, $args, $run_name);
+    list($result, $args) = $test->setup_runs($logger, $args, $run_name, $update_run);
     if (namespace\RESULT_PASS !== $result) {
         return;
     }
 
-    $update_run = false;
-    if ($args instanceof ArgumentSets) {
-        $arglists = $args->argsets();
-        if (\is_iterable($arglists)) {
-            $update_run = true;
-        }
-        else {
-            $arglists = array($arglists);
-        }
+    if (!\is_iterable($args)) {
+        $message = "'{$test->setup_runs}' returned a non-iterable argument set";
+        $logger->log_error($test->name, $message);
     }
     else {
-        $arglists = array($args);
-    }
-
-    foreach ($arglists as $i => $arglist) {
-        if (isset($arglist)) {
-            if (\is_iterable($arglist)) {
-                if (!\is_array($arglist)) {
-                    $arglist = \iterator_to_array($arglist);
+        foreach ($args as $i => $argset) {
+            if (isset($argset)) {
+                if (\is_iterable($argset)) {
+                    if (!\is_array($argset)) {
+                        $argset = \iterator_to_array($argset);
+                    }
+                }
+                else {
+                    $message = "'{$test->setup_runs}' returned a non-iterable argument set";
+                    if ($update_run) {
+                        $message .= "\nfor argument set '{$i}'";
+                    }
+                    $logger->log_error($test->name, $message);
+                    continue;
                 }
             }
-            else {
-                $message = "'{$test->setup}' returned a non-iterable argument list";
-                if ($update_run) {
-                    $message .= "\nfor argument list '{$i}'";
-                }
-                $logger->log_error($test->name, $message);
+
+            $this_run_id = $run_id;
+            $this_run_name = $run_name;
+            if ($update_run) {
+                $this_run_id[] = $i;
+                $this_run_name = \sprintf(' (%s)', \implode(', ', $this_run_id));
+            }
+
+            list($result, $argset) = $test->setup($logger, $argset, $this_run_name);
+            if (namespace\RESULT_PASS !== $result) {
                 continue;
             }
-        }
-
-        $this_run_id = $run_id;
-        if ($update_run) {
-            $this_run_id[] = $i;
-        }
-
-        list($result, $arglist) = $test->setup_run($logger, $arglist, $this_run_id);
-        if (namespace\RESULT_PASS !== $result) {
-            continue;
-        }
-        if (\is_iterable($arglist)) {
-            if (!\is_array($arglist)) {
-                $arglist = \iterator_to_array($arglist);
+            if ($argset !== null && !\is_iterable($argset)) {
+                $message = "'{$test->setup}' returned a non-iterable argument set";
+                if ($update_run) {
+                    $message .= "\nfor argument set '{$i}'";
+                }
+                $logger->log_error($test->name, $message);
             }
-        }
-        elseif ($arglist !== null) {
-            $message = "'{$test->setup_run}' returned a non-iterable argument list";
-            if ($update_run) {
-                $message .= "\nfor argument list '{$i}'";
+            else {
+                if ($argset !== null && !\is_array($argset)) {
+                    $argset = \iterator_to_array($argset);
+                }
+                $test->run($state, $logger, $argset, $this_run_id, $targets);
             }
-            $logger->log_error($test->name, $message);
-            continue;
+            $test->teardown($state, $logger, $argset, $this_run_name);
         }
-        $test->run($state, $logger, $arglist, $this_run_id, $targets);
-        $test->teardown_run($logger, $arglist, $this_run_id);
     }
 
-    $test->teardown($state, $logger, $args, $run_name);
+    $test->teardown_runs($logger, $args, $run_name);
 }
 
 
@@ -407,22 +400,26 @@ function run_directory_setup(
  * @param DirectoryTest $directory
  * @param ?mixed[] $args
  * @param string $run
- * @return array{int, ?mixed[]}
+ * @param ?bool $update_run
+ * @return array{int, array<?mixed[]>}
  */
-function run_directory_setup_run(
+function run_directory_setup_runs(
     BufferingLogger $logger,
     DirectoryTest $directory,
     array $args = null,
-    $run = null
+    $run = null,
+    &$update_run
 ) {
-    if ($directory->setup_run) {
-        $name = "{$directory->setup_run}{$run}";
+    if ($directory->setup_runs) {
+        $update_run = true;
+        $name = "{$directory->setup_runs}{$run}";
         namespace\start_buffering($logger, $name);
-        $result = namespace\_run_setup($logger, $name, $directory->setup_run, $args);
+        $result = namespace\_run_setup($logger, $name, $directory->setup_runs, $args);
         namespace\end_buffering($logger);
     }
     else {
-        $result = array(namespace\RESULT_PASS, $args);
+        $update_run = false;
+        $result = array(namespace\RESULT_PASS, array($args));
     }
     return $result;
 }
@@ -475,16 +472,23 @@ function _run_directory_test(
 }
 
 
-function run_directory_teardown_run(
+/**
+ * @param BufferingLogger $logger
+ * @param DirectoryTest $directory
+ * @param mixed $args
+ * @param ?string $run
+ * @return void
+ */
+function run_directory_teardown_runs(
     BufferingLogger $logger,
     DirectoryTest $directory,
-    array $args = null,
+    $args = null,
     $run = null
 ) {
-    if ($directory->teardown_run) {
-        $name = "{$directory->teardown_run}{$run}";
+    if ($directory->teardown_runs) {
+        $name = "{$directory->teardown_runs}{$run}";
         namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $directory->teardown_run, $args);
+        namespace\_run_teardown($logger, $name, $directory->teardown_runs, $args, false);
         namespace\end_buffering($logger);
     }
 }
@@ -496,12 +500,6 @@ function run_directory_teardown(
     $args = null,
     $run = null
 ) {
-    \assert(
-        null === $args
-        || \is_array($args)
-        || ($args instanceof ArgumentSets)
-    );
-
     if ($directory->teardown) {
         $name = "{$directory->teardown}{$run}";
         namespace\start_buffering($logger, $name);
@@ -534,23 +532,27 @@ function run_file_setup(
  * @param BufferingLogger $logger
  * @param FileTest $file
  * @param ?mixed[] $args
- * @param string $run
- * @return array{int, ?mixed[]}
+ * @param ?string $run
+ * @param ?bool $update_run
+ * @return array{int, array<?mixed[]>}
  */
-function run_file_setup_run(
+function run_file_setup_runs(
     BufferingLogger $logger,
     FileTest $file,
     array $args = null,
-    $run = null
+    $run = null,
+    &$update_run
 ) {
-    if ($file->setup_run) {
-        $name = "{$file->setup_run}{$run}";
+    if ($file->setup_runs) {
+        $update_run = true;
+        $name = "{$file->setup_runs}{$run}";
         namespace\start_buffering($logger, $name);
-        $result = namespace\_run_setup($logger, $name, $file->setup_run, $args);
+        $result = namespace\_run_setup($logger, $name, $file->setup_runs, $args);
         namespace\end_buffering($logger);
     }
     else {
-        $result = array(namespace\RESULT_PASS, $args);
+        $update_run = false;
+        $result = array(namespace\RESULT_PASS, array($args));
     }
     return $result;
 }
@@ -618,16 +620,23 @@ function _run_file_test(
 }
 
 
-function run_file_teardown_run(
+/**
+ * @param BufferingLogger $logger
+ * @param FileTest $file
+ * @param mixed $args
+ * @param ?string $run
+ * @return void
+ */
+function run_file_teardown_runs(
     BufferingLogger $logger,
     FileTest $file,
-    array $args = null,
+    $args = null,
     $run = null
 ) {
-    if ($file->teardown_run) {
-        $name = "{$file->teardown_run}{$run}";
+    if ($file->teardown_runs) {
+        $name = "{$file->teardown_runs}{$run}";
         namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $file->teardown_run, $args);
+        namespace\_run_teardown($logger, $name, $file->teardown_runs, $args, false);
         namespace\end_buffering($logger);
     }
 }
@@ -898,19 +907,14 @@ function _run_test_function(
 }
 
 
-function _run_teardown(Logger $logger, $name, $callable, $args = null) {
+/**
+ * @param ?bool $unpack
+ */
+function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack = true) {
     try {
-        if (!isset($args)) {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable);
-        }
-        elseif(\is_array($args)) {
+        if($unpack && \is_array($args)) {
             // #BC(5.5): Use proxy function for argument unpacking
             namespace\unpack_function($callable, $args);
-        }
-        elseif ($args instanceof ArgumentSets) {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
-            \call_user_func($callable, $args->argsets());
         }
         else {
             // #BC(5.3): Invoke (possible) object method using call_user_func()

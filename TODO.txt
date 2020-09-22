@@ -34,8 +34,6 @@ Release
         one or more directories in the hierarchy are parameterized with
         multiple argument lists
 
-    -   Accessing unset dependency state
-
 -   Targets:
 
     -   find_class_target: don't use 'method_exists' to check if a target
@@ -187,14 +185,6 @@ Release
         outcome of a parameterized requisite, assuming the requisite saves
         state?
 
--   Change skip() (or add a skip_if()?) to take a boolean parameter indicating
-    whether or not a skip should be thrown? This could make code a bit cleaner
-    as you wouldn't need to write explicit if conditions. E.g.:
-        skip(
-            \version_compare(PHP_VERSION, '7.2', '<'),
-            'PHP 7.2 or greater required'
-        )
-
 -   Test parameterization
 
     -   Test validation of argument lists returned by directory setup
@@ -207,6 +197,11 @@ Release
 
     -   Test setup_run for directories, including handing of multiple
         setup_run functions
+
+    -   Setup functions that are generators do not execute when called, but
+        when iterated. This mean generator functions that have output escape
+        our output buffering. We need to buffer both each iteration and the
+        conversion of an iterator to an array in run_test().
 
 
 Future / Wishlist

@@ -483,14 +483,20 @@ class TestDirectories {
         $expected = array(
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\setup_directory',
+                'dir_params\\setup_runs_for_directory',
                 $path,
             ),
 
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\setup_directory (0)',
+                '2 4',
+            ),
+
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\setup_run_for_file (0, 0)',
+                'dir_params\\setup_file (0, 0)',
                 '2 4',
             ),
             array(
@@ -515,13 +521,13 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_run_for_file (0, 0)',
+                'dir_params\\teardown_file (0, 0)',
                 '2 4',
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\setup_run_for_file (0, 1)',
+                'dir_params\\setup_file (0, 1)',
                 '4 2',
             ),
             array(
@@ -546,18 +552,18 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_run_for_file (0, 1)',
+                'dir_params\\teardown_file (0, 1)',
                 '4 2',
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_file (0)',
+                'dir_params\\teardown_runs_for_file (0)',
                 '2 4 4 2',
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_run_for_directory (0)',
+                'dir_params\\teardown_directory (0)',
                 '2 4',
             ),
 
@@ -565,7 +571,13 @@ class TestDirectories {
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\setup_run_for_file (1, 0)',
+                'dir_params\\setup_directory (1)',
+                '8 16',
+            ),
+
+            array(
+                easytest\EVENT_OUTPUT,
+                'dir_params\\setup_file (1, 0)',
                 '8 16',
             ),
             array(
@@ -590,13 +602,13 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_run_for_file (1, 0)',
+                'dir_params\\teardown_file (1, 0)',
                 '8 16',
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\setup_run_for_file (1, 1)',
+                'dir_params\\setup_file (1, 1)',
                 '16 8',
             ),
             array(
@@ -621,25 +633,25 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_run_for_file (1, 1)',
+                'dir_params\\teardown_file (1, 1)',
                 '16 8',
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_file (1)',
+                'dir_params\\teardown_runs_for_file (1)',
                 '8 16 16 8',
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_run_for_directory (1)',
+                'dir_params\\teardown_directory (1)',
                 '8 16',
             ),
 
 
             array(
                 easytest\EVENT_OUTPUT,
-                'dir_params\\teardown_directory',
+                'dir_params\\teardown_runs_for_directory',
                 $path,
             ),
         );
@@ -654,13 +666,13 @@ class TestDirectories {
         $expected = array(
             array(
                 easytest\EVENT_OUTPUT,
-                'subdir_params\\setup_directory',
+                'subdir_params\\setup_runs_for_directory',
                 $path,
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
-                'subdir_params\\subdir\\setup_directory (0)',
+                'subdir_params\\subdir\\setup_runs_for_directory (0)',
                 "$path/test_subdir",
             ),
             array(
@@ -705,14 +717,14 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'subdir_params\\subdir\\teardown_directory (0)',
+                'subdir_params\\subdir\\teardown_runs_for_directory (0)',
                 '2 4 4 2',
             ),
 
 
             array(
                 easytest\EVENT_OUTPUT,
-                'subdir_params\\subdir\\setup_directory (1)',
+                'subdir_params\\subdir\\setup_runs_for_directory (1)',
                 "$path/test_subdir",
             ),
             array(
@@ -757,13 +769,13 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'subdir_params\\subdir\\teardown_directory (1)',
+                'subdir_params\\subdir\\teardown_runs_for_directory (1)',
                 '8 16 16 8',
             ),
 
             array(
                 easytest\EVENT_OUTPUT,
-                'subdir_params\\teardown_directory',
+                'subdir_params\\teardown_runs_for_directory',
                 $path,
             ),
         );
@@ -778,17 +790,17 @@ class TestDirectories {
         $expected = array(
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\setup_directory',
+                'param_target\\setup_runs_for_directory',
                 $path,
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\setup_directory (0)',
+                'param_target\\dir\\setup_runs_for_directory (0)',
                 "$path/test_dir",
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\setup_directory (0, 0)',
+                'param_target\\dir\\subdir\\setup_runs_for_directory (0, 0)',
                 "$path/test_dir/test_subdir",
             ),
             array(
@@ -803,14 +815,14 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\teardown_directory (0, 0)',
+                'param_target\\dir\\subdir\\teardown_runs_for_directory (0, 0)',
                 "$path/test_dir/test_subdir",
             ),
 
 
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\setup_directory (0, 1)',
+                'param_target\\dir\\subdir\\setup_runs_for_directory (0, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
@@ -825,24 +837,24 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\teardown_directory (0, 1)',
+                'param_target\\dir\\subdir\\teardown_runs_for_directory (0, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\teardown_directory (0)',
+                'param_target\\dir\\teardown_runs_for_directory (0)',
                 "$path/test_dir",
             ),
 
 
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\setup_directory (1)',
+                'param_target\\dir\\setup_runs_for_directory (1)',
                 "$path/test_dir",
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\setup_directory (1, 0)',
+                'param_target\\dir\\subdir\\setup_runs_for_directory (1, 0)',
                 "$path/test_dir/test_subdir",
             ),
             array(
@@ -857,14 +869,14 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\teardown_directory (1, 0)',
+                'param_target\\dir\\subdir\\teardown_runs_for_directory (1, 0)',
                 "$path/test_dir/test_subdir",
             ),
 
 
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\setup_directory (1, 1)',
+                'param_target\\dir\\subdir\\setup_runs_for_directory (1, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
@@ -879,17 +891,17 @@ class TestDirectories {
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\subdir\\teardown_directory (1, 1)',
+                'param_target\\dir\\subdir\\teardown_runs_for_directory (1, 1)',
                 "$path/test_dir/test_subdir",
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\dir\\teardown_directory (1)',
+                'param_target\\dir\\teardown_runs_for_directory (1)',
                 "$path/test_dir",
             ),
             array(
                 easytest\EVENT_OUTPUT,
-                'param_target\\teardown_directory',
+                'param_target\\teardown_runs_for_directory',
                 $path,
             ),
         );
@@ -908,19 +920,6 @@ class TestDirectories {
         $path = $this->path;
 
         $expected = array(
-            array(
-                easytest\EVENT_OUTPUT,
-                'generator\\setup_directory',
-                'generator\\setup_directory',
-            ),
-
-
-            array(
-                easytest\EVENT_OUTPUT,
-                'generator\\setup_file (0)',
-                'generator\\setup_file',
-            ),
-
             array(
                 easytest\EVENT_PASS,
                 'generator\\test_one (0, 0)',
@@ -942,13 +941,12 @@ class TestDirectories {
                 'generator\\test_two (0, 1)',
                 null,
             ),
-
-
             array(
                 easytest\EVENT_OUTPUT,
-                'generator\\setup_file (1)',
-                'generator\\setup_file',
+                'generator\\teardown_runs_for_file (0)',
+                'generator\\teardown_runs_for_file',
             ),
+
 
             array(
                 easytest\EVENT_PASS,
@@ -971,12 +969,17 @@ class TestDirectories {
                 'generator\\test_two (1, 1)',
                 null,
             ),
+            array(
+                easytest\EVENT_OUTPUT,
+                'generator\\teardown_runs_for_file (1)',
+                'generator\\teardown_runs_for_file',
+            ),
 
 
             array(
                 easytest\EVENT_OUTPUT,
-                'generator\\teardown_directory',
-                'generator\\teardown_directory',
+                'generator\\teardown_runs_for_directory',
+                'generator\\teardown_runs_for_directory',
             ),
         );
         $this->assert_log($expected);

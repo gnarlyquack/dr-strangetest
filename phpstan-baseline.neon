@@ -281,7 +281,12 @@ parameters:
 			path: src/easytest/discover.php
 
 		-
-			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$setup_run \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$setup_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$teardown_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
 			path: src/easytest/discover.php
 
@@ -416,7 +421,12 @@ parameters:
 			path: src/easytest/discover.php
 
 		-
-			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup_run \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			count: 1
+			path: src/easytest/discover.php
+
+		-
+			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
 			path: src/easytest/discover.php
 
@@ -1591,6 +1601,16 @@ parameters:
 			path: src/easytest/run.php
 
 		-
+			message: "#^Undefined variable\\: \\$update_run$#"
+			count: 1
+			path: src/easytest/run.php
+
+		-
+			message: "#^Variable \\$update_run might not be defined\\.$#"
+			count: 2
+			path: src/easytest/run.php
+
+		-
 			message: "#^Function easytest\\\\run_directory_setup\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
@@ -1647,21 +1667,6 @@ parameters:
 
 		-
 			message: "#^Function easytest\\\\_run_directory_test\\(\\) has parameter \\$test with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Function easytest\\\\run_directory_teardown_run\\(\\) has parameter \\$run with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
 
@@ -1737,21 +1742,6 @@ parameters:
 
 		-
 			message: "#^Function easytest\\\\_run_file_test\\(\\) has parameter \\$test with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/easytest/run.php
-
-		-
-			message: "#^Function easytest\\\\run_file_teardown_run\\(\\) has parameter \\$run with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/run.php
 
@@ -2166,11 +2156,6 @@ parameters:
 			path: src/easytest/tests.php
 
 		-
-			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$teardown_run has no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
 			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$tests has no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/tests.php
@@ -2216,21 +2201,6 @@ parameters:
 			path: src/easytest/tests.php
 
 		-
-			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Method easytest\\\\DirectoryTest\\:\\:teardown_run\\(\\) has parameter \\$run_id with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
 			message: "#^Method easytest\\\\DirectoryTest\\:\\:run\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/tests.php
@@ -2262,11 +2232,6 @@ parameters:
 
 		-
 			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown has no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown_run has no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/tests.php
 
@@ -2332,21 +2297,6 @@ parameters:
 
 		-
 			message: "#^Method easytest\\\\FileTest\\:\\:teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Method easytest\\\\FileTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Method easytest\\\\FileTest\\:\\:teardown_run\\(\\) has parameter \\$args with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Method easytest\\\\FileTest\\:\\:teardown_run\\(\\) has parameter \\$run_id with no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/tests.php
 
@@ -2456,11 +2406,6 @@ parameters:
 			path: src/easytest/tests.php
 
 		-
-			message: "#^Method easytest\\\\ClassTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
 			message: "#^Method easytest\\\\ClassTest\\:\\:run\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/tests.php
@@ -2562,11 +2507,6 @@ parameters:
 
 		-
 			message: "#^Method easytest\\\\FunctionTest\\:\\:teardown\\(\\) has parameter \\$run with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/tests.php
-
-		-
-			message: "#^Method easytest\\\\FunctionTest\\:\\:teardown_run\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/tests.php
 

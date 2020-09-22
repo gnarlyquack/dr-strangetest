@@ -718,7 +718,7 @@ class TestFiles {
 
             array(
                 easytest\EVENT_OUTPUT,
-                'multiple_runs\\teardown_file',
+                'multiple_runs\\teardown_runs',
                 \print_r(array(array(2, 4), array(8, 16)), true),
             ),
         ));
@@ -775,7 +775,7 @@ function assert_run_file($filepath, $events) {
 
 function test_logs_error_if_arglist_isnt_iterable() {
     $file = namespace\filepath('test_noniterable_arglist.php');
-    $error = "'noniterable_arglist\\setup_file' returned a non-iterable argument list";
+    $error = "'noniterable_arglist\\setup_file' returned a non-iterable argument set";
     $events = array(
         array(easytest\EVENT_ERROR, $file, $error),
         array(easytest\EVENT_OUTPUT, 'noniterable_arglist\\teardown_file', '.'),
@@ -787,10 +787,10 @@ function test_logs_error_if_arglist_isnt_iterable() {
 
 function test_logs_error_if_arglists_arent_iterable() {
     $file = namespace\filepath('test_noniterable_arglists.php');
-    $error = "'noniterable_arglists\\setup_file' returned a non-iterable argument list";
+    $error = "'noniterable_arglists\\setup_runs' returned a non-iterable argument set";
     $events = array(
         array(easytest\EVENT_ERROR, $file, $error),
-        array(easytest\EVENT_OUTPUT, 'noniterable_arglists\\teardown_file', '.'),
+        array(easytest\EVENT_OUTPUT, 'noniterable_arglists\\teardown_runs', '.'),
     );
 
     namespace\assert_run_file($file, $events);
@@ -799,13 +799,13 @@ function test_logs_error_if_arglists_arent_iterable() {
 
 function test_logs_error_if_any_arglist_isnt_iterable() {
     $file = namespace\filepath('test_any_noniterable_arglist.php');
-    $error = "'any_noniterable_arglist\\setup_file' returned a non-iterable argument list\nfor argument list '%d'";
+    $error = "'any_noniterable_arglist\\setup_runs' returned a non-iterable argument set\nfor argument set '%d'";
     $events = array(
         array(easytest\EVENT_ERROR, $file, \sprintf($error, 0)),
         array(easytest\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
-        array(easytest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run (1)', '.'),
+        array(easytest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_file (1)', '.'),
         array(easytest\EVENT_ERROR, $file, \sprintf($error, 2)),
-        array(easytest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_file', '.'),
+        array(easytest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_runs', '.'),
     );
 
     namespace\assert_run_file($file, $events);

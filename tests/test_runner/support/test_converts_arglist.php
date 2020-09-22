@@ -9,10 +9,7 @@ function setup_file() {
     return new \NoRewindIterator(new \ArrayIterator(array(1, 2, 3)));
 }
 
-function teardown_file($args) {
-    if (!($args instanceof \NoRewindIterator)) {
-        echo '$args = ', \print_r($args, true);
-    }
+function teardown_file($one, $two, $three) {
     echo '.';
 }
 

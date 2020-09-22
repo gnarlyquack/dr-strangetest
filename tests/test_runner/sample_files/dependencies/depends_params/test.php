@@ -4,11 +4,11 @@ namespace depends_params;
 use easytest;
 
 
-function setup_file() {
-    return easytest\make_argument_sets(array(
+function setup_runs_for_file() {
+    return array(
         array(1),
         array(2),
-    ));
+    );
 }
 
 

@@ -5,11 +5,11 @@ namespace noniterable_arglists;
 use easytest;
 
 
-function setup_file() {
-    return easytest\make_argument_sets(1);
+function setup_runs() {
+    return 1;
 }
 
-function teardown_file($arg) {
+function teardown_runs($arg) {
     if ($arg !== 1) {
         echo '$arg = ', \print_r($arg, true);
     }

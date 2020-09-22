@@ -3,8 +3,11 @@
 namespace param_xdepend\param;
 use easytest;
 
-function setup_file() {
-    return easytest\make_argument_sets(array(array(2), array(4)));
+function setup_runs() {
+    return array(
+        array(2),
+        array(4)
+    );
 }
 
 

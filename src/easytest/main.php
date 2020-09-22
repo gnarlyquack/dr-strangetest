@@ -18,8 +18,8 @@ const ERROR_SETUP             = 0x01;
 const ERROR_TEARDOWN          = 0x02;
 const ERROR_SETUP_FUNCTION    = 0x04;
 const ERROR_TEARDOWN_FUNCTION = 0x08;
-const ERROR_TEARDOWN_RUN      = 0x10;
-const ERROR_SETUP_RUN         = 0x20;
+const ERROR_TEARDOWN_RUNS     = 0x10;
+const ERROR_SETUP_RUNS        = 0x20;
 
 const EVENT_PASS   = 1;
 const EVENT_FAIL   = 2;
@@ -118,41 +118,6 @@ final class State extends struct {
     public $results = array();
     public $depends = array();
     public $fixture = array();
-}
-
-
-/**
- * @api
- */
-final class ArgumentSets {
-    /** @var mixed */
-    private $argsets;
-
-
-    /**
-     * @param mixed $argsets
-     */
-    public function __construct($argsets) {
-        $this->argsets = $argsets;
-    }
-
-
-    /**
-     * @return mixed
-     */
-    public function argsets() {
-        return $this->argsets;
-    }
-}
-
-
-/**
- * @api
- * @param mixed $argsets
- * @return ArgumentSets
- */
-function make_argument_sets($argsets) {
-    return new ArgumentSets($argsets);
 }
 
 

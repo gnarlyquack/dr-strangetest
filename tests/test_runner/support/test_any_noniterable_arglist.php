@@ -5,17 +5,15 @@ namespace any_noniterable_arglist;
 use easytest;
 
 
-function setup_file() {
-    return easytest\make_argument_sets(
-        array(
-            1,
-            array(2, 3),
-            4,
-        )
+function setup_runs() {
+    return array(
+        1,
+        array(2, 3),
+        4,
     );
 }
 
-function teardown_file($args) {
+function teardown_runs($args) {
     if ($args !== array(1, array(2, 3), 4)) {
         echo '$args = ', \print_r($arg, true);
     }
@@ -23,7 +21,7 @@ function teardown_file($args) {
 }
 
 
-function teardown_run($one, $two) {
+function teardown_file($one, $two) {
     if (array(2, 3) !== array($one, $two)) {
         echo '$one = ', \print_r($one, true), "\n",
             '$two = ', \print_r($two, true);

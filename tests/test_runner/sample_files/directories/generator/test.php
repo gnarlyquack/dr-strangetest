@@ -3,13 +3,13 @@
 namespace generator;
 use easytest;
 
-function setup_file($one, $two) {
+function setup_runs_for_file($one, $two) {
+    yield [$one, $two, 5, 6];
+    yield [$one, $two, 7, 8];
+}
+
+function teardown_runs_for_file() {
     echo __FUNCTION__;
-    $generate = function() use ($one, $two) {
-        yield [$one, $two, 5, 6];
-        yield [$one, $two, 7, 8];
-    };
-    return easytest\make_argument_sets($generate());
 }
 
 

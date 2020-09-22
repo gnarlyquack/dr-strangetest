@@ -4,14 +4,14 @@ namespace multiple_runs;
 use easytest;
 
 
-function setup_file() {
-    return easytest\make_argument_sets(array(
+function setup_runs() {
+    return array(
         array(2, 4),
         array(8, 16)
-    ));
+    );
 }
 
-function teardown_file($args) {
+function teardown_runs($args) {
     \print_r($args);
 }
 

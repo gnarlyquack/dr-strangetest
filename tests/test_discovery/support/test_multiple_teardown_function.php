@@ -2,10 +2,9 @@
 
 namespace multiple_teardown_function;
 
+function teardown_runs() {}
 
 function teardown_file() {}
-
-function teardown_run() {}
 
 
 function teardown_one() {}
