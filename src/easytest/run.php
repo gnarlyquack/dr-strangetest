@@ -912,12 +912,16 @@ function _run_test_function(
  */
 function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack = true) {
     try {
-        if($unpack && \is_array($args)) {
-            // #BC(5.5): Use proxy function for argument unpacking
+        if ($args === null) {
+            // @bc 5.3 Invoke (possible) object method using call_user_func()
+            \call_user_func($callable);
+        }
+        elseif($unpack && \is_array($args)) {
+            // @bc 5.5 Use proxy function for argument unpacking
             namespace\unpack_function($callable, $args);
         }
         else {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            // @bc 5.3 Invoke (possible) object method using call_user_func()
             \call_user_func($callable, $args);
         }
         return namespace\RESULT_PASS;
