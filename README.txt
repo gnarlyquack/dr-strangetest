@@ -1,6 +1,5 @@
-EasyTest is a testing framework for PHP.
-
-In addition to this README, you may also want to refer to the wiki:
+The documentation in this file will probably be deprecated and moved to the
+wiki, so referring to the wiki is recommended unless it directs you back here:
 https://github.com/gnarlyquack/easytest/wiki
 
 
