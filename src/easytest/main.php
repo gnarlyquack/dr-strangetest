@@ -89,10 +89,19 @@ abstract class struct {
 
 final class Error extends \ErrorException {
 
+    /**
+     * @param string $message
+     * @param int $severity
+     * @param string $file
+     * @parem int $line
+     */
     public function __construct($message, $severity, $file, $line) {
         parent::__construct($message, 0, $severity, $file, $line);
     }
 
+    /**
+     * @return string
+     */
     public function __toString() {
         if (!$this->string) {
             $this->string =  \sprintf(
@@ -106,6 +115,7 @@ final class Error extends \ErrorException {
         return $this->string;
     }
 
+    /** @var string */
     private $string;
 }
 

@@ -29,6 +29,9 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
 
     final class Failure extends \Exception {
 
+        /**
+         * @param string $message
+         */
         public function __construct($message) {
             parent::__construct($message);
             $result = namespace\_find_client_call_site();
@@ -37,7 +40,9 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
             }
         }
 
-
+        /**
+         * @return string
+         */
         public function __toString() {
             if (!$this->string) {
                 $this->string = namespace\_format_exception_string(
@@ -48,7 +53,9 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
             return $this->string;
         }
 
+        /** @var string */
         private $string;
+        /** @var array<array<string, mixed>> */
         private $trace;
     }
 
@@ -57,6 +64,9 @@ else {
 
     final class Failure extends \AssertionError {
 
+        /**
+         * @param string $message
+         */
         public function __construct($message) {
             parent::__construct($message);
             $result = namespace\_find_client_call_site();
@@ -65,7 +75,9 @@ else {
             }
         }
 
-
+        /**
+         * @return string
+         */
         public function __toString() {
             if (!$this->string) {
                 $this->string = namespace\_format_exception_string(
@@ -76,7 +88,9 @@ else {
             return $this->string;
         }
 
+        /** @var string */
         private $string;
+        /** @var array<array<string, mixed>> */
         private $trace;
     }
 
@@ -86,6 +100,9 @@ else {
 
 final class Skip extends \Exception {
 
+    /**
+     * @param string $message
+     */
     public function __construct($message, Skip $previous = null) {
         parent::__construct($message, 0, $previous);
         $result = namespace\_find_client_call_site();
@@ -95,6 +112,9 @@ final class Skip extends \Exception {
     }
 
 
+    /**
+     * @return string
+     */
     public function __toString() {
         if (!$this->string) {
             $prev = $this->getPrevious();
@@ -118,7 +138,9 @@ final class Skip extends \Exception {
         return $this->string;
     }
 
+    /** @var string */
     private $string;
+    /** @var array<array<string, mixed>> */
     private $trace;
 }
 

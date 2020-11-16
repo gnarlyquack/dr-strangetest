@@ -9,12 +9,12 @@ test:
 
 .PHONY: analyse
 analyse:
-	./phpstan.phar analyse
+	./vendor/bin/phpstan analyse
 
 
 .PHONY: baseline
 baseline:
-	./phpstan.phar analyse --generate-baseline
+	./vendor/bin/phpstan analyse --generate-baseline
 
 
 .PHONY: build

@@ -1,2 +1,4 @@
 /build/
-/phpstan.phar
+/composer.lock
+/composer.phar
+/vendor/

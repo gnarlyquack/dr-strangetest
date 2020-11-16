@@ -180,8 +180,6 @@ function _process_class_target(array &$targets, $target, array &$errors) {
         }
     }
 
-    \assert(isset($class));
-    \assert(isset($targets[$class]));
     if ($methods && $subtarget_count) {
         $targets = &$targets[$class]->subtargets;
         foreach (\explode(',', $methods) as $method) {

@@ -516,26 +516,6 @@ parameters:
 			path: src/easytest/exceptions.php
 
 		-
-			message: "#^Property easytest\\\\Failure\\:\\:\\$string has no typehint specified\\.$#"
-			count: 2
-			path: src/easytest/exceptions.php
-
-		-
-			message: "#^Property easytest\\\\Failure\\:\\:\\$trace has no typehint specified\\.$#"
-			count: 2
-			path: src/easytest/exceptions.php
-
-		-
-			message: "#^Property easytest\\\\Skip\\:\\:\\$string has no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/exceptions.php
-
-		-
-			message: "#^Property easytest\\\\Skip\\:\\:\\$trace has no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/exceptions.php
-
-		-
 			message: "#^Function easytest\\\\_find_client_call_site\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/exceptions.php
@@ -891,17 +871,7 @@ parameters:
 			path: src/easytest/main.php
 
 		-
-			message: "#^Method easytest\\\\Error\\:\\:__construct\\(\\) has parameter \\$file with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
 			message: "#^Method easytest\\\\Error\\:\\:__construct\\(\\) has parameter \\$line with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/main.php
-
-		-
-			message: "#^Property easytest\\\\Error\\:\\:\\$string has no typehint specified\\.$#"
 			count: 1
 			path: src/easytest/main.php
 
