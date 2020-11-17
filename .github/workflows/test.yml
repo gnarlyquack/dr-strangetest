@@ -1,0 +1,24 @@
+name: test
+on: [push]
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                php-versions: ['5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4']
+        name: Test on PHP ${{ matrix.php-versions }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-versions }}
+                  ini-values: phar.readonly=false, zend.assertions=1
+
+            - name: Build Phar
+              run: ./bin/makephar
+
+            - name: Run Tests
+              run: ./build/easytest.phar --verbose
