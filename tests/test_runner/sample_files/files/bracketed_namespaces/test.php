@@ -12,10 +12,7 @@ $bar = namespace\BAR;
 
 }
 
-namespace
-    ns01 // parent namespace
-    \   // namespace separator
-    ns2 // sub namespace
+namespace ns01\ns2 // namespace 2
 {
 
 class TestNamespaces {

@@ -1,5 +1,5 @@
 .PHONY: check
-check: test analyse
+check: analyse test
 
 
 .PHONY: test

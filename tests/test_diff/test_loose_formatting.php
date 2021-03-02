@@ -41,8 +41,8 @@ EXPECTED;
 function test_diffs_unequal_arrays() {
     $from = array(
         '1 mouse',
-        '2 mouse',
-        array('mouse', '3', '4'),
+        '2.0',
+        array('0', '3', '4'),
         false,
         '5',
     );
@@ -67,9 +67,9 @@ function test_diffs_unequal_arrays() {
     $expected = <<<'EXPECTED'
   array(
       0 => '1 mouse',
-      1 => '2 mouse',
+      1 => '2.0',
       2 => array(
-          0 => 'mouse',
+          0 => '0',
           1 => '3',
           2 => '4',
       ),

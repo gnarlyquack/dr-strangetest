@@ -83,8 +83,6 @@ Release
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
--   Add PHP 8 support (once it's released)
-
 -   Replace switches with if statements (to enforce strict comparison)
 
 -   Diffs and formatting

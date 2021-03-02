@@ -63,18 +63,31 @@ class TestAssertExpression {
 
 
     public function test_uses_exception_as_description() {
-        // #BC(5.4): Check if assert() takes description parameter
+        // @bc 5.4 Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
             easytest\skip('PHP 5.4.8 added assert() $description parameter');
         }
 
-        $expected = new ExpectedException();
-        $f = easytest\assert_throws(
-            'easytest\\Failure',
-            function() use ($expected) { assert(true == false, $expected); }
-        );
+        // @bc 7.4 Check if assert() uses exception as the description
+        // If an exception is provided as the description, PHP 8 appears to
+        // throw it regardless of the setting of assert.exception.
+        if (version_compare(PHP_VERSION, '8.0', '<')) {
+            $expected = new ExpectedException();
+            $f = easytest\assert_throws(
+                'easytest\\Failure',
+                function() use ($expected) { assert(true == false, $expected); }
+            );
+            easytest\assert_identical("$expected", $f->getMessage());
+        }
+        else {
+            $expected = new ExpectedException();
+            $f = easytest\assert_throws(
+                get_class($expected),
+                function() use ($expected) { assert(true == false, $expected); }
+            );
+            easytest\assert_identical($expected, $f);
+        }
 
-        easytest\assert_identical("$expected", $f->getMessage());
     }
 }
 

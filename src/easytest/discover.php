@@ -190,6 +190,7 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
     }
 
     $ns = '';
+    // @bc 7.4 Use token_get_all instead of PhpToken object interface(?)
     $tokens = \token_get_all($source);
     $exists = array(
         \T_CLASS => 'class_exists',
@@ -240,7 +241,7 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
             }
         }
         elseif (\T_NAMESPACE === $token_type) {
-            list($ns, $i) = namespace\_parse_namespace($tokens, $i, $ns);
+            $ns = namespace\_parse_namespace($tokens, $i, $ns);
         }
         elseif (\T_USE === $token_type) {
             // don't discover 'use function <function name>', etc.
@@ -368,7 +369,13 @@ function _consume_statement(array $tokens, $i) {
 }
 
 
-function _parse_namespace($tokens, $i, $current_ns) {
+/**
+ * @param mixed[] $tokens
+ * @param int $i
+ * @param string $current_ns
+ * @return string
+ */
+function _parse_namespace(array $tokens, &$i, $current_ns) {
     // There are two options:
     //
     // 1) This is a namespace declaration, which takes two forms:
@@ -383,29 +390,55 @@ function _parse_namespace($tokens, $i, $current_ns) {
     // token found after the 'namespace' keyword, this isn't a namespace
     // declaration. Otherwise, everything until the terminating ';' or '{'
     // constitutes the identifier.
-    $ns = array();
-    while (++$i) {
-        if ($tokens[$i] === ';' || $tokens[$i] === '{') {
-            return array($ns ? (\implode('', $ns) . '\\') : '', $i);
+    $ns = '';
+    for ($c = \count($tokens); $i < $c; ++$i) {
+        $token = $tokens[$i];
+        if (';' === $token || '{' === $token) {
+            break;
         }
 
-        if (!\is_array($tokens[$i])) {
+        if (!\is_array($token)) {
             continue;
         }
 
-        switch ($tokens[$i][0]) {
-        case \T_NS_SEPARATOR:
-            if (!$ns) {
-                return array($current_ns, $i);
+        $code = $token[0];
+        // @bc 7.4 Build namespace name from its individual tokens
+        // PHP >= 8 tokenizes the entire namespace name as one token
+        if (\version_compare(\PHP_VERSION, '8.0', '<')) {
+            if (\T_NS_SEPARATOR === $code) {
+                if (0 === \strlen($ns)) {
+                    $ns = $current_ns;
+                    break;
+                }
+                else {
+                    $ns .= $token[1];
+                }
             }
-            $ns[] = $tokens[$i][1];
-            break;
-
-        case \T_STRING:
-            $ns[] = $tokens[$i][1];
-            break;
+            elseif (\T_STRING === $code) {
+                $ns .= $token[1];
+            }
+        }
+        else {
+            if (\T_NAME_QUALIFIED === $code || \T_STRING === $code) {
+                \assert(0 === \strlen($ns));
+                $ns = $token[1];
+            }
+            elseif (\T_NS_SEPARATOR === $code) {
+                \assert(0 === \strlen($ns));
+                $ns = $current_ns;
+                break;
+            }
         }
     }
+
+    do {
+        $token = $tokens[$i++];
+    } while ((';' !== $token) && ('{' !== $token));
+
+    if (\strlen($ns)) {
+        $ns .= '\\';
+    }
+    return $ns;
 }
 
 

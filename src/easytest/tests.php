@@ -67,11 +67,11 @@ final class DirectoryTest extends struct {
      */
     public function setup_runs(
         BufferingLogger $logger,
-        $args = null,
+        &$update_run,
         $run_name,
-        &$update_run
+        $args = null
     ) {
-        return namespace\run_directory_setup_runs($logger, $this, $args, $run_name, $update_run);
+        return namespace\run_directory_setup_runs($logger, $this, $update_run, $run_name, $args);
     }
 
 
@@ -149,11 +149,11 @@ final class FileTest extends struct {
      */
     public function setup_runs(
         BufferingLogger $logger,
-        $args = null,
+        &$update_run,
         $run_name,
-        &$update_run
+        $args = null
     ) {
-        return namespace\run_file_setup_runs($logger, $this, $args, $run_name, $update_run);
+        return namespace\run_file_setup_runs($logger, $this, $update_run, $run_name, $args);
     }
 
 
@@ -229,9 +229,9 @@ final class ClassTest extends struct {
      */
     public function setup_runs(
         BufferingLogger $logger,
-        $args = null,
+        &$update_run,
         $run_name,
-        &$update_run
+        $args = null
     ) {
         $update_run = false;
         return array(namespace\RESULT_PASS, array($args));
@@ -296,9 +296,9 @@ final class FunctionTest extends struct {
      */
     public function setup_runs(
         BufferingLogger $logger,
-        $args = null,
+        &$update_run,
         $run_name,
-        &$update_run
+        $args = null
     ) {
         $update_run = false;
         return array(namespace\RESULT_PASS, array($args));

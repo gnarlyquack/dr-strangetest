@@ -561,7 +561,7 @@ EXPECTED;
 
 class TestAssertLessOrEqual {
     public function test_passes() {
-        easytest\assert_less_or_equal('0 cabbage', 0);
+        easytest\assert_less_or_equal('0', 0);
     }
 
 

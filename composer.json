@@ -9,7 +9,7 @@
         "source": "https://github.com/gnarlyquack/easytest"
     },
     "require": {
-        "php": "5.3 - 7.4"
+        "php": "5.3 - 8.0"
     },
     "bin": ["bin/easytest"],
     "extra": {

@@ -391,26 +391,6 @@ parameters:
 			path: src/easytest/discover.php
 
 		-
-			message: "#^Function easytest\\\\_parse_namespace\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/easytest/discover.php
-
-		-
-			message: "#^Function easytest\\\\_parse_namespace\\(\\) has parameter \\$current_ns with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/discover.php
-
-		-
-			message: "#^Function easytest\\\\_parse_namespace\\(\\) has parameter \\$i with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/discover.php
-
-		-
-			message: "#^Function easytest\\\\_parse_namespace\\(\\) has parameter \\$tokens with no typehint specified\\.$#"
-			count: 1
-			path: src/easytest/discover.php
-
-		-
 			message: "#^Function easytest\\\\discover_file\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/easytest/discover.php
@@ -517,6 +497,11 @@ parameters:
 
 		-
 			message: "#^Function easytest\\\\_find_client_call_site\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/easytest/exceptions.php
+
+		-
+			message: "#^Parameter \\#1 \\$options of function debug_backtrace expects int, false given\\.$#"
 			count: 1
 			path: src/easytest/exceptions.php
 

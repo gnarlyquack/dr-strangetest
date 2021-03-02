@@ -195,14 +195,19 @@ function _enable_error_handling() {
     \assert_options(\ASSERT_ACTIVE, 1);
     \assert_options(\ASSERT_WARNING, 0); // Default is 1
     \assert_options(\ASSERT_BAIL, 0);
-    \assert_options(\ASSERT_QUIET_EVAL, 0);
+    // @bc 7.4 check if ASSERT_QUIET_EVAL is defined
+    if (\defined('ASSERT_QUIET_EVAL')) {
+        \assert_options(\ASSERT_QUIET_EVAL, 0);
+    }
     \assert_options(\ASSERT_CALLBACK, 'easytest\\_handle_assertion');
 }
 
 
 function _handle_assertion($file, $line, $code, $desc = null) {
     if (!\ini_get('assert.exception')) {
-        if ('' !== $code) {
+        // @bc 7.4 Check that $code is not an empty string
+        // PHP 8 appears to pass null instead of an empty string if $code is empty
+        if (isset($code) && \strlen($code) > 0) {
             $code = "assert($code) failed";
         }
         $message = namespace\format_failure_message($code, $desc);

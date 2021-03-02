@@ -317,7 +317,7 @@ function run_test(
     }
 
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-    list($result, $args) = $test->setup_runs($logger, $args, $run_name, $update_run);
+    list($result, $args) = $test->setup_runs($logger, $update_run, $run_name, $args);
     if (namespace\RESULT_PASS !== $result) {
         return;
     }
@@ -406,9 +406,9 @@ function run_directory_setup(
 function run_directory_setup_runs(
     BufferingLogger $logger,
     DirectoryTest $directory,
-    array $args = null,
+    &$update_run,
     $run = null,
-    &$update_run
+    array $args = null
 ) {
     if ($directory->setup_runs) {
         $update_run = true;
@@ -539,9 +539,9 @@ function run_file_setup(
 function run_file_setup_runs(
     BufferingLogger $logger,
     FileTest $file,
-    array $args = null,
+    &$update_run,
     $run = null,
-    &$update_run
+    array $args = null
 ) {
     if ($file->setup_runs) {
         $update_run = true;
