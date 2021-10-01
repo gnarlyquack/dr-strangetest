@@ -5,7 +5,7 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-// #BC(7.0): Provide implementation of is_iterable
+// @bc 7.0 Provide implementation of is_iterable
 
 /**
  * @param mixed $var

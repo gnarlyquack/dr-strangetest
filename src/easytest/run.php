@@ -166,7 +166,7 @@ final class Context {
         catch (\AssertionError $e) {
             $this->logger->log_failure($this->test->name, $e);
         }
-        // #BC(5.6): Catch Failure
+        // @bc 5.6 Catch Failure
         catch (Failure $e) {
             $this->logger->log_failure($this->test->name, $e);
         }
@@ -189,7 +189,7 @@ final class Context {
         $dependees = array();
         $result = array();
         $nnames = 0;
-        // #BC(5.5): Use func_get_args instead of argument unpacking
+        // @bc 5.5 Use func_get_args instead of argument unpacking
         foreach (\func_get_args() as $nnames => $name) {
             list($normalized, $run) = $this->normalize_name($name);
 
@@ -725,14 +725,14 @@ function _run_class_test(
 function _instantiate_test(Logger $logger, $class, $args) {
     try {
         if ($args) {
-            // #BC(5.5): Use proxy function for argument unpacking
+            // @bc 5.5 Use proxy function for argument unpacking
             return namespace\unpack_construct($class, $args);
         }
         else {
             return new $class();
         }
     }
-    // #BC(5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {
         $logger->log_error($class, $e);
     }
@@ -781,7 +781,7 @@ function run_function_test(
     State $state, BufferingLogger $logger, FunctionTest $test,
     array $arglist = null, array $run_id = null, array $targets = null
 ) {
-    // #BC(5.4): Omit description from assert
+    // @bc 5.4 Omit description from assert
     \assert(!$targets); // function tests can't have targets
     \assert($test->result === namespace\RESULT_PASS);
 
@@ -840,11 +840,11 @@ function run_function_teardown(
 function _run_setup(Logger $logger, $name, $callable, array $args = null) {
     try {
         if ($args) {
-            // #BC(5.5): Use proxy function for argument unpacking
+            // @bc 5.5 Use proxy function for argument unpacking
             $result = namespace\unpack_function($callable, $args);
         }
         else {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            // @bc 5.3 Invoke (possible) object method using call_user_func()
             $result = \call_user_func($callable);
         }
         return array(namespace\RESULT_PASS, $result);
@@ -852,7 +852,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
     catch (Skip $e) {
         $logger->log_skip($name, $e);
     }
-    // #BC(5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {
         $logger->log_error($name, $e);
     }
@@ -869,11 +869,11 @@ function _run_test_function(
     try {
         if ($args) {
             $args[] = $context;
-            // #BC(5.5): Use proxy function for argument unpacking
+            // @bc 5.5 Use proxy function for argument unpacking
             namespace\unpack_function($callable, $args);
         }
         else {
-            // #BC(5.3): Invoke (possible) object method using call_user_func()
+            // @bc 5.3 Invoke (possible) object method using call_user_func()
             \call_user_func($callable, $context);
         }
         $result = $context->result();
@@ -882,7 +882,7 @@ function _run_test_function(
         $logger->log_failure($name, $e);
         $result = namespace\RESULT_FAIL;
     }
-    // #BC(5.6): Catch Failure
+    // @bc 5.6 Catch Failure
     catch (Failure $e) {
         $logger->log_failure($name, $e);
         $result = namespace\RESULT_FAIL;
@@ -894,7 +894,7 @@ function _run_test_function(
     catch (Postpone $_) {
         $result = namespace\RESULT_POSTPONE;
     }
-    // #BC(5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {
         $logger->log_error($name, $e);
         $result = namespace\RESULT_FAIL;
@@ -926,7 +926,7 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack =
         }
         return namespace\RESULT_PASS;
     }
-    // #BC(5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {
         $logger->log_error($name, $e);
     }

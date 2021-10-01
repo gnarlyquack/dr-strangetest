@@ -209,7 +209,7 @@ function assert_throws($expected, $callback, $description = null) {
     try {
         $callback();
     }
-    // #BC(5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {}
     catch (\Throwable $e) {}
 

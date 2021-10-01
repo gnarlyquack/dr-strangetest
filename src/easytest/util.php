@@ -1000,7 +1000,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
     if (\is_object($value)) {
         $cost = 1;
         $subvalues = array();
-        // #BC(5.4): use variable for array cast in order to create references
+        // @bc 5.4 use variable for array cast in order to create references
         $values = (array)$value;
         foreach ($values as $k => &$v) {
             $subname = \sprintf('%s->%s', $name, $k);
@@ -1433,7 +1433,7 @@ function _format_object(&$var, $name, $loose, &$seen, $sentinels, $padding) {
 function _format_object_start(&$object, $loose, &$class = null) {
     $class = \get_class($object);
     if (!$loose) {
-        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \function_exists('spl_object_id')
             ? \spl_object_id($object)
             : \spl_object_hash($object);

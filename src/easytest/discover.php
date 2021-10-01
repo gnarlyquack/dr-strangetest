@@ -273,7 +273,7 @@ function _read_file(BufferingLogger $logger, $filepath) {
     try {
         $source = \file_get_contents($filepath);
     }
-    // #(BC 5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {
         $logger->log_error($filepath, $e);
         return false;
@@ -298,7 +298,7 @@ function _include_file(Logger $logger, $file) {
         namespace\_guard_include($file);
         return true;
     }
-    // #BC(5.6): Catch Exception
+    // @bc 5.6 Catch Exception
     catch (\Exception $e) {
         $logger->log_error($file, $e);
     }

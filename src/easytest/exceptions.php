@@ -24,7 +24,7 @@ function fail($reason) {
 // Implementation
 
 
-// #BC(5.6): Extend Failure from Exception
+// @bc 5.6 Extend Failure from Exception
 if (\version_compare(\PHP_VERSION, '7.0', '<')) {
 
     final class Failure extends \Exception {
@@ -151,7 +151,7 @@ final class InvalidCodePath extends \Exception {}
 
 function _find_client_call_site() {
     // Find the first call in a backtrace that's outside of easytest
-    // #BC(5.3): Pass false for debug_backtrace() $option parameter
+    // @bc 5.3 Pass false for debug_backtrace() $option parameter
     $trace = \defined('DEBUG_BACKTRACE_IGNORE_ARGS')
            ? \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS)
            : \debug_backtrace(false);
@@ -184,7 +184,7 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
     // Create a backtrace excluding calls made within easytest
     $buffer = array();
     foreach ($trace as $frame) {
-        // #BC(5.3): Functions have no file if executed in call_user_func()
+        // @bc 5.3 Functions have no file if executed in call_user_func()
         // call_user_func() specifically was giving us a (fatal) error, but
         // possibly we should guard against this regardless?
         if (!isset($frame['file'])) {

@@ -31,7 +31,7 @@ const LOG_QUIET  = 0x0;
 const LOG_PASS   = 0x01;
 const LOG_SKIP   = 0x02;
 const LOG_OUTPUT = 0x04;
-// #BC(5.5): Use define() to define constant expressions
+// @bc 5.5 Use define() to define constant expressions
 define('easytest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
 // Right now just used for debugging
 define('easytest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
@@ -70,7 +70,7 @@ interface Logger {
 
 
 
-# BC(5.3): Use an abstract class instead of (potentially) a trait
+// @bc 5.3 Use an abstract class instead of (potentially) a trait
 abstract class struct {
     final public function __set($name, $value) {
         throw new \Exception(
@@ -170,11 +170,11 @@ function main($argc, $argv) {
 
 
 function _enable_error_handling() {
-    // #BC(5.3): Include E_STRICT in error_reporting()
+    // @bc 5.3 Include E_STRICT in error_reporting()
     \error_reporting(\E_ALL | \E_STRICT);
     \set_error_handler('easytest\\_handle_error', \error_reporting());
 
-    // #BC(5.6): Check if PHP 7 assertion options are supported
+    // @bc 5.6 Check if PHP 7 assertion options are supported
     if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
         if ('-1' === \ini_get('zend.assertions')) {
             \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
@@ -182,7 +182,7 @@ function _enable_error_handling() {
         }
         \ini_set('zend.assertions', '1');
 
-        // #BC(7.1): Check whether or not to enable assert.exception
+        // @bc 7.1 Check whether or not to enable assert.exception
         // Since PHP 7.2 deprecates calling assert() with a string assertion,
         // there seems to be no reason to keep assert's legacy behavior enabled
         if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
@@ -250,7 +250,7 @@ function _load_easytest() {
         'tests',
         'util',
     );
-    // #BC(5.5): Implement proxy functions for argument unpacking
+    // @bc 5.5 Implement proxy functions for argument unpacking
     // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
     // versions, so we need to include version-dependent proxy functions to do
     // the unpacking for us. When support for PHP < 5.6 is dropped, this can
@@ -262,7 +262,7 @@ function _load_easytest() {
     else {
         $files[] = 'unpack';
     }
-    // #BC(7.0): Include implementation for is_iterable()
+    // @bc 7.0 Include implementation for is_iterable()
     if (!\function_exists('is_iterable')) {
         $files[] = 'is_iterable';
     }
@@ -277,7 +277,7 @@ function _microtime() {
         list($sec, $nsec) = hrtime();
         return 1000000 * $sec + $nsec / 1000;
     }
-    // #BC(7.2): Use microtime for timing
+    // @bc 7.2 Use microtime for timing
     else {
         list($usec, $sec) = \explode(' ', \microtime());
         return 1000000 * (int)$sec + (int)(1000000 * (float)$usec);
@@ -331,7 +331,7 @@ function _parse_short_option($args, $opts) {
     while ($nargs === \count($args)) {
         $opt = \substr($args[0], 0, 1);
         $args[0] = \substr($args[0], 1);
-        // #BC(5.6): Loose comparison in case substr() returned false
+        // @bc 5.6 Loose comparison in case substr() returned false
         if ('' == $args[0]) {
             \array_shift($args);
         }

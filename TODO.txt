@@ -151,9 +151,6 @@ Release
 
 -   Ensure items comprising EasyTest's API are tagged @api in their DocBlock
 
--   Change backward compatibility annotations to a DocBlock style:
-        @bc <version> <description>
-
 -   Dependencies:
 
     -   Do we handle declaring a dependency on one's self?

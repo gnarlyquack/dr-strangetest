@@ -7,7 +7,7 @@
 
 namespace easytest;
 
-// #BC(5.5): Implement proxy functions for argument unpacking
+// @bc 5.5 Implement proxy functions for argument unpacking
 // PHP 5.6's argument unpacking syntax causes a syntax error in earlier PHP
 // versions, so we need to implement version-dependent proxy functions to do
 // the unpacking for us. When support for PHP < 5.6 is dropped, this can all be
@@ -32,7 +32,7 @@ function unpack_function($callable, array $args) {
  * @return T
  */
 function unpack_construct($class, array $args) {
-    // #BC(5.3): Save object to variable before accessing member
+    // @bc 5.3 Save object to variable before accessing member
     $object = new \ReflectionClass($class);
     return $object->newInstanceArgs($args);
 }
