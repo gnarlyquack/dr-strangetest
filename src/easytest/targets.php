@@ -117,12 +117,13 @@ function process_user_targets(array $args, &$errors) {
     \sort($keys, \SORT_STRING);
     $key = \current($keys);
     while ($key !== false) {
+        \assert(\is_string($key));
         if (\is_dir($key)) {
             $keylen = \strlen($key);
             $next = \next($keys);
             while (
                 $next !== false
-                && 0 === \substr_compare($next, $key, 0, $keylen)
+                && 0 === \substr_compare((string)$next, $key, 0, $keylen)
             ) {
                 unset($targets[$next]);
                 $next = \next($keys);
