@@ -17,32 +17,59 @@ const _TARGET_PATH     = '--path=';
 
 
 interface Target {
+    /**
+     * @return string
+     */
     public function name();
+
+    /**
+     * @return Target[]
+     */
     public function subtargets();
 }
 
 
 final class _Target extends struct implements Target {
+    /** @var string */
     public $name;
+    /** @var Target[] */
     public $subtargets = array();
 
+
+    /**
+     * @param string $name
+     */
     public function __construct($name) {
         $this->name = $name;
     }
 
+    /**
+     * @return string
+     */
     public function name() {
         return $this->name;
     }
 
+    /**
+     * @return Target[]
+     */
     public function subtargets() {
         return $this->subtargets;
     }
 }
 
 
+/**
+ * @param string[] $args
+ * @param string[] $errors
+ * @return array{?string, ?Target[]}
+ */
 function process_user_targets(array $args, &$errors) {
     if (!$args) {
-        $args[] = \getcwd();
+        $cwd = \getcwd();
+        // @todo What should we do if getcwd() fails?
+        \assert(\is_string($cwd));
+        $args[] = $cwd;
     }
     $errors = array();
 
@@ -138,6 +165,12 @@ function process_user_targets(array $args, &$errors) {
 }
 
 
+/**
+ * @param _Target[] $targets
+ * @param string $target
+ * @param string[] $errors
+ * @return void
+ */
 function _process_class_target(array &$targets, $target, array &$errors) {
     $split = \strpos($target, '::');
     if (false === $split) {
@@ -200,6 +233,12 @@ function _process_class_target(array &$targets, $target, array &$errors) {
 }
 
 
+/**
+ * @param _Target[] $targets
+ * @param string $functions
+ * @param string[] $errors
+ * @return void
+ */
 function _process_function_target(array &$targets, $functions, array &$errors) {
     foreach (\explode(',', $functions) as $function) {
         if (!\strlen($function)) {
@@ -216,6 +255,13 @@ function _process_function_target(array &$targets, $functions, array &$errors) {
 }
 
 
+/**
+ * @param _Target[] $targets
+ * @param ?string $root
+ * @param string $path
+ * @param string[] $errors
+ * @return array{?string, ?int}
+ */
 function _process_path_target(array &$targets, &$root, $path, array &$errors) {
     $realpath = \realpath($path);
     $file = null;
@@ -251,6 +297,10 @@ function _process_path_target(array &$targets, &$root, $path, array &$errors) {
 }
 
 
+/**
+ * @param string $path
+ * @return string
+ */
 function _determine_test_root($path) {
     // The test root directory is the first directory above $path whose
     // case-insensitive name does not begin with 'test'. If $path is a
@@ -269,34 +319,38 @@ function _determine_test_root($path) {
 }
 
 
+/**
+ * @param Target[] $targets
+ * @return array{bool, Target[]}
+ */
 function find_directory_targets(Logger $logger, DirectoryTest $test, array $targets) {
     $error = false;
     $result = array();
     $current = null;
     $testnamelen = \strlen($test->name);
     foreach ($targets as $target) {
-        if ($target->name === $test->name) {
+        if ($target->name() === $test->name) {
             \assert(!$result);
             \assert(!$error);
             break;
         }
 
-        $i = \strpos($target->name, \DIRECTORY_SEPARATOR, $testnamelen);
+        $i = \strpos($target->name(), \DIRECTORY_SEPARATOR, $testnamelen);
         if (false === $i) {
-            $childpath = $target->name;
+            $childpath = $target->name();
         }
         else {
-            $childpath = \substr($target->name, 0, $i + 1);
+            $childpath = \substr($target->name(), 0, $i + 1);
         }
 
         if (!isset($test->tests[$childpath])) {
             $error = true;
             $logger->log_error(
-                $target->name,
-                'This path is not a valid test ' . (\is_dir($target->name) ? 'directory' : 'file')
+                $target->name(),
+                'This path is not a valid test ' . (\is_dir($target->name()) ? 'directory' : 'file')
             );
         }
-        elseif ($childpath === $target->name) {
+        elseif ($childpath === $target->name()) {
             $result[] = $target;
             $current = null;
         }
@@ -312,17 +366,21 @@ function find_directory_targets(Logger $logger, DirectoryTest $test, array $targ
 }
 
 
+/**
+ * @param Target[] $targets
+ * @return array{bool, Target[]}
+ */
 function find_file_targets(Logger $logger, FileTest $test, array $targets) {
     $error = false;
     $result = array();
     foreach ($targets as $target) {
-        if (isset($test->tests[$target->name])) {
+        if (isset($test->tests[$target->name()])) {
             $result[] = $target;
         }
         else {
             $error = true;
             $logger->log_error(
-                $target->name,
+                $target->name(),
                 "This identifier is not a valid test in {$test->name}"
             );
         }
@@ -331,17 +389,21 @@ function find_file_targets(Logger $logger, FileTest $test, array $targets) {
 }
 
 
+/**
+ * @param Target[] $targets
+ * @return array{bool, string[]}
+ */
 function find_class_targets(Logger $logger, ClassTest $test, array $targets) {
     $error = false;
     $result = array();
     foreach ($targets as $target) {
-        if (\method_exists($test->name, $target->name)) {
-            $result[] = $target->name;
+        if (\method_exists($test->name, $target->name())) {
+            $result[] = $target->name();
         }
         else {
             $error = true;
             $logger->log_error(
-                $target->name,
+                $target->name(),
                 "This identifier is not a valid test method in class {$test->name}"
             );
         }
@@ -350,6 +412,10 @@ function find_class_targets(Logger $logger, ClassTest $test, array $targets) {
 }
 
 
+/**
+ * @param Dependency[] $dependencies
+ * @return Target[]
+ */
 function build_targets_from_dependencies(array $dependencies) {
     $targets = array();
     $current_file = $current_class = null;

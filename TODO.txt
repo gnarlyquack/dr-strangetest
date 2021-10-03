@@ -131,19 +131,6 @@ Release
     in a production release. If so, then we probably want to allow the phar
     version to be installable with Composer (a la psalm/phar, for example)
 
--   Add typehints:
-    -   buffer.php
-    -   dependency.php
-    -   discover.php
-    -   exceptions.php
-    -   log.php
-    -   main.php
-    -   output.php
-    -   run.php
-    -   targets.php
-    -   tests.php
-    -   util.php
-
 -   The comparison assertions ('<', '<=', '>', '>=') can operate
     (successfully) on (some) composite values. What implications does this
     have on formatting failure messages?

@@ -8,6 +8,11 @@
 namespace easytest;
 
 
+/**
+ * @param string $dirpath
+ * @param Target[] $targets
+ * @return void
+ */
 function discover_tests(BufferingLogger $logger, $dirpath, array $targets) {
     $state = new State();
     $directory = namespace\discover_directory($state, $logger, $dirpath);
@@ -28,6 +33,10 @@ function discover_tests(BufferingLogger $logger, $dirpath, array $targets) {
 }
 
 
+/**
+ * @param string $path
+ * @return DirectoryTest|false
+ */
 function discover_directory(State $state, BufferingLogger $logger, $path) {
     if (isset($state->directories[$path])) {
         return $state->directories[$path];
@@ -104,6 +113,11 @@ function discover_directory(State $state, BufferingLogger $logger, $path) {
 }
 
 
+/**
+ * @param string $filepath
+ * @param string[] $seen
+ * @return DirectoryTest|false
+ */
 function _discover_directory_setup(
     BufferingLogger $logger, DirectoryTest $directory, $filepath, array &$seen
 ) {
@@ -145,6 +159,13 @@ function _discover_directory_setup(
 }
 
 
+/**
+ * @param int $error
+ * @param string $namespace
+ * @param string $function
+ * @param callable-string $fullname
+ * @return bool
+ */
 function _is_directory_setup_function(
     DirectoryTest $directory, &$error, $namespace, $function, $fullname
 ) {
@@ -183,6 +204,12 @@ function _is_directory_setup_function(
 }
 
 
+/**
+ * @param string $filepath
+ * @param callable[] $checks
+ * @param string[] $seen
+ * @return bool
+ */
 function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$seen) {
     $source = namespace\_read_file($logger, $filepath);
     if (!$source) {
@@ -261,6 +288,10 @@ function _parse_file(BufferingLogger $logger, $filepath, array $checks, array &$
 }
 
 
+/**
+ * @param string $filepath
+ * @return string|false
+ */
 function _read_file(BufferingLogger $logger, $filepath) {
     // First include the file to ensure it parses correctly
     namespace\start_buffering($logger, $filepath);
@@ -293,6 +324,10 @@ function _read_file(BufferingLogger $logger, $filepath) {
 }
 
 
+/**
+ * @param string $file
+ * @return bool
+ */
 function _include_file(Logger $logger, $file) {
     try {
         namespace\_guard_include($file);
@@ -309,12 +344,21 @@ function _include_file(Logger $logger, $file) {
 }
 
 
+/**
+ * @param string $file
+ * @return void
+ */
 function _guard_include($file) {
     // Isolate included files to prevent them from meddling with local state
     include $file;
 }
 
 
+/**
+ * @param array<string|array{int, string, int}> $tokens
+ * @param int $i
+ * @return array{?string, int}
+ */
 function _parse_identifier($tokens, $i) {
     $identifier = null;
     // $i = keyword identifying the type of identifer ('class', 'function',
@@ -442,6 +486,10 @@ function _parse_namespace(array $tokens, &$i, $current_ns) {
 }
 
 
+/**
+ * @param string $filepath
+ * @return FileTest|false
+ */
 function discover_file(State $state, BufferingLogger $logger, $filepath) {
     if (isset($state->files[$filepath])) {
         return $state->files[$filepath];
@@ -504,6 +552,11 @@ function discover_file(State $state, BufferingLogger $logger, $filepath) {
 }
 
 
+/**
+ * @param string $source
+ * @param string[] $fixtures
+ * @return void
+ */
 function _log_fixture_error(Logger $logger, $source, $fixtures) {
     $message = 'Multiple conflicting fixture functions found:';
     foreach ($fixtures as $i => $fixture) {
@@ -514,6 +567,12 @@ function _log_fixture_error(Logger $logger, $source, $fixtures) {
 }
 
 
+/**
+ * @param string $namespace
+ * @param string $class
+ * @param class-string $fullname
+ * @return bool
+ */
 function _is_test_class(FileTest $file, $namespace, $class, $fullname) {
     if (0 === \substr_compare($class, 'test', 0, 4, true)) {
         $info = new TestInfo();
@@ -528,6 +587,13 @@ function _is_test_class(FileTest $file, $namespace, $class, $fullname) {
 }
 
 
+/**
+ * @param int $error
+ * @param string $namespace
+ * @param string $function
+ * @param callable-string $fullname
+ * @return bool
+ */
 function _is_test_function(FileTest $file, &$error, $namespace, $function, $fullname) {
     if (0 === \substr_compare($function, 'test', 0, 4, true)) {
         $info = new TestInfo();
@@ -588,44 +654,49 @@ function _is_test_function(FileTest $file, &$error, $namespace, $function, $full
 }
 
 
+/**
+ * @return ClassTest|false
+ */
 function discover_class(State $state, Logger $logger, TestInfo $info) {
     $classname = $info->name;
+    \assert(\class_exists($classname));
     if (isset($state->classes[$classname])) {
         return $state->classes[$classname];
     }
 
-    $class = new ClassTest();
-    $class->file = $info->filename;
-    $class->namespace = $info->namespace;
-    $class->name = $classname;
+    $tests = array();
+    $setup = array();
+    $teardown = array();
+    $setup_function = null;
+    $teardown_function = null;
     $error = 0;
     foreach (\get_class_methods($classname) as $method) {
         if (0 === \substr_compare($method, 'test', 0, 4, true)) {
-            $class->tests[] = $method;
+            $tests[] = $method;
             continue;
         }
 
         if(\preg_match('~^(setup|teardown)(?:_?object)?$~i', $method, $matches)) {
             if (0 === \strcasecmp('setup', $matches[1])) {
                 if ($matches[0] === $matches[1]) {
-                    $class->setup_function = $method;
+                    $setup_function = $method;
                 }
                 else {
-                    if ($class->setup) {
+                    if ($setup) {
                         $error |= namespace\ERROR_SETUP;
                     }
-                    $class->setup[] = $method;
+                    $setup[] = $method;
                 }
             }
             else {
                 if ($matches[0] === $matches[1]) {
-                    $class->teardown_function = $method;
+                    $teardown_function = $method;
                 }
                 else {
-                    if ($class->teardown) {
+                    if ($teardown) {
                         $error |= namespace\ERROR_TEARDOWN;
                     }
-                    $class->teardown[] = $method;
+                    $teardown[] = $method;
                 }
             }
             continue;
@@ -638,7 +709,7 @@ function discover_class(State $state, Logger $logger, TestInfo $info) {
                 $classname,
                 \sprintf(
                     "Multiple setup fixtures found:\n\t%s",
-                    \implode("\n\t", $class->setup)
+                    \implode("\n\t", $setup)
                 )
             );
         }
@@ -647,19 +718,26 @@ function discover_class(State $state, Logger $logger, TestInfo $info) {
                 $classname,
                 \sprintf(
                     "Multiple teardown fixtures found:\n\t%s",
-                    \implode("\n\t", $class->teardown)
+                    \implode("\n\t", $teardown)
                 )
             );
         }
         $class = false;
     }
-    elseif (!$class->tests) {
+    elseif (!$tests) {
         // Should this be logged/reported?
         $class = false;
     }
     else {
-        $class->setup = $class->setup ? $class->setup[0] : null;
-        $class->teardown = $class->teardown ? $class->teardown[0] : null;
+        $class = new ClassTest();
+        $class->file = $info->filename;
+        $class->namespace = $info->namespace;
+        $class->name = $classname;
+        $class->tests = $tests;
+        $class->setup = $setup ? $setup[0] : null;
+        $class->teardown = $teardown ? $teardown[0] : null;
+        $class->setup_function = $setup_function;
+        $class->teardown_function = $teardown_function;
     }
 
     $state->classes[$classname] = $class;

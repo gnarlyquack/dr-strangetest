@@ -15,76 +15,129 @@ final class LiveUpdatingLogger implements Logger {
     }
 
 
+    /**
+     * @param string $source
+     * @return void
+     */
     public function log_pass($source) {
         namespace\output_pass();
         $this->logger->log_pass($source);
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable $reason
+     * @return void
+     */
     public function log_failure($source, $reason) {
         namespace\output_failure();
         $this->logger->log_failure($source, $reason);
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable $reason
+     * @return void
+     */
     public function log_error($source, $reason) {
         namespace\output_error();
         $this->logger->log_error($source, $reason);
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable $reason
+     * @param ?bool $during_error
+     * @return void
+     */
     public function log_skip($source, $reason, $during_error = false) {
         namespace\output_skip();
         $this->logger->log_skip($source, $reason, $during_error);
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable $reason
+     * @param ?bool $during_error
+     * @return void
+     */
     public function log_output($source, $reason, $during_error = false) {
         namespace\output_output();
         $this->logger->log_output($source, $reason, $during_error);
     }
 
 
+    /** @var Logger */
     private $logger;
 }
 
 
 
+/**
+ * @param string $text
+ * @return void
+ */
 function output($text) {
     echo "$text\n";
 }
 
 
+/**
+ * @param string $text
+ * @return void
+ */
 function output_header($text) {
     echo "$text\n\n";
 }
 
 
+/**
+ * @return void
+ */
 function output_pass() {
     echo '.';
 }
 
 
+/**
+ * @return void
+ */
 function output_error() {
     echo 'E';
 }
 
 
+/**
+ * @return void
+ */
 function output_failure() {
     echo 'F';
 }
 
 
+/**
+ * @return void
+ */
 function output_skip() {
     echo 'S';
 }
 
 
+/**
+ * @return void
+ */
 function output_output() {
     echo 'O';
 }
 
 
+/**
+ * @return void
+ */
 function output_log(Log $log) {
     $event_types = array(
         namespace\EVENT_FAIL => 'FAILED',

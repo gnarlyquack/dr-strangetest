@@ -12,11 +12,24 @@ final class Postpone extends \Exception {}
 
 
 final class Dependency extends struct {
+    /** @var string */
     public $file;
+
+    /** @var ?string */
     public $class;
+
+    /** @var string */
     public $function;
+
+    /** @var array<string, string[]> */
     public $dependees = array();
 
+
+    /**
+     * @param string $file
+     * @param ?string $class
+     * @param string $function
+     */
     public function __construct($file, $class, $function) {
         $this->file = $file;
         $this->class = $class;
@@ -26,10 +39,19 @@ final class Dependency extends struct {
 
 
 final class _DependencyGraph {
+    /** @var State */
     private $state;
+
+    /** @var Logger */
     private $logger;
+
+    /** @var Dependency[] */
     private $postorder = array();
+
+    /** @var array<string, bool> */
     private $marked = array();
+
+    /** @var array<string, bool> */
     private $stack = array();
 
 
@@ -39,6 +61,9 @@ final class _DependencyGraph {
     }
 
 
+    /**
+     * @return Dependency[]
+     */
     public function sort() {
         foreach ($this->state->depends as $from => $_) {
             $this->postorder($from);
@@ -47,6 +72,11 @@ final class _DependencyGraph {
     }
 
 
+    /**
+     * @param string $from
+     * @param string[] $runs
+     * @return bool
+     */
     private function postorder($from, array $runs = array()) {
         if (isset($this->marked[$from])) {
             if (!$this->marked[$from]) {
@@ -114,6 +144,11 @@ final class _DependencyGraph {
     }
 
 
+    /**
+     * @param string $from
+     * @param string[] $runs
+     * @return bool
+     */
     private function check_run_results($from, array $runs) {
         $result = true;
         foreach ($runs as $run) {
@@ -130,6 +165,9 @@ final class _DependencyGraph {
 }
 
 
+/**
+ * @return Dependency[]
+ */
 function resolve_dependencies(State $state, Logger $logger) {
     $graph = new _DependencyGraph($state, $logger);
     return $graph->sort();

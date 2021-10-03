@@ -9,12 +9,23 @@ namespace easytest;
 
 
 final class BasicLog implements Log {
+    /** @var float */
     public $megabytes_used;
+
+    /** @var float */
     public $seconds_elapsed;
+
+    /** @var int[] $count */
     private $count;
+
+    /** @var array{int, string, string|\Throwable|null}[] */
     private $events;
 
 
+    /**
+     * @param int[] $count
+     * @param array{int, string, string|\Throwable|null}[] $events
+     */
     public function __construct(array $count, array $events) {
         $this->count = $count;
         $this->events = $events;
@@ -65,6 +76,7 @@ final class BasicLog implements Log {
 
 
 final class BasicLogger implements Logger {
+    /** @var int[] */
     private $count = array(
         namespace\EVENT_PASS   => 0,
         namespace\EVENT_ERROR  => 0,
@@ -72,10 +84,17 @@ final class BasicLogger implements Logger {
         namespace\EVENT_SKIP   => 0,
         namespace\EVENT_OUTPUT => 0,
     );
+
+    /** @var array{int, string, string|\Throwable|null}[] */
     private $events = array();
+
+    /** @var bool */
     private $verbose;
 
 
+    /**
+     * @param bool $verbose
+     */
     public function __construct($verbose) {
         $this->verbose = $verbose;
     }
@@ -104,6 +123,7 @@ final class BasicLogger implements Logger {
     public function log_skip($source, $reason, $during_error = false) {
         ++$this->count[namespace\EVENT_SKIP];
         if ($during_error) {
+            \assert($reason instanceof \Throwable);
             $reason = new Skip('Although this test was skipped, there was also an error', $reason);
             $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
         }
@@ -121,6 +141,9 @@ final class BasicLogger implements Logger {
     }
 
 
+    /**
+     * @return BasicLog
+     */
     public function get_log() {
         return new BasicLog($this->count, $this->events);
     }

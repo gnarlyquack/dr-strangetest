@@ -9,11 +9,22 @@ namespace easytest;
 
 
 final class BufferingLogger implements Logger {
+    /** @var Logger */
     public $logger;
+
+    /** @var ?string */
     public $buffer;
+
+    /** @var bool */
     public $error = false;
+
+    /** @var int */
     public $ob_level_current;
+
+    /** @var int */
     public $ob_level_start;
+
+    /** @var array{int, string, string|\Throwable|null}[] */
     public $queued = array();
 
 
@@ -76,6 +87,10 @@ final class BufferingLogger implements Logger {
 
 
 
+/**
+ * @param string $source
+ * @return void
+ */
 function start_buffering(BufferingLogger $logger, $source) {
     if ($logger->buffer) {
         namespace\_reset_buffer($logger);
@@ -89,24 +104,29 @@ function start_buffering(BufferingLogger $logger, $source) {
 }
 
 
+/**
+ * @return void
+ */
 function end_buffering(BufferingLogger $logger) {
+    $source = $logger->buffer;
+    \assert(\is_string($source));
     $buffers = array();
     for ($level = \ob_get_level();
          $level > $logger->ob_level_start;
          --$level)
     {
         $logger->log_error(
-            $logger->buffer,
+            $source,
             \sprintf(
                 "An output buffer was started but never deleted.\nBuffer contents were: %s",
-                namespace\_format_buffer(\ob_get_clean())
+                namespace\_format_buffer((string)\ob_get_clean())
             )
         );
     }
 
     if ($level < $logger->ob_level_start) {
         $logger->log_error(
-            $logger->buffer,
+            $source,
             "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
         );
     }
@@ -114,7 +134,7 @@ function end_buffering(BufferingLogger $logger) {
         $output = (string)\ob_get_clean();
         if (\strlen($output)) {
             $logger->log_output(
-                $logger->buffer,
+                $source,
                 namespace\_format_buffer($output),
                 $logger->error
             );
@@ -152,7 +172,11 @@ function end_buffering(BufferingLogger $logger) {
 }
 
 
+/**
+ * @return void
+ */
 function _reset_buffer(BufferingLogger $logger) {
+    \assert(\is_string($logger->buffer));
     $level = \ob_get_level();
 
     if ($level < $logger->ob_level_start) {
@@ -205,6 +229,10 @@ function _reset_buffer(BufferingLogger $logger) {
 }
 
 
+/**
+ * @param string $buffer
+ * @return string
+ */
 function _format_buffer($buffer) {
     if ('' === $buffer) {
         return '[the output buffer was empty]';

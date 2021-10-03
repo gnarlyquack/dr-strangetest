@@ -39,32 +39,82 @@ define('easytest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
 
 
 interface Log {
+    /**
+     * @return int
+     */
     public function pass_count();
 
+    /**
+     * @return int
+     */
     public function failure_count();
 
+    /**
+     * @return int
+     */
     public function error_count();
 
+    /**
+     * @return int
+     */
     public function skip_count();
 
+    /**
+     * @return int
+     */
     public function output_count();
 
+    /**
+     * @return float
+     */
     public function seconds_elapsed();
 
+    /**
+     * @return float
+     */
     public function memory_used();
 
+    /**
+     * @return array{int, string, string|\Throwable|null}[]
+     */
     public function get_events();
 }
 
 interface Logger {
+    /**
+     * @param string $source
+     * @return void
+     */
     public function log_pass($source);
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @return void
+     */
     public function log_failure($source, $reason);
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @return void
+     */
     public function log_error($source, $reason);
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @param ?bool $during_error
+     * @return void
+     */
     public function log_skip($source, $reason, $during_error = false);
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @param ?bool $during_error
+     * @return void
+     */
     public function log_output($source, $reason, $during_error = false);
 }
 
@@ -72,6 +122,12 @@ interface Logger {
 
 // @bc 5.3 Use an abstract class instead of (potentially) a trait
 abstract class struct {
+    /**
+     * @param string $name
+     * @param mixed $value
+     * @return never
+     * @throws \Exception
+     */
     final public function __set($name, $value) {
         throw new \Exception(
             \sprintf("Undefined property: %s::%s", \get_class($this), $name)
@@ -79,6 +135,11 @@ abstract class struct {
     }
 
 
+    /**
+     * @param string $name
+     * @return never
+     * @throws \Exception
+     */
     final public function __get($name) {
         throw new \Exception(
             \sprintf("Undefined property: %s::%s", \get_class($this), $name)
@@ -93,7 +154,7 @@ final class Error extends \ErrorException {
      * @param string $message
      * @param int $severity
      * @param string $file
-     * @parem int $line
+     * @param int $line
      */
     public function __construct($message, $severity, $file, $line) {
         parent::__construct($message, 0, $severity, $file, $line);
@@ -121,17 +182,35 @@ final class Error extends \ErrorException {
 
 
 final class State extends struct {
+    /** @var string[] */
     public $seen = array();
+
+    /** @var array<string, DirectoryTest|false> */
     public $directories = array();
+
+    /** @var array<string, FileTest|false> */
     public $files = array();
+
+    /** @var array<string, ClassTest|false> */
     public $classes = array();
+
+    /** @var array<string, bool[]> */
     public $results = array();
+
+    /** @var array<string, Dependency> */
     public $depends = array();
+
+    /** @var array<string, array<string, mixed>> */
     public $fixture = array();
 }
 
 
 
+/**
+ * @param int $argc
+ * @param string[] $argv
+ * @return never
+ */
 function main($argc, $argv) {
     namespace\_enable_error_handling();
     namespace\_try_loading_composer();
@@ -169,6 +248,9 @@ function main($argc, $argv) {
 }
 
 
+/**
+ * @return void
+ */
 function _enable_error_handling() {
     // @bc 5.3 Include E_STRICT in error_reporting()
     \error_reporting(\E_ALL | \E_STRICT);
@@ -203,6 +285,14 @@ function _enable_error_handling() {
 }
 
 
+/**
+ * @param string $file
+ * @param int $line
+ * @param ?string $code
+ * @param ?string $desc
+ * @return void
+ * @throws Failure
+ */
 function _handle_assertion($file, $line, $code, $desc = null) {
     if (!\ini_get('assert.exception')) {
         // @bc 7.4 Check that $code is not an empty string
@@ -215,15 +305,27 @@ function _handle_assertion($file, $line, $code, $desc = null) {
     }
 }
 
+
+/**
+ * @param int $errno
+ * @param string $errstr
+ * @param string $errfile
+ * @param int $errline
+ * @return bool
+ * @throws Error
+ */
 function _handle_error($errno, $errstr, $errfile, $errline) {
     if (!(\error_reporting() & $errno)) {
         // This error code is not included in error_reporting
-        return;
+        return false;
     }
     throw new Error($errstr, $errno, $errfile, $errline);
 }
 
 
+/**
+ * @return void
+ */
 function _try_loading_composer() {
     // Assume (reasonably?) users are working in their root source directory
     $composer = \sprintf(
@@ -236,6 +338,9 @@ function _try_loading_composer() {
 }
 
 
+/**
+ * @return void
+ */
 function _load_easytest() {
     $files = array(
         'assertions',
@@ -272,6 +377,9 @@ function _load_easytest() {
 }
 
 
+/**
+ * @return float
+ */
 function _microtime() {
     if (\function_exists('hrtime')) {
         list($sec, $nsec) = hrtime();
@@ -285,6 +393,11 @@ function _microtime() {
 }
 
 
+/**
+ * @param int $argc
+ * @param string[] $argv
+ * @return array{array<string, mixed>, string[]}
+ */
 function _parse_arguments($argc, $argv) {
     $opts = array('verbose' => false);
     $args = \array_slice($argv, 1);
@@ -314,14 +427,25 @@ function _parse_arguments($argc, $argv) {
 }
 
 
+/**
+ * @param string[] $args
+ * @param array<string, int> $opts
+ * @return array{array<string, mixed>, string[]}
+ */
 function _parse_long_option($args, $opts) {
     $opt = \array_shift($args);
+    \assert(\is_string($opt));
     // Remove the leading dashes
     $opt = \substr($opt, 2);
     return namespace\_parse_option($opt, $args, $opts);
 }
 
 
+/**
+ * @param string[] $args
+ * @param array<string, int> $opts
+ * @return array{array<string, mixed>, string[]}
+ */
 function _parse_short_option($args, $opts) {
     // Remove the leading dash, but don't remove the option from $args in
     // case the option is concatenated with a value or other short options
@@ -341,6 +465,12 @@ function _parse_short_option($args, $opts) {
 }
 
 
+/**
+ * @param string $opt
+ * @param string[] $args
+ * @param array<string, int> $opts
+ * @return array{array<string, mixed>, string[]}
+ */
 function _parse_option($opt, $args, $opts) {
     switch ($opt) {
         case 'q':
@@ -370,6 +500,9 @@ function _parse_option($opt, $args, $opts) {
 }
 
 
+/**
+ * @return string
+ */
 function _get_version() {
     return \sprintf(
         '%s %s',
@@ -379,6 +512,9 @@ function _get_version() {
 }
 
 
+/**
+ * @return string
+ */
 function _get_help() {
     return <<<'HELP'
 Usage: easytest [OPTION]... [PATH]...

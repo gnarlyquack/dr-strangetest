@@ -10,11 +10,21 @@ namespace easytest;
 
 // These function comprise the API to generate EasyTest-specific exceptions
 
+/**
+ * @param string $reason
+ * @return never
+ * @throws Skip
+ */
 function skip($reason) {
     throw new Skip($reason);
 }
 
 
+/**
+ * @param string $reason
+ * @return never
+ * @throws Failure
+ */
 function fail($reason) {
     throw new Failure($reason);
 }
@@ -103,7 +113,7 @@ final class Skip extends \Exception {
     /**
      * @param string $message
      */
-    public function __construct($message, Skip $previous = null) {
+    public function __construct($message, \Throwable $previous = null) {
         parent::__construct($message, 0, $previous);
         $result = namespace\_find_client_call_site();
         if ($result) {
@@ -149,12 +159,15 @@ final class InvalidCodePath extends \Exception {}
 
 
 
+/**
+ * @return ?mixed[]
+ */
 function _find_client_call_site() {
     // Find the first call in a backtrace that's outside of easytest
     // @bc 5.3 Pass false for debug_backtrace() $option parameter
     $trace = \defined('DEBUG_BACKTRACE_IGNORE_ARGS')
            ? \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS)
-           : \debug_backtrace(false);
+           : \debug_backtrace(0);
     foreach ($trace as $i => $frame) {
         // Apparently there's no file if we were thrown from the error
         // handler
@@ -178,6 +191,14 @@ function _find_client_call_site() {
 }
 
 
+/**
+ * @param string $format
+ * @param string $message
+ * @param string $file
+ * @param int $line
+ * @param array<array<string, mixed>> $trace
+ * @return string
+ */
 function _format_exception_string($format, $message, $file, $line, $trace) {
     $string = \sprintf($format, $message, $file, $line);
 

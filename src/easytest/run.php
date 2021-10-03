@@ -16,12 +16,20 @@ const RESULT_POSTPONE = 0x2;
 final class Context {
     /** @var State */
     private $state;
+    /** @var Logger */
     private $logger;
+    /** @var FunctionTest */
     private $test;
+    /** @var string */
     private $run;
+    /** @var int */
     private $result = namespace\RESULT_PASS;
+    /** @var (callable(mixed ...): void)[] */
     private $teardowns = array();
 
+    /**
+     * @param string $run
+     */
     public function __construct(State $state, Logger $logger,
         FunctionTest $test, $run
     ) {
@@ -32,6 +40,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $expected
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     public function assert_different($expected, $actual, $description = null) {
         return $this->do_assert(
             function() use ($expected, $actual, $description) {
@@ -41,6 +55,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $expected
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     public function assert_equal($expected, $actual, $description = null) {
         return $this->do_assert(
             function() use ($expected, $actual, $description) {
@@ -50,6 +70,11 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     function assert_false($actual, $description = null) {
         return $this->do_assert(
             function() use ($actual, $description) {
@@ -59,6 +84,11 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     function assert_falsy($actual, $description = null) {
         return $this->do_assert(
             function() use ($actual, $description) {
@@ -68,6 +98,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param mixed $min
+     * @param ?string $description
+     * @return bool
+     */
     function assert_greater($actual, $min, $description = null) {
         return $this->do_assert(
             function() use ($actual, $min, $description) {
@@ -77,6 +113,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param mixed $min
+     * @param ?string $description
+     * @return bool
+     */
     function assert_greater_or_equal($actual, $min, $description = null) {
         return $this->do_assert(
             function() use ($actual, $min, $description) {
@@ -86,6 +128,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $expected
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     function assert_identical($expected, $actual, $description = null) {
         return $this->do_assert(
             function() use ($expected, $actual, $description) {
@@ -95,6 +143,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param mixed $max
+     * @param ?string $description
+     * @return bool
+     */
     function assert_less($actual, $max, $description = null) {
         return $this->do_assert(
             function() use ($actual, $max, $description) {
@@ -104,6 +158,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param mixed $max
+     * @param ?string $description
+     * @return bool
+     */
     function assert_less_or_equal($actual, $max, $description = null) {
         return $this->do_assert(
             function() use ($actual, $max, $description) {
@@ -113,6 +173,14 @@ final class Context {
     }
 
 
+    /**
+     * @template T of \Throwable
+     * @param class-string<T> $expected
+     * @param callable $callback
+     * @param ?string $description
+     * @param ?T $result
+     * @return bool
+     */
     function assert_throws($expected, $callback, $description = null, &$result = null) {
         return $this->do_assert(
             function() use ($expected, $callback, $description, &$result) {
@@ -122,6 +190,11 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     function assert_true($actual, $description = null) {
         return $this->do_assert(
             function() use ($actual, $description) {
@@ -131,6 +204,11 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     function assert_truthy($actual, $description = null) {
         return $this->do_assert(
             function() use ($actual, $description) {
@@ -140,6 +218,12 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $expected
+     * @param mixed $actual
+     * @param ?string $description
+     * @return bool
+     */
     function assert_unequal($expected, $actual, $description = null) {
         return $this->do_assert(
             function() use ($expected, $actual, $description) {
@@ -149,6 +233,10 @@ final class Context {
     }
 
 
+    /**
+     * @param string $reason
+     * @return bool
+     */
     function fail($reason) {
         return $this->do_assert(
             function() use ($reason) {
@@ -158,6 +246,10 @@ final class Context {
     }
 
 
+    /**
+     * @param callable(): void $assert
+     * @return bool
+     */
     private function do_assert($assert) {
         try {
             $assert();
@@ -175,6 +267,10 @@ final class Context {
     }
 
 
+    /**
+     * @param callable(mixed ...): void $callable
+     * @return void
+     */
     public function teardown($callable) {
         $this->teardowns[] = $callable;
     }
@@ -243,21 +339,35 @@ final class Context {
     }
 
 
+    /**
+     * @param mixed $value
+     * @return void
+     */
     public function set($value) {
         $this->state->fixture[$this->test->name][$this->run] = $value;
     }
 
 
+    /**
+     * @return int
+     */
     public function result() {
         return $this->result;
     }
 
 
+    /**
+     * @return callable[]
+     */
     public function teardowns() {
         return $this->teardowns;
     }
 
 
+    /**
+     * @param string $name
+     * @return array{string, string}
+     */
     private function normalize_name($name) {
         if (
             !\preg_match(
@@ -269,6 +379,7 @@ final class Context {
             \trigger_error("Invalid test name: $name");
         }
 
+        /** @var string[] $matches */
         list(, $namespace, $class, $function) = $matches;
 
         if (!$namespace) {
@@ -305,8 +416,14 @@ final class Context {
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function run_test(
-    State $state, BufferingLogger $logger, $test,
+    State $state, BufferingLogger $logger, Test $test,
     $args = null, array $run_id = null, array $targets = null
 ) {
     if ($targets) {
@@ -323,8 +440,8 @@ function run_test(
     }
 
     if (!\is_iterable($args)) {
-        $message = "'{$test->setup_runs}' returned a non-iterable argument set";
-        $logger->log_error($test->name, $message);
+        $message = "'{$test->setup_runs_name()}' returned a non-iterable argument set";
+        $logger->log_error($test->name(), $message);
     }
     else {
         foreach ($args as $i => $argset) {
@@ -335,11 +452,11 @@ function run_test(
                     }
                 }
                 else {
-                    $message = "'{$test->setup_runs}' returned a non-iterable argument set";
+                    $message = "'{$test->setup_runs_name()}' returned a non-iterable argument set";
                     if ($update_run) {
                         $message .= "\nfor argument set '{$i}'";
                     }
-                    $logger->log_error($test->name, $message);
+                    $logger->log_error($test->name(), $message);
                     continue;
                 }
             }
@@ -356,11 +473,11 @@ function run_test(
                 continue;
             }
             if ($argset !== null && !\is_iterable($argset)) {
-                $message = "'{$test->setup}' returned a non-iterable argument set";
+                $message = "'{$test->setup_name()}' returned a non-iterable argument set";
                 if ($update_run) {
                     $message .= "\nfor argument set '{$i}'";
                 }
-                $logger->log_error($test->name, $message);
+                $logger->log_error($test->name(), $message);
             }
             else {
                 if ($argset !== null && !\is_array($argset)) {
@@ -376,6 +493,11 @@ function run_test(
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string $run
+ * @return array{int, ?mixed[]}
+ */
 function run_directory_setup(
     BufferingLogger $logger,
     DirectoryTest $directory,
@@ -401,7 +523,7 @@ function run_directory_setup(
  * @param ?mixed[] $args
  * @param string $run
  * @param ?bool $update_run
- * @return array{int, array<?mixed[]>}
+ * @return array{int, ?mixed[]}
  */
 function run_directory_setup_runs(
     BufferingLogger $logger,
@@ -425,6 +547,12 @@ function run_directory_setup_runs(
 }
 
 
+/**
+ * @param ?mixed[] $arglist
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function run_directory_tests(
     State $state, BufferingLogger $logger, DirectoryTest $directory,
     array $arglist = null, array $run_id = null, array $targets = null
@@ -448,6 +576,13 @@ function run_directory_tests(
 }
 
 
+/**
+ * @param string $test
+ * @param ?mixed[] $arglist
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function _run_directory_test(
     State $state, BufferingLogger $logger, DirectoryTest $directory, $test,
     $arglist = null, array $run_id = null, array $targets = null
@@ -494,6 +629,11 @@ function run_directory_teardown_runs(
 }
 
 
+/**
+ * @param ?mixed $args
+ * @param ?string $run
+ * @return void
+ */
 function run_directory_teardown(
     BufferingLogger $logger,
     DirectoryTest $directory,
@@ -509,6 +649,11 @@ function run_directory_teardown(
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string $run
+ * @return array{int, ?mixed[]}
+ */
 function run_file_setup(
     BufferingLogger $logger,
     FileTest $file,
@@ -534,7 +679,7 @@ function run_file_setup(
  * @param ?mixed[] $args
  * @param ?string $run
  * @param ?bool $update_run
- * @return array{int, array<?mixed[]>}
+ * @return array{int, ?mixed[]}
  */
 function run_file_setup_runs(
     BufferingLogger $logger,
@@ -558,6 +703,12 @@ function run_file_setup_runs(
 }
 
 
+/**
+ * @param ?mixed[] $arglist
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function run_file_tests(
     State $state, BufferingLogger $logger, FileTest $file,
     array $arglist = null, array $run_id = null, array $targets = null
@@ -581,6 +732,13 @@ function run_file_tests(
 }
 
 
+/**
+ * @param string $test
+ * @param ?mixed[] $arglist
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function _run_file_test(
     State $state, BufferingLogger $logger, FileTest $file, $test,
     $arglist = null, array $run_id = null, array $targets = null
@@ -597,6 +755,7 @@ function _run_file_test(
         $test->namespace = $info->namespace;
         $test->function = $info->name;
         $test->name = $info->name;
+        \assert(\is_callable($info->name));
         $test->test = $info->name;
         if ($file->setup_function) {
             $test->setup_name = $file->setup_function_name;
@@ -642,6 +801,11 @@ function run_file_teardown_runs(
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string $run
+ * @return void
+ */
 function run_file_teardown(
     BufferingLogger $logger,
     FileTest $file,
@@ -657,6 +821,11 @@ function run_file_teardown(
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string $run
+ * @return array{int, ?mixed[]}
+ */
 function run_class_setup(
     BufferingLogger $logger,
     ClassTest $class,
@@ -674,6 +843,7 @@ function run_class_setup(
     if ($class->setup) {
         $name = "{$class->name}::{$class->setup}{$run}";
         $method = array($class->object, $class->setup);
+        \assert(\is_callable($method));
         namespace\start_buffering($logger, $name);
         list($result[0],) = namespace\_run_setup($logger, $name, $method);
         namespace\end_buffering($logger);
@@ -682,6 +852,12 @@ function run_class_setup(
 }
 
 
+/**
+ * @param ?mixed[] $arglist
+ * @param ?string[] $run_id
+ * @param ?string[] $targets
+ * @return void
+ */
 function run_class_tests(
     State $state, BufferingLogger $logger, ClassTest $class,
     array $arglist = null, array $run_id = null, array $targets = null
@@ -699,6 +875,12 @@ function run_class_tests(
 }
 
 
+/**
+ * @param string $method
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function _run_class_test(
     State $state, BufferingLogger $logger, ClassTest $class, $method,
     array $run_id = null, array $targets = null
@@ -709,19 +891,31 @@ function _run_class_test(
     $test->class = $class->name;
     $test->function =  $method;
     $test->name = "{$class->name}::{$method}";
-    $test->test = array($class->object, $method);
+    $method = array($class->object, $method);
+    \assert(\is_callable($method));
+    $test->test = $method;
     if ($class->setup_function) {
-        $test->setup = array($class->object, $class->setup_function);
+        $method = array($class->object, $class->setup_function);
+        \assert(\is_callable($method));
+        $test->setup = $method;
         $test->setup_name = $class->setup_function;
     }
     if ($class->teardown_function) {
-        $test->teardown = array($class->object, $class->teardown_function);
+        $method = array($class->object, $class->teardown_function);
+        \assert(\is_callable($method));
+        $test->teardown = $method;
         $test->teardown_name = $class->teardown_function;
     }
     namespace\run_test($state, $logger, $test, null, $run_id);
 }
 
 
+/**
+ * @template T of object
+ * @param class-string<T> $class
+ * @param ?mixed[] $args
+ * @return ?T
+ */
 function _instantiate_test(Logger $logger, $class, $args) {
     try {
         if ($args) {
@@ -739,14 +933,19 @@ function _instantiate_test(Logger $logger, $class, $args) {
     catch (\Throwable $e) {
         $logger->log_error($class, $e);
     }
-    return false;
+    return null;
 }
 
 
+/**
+ * @param ?string $run
+ * @return void
+ */
 function run_class_teardown(BufferingLogger $logger, ClassTest $class, $run) {
     if ($class->teardown) {
         $name = "{$class->name}::{$class->teardown}{$run}";
         $method = array($class->object, $class->teardown);
+        \assert(\is_callable($method));
         namespace\start_buffering($logger, $name);
         namespace\_run_teardown($logger, $name, $method);
         namespace\end_buffering($logger);
@@ -755,6 +954,11 @@ function run_class_teardown(BufferingLogger $logger, ClassTest $class, $run) {
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string $run
+ * @return array{int, ?mixed[]}
+ */
 function run_function_setup(
     BufferingLogger $logger,
     FunctionTest $test,
@@ -777,6 +981,12 @@ function run_function_setup(
 }
 
 
+/**
+ * @param ?mixed[] $arglist
+ * @param ?string[] $run_id
+ * @param ?Target[] $targets
+ * @return void
+ */
 function run_function_test(
     State $state, BufferingLogger $logger, FunctionTest $test,
     array $arglist = null, array $run_id = null, array $targets = null
@@ -800,6 +1010,11 @@ function run_function_test(
 }
 
 
+/**
+ * @param ?mixed[] $args
+ * @param ?string $run
+ * @return void
+ */
 function run_function_teardown(
     State $state,
     BufferingLogger $logger,
@@ -837,6 +1052,12 @@ function run_function_teardown(
 }
 
 
+/**
+ * @param string $name
+ * @param callable(mixed ...$args): mixed[] $callable
+ * @param ?mixed[] $args
+ * @return array{int, ?mixed[]}
+ */
 function _run_setup(Logger $logger, $name, $callable, array $args = null) {
     try {
         if ($args) {
@@ -863,6 +1084,12 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null) {
 }
 
 
+/**
+ * @param string $name
+ * @param callable(mixed ...$args): void $callable
+ * @param ?mixed[] $args
+ * @return int
+ */
 function _run_test_function(
     Logger $logger, $name, $callable, Context $context, array $args = null
 ) {
@@ -908,7 +1135,11 @@ function _run_test_function(
 
 
 /**
+ * @param string $name
+ * @param callable(mixed ...$args): void $callable
+ * @param ?mixed[] $args
  * @param ?bool $unpack
+ * @return int
  */
 function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack = true) {
     try {

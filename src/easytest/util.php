@@ -8,7 +8,12 @@
 namespace easytest;
 
 /**
+ * @param mixed $from
+ * @param mixed $to
+ * @param string $from_name
+ * @param string $to_name
  * @param bool $loose
+ * @return string
  */
 function diff(&$from, &$to, $from_name, $to_name, $loose = false) {
     if ($from_name === $to_name) {
@@ -31,16 +36,22 @@ function diff(&$from, &$to, $from_name, $to_name, $loose = false) {
 final class _DiffState extends struct {
     /** @var bool */
     public $loose;
+
+    /** @var string[] */
     public $diff = array();
+
+    /** @var array{'byval': mixed[], 'byref': mixed[]} */
     public $seen = array('byval' => array(), 'byref' => array());
-    public $sentinels = array('byref' => null);
+
+    /** @var array{'byref': null, 'byval': \stdClass} */
+    public $sentinels;
 
     /**
      * @param bool $loose
      */
     public function __construct($loose) {
         $this->loose = $loose;
-        $this->sentinels['byval'] = new \stdClass();
+        $this->sentinels = array('byref' => null, 'byval' => new \stdClass());
     }
 }
 
@@ -50,8 +61,12 @@ const _FORMAT_INDENT = '    ';
 
 
 final class _DiffCopy {
+    /** @var string */
     public $value;
 
+    /**
+     * @param string $value
+     */
     public function __construct($value) {
         $this->value = $value;
     }
@@ -63,12 +78,19 @@ final class _DiffCopy {
 
 
 final class _DiffInsert {
+    /** @var string */
     public $value;
 
+    /**
+     * @param string $value
+     */
     public function __construct($value) {
         $this->value = $value;
     }
 
+    /**
+     * @return string
+     */
     public function __toString() {
         return "+ {$this->value}";
     }
@@ -76,12 +98,19 @@ final class _DiffInsert {
 
 
 final class _DiffDelete {
+    /** @var string */
     public $value;
 
+    /**
+     * @param string $value
+     */
     public function __construct($value) {
         $this->value = $value;
     }
 
+    /**
+     * @return string
+     */
     public function __toString() {
         return "- {$this->value}";
     }
@@ -89,10 +118,20 @@ final class _DiffDelete {
 
 
 final class _Edit extends struct {
+    /** @var int */
     public $flen;
+
+    /** @var int */
     public $tlen;
+
+    /** @var array<int, int[]> */
     public $m;
 
+    /**
+     * @param int $flen
+     * @param int $tlen
+     * @param array<int, int[]> $m
+     */
     public function __construct($flen, $tlen, $m) {
         $this->flen = $flen;
         $this->tlen = $tlen;
@@ -1016,6 +1055,9 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
 }
 
 
+/**
+ * @return void
+ */
 function _diff_values(_Value $from, _Value $to, _DiffState $state) {
     if (namespace\_lcs_values($from, $to, $state->loose, $lcs)) {
         namespace\_copy_value($state->diff, $from);
@@ -1049,6 +1091,8 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
 
 /**
  * @param bool $loose
+ * @param int $lcs
+ * @return bool
  */
 function _lcs_values(_Value $from, _Value $to, $loose, &$lcs) {
     if (namespace\_compare_values($from, $to, $loose)) {
@@ -1081,7 +1125,10 @@ function _lcs_values(_Value $from, _Value $to, $loose, &$lcs) {
 
 
 /**
+ * @param _Value[] $from
+ * @param _Value[] $to
  * @param bool $loose
+ * @return _Edit
  */
 function _lcs_array(array $from, array $to, $loose) {
     $m = array();
@@ -1116,6 +1163,7 @@ function _lcs_array(array $from, array $to, $loose) {
 
 /**
  * @param bool $loose
+ * @return bool
  */
 function _compare_values(_Value $from, _Value $to, $loose) {
     $result = $from->key() === $to->key();
@@ -1131,6 +1179,11 @@ function _compare_values(_Value $from, _Value $to, $loose) {
 }
 
 
+/**
+ * @param _Value[] $from
+ * @param _Value[] $to
+ * @return void
+ */
 function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $state) {
     $m = $edit->m;
     $f = $edit->flen;
@@ -1221,7 +1274,9 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
 
 
 /**
+ * @param string[] $diff
  * @param _DiffPosition::* $pos
+ * @return void
  */
 function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
     namespace\_copy_string($diff, $value->format_value($pos));
@@ -1229,7 +1284,9 @@ function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
 
 
 /**
+ * @param string[] $diff
  * @param _DiffPosition::* $pos
+ * @return void
  */
 function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
     namespace\_insert_string($diff, $value->format_value($pos));
@@ -1237,13 +1294,20 @@ function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) 
 
 
 /**
+ * @param string[] $diff
  * @param _DiffPosition::* $pos
+ * @return void
  */
 function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
     namespace\_delete_string($diff, $value->format_value($pos));
 }
 
 
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
 function _copy_string(array &$diff, $string) {
     foreach (\array_reverse(\explode("\n", $string)) as $v) {
         $diff[] = new _DiffCopy($v);
@@ -1251,6 +1315,11 @@ function _copy_string(array &$diff, $string) {
 }
 
 
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
 function _insert_string(array &$diff, $string) {
     foreach (\array_reverse(\explode("\n", $string)) as $v) {
         $diff[] = new _DiffInsert($v);
@@ -1258,6 +1327,11 @@ function _insert_string(array &$diff, $string) {
 }
 
 
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
 function _delete_string(array &$diff, $string) {
     foreach (\array_reverse(\explode("\n", $string)) as $v) {
         $diff[] = new _DiffDelete($v);
@@ -1274,6 +1348,12 @@ function _format_indent($indent_level) {
 }
 
 
+/**
+ * @param ?string $assertion
+ * @param ?string $description
+ * @param ?string $detail
+ * @return string
+ */
 function format_failure_message($assertion, $description = null, $detail = null) {
     $message = array();
     if ($assertion) {
@@ -1299,7 +1379,10 @@ function format_failure_message($assertion, $description = null, $detail = null)
 // This provides more readable(?) formatting of variables than PHP's built-in
 // variable-printing functions (print_r(), var_dump(), var_export()) and also
 // handles recursive references.
-
+/**
+ * @param mixed $var
+ * @return string
+ */
 function format_variable(&$var) {
     $name = \is_object($var) ? \get_class($var) : \gettype($var);
     $seen = array('byval' => array(), 'byref' => array());
@@ -1312,7 +1395,13 @@ function format_variable(&$var) {
 
 
 /**
+ * @param mixed $var
+ * @param string $name
  * @param bool $loose
+ * @param array{'byval': mixed[], 'byref': mixed[]} $seen
+ * @param array{'byref': null, 'byval': \stdClass} $sentinels
+ * @param string $indent
+ * @return string
  */
 function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $indent) {
     $reference = namespace\_check_reference($var, $name, $seen, $sentinels);
@@ -1337,11 +1426,19 @@ function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $i
 }
 
 
+/**
+ * @param scalar $var
+ * @return string
+ */
 function _format_scalar(&$var) {
     return \var_export($var, true);
 }
 
 
+/**
+ * @param resource $var
+ * @return string
+ */
 function _format_resource(&$var) {
     return \sprintf(
         '%s of type "%s"',
@@ -1352,9 +1449,16 @@ function _format_resource(&$var) {
 
 
 /**
+ * @template T
+ * @param T[] $var
+ * @param string $name
  * @param bool $loose
+ * @param array{'byval': mixed[], 'byref': mixed[]} $seen
+ * @param array{'byref': null, 'byval': \stdClass} $sentinels
+ * @param string $padding
+ * @return string
  */
-function _format_array(&$var, $name, $loose, &$seen, $sentinels, $padding) {
+function _format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding) {
     $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
@@ -1382,7 +1486,13 @@ function _format_array(&$var, $name, $loose, &$seen, $sentinels, $padding) {
 
 
 /**
+ * @param object $var
+ * @param string $name
  * @param bool $loose
+ * @param array{'byval': mixed[], 'byref': mixed[]} $seen
+ * @param array{'byref': null, 'byval': \stdClass} $sentinels
+ * @param string $padding
+ * @return string
  */
 function _format_object(&$var, $name, $loose, &$seen, $sentinels, $padding) {
     $indent = $padding . namespace\_FORMAT_INDENT;
@@ -1461,6 +1571,13 @@ function _format_object_end() {
 // Since PHP has no built-in way to determine if a variable is a reference,
 // references are identified using jank wherein $var is changed and $seen
 // is checked for an equivalent change.
+/**
+ * @param mixed $var
+ * @param string $name
+ * @param array{'byval': mixed[], 'byref': mixed[]} $seen
+ * @param array{'byref': null, 'byval': \stdClass} $sentinels
+ * @return false|string
+ */
 function _check_reference(&$var, $name, &$seen, $sentinels) {
     if (\is_scalar($var) || \is_array($var) || null === $var) {
         $copy = $var;
@@ -1480,6 +1597,8 @@ function _check_reference(&$var, $name, &$seen, $sentinels) {
             $seen['byref'][$name] = &$var;
         }
         else {
+            \assert(\is_string($reference));
+            \assert(\strlen($reference) > 0);
             $copy = $var;
             $var = $sentinels['byref'];
             if ($var === $seen['byref'][$reference]) {
@@ -1493,6 +1612,11 @@ function _check_reference(&$var, $name, &$seen, $sentinels) {
 
 
 
+/**
+ * @param mixed[] $array
+ * @param mixed[] $seen
+ * @return void
+ */
 function ksort_recursive(&$array, &$seen = array()) {
     if (!\is_array($array)) {
         return;
