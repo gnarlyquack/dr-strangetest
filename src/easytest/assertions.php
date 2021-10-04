@@ -11,6 +11,7 @@ namespace easytest;
 // The functions in this file comprise EasyTest's assertion API
 
 /**
+ * @api
  * @param mixed $expected
  * @param mixed $actual
  * @param ?string $description
@@ -32,6 +33,7 @@ function assert_different($expected, $actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $expected
  * @param mixed $actual
  * @param ?string $description
@@ -53,6 +55,7 @@ function assert_equal($expected, $actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param ?string $description
  * @return void
@@ -73,6 +76,7 @@ function assert_false($actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param ?string $description
  * @return void
@@ -93,6 +97,7 @@ function assert_falsy($actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param mixed $min
  * @param ?string $description
@@ -114,6 +119,7 @@ function assert_greater($actual, $min, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param mixed $min
  * @param ?string $description
@@ -135,6 +141,7 @@ function assert_greater_or_equal($actual, $min, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $expected
  * @param mixed $actual
  * @param ?string $description
@@ -156,6 +163,7 @@ function assert_identical($expected, $actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param mixed $max
  * @param ?string $description
@@ -177,6 +185,7 @@ function assert_less($actual, $max, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param mixed $max
  * @param ?string $description
@@ -198,6 +207,7 @@ function assert_less_or_equal($actual, $max, $description = null) {
 
 
 /**
+ * @api
  * @template T of \Throwable
  * @param class-string<T> $expected
  * @param callable $callback
@@ -234,6 +244,7 @@ function assert_throws($expected, $callback, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param ?string $description
  * @return void
@@ -254,6 +265,7 @@ function assert_true($actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $actual
  * @param ?string $description
  * @return void
@@ -274,6 +286,7 @@ function assert_truthy($actual, $description = null) {
 
 
 /**
+ * @api
  * @param mixed $expected
  * @param mixed $actual
  * @param ?string $description

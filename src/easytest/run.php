@@ -13,6 +13,9 @@ const RESULT_FAIL     = 0x1;
 const RESULT_POSTPONE = 0x2;
 
 
+/**
+ * @api
+ */
 final class Context {
     /** @var State */
     private $state;

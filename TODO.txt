@@ -136,8 +136,6 @@ Release
     have on formatting failure messages?
     https://www.php.net/manual/en/language.operators.comparison.php
 
--   Ensure items comprising EasyTest's API are tagged @api in their DocBlock
-
 -   Dependencies:
 
     -   Do we handle declaring a dependency on one's self?

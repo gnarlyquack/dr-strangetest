@@ -148,8 +148,10 @@ abstract class struct {
 }
 
 
+/**
+ * @api
+ */
 final class Error extends \ErrorException {
-
     /**
      * @param string $message
      * @param int $severity

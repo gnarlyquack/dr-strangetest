@@ -8,6 +8,7 @@
 namespace easytest;
 
 /**
+ * @api
  * @param mixed $from
  * @param mixed $to
  * @param string $from_name
@@ -1349,6 +1350,7 @@ function _format_indent($indent_level) {
 
 
 /**
+ * @api
  * @param ?string $assertion
  * @param ?string $description
  * @param ?string $detail
@@ -1374,14 +1376,17 @@ function format_failure_message($assertion, $description = null, $detail = null)
 
 
 
-// Format a variable for display.
-//
-// This provides more readable(?) formatting of variables than PHP's built-in
-// variable-printing functions (print_r(), var_dump(), var_export()) and also
-// handles recursive references.
 /**
- * @param mixed $var
- * @return string
+ * Format a string representation of a variable.
+ *
+ * This provides more readable(?) formatting of variables than PHP's built-in
+ * variable-printing functions (print_r(), var_dump(), var_export()) and also
+ * handles recursive references.
+ *
+ * @api
+ * @param mixed $var The variable to format. $var is received as a reference in
+ *                   order to detect self-referencing values.
+ * @return string A string representation of $var
  */
 function format_variable(&$var) {
     $name = \is_object($var) ? \get_class($var) : \gettype($var);

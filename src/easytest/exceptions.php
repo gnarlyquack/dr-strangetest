@@ -11,6 +11,7 @@ namespace easytest;
 // These function comprise the API to generate EasyTest-specific exceptions
 
 /**
+ * @api
  * @param string $reason
  * @return never
  * @throws Skip
@@ -21,6 +22,7 @@ function skip($reason) {
 
 
 /**
+ * @api
  * @param string $reason
  * @return never
  * @throws Failure
@@ -36,7 +38,9 @@ function fail($reason) {
 
 // @bc 5.6 Extend Failure from Exception
 if (\version_compare(\PHP_VERSION, '7.0', '<')) {
-
+    /**
+     * @api
+     */
     final class Failure extends \Exception {
 
         /**
@@ -71,7 +75,9 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
 
 }
 else {
-
+    /**
+     * @api
+     */
     final class Failure extends \AssertionError {
 
         /**
@@ -107,7 +113,9 @@ else {
 }
 
 
-
+/**
+ * @api
+ */
 final class Skip extends \Exception {
 
     /**
