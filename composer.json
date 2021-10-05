@@ -1,17 +1,17 @@
 {
-    "name": "easytest/easytest",
+    "name": "gnarlyquack/strangetest",
     "description": "Quick and painless testing for PHP",
     "keywords": ["testing"],
-    "homepage": "https://github.com/gnarlyquack/easytest",
+    "homepage": "https://github.com/gnarlyquack/strangetest",
     "license": "ISC",
     "support": {
-        "issues": "https://github.com/gnarlyquack/easytest/issues",
-        "source": "https://github.com/gnarlyquack/easytest"
+        "issues": "https://github.com/gnarlyquack/strangetest/issues",
+        "source": "https://github.com/gnarlyquack/strangetest"
     },
     "require": {
         "php": "5.3 - 8.0"
     },
-    "bin": ["bin/easytest"],
+    "bin": ["bin/strangetest"],
     "extra": {
         "branch-alias": {
             "dev-master": "0.x-dev"

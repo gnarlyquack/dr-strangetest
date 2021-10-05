@@ -1,19 +1,19 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace easytest;
+namespace strangetest;
 
 
 const _TARGET_CLASS    = '--class=';
 const _TARGET_FUNCTION = '--function=';
 const _TARGET_PATH     = '--path=';
-\define('easytest\\_TARGET_CLASS_LEN', \strlen(namespace\_TARGET_CLASS));
-\define('easytest\\_TARGET_FUNCTION_LEN', \strlen(namespace\_TARGET_FUNCTION));
-\define('easytest\\_TARGET_PATH_LEN', \strlen(namespace\_TARGET_PATH));
+\define('strangetest\\_TARGET_CLASS_LEN', \strlen(namespace\_TARGET_CLASS));
+\define('strangetest\\_TARGET_FUNCTION_LEN', \strlen(namespace\_TARGET_FUNCTION));
+\define('strangetest\\_TARGET_PATH_LEN', \strlen(namespace\_TARGET_PATH));
 
 
 interface Target {

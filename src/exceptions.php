@@ -1,14 +1,14 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace easytest;
+namespace strangetest;
 
 
-// These function comprise the API to generate EasyTest-specific exceptions
+// These functions constitute the API to generate Dr. Strangetest exceptions
 
 /**
  * @api
@@ -171,7 +171,7 @@ final class InvalidCodePath extends \Exception {}
  * @return ?mixed[]
  */
 function _find_client_call_site() {
-    // Find the first call in a backtrace that's outside of easytest
+    // Find the first call in a backtrace that's outside of Dr. Strangetest
     // @bc 5.3 Pass false for debug_backtrace() $option parameter
     $trace = \defined('DEBUG_BACKTRACE_IGNORE_ARGS')
            ? \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS)
@@ -210,7 +210,7 @@ function _find_client_call_site() {
 function _format_exception_string($format, $message, $file, $line, $trace) {
     $string = \sprintf($format, $message, $file, $line);
 
-    // Create a backtrace excluding calls made within easytest
+    // Create a backtrace excluding calls made within Dr. Strangetest
     $buffer = array();
     foreach ($trace as $frame) {
         // @bc 5.3 Functions have no file if executed in call_user_func()
@@ -220,15 +220,15 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
             continue;
         }
         if ( __DIR__ === \dirname($frame['file'])) {
-            // We don't want to walk the entire call stack, because easytest's
-            // entry point is probably outside the easytest directory, and we
-            // don't want to erroneously show that as a client call. We need a
-            // checkpoint so, once we hit it, we know we can't be in client
-            // code anymore. It seems "discover_tests" is the lowest we can set
-            // that checkpoint, as clients can throw exceptions in a variety of
-            // places (e.g., setup fixtures) all of which are subsumed by
-            // discover_tests
-            if ('easytest\\discover_tests' === $frame['function']) {
+            // We don't want to walk the entire call stack, because Dr.
+            // Strangetest's entry point is probably outside the src directory,
+            // and we don't want to erroneously show that as a client call. We
+            // need a checkpoint so, once we hit it, we know we can't be in
+            // client code anymore. It seems "discover_tests" is the lowest we
+            // can set that checkpoint, as clients can throw exceptions in a
+            // variety of places (e.g., setup fixtures) all of which are
+            // subsumed by discover_tests
+            if ('strangetest\\discover_tests' === $frame['function']) {
                 break;
             }
             continue;

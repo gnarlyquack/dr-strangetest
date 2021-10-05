@@ -1,6 +1,6 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
@@ -9,13 +9,13 @@ class ExpectedException extends \Exception {}
 class UnexpectedException extends \Exception {}
 
 
-function assert_log(array $log, easytest\BasicLogger $logger) {
+function assert_log(array $log, strangetest\BasicLogger $logger) {
     $expected = array(
-        easytest\EVENT_PASS => 0,
-        easytest\EVENT_FAIL => 0,
-        easytest\EVENT_ERROR => 0,
-        easytest\EVENT_SKIP => 0,
-        easytest\EVENT_OUTPUT => 0,
+        strangetest\EVENT_PASS => 0,
+        strangetest\EVENT_FAIL => 0,
+        strangetest\EVENT_ERROR => 0,
+        strangetest\EVENT_SKIP => 0,
+        strangetest\EVENT_OUTPUT => 0,
         'events' => array(),
     );
     foreach ($log as $i => $entry) {
@@ -24,11 +24,11 @@ function assert_log(array $log, easytest\BasicLogger $logger) {
 
     $actual = $logger->get_log();
     $actual = array(
-        easytest\EVENT_PASS => $actual->pass_count(),
-        easytest\EVENT_FAIL => $actual->failure_count(),
-        easytest\EVENT_ERROR => $actual->error_count(),
-        easytest\EVENT_SKIP => $actual->skip_count(),
-        easytest\EVENT_OUTPUT => $actual->output_count(),
+        strangetest\EVENT_PASS => $actual->pass_count(),
+        strangetest\EVENT_FAIL => $actual->failure_count(),
+        strangetest\EVENT_ERROR => $actual->error_count(),
+        strangetest\EVENT_SKIP => $actual->skip_count(),
+        strangetest\EVENT_OUTPUT => $actual->output_count(),
         'events' => $actual->get_events(),
     );
     for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
@@ -40,11 +40,11 @@ function assert_log(array $log, easytest\BasicLogger $logger) {
             $actual['events'][$i][2] = $reason->getMessage();
         }
     }
-    easytest\assert_identical($expected, $actual);
+    strangetest\assert_identical($expected, $actual);
 }
 
 
-function assert_events($expected, easytest\BasicLogger $logger) {
+function assert_events($expected, strangetest\BasicLogger $logger) {
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event) {
         list($type, $source, $reason) = $event;
@@ -57,14 +57,14 @@ function assert_events($expected, easytest\BasicLogger $logger) {
 
         $actual[$i] = array($type, $source, $reason);
     }
-    easytest\assert_identical($expected, $actual);
+    strangetest\assert_identical($expected, $actual);
 }
 
 
-function assert_report($expected, easytest\BasicLogger $logger) {
+function assert_report($expected, strangetest\BasicLogger $logger) {
     $log = $logger->get_log();
     $log->seconds_elapsed = 1;
     $log->megabytes_used = 1;
-    easytest\output_log($log);
-    easytest\assert_identical($expected, ob_get_contents());
+    strangetest\output_log($log);
+    strangetest\assert_identical($expected, ob_get_contents());
 }

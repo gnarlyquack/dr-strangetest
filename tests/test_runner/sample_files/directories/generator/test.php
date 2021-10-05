@@ -1,7 +1,7 @@
 <?php
 
 namespace generator;
-use easytest;
+
 
 function setup_runs_for_file($one, $two) {
     yield [$one, $two, 5, 6];

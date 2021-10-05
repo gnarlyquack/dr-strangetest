@@ -2,7 +2,7 @@
 
 namespace definitions;
 
-use function easytest\assert_true;
+use function strangetest\assert_true;
 
 
 trait TestTrait {

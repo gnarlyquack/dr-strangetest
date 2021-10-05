@@ -1,13 +1,13 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
 namespace test\diff\strict_formatting;
 
-use easytest;
+use strangetest;
 
 // Tests to see if diffs between various types are formatted correctly
 
@@ -25,8 +25,8 @@ function get_oid($object) {
 
 function assert_diff(&$from, &$to, $expected) {
     $expected = "- from\n+ to\n\n" . $expected;
-    $actual = easytest\diff($from, $to, 'from', 'to');
-    easytest\assert_identical($expected, $actual);
+    $actual = strangetest\diff($from, $to, 'from', 'to');
+    strangetest\assert_identical($expected, $actual);
 }
 
 
@@ -137,7 +137,7 @@ EXPECTED;
 
 function test_formats_resource() {
     $value = \fopen(__FILE__, 'rb');
-    $expected = '  ' . easytest\_format_resource($value);
+    $expected = '  ' . strangetest\_format_resource($value);
     namespace\assert_diff($value, $value, $expected);
 }
 
@@ -145,7 +145,7 @@ function test_formats_resource() {
 function test_diffs_different_scalar_values() {
     $a = null;
     $b = false;
-    $actual = easytest\diff($a, $b, 'a', 'b');
+    $actual = strangetest\diff($a, $b, 'a', 'b');
     $expected = <<<'EXPECTED'
 - a
 + b
@@ -153,7 +153,7 @@ function test_diffs_different_scalar_values() {
 - NULL
 + false
 EXPECTED;
-    easytest\assert_identical($expected, $actual);
+    strangetest\assert_identical($expected, $actual);
 }
 
 
@@ -299,8 +299,8 @@ EXPECTED;
 function test_diffs_different_resources() {
     $from = \fopen(__FILE__, 'rb');
     $to = \fopen(__FILE__, 'rb');
-    $expected = '- ' . easytest\_format_resource($from)
-            . "\n+ " . easytest\_format_resource($to);
+    $expected = '- ' . strangetest\_format_resource($from)
+            . "\n+ " . strangetest\_format_resource($to);
 
     namespace\assert_diff($from, $to, $expected);
 }

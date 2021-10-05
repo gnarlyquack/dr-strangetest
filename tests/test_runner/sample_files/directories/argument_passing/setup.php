@@ -7,7 +7,7 @@ function setup_directory_arguments() {
 
 function teardown_directory_arguments($one, $two) {
     echo __DIR__;
-    easytest\assert_identical(
+    strangetest\assert_identical(
         array('one', 'two'), array($one, $two),
         'Incorrect arguments passed to directory teardown!'
     );

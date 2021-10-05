@@ -10,7 +10,7 @@ class TestArgumentsTwo {
     }
 
     public function test() {
-        easytest\assert_identical(
+        strangetest\assert_identical(
             array('two', 'three'),
             array($this->two, $this->three)
         );

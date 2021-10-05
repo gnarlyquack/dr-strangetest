@@ -1,7 +1,8 @@
 <?php
 
 namespace buffering;
-use easytest;
+
+use strangetest;
 
 
 function setup_function() {
@@ -19,7 +20,7 @@ function teardown_function() {
 
 function test_skip() {
     echo __FUNCTION__;
-    easytest\skip('Skip me');
+    strangetest\skip('Skip me');
 }
 
 function test_error() {
@@ -29,7 +30,7 @@ function test_error() {
 
 function test_fail() {
     echo __FUNCTION__;
-    easytest\fail('I failed');
+    strangetest\fail('I failed');
 }
 
 
@@ -48,7 +49,7 @@ class test {
 
     public function test_skip() {
         echo __FUNCTION__;
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
     public function test_error() {
@@ -58,7 +59,7 @@ class test {
 
     public function test_fail() {
         echo __FUNCTION__;
-        easytest\fail('I failed');
+        strangetest\fail('I failed');
     }
 
     public function test_pass() {

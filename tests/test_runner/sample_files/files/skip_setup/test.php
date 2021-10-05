@@ -1,7 +1,8 @@
 <?php
 
 namespace skip_setup;
-use easytest;
+
+use strangetest;
 
 
 function setup_file() {
@@ -14,7 +15,7 @@ function teardown_file() {
 
 
 function setup_function() {
-    easytest\skip('Skip me');
+    strangetest\skip('Skip me');
 }
 
 function teardown_function() {
@@ -37,7 +38,7 @@ class test {
     }
 
     public function setup() {
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
     public function teardown() {

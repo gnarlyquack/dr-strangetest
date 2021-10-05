@@ -2,8 +2,6 @@
 
 namespace subdir_params\subdir;
 
-use easytest;
-
 
 function setup_functions($one, $two) {
     return array($one, $two, $one * $two);

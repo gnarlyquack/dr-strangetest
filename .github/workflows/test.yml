@@ -21,4 +21,4 @@ jobs:
               run: ./bin/makephar
 
             - name: Run Tests
-              run: ./build/easytest.phar --verbose
+              run: ./build/strangetest.phar --verbose

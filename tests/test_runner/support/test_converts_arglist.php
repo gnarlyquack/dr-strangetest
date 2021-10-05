@@ -2,7 +2,7 @@
 
 namespace converts_arglist;
 
-use easytest;
+use strangetest;
 
 
 function setup_file() {
@@ -15,9 +15,9 @@ function teardown_file($one, $two, $three) {
 
 
 function test_one($one, $two, $three) {
-    easytest\assert_identical(array(1, 2, 3), array($one, $two, $three));
+    strangetest\assert_identical(array(1, 2, 3), array($one, $two, $three));
 }
 
 function test_two($one, $two, $three) {
-    easytest\assert_identical(array(1, 2, 3), array($one, $two, $three));
+    strangetest\assert_identical(array(1, 2, 3), array($one, $two, $three));
 }

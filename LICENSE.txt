@@ -1,4 +1,4 @@
-EasyTest
+Dr. Strangetest
 Copyright (c) 2014, 2020-2021 Karl Nack
 
 Permission to use, copy, modify, and/or distribute this software for any

@@ -2,8 +2,6 @@
 
 namespace noniterable_arglists;
 
-use easytest;
-
 
 function setup_runs() {
     return 1;

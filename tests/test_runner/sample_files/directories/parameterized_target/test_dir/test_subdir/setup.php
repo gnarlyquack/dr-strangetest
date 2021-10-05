@@ -2,8 +2,6 @@
 
 namespace param_target\dir\subdir;
 
-use easytest;
-
 
 function setup_runs_for_directory($one) {
     echo __DIR__;

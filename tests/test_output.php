@@ -1,6 +1,6 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
@@ -10,7 +10,7 @@ class TestQuietOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new easytest\BasicLogger(easytest\LOG_QUIET);
+        $this->logger = new strangetest\BasicLogger(strangetest\LOG_QUIET);
         ob_start();
     }
 
@@ -92,7 +92,7 @@ OUT;
 
 
 This report omitted skipped tests.
-To view, rerun easytest with the --verbose option.
+To view, rerun Dr. Strangetest with the --verbose option.
 
 Seconds elapsed: 1
 Memory used: 1 MB
@@ -109,7 +109,7 @@ OUT;
 
 
 This report omitted output.
-To view, rerun easytest with the --verbose option.
+To view, rerun Dr. Strangetest with the --verbose option.
 
 Seconds elapsed: 1
 Memory used: 1 MB
@@ -173,7 +173,7 @@ output 3
 
 
 This report omitted output and skipped tests.
-To view, rerun easytest with the --verbose option.
+To view, rerun Dr. Strangetest with the --verbose option.
 
 Seconds elapsed: 1
 Memory used: 1 MB
@@ -190,7 +190,7 @@ class TestVerboseOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new easytest\BasicLogger(easytest\LOG_VERBOSE);
+        $this->logger = new strangetest\BasicLogger(strangetest\LOG_VERBOSE);
         ob_start();
     }
 

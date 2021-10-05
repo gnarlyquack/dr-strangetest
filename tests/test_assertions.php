@@ -1,6 +1,6 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
@@ -21,7 +21,7 @@ $expected:
 $actual:
 %s
 MSG;
-        throw new easytest\Failure(
+        throw new strangetest\Failure(
             sprintf($msg, var_export($expected, true), var_export($actual, true))
         );
     }
@@ -30,7 +30,7 @@ MSG;
     // tests
 
     public function test_passes() {
-        easytest\assert_identical(1, 1);
+        strangetest\assert_identical(1, 1);
     }
 
 
@@ -50,12 +50,12 @@ MSG;
                 1 => array(1 => 3, 0 => 2),
                 0 => 1,
             );
-            easytest\assert_identical($array1, $array2);
+            strangetest\assert_identical($array1, $array2);
         }
-        catch (easytest\Failure $actual) {}
+        catch (strangetest\Failure $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Did not fail on non-identical arrays');
+            throw new strangetest\Failure('Did not fail on non-identical arrays');
         }
 
         $expected = <<<'EXPECTED'
@@ -85,12 +85,12 @@ EXPECTED;
     public function test_uses_provided_message() {
         $message = 'Fail! :-(';
         try {
-            easytest\assert_identical(1, '1', $message);
+            strangetest\assert_identical(1, '1', $message);
         }
-        catch (easytest\Failure $actual) {}
+        catch (strangetest\Failure $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Did not fail on non-identical values');
+            throw new strangetest\Failure('Did not fail on non-identical values');
         }
 
         $expected = <<<EXPECTED
@@ -112,25 +112,25 @@ EXPECTED;
 class TestAssertThrows {
     public function test_returns_expected_exception() {
         $expected = new ExpectedException();
-        $actual = easytest\assert_throws(
+        $actual = strangetest\assert_throws(
             'ExpectedException',
             function() use ($expected) { throw $expected; }
         );
-        easytest\assert_identical($expected, $actual);
+        strangetest\assert_identical($expected, $actual);
     }
 
 
     public function test_fails_when_no_exception_is_thrown() {
         try {
-            easytest\assert_throws('ExpectedException', function() {});
+            strangetest\assert_throws('ExpectedException', function() {});
         }
-        catch (easytest\Failure $actual) {}
+        catch (strangetest\Failure $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Did not fail when no exception was thrown');
+            throw new strangetest\Failure('Did not fail when no exception was thrown');
         }
 
-        easytest\assert_identical(
+        strangetest\assert_identical(
             'Expected to catch ExpectedException but no exception was thrown',
             $actual->getMessage()
         );
@@ -140,7 +140,7 @@ class TestAssertThrows {
     public function test_rethrows_unexpected_exception() {
         $expected = new UnexpectedException();
         try {
-            easytest\assert_throws(
+            strangetest\assert_throws(
                 'ExpectedException',
                 function() use ($expected) { throw $expected; }
             );
@@ -148,33 +148,33 @@ class TestAssertThrows {
         catch (\Exception $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Did not rethrow an unexpected exception');
+            throw new strangetest\Failure('Did not rethrow an unexpected exception');
         }
 
-        easytest\assert_identical(
+        strangetest\assert_identical(
             "Expected to catch ExpectedException but instead caught UnexpectedException",
             $actual->getMessage()
         );
-        easytest\assert_identical($expected, $actual->getPrevious());
+        strangetest\assert_identical($expected, $actual->getPrevious());
     }
 
 
     public function test_uses_provided_message() {
         $expected = 'My custom failure message.';
         try {
-            easytest\assert_throws(
+            strangetest\assert_throws(
                 'ExpectedException',
                 function() {},
                 $expected
             );
         }
-        catch (easytest\Failure $actual) {}
+        catch (strangetest\Failure $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Did not fail when no exception was thrown');
+            throw new strangetest\Failure('Did not fail when no exception was thrown');
         }
 
-        easytest\assert_identical(
+        strangetest\assert_identical(
             "Expected to catch ExpectedException but no exception was thrown\n$expected",
             $actual->getMessage()
         );
@@ -199,13 +199,13 @@ class TestAssertEqual {
             1 => array(1 => 3, 0 => 2),
             0 => 1,
         );
-        easytest\assert_equal($array1, $array2);
+        strangetest\assert_equal($array1, $array2);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
                 // NOTE: Test of unequal arrays with elements in different key
                 // order to ensure that they're sorted by key when displayed
@@ -225,7 +225,7 @@ class TestAssertEqual {
                 $array1[] = &$array1;
                 $array2[] = &$array2;
 
-                easytest\assert_equal($array1, $array2);
+                strangetest\assert_equal($array1, $array2);
             }
         );
 
@@ -259,16 +259,16 @@ Assertion "$expected == $actual" failed
   )
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_uses_provided_message() {
         $message = 'Fail! :-(';
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() use ($message) {
-                easytest\assert_equal(true, false, $message);
+                strangetest\assert_equal(true, false, $message);
             }
         );
 
@@ -283,7 +283,7 @@ $message
 + false
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -291,15 +291,15 @@ EXPECTED;
 
 class TestAssertDifferent {
     public function test_passes() {
-        easytest\assert_different('1', 1);
+        strangetest\assert_different('1', 1);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_different(1, 1);
+                strangetest\assert_different(1, 1);
             }
         );
 
@@ -309,15 +309,15 @@ Assertion "$expected !== $actual" failed
 $expected = $actual = 1
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_different(true, true, 'I failed.');
+                strangetest\assert_different(true, true, 'I failed.');
             }
         );
 
@@ -328,7 +328,7 @@ I failed.
 $expected = $actual = true
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -336,15 +336,15 @@ EXPECTED;
 
 class TestAssertFalse {
     public function test_passes() {
-        easytest\assert_false(false);
+        strangetest\assert_false(false);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_false(null);
+                strangetest\assert_false(null);
             }
         );
 
@@ -354,15 +354,15 @@ Assertion "$actual === false" failed
 $actual = NULL
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_false('0', 'I failed.');
+                strangetest\assert_false('0', 'I failed.');
             }
         );
 
@@ -373,7 +373,7 @@ I failed.
 $actual = '0'
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -381,15 +381,15 @@ EXPECTED;
 
 class TestAssertFalsy {
     public function test_passes() {
-        easytest\assert_falsy(null);
+        strangetest\assert_falsy(null);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_falsy(true);
+                strangetest\assert_falsy(true);
             }
         );
 
@@ -399,15 +399,15 @@ Assertion "$actual == false" failed
 $actual = true
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_falsy('0 cabbage', 'I failed.');
+                strangetest\assert_falsy('0 cabbage', 'I failed.');
             }
         );
 
@@ -418,7 +418,7 @@ I failed.
 $actual = '0 cabbage'
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -426,15 +426,15 @@ EXPECTED;
 
 class TestAssertGreater {
     public function test_passes() {
-        easytest\assert_greater('3 bones', 0);
+        strangetest\assert_greater('3 bones', 0);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_greater(0, 0);
+                strangetest\assert_greater(0, 0);
             }
         );
 
@@ -444,15 +444,15 @@ Assertion "$actual > 0" failed
 $actual = 0
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_greater(-6, -5, 'I failed.');
+                strangetest\assert_greater(-6, -5, 'I failed.');
             }
         );
 
@@ -463,7 +463,7 @@ I failed.
 $actual = -6
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -471,15 +471,15 @@ EXPECTED;
 
 class TestAssertGreaterOrEqual {
     public function test_passes() {
-        easytest\assert_greater_or_equal('0 cabbage', 0);
+        strangetest\assert_greater_or_equal('0 cabbage', 0);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_greater_or_equal(-1, 0);
+                strangetest\assert_greater_or_equal(-1, 0);
             }
         );
 
@@ -489,15 +489,15 @@ Assertion "$actual >= 0" failed
 $actual = -1
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_greater_or_equal(-6, -5, 'I failed.');
+                strangetest\assert_greater_or_equal(-6, -5, 'I failed.');
             }
         );
 
@@ -508,7 +508,7 @@ I failed.
 $actual = -6
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -516,15 +516,15 @@ EXPECTED;
 
 class TestAssertLess {
     public function test_passes() {
-        easytest\assert_less('-3 bones', 0);
+        strangetest\assert_less('-3 bones', 0);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_less(0, 0);
+                strangetest\assert_less(0, 0);
             }
         );
 
@@ -534,15 +534,15 @@ Assertion "$actual < 0" failed
 $actual = 0
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_less(-5, -6, 'I failed.');
+                strangetest\assert_less(-5, -6, 'I failed.');
             }
         );
 
@@ -553,7 +553,7 @@ I failed.
 $actual = -5
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -561,15 +561,15 @@ EXPECTED;
 
 class TestAssertLessOrEqual {
     public function test_passes() {
-        easytest\assert_less_or_equal('0', 0);
+        strangetest\assert_less_or_equal('0', 0);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_less_or_equal(1, 0);
+                strangetest\assert_less_or_equal(1, 0);
             }
         );
 
@@ -579,15 +579,15 @@ Assertion "$actual <= 0" failed
 $actual = 1
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_less_or_equal(-5, -6, 'I failed.');
+                strangetest\assert_less_or_equal(-5, -6, 'I failed.');
             }
         );
 
@@ -598,7 +598,7 @@ I failed.
 $actual = -5
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -606,15 +606,15 @@ EXPECTED;
 
 class TestAssertTrue {
     public function test_passes() {
-        easytest\assert_true(true);
+        strangetest\assert_true(true);
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_true(1);
+                strangetest\assert_true(1);
             }
         );
 
@@ -624,15 +624,15 @@ Assertion "$actual === true" failed
 $actual = 1
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_true('true', 'I failed.');
+                strangetest\assert_true('true', 'I failed.');
             }
         );
 
@@ -643,7 +643,7 @@ I failed.
 $actual = 'true'
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -651,15 +651,15 @@ EXPECTED;
 
 class TestAssertTruthy {
     public function test_passes() {
-        easytest\assert_truthy(new \stdClass());
+        strangetest\assert_truthy(new \stdClass());
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_truthy('0');
+                strangetest\assert_truthy('0');
             }
         );
 
@@ -669,15 +669,15 @@ Assertion "$actual == true" failed
 $actual = '0'
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_truthy(array(), 'I failed.');
+                strangetest\assert_truthy(array(), 'I failed.');
             }
         );
 
@@ -688,7 +688,7 @@ I failed.
 $actual = array()
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }
 
@@ -696,13 +696,13 @@ EXPECTED;
 
 class TestAssertUnequal {
     public function test_passes() {
-        easytest\assert_unequal('0', '');
+        strangetest\assert_unequal('0', '');
     }
 
 
     public function test_shows_reason_for_failure() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
                 // NOTE: Test of equal arrays in different key order to ensure
                 // they're sorted by key when displayed
@@ -718,7 +718,7 @@ class TestAssertUnequal {
                     1 => array(1 => 3, 0 => 2),
                     0 => 1,
                 );
-                easytest\assert_unequal($array1, $array2);
+                strangetest\assert_unequal($array1, $array2);
             }
         );
 
@@ -739,15 +739,15 @@ Assertion "$expected != $actual" failed
   )
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 
 
     public function test_shows_description() {
-        $actual = easytest\assert_throws(
-            'easytest\\Failure',
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
             function() {
-                easytest\assert_unequal(null, false, 'I failed.');
+                strangetest\assert_unequal(null, false, 'I failed.');
             }
         );
 
@@ -762,6 +762,6 @@ I failed.
 + false
 EXPECTED;
 
-        easytest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($expected, $actual->getMessage());
     }
 }

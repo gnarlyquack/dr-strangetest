@@ -1,6 +1,6 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
@@ -41,16 +41,16 @@ class TestFormatVariable {
 
         foreach ($tests as $test) {
             list($variable, $expected) = $test;
-            $actual = easytest\format_variable($variable);
-            easytest\assert_identical($expected, $actual);
+            $actual = strangetest\format_variable($variable);
+            strangetest\assert_identical($expected, $actual);
         }
     }
 
 
     public function test_formats_empty_array() {
         $variable = array();
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical('array()', $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical('array()', $actual);
     }
 
 
@@ -78,8 +78,8 @@ array(
     ),
 )
 EXPECTED;
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical($expected, $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical($expected, $actual);
     }
 
 
@@ -89,8 +89,8 @@ EXPECTED;
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical("stdClass #$id {}", $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical("stdClass #$id {}", $actual);
     }
 
 
@@ -108,8 +108,8 @@ InheritFormat #$id {
     ObjectFormat::\$three = 'parent private';
 }
 EXPECTED;
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical($expected, $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical($expected, $actual);
     }
 
 
@@ -122,8 +122,8 @@ EXPECTED;
             $resource,
             get_resource_type($variable)
         );
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical($expected, $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical($expected, $actual);
     }
 
 
@@ -163,8 +163,8 @@ array(
     'nine' => &array,
 )
 EXPECTED;
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical($expected, $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical($expected, $actual);
     }
 
 
@@ -196,8 +196,8 @@ ObjectFormat #$id1 {
     \$three = 'parent private';
 }
 EXPECTED;
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical($expected, $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical($expected, $actual);
     }
 
 
@@ -214,7 +214,7 @@ IntegerProperties #$id {
     \$1 = 'one';
 }
 EXPECTED;
-        $actual = easytest\format_variable($variable);
-        easytest\assert_identical($expected, $actual);
+        $actual = strangetest\format_variable($variable);
+        strangetest\assert_identical($expected, $actual);
     }
 }

@@ -1,6 +1,6 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
@@ -13,10 +13,10 @@ class TestExceptions {
             $line = __LINE__ + 1;
             trigger_error($message);
         }
-        catch (easytest\Error $actual) {}
+        catch (strangetest\Error $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Error exception wasn\'t thrown');
+            throw new strangetest\Failure('Error exception wasn\'t thrown');
         }
 
         $expected = sprintf(
@@ -26,7 +26,7 @@ class TestExceptions {
             $line,
             $actual->getTraceAsString()
         );
-        easytest\assert_identical($expected, "$actual");
+        strangetest\assert_identical($expected, "$actual");
     }
 
 
@@ -35,12 +35,12 @@ class TestExceptions {
         $file = __FILE__;
         try {
             $line = __LINE__ + 1;
-            easytest\fail($message);
+            strangetest\fail($message);
         }
-        catch (easytest\Failure $actual) {}
+        catch (strangetest\Failure $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Failure exception wasn\'t thrown');
+            throw new strangetest\Failure('Failure exception wasn\'t thrown');
         }
 
         $expected = <<<MSG
@@ -48,7 +48,7 @@ $message
 
 in $file on line $line
 MSG;
-        easytest\assert_identical($expected, "$actual");
+        strangetest\assert_identical($expected, "$actual");
     }
 
 
@@ -64,12 +64,12 @@ $message
 in $file on line $lines[4]
 
 Called from:
-$file($lines[3]): easytest\\assert_throws()
+$file($lines[3]): strangetest\\assert_throws()
 $file($lines[2]): ${class}->fail()
 $file($lines[1]): ${class}->helper_two()
 $file($lines[0]): ${class}->helper_one()
 MSG;
-        easytest\assert_identical($expected, "$actual");
+        strangetest\assert_identical($expected, "$actual");
     }
 
     private function helper_one($message, &$lines) {
@@ -87,11 +87,11 @@ MSG;
         $lines[] = version_compare(PHP_VERSION, '7.0', '<')
                  ? __LINE__ + 8
                  : __LINE__ + 6;
-        return easytest\assert_throws(
-            'easytest\\Failure',
+        return strangetest\assert_throws(
+            'strangetest\\Failure',
             function() use ($message, &$lines) {
                 $lines[] = __LINE__ + 1;
-                easytest\fail($message);
+                strangetest\fail($message);
             }
         );
     }
@@ -102,18 +102,18 @@ MSG;
         $file = __FILE__;
         try {
             $line = __LINE__ + 1;
-            easytest\skip($message);
+            strangetest\skip($message);
         }
-        catch (easytest\Skip $actual) {}
+        catch (strangetest\Skip $actual) {}
 
         if (!isset($actual)) {
-            throw new easytest\Failure('Skip exception not thrown');
+            throw new strangetest\Failure('Skip exception not thrown');
         }
 
         $expected = <<<MSG
 $message
 in $file on line $line
 MSG;
-        easytest\assert_identical($expected, "$actual");
+        strangetest\assert_identical($expected, "$actual");
     }
 }

@@ -2,8 +2,6 @@
 
 namespace dir_params;
 
-use easytest;
-
 
 function setup_runs_for_file($one, $two) {
     return array(

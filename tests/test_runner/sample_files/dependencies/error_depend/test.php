@@ -1,7 +1,9 @@
 <?php
 
 namespace error_depend;
-use easytest;
+
+use strangetest;
+
 
 function teardown_function() {
     if (test::$test === 'error_depend\\test_one') {
@@ -10,7 +12,7 @@ function teardown_function() {
 }
 
 
-function test_one(easytest\Context $context) {
+function test_one(strangetest\Context $context) {
     test::$test = __FUNCTION__;
     $context->depend_on('test_two');
 }
@@ -30,7 +32,7 @@ class test {
         }
     }
 
-    public function test_one(easytest\Context $context) {
+    public function test_one(strangetest\Context $context) {
         self::$test = __FUNCTION__;
         $context->depend_on('test_two');
     }

@@ -1,13 +1,13 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace easytest;
+namespace strangetest;
 
-const PROGRAM_NAME    = 'EasyTest';
+const PROGRAM_NAME    = 'Dr. Strangetest';
 const PROGRAM_VERSION = '0.6.0';
 
 const EXIT_SUCCESS = 0;
@@ -32,9 +32,9 @@ const LOG_PASS   = 0x01;
 const LOG_SKIP   = 0x02;
 const LOG_OUTPUT = 0x04;
 // @bc 5.5 Use define() to define constant expressions
-define('easytest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
+define('strangetest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
 // Right now just used for debugging
-define('easytest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
+define('strangetest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
 
 
 
@@ -216,7 +216,7 @@ final class State extends struct {
 function main($argc, $argv) {
     namespace\_enable_error_handling();
     namespace\_try_loading_composer();
-    namespace\_load_easytest();
+    namespace\_load_strangetest();
 
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
     list($root, $targets) = namespace\process_user_targets($args, $errors);
@@ -256,12 +256,12 @@ function main($argc, $argv) {
 function _enable_error_handling() {
     // @bc 5.3 Include E_STRICT in error_reporting()
     \error_reporting(\E_ALL | \E_STRICT);
-    \set_error_handler('easytest\\_handle_error', \error_reporting());
+    \set_error_handler('strangetest\\_handle_error', \error_reporting());
 
     // @bc 5.6 Check if PHP 7 assertion options are supported
     if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
         if ('-1' === \ini_get('zend.assertions')) {
-            \fwrite(\STDERR, "EasyTest should not be run in a production environment.\n");
+            \fwrite(\STDERR, "Dr. Strangetest should not be run in a production environment.\n");
             exit(namespace\EXIT_FAILURE);
         }
         \ini_set('zend.assertions', '1');
@@ -283,7 +283,7 @@ function _enable_error_handling() {
     if (\defined('ASSERT_QUIET_EVAL')) {
         \assert_options(\ASSERT_QUIET_EVAL, 0);
     }
-    \assert_options(\ASSERT_CALLBACK, 'easytest\\_handle_assertion');
+    \assert_options(\ASSERT_CALLBACK, 'strangetest\\_handle_assertion');
 }
 
 
@@ -343,7 +343,7 @@ function _try_loading_composer() {
 /**
  * @return void
  */
-function _load_easytest() {
+function _load_strangetest() {
     $files = array(
         'assertions',
         'buffer',
@@ -494,7 +494,7 @@ function _parse_option($opt, $args, $opts) {
             exit(namespace\EXIT_SUCCESS);
 
         default:
-            fwrite(\STDERR, "Unknown option: $opt\nPlease see 'easytest --help'\n");
+            fwrite(\STDERR, "Unknown option: $opt\nPlease see 'strangetest --help'\n");
             exit(namespace\EXIT_FAILURE);
     }
 
@@ -519,7 +519,7 @@ function _get_version() {
  */
 function _get_help() {
     return <<<'HELP'
-Usage: easytest [OPTION]... [PATH]...
+Usage: strangetest [OPTION]... [PATH]...
 
 Search for and run tests located in PATHs, which may be a list of directories
 and/or files. If omitted, the current directory is searched by default.
@@ -541,6 +541,6 @@ Supported options:
   --version
     Show version information and exit.
 
-Please report bugs to: https://github.com/gnarlyquack/easytest/issues
+Please report bugs to: https://github.com/gnarlyquack/strangetest/issues
 HELP;
 }

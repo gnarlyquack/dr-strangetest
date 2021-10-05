@@ -1,11 +1,12 @@
 <?php
 
 namespace skip_file;
-use easytest;
+
+use strangetest;
 
 
 function setup_file() {
-    easytest\skip('Skip me');
+    strangetest\skip('Skip me');
 }
 
 function teardown_file() {

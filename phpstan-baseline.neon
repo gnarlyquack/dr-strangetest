@@ -3,105 +3,105 @@ parameters:
 		-
 			message: "#^Cannot access an offset on \\(callable\\)\\|null\\.$#"
 			count: 2
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
 			message: "#^Cannot access offset 0 on callable\\(\\)\\: mixed\\.$#"
 			count: 2
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
 			message: "#^Parameter \\#2 \\$array of function implode expects array\\|null, \\(callable&string\\)\\|null given\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Parameter \\#3 \\$fixtures of function easytest\\\\_log_fixture_error expects array\\<string\\>, \\(callable&string\\)\\|null given\\.$#"
+			message: "#^Parameter \\#3 \\$fixtures of function strangetest\\\\_log_fixture_error expects array\\<string\\>, \\(callable&string\\)\\|null given\\.$#"
 			count: 8
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Parameter \\#3 \\$fixtures of function easytest\\\\_log_fixture_error expects array\\<string\\>, \\(callable\\)\\|null given\\.$#"
+			message: "#^Parameter \\#3 \\$fixtures of function strangetest\\\\_log_fixture_error expects array\\<string\\>, \\(callable\\)\\|null given\\.$#"
 			count: 2
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$setup \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\DirectoryTest\\:\\:\\$setup \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$setup_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\DirectoryTest\\:\\:\\$setup_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$teardown \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\DirectoryTest\\:\\:\\$teardown \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\DirectoryTest\\:\\:\\$teardown_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\DirectoryTest\\:\\:\\$teardown_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\FileTest\\:\\:\\$setup \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\FileTest\\:\\:\\$setup_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\FileTest\\:\\:\\$setup_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\FileTest\\:\\:\\$teardown \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Property easytest\\\\FileTest\\:\\:\\$teardown_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
+			message: "#^Property strangetest\\\\FileTest\\:\\:\\$teardown_runs \\(\\(callable\\(\\)\\: mixed&string\\)\\|null\\) does not accept string\\|null\\.$#"
 			count: 1
-			path: src/easytest/discover.php
+			path: src/discover.php
 
 		-
-			message: "#^Access to protected property easytest\\\\Failure\\:\\:\\$file\\.$#"
+			message: "#^Access to protected property strangetest\\\\Failure\\:\\:\\$file\\.$#"
 			count: 1
-			path: src/easytest/exceptions.php
+			path: src/exceptions.php
 
 		-
-			message: "#^Access to protected property easytest\\\\Failure\\:\\:\\$line\\.$#"
+			message: "#^Access to protected property strangetest\\\\Failure\\:\\:\\$line\\.$#"
 			count: 1
-			path: src/easytest/exceptions.php
+			path: src/exceptions.php
 
 		-
-			message: "#^Access to protected property easytest\\\\Failure\\:\\:\\$message\\.$#"
+			message: "#^Access to protected property strangetest\\\\Failure\\:\\:\\$message\\.$#"
 			count: 1
-			path: src/easytest/exceptions.php
+			path: src/exceptions.php
 
 		-
-			message: "#^Parameter \\#2 \\$dirpath of function easytest\\\\discover_tests expects string, string\\|null given\\.$#"
+			message: "#^Parameter \\#2 \\$dirpath of function strangetest\\\\discover_tests expects string, string\\|null given\\.$#"
 			count: 1
-			path: src/easytest/main.php
+			path: src/main.php
 
 		-
-			message: "#^Parameter \\#3 \\$targets of function easytest\\\\discover_tests expects array\\<easytest\\\\Target\\>, array\\<easytest\\\\Target\\>\\|null given\\.$#"
+			message: "#^Parameter \\#3 \\$targets of function strangetest\\\\discover_tests expects array\\<strangetest\\\\Target\\>, array\\<strangetest\\\\Target\\>\\|null given\\.$#"
 			count: 1
-			path: src/easytest/main.php
+			path: src/main.php
 
 		-
-			message: "#^Parameter \\#6 \\$targets of function easytest\\\\run_class_tests expects array\\<string\\>\\|null, array\\<easytest\\\\Target\\>\\|null given\\.$#"
+			message: "#^Parameter \\#6 \\$targets of function strangetest\\\\run_class_tests expects array\\<string\\>\\|null, array\\<strangetest\\\\Target\\>\\|null given\\.$#"
 			count: 1
-			path: src/easytest/tests.php
+			path: src/tests.php
 
 		-
-			message: "#^Return type \\(array\\(bool, array\\<string\\>\\)\\) of method easytest\\\\ClassTest\\:\\:find_targets\\(\\) should be compatible with return type \\(array\\(bool, array\\<easytest\\\\Target\\>\\)\\) of method easytest\\\\Test\\:\\:find_targets\\(\\)$#"
+			message: "#^Return type \\(array\\(bool, array\\<string\\>\\)\\) of method strangetest\\\\ClassTest\\:\\:find_targets\\(\\) should be compatible with return type \\(array\\(bool, array\\<strangetest\\\\Target\\>\\)\\) of method strangetest\\\\Test\\:\\:find_targets\\(\\)$#"
 			count: 1
-			path: src/easytest/tests.php
+			path: src/tests.php
 
 		-
-			message: "#^Parameter \\#3 \\$m of class easytest\\\\_Edit constructor expects array\\<int, array\\<int\\>\\>, array\\<int, array\\<int, float\\|int\\>\\> given\\.$#"
+			message: "#^Parameter \\#3 \\$m of class strangetest\\\\_Edit constructor expects array\\<int, array\\<int\\>\\>, array\\<int, array\\<int, float\\|int\\>\\> given\\.$#"
 			count: 1
-			path: src/easytest/util.php
+			path: src/util.php
 

@@ -10,7 +10,7 @@ class TestInsufficientArguments {
     }
 
     public function test() {
-        easytest\assert_identical(
+        strangetest\assert_identical(
             array('one', 'two'),
             array($this->one, $this->two)
         );

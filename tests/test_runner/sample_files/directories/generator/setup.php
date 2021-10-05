@@ -1,7 +1,7 @@
 <?php
 
 namespace generator;
-use easytest;
+
 
 function setup_runs_for_directory() {
     yield [1, 2];

@@ -1,7 +1,6 @@
 <?php
 
 namespace targets;
-use easytest;
 
 
 function test_one() {}

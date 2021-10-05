@@ -2,7 +2,7 @@
 
 namespace file_failures;
 
-use easytest;
+use strangetest;
 
 
 function setup_file() {
@@ -23,23 +23,23 @@ function teardown_function() {
 }
 
 
-function test_one(easytest\Context $context) {
+function test_one(strangetest\Context $context) {
     $context->teardown(function() { echo 'teardown'; });
-    easytest\fail('I failed');
+    strangetest\fail('I failed');
 }
 
-function test_two(easytest\Context $context) {
+function test_two(strangetest\Context $context) {
     $context->teardown(function() { echo 'teardown'; });
     \trigger_error('An error happened');
 }
 
 
-function test_three(easytest\Context $context) {
+function test_three(strangetest\Context $context) {
     $context->teardown(function() { echo 'teardown'; });
     @$foo['bar'];
 }
 
-function test_four(easytest\Context $context) {
+function test_four(strangetest\Context $context) {
     $context->teardown(function() { echo 'teardown'; });
     throw new \Exception("I'm exceptional!");
 }
@@ -62,22 +62,22 @@ class test {
         echo '.';
     }
 
-    public function test_one(easytest\Context $context) {
+    public function test_one(strangetest\Context $context) {
         $context->teardown(function() { echo 'teardown'; });
-        easytest\fail('I failed');
+        strangetest\fail('I failed');
     }
 
-    public function test_two(easytest\Context $context) {
+    public function test_two(strangetest\Context $context) {
         $context->teardown(function() { echo 'teardown'; });
         \trigger_error('An error happened');
     }
 
-    function test_three(easytest\Context $context) {
+    function test_three(strangetest\Context $context) {
         $context->teardown(function() { echo 'teardown'; });
         $foo = @$this->bar;
     }
 
-    public function test_four(easytest\Context $context) {
+    public function test_four(strangetest\Context $context) {
         $context->teardown(function() { echo 'teardown'; });
         throw new \Exception("I'm exceptional!");
     }

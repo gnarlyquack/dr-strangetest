@@ -1,7 +1,8 @@
 <?php
 
 namespace constructor_error;
-use easytest;
+
+use strangetest;
 
 
 function setup_file() {
@@ -28,7 +29,7 @@ function test_one() {}
 
 class test {
     public function __construct() {
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
     public function setup_object() {

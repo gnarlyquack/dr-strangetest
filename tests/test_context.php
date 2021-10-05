@@ -1,17 +1,17 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
 namespace test\context;
 
-use easytest;
-use easytest\BasicLogger;
-use easytest\Context;
-use easytest\FunctionTest;
-use easytest\State;
+use strangetest;
+use strangetest\BasicLogger;
+use strangetest\Context;
+use strangetest\FunctionTest;
+use strangetest\State;
 
 
 function setup() {
@@ -35,9 +35,9 @@ function test_assert_throws_passes(
     );
 
     \assert_log(array(), $logger);
-    easytest\assert_identical($expected, $actual);
-    easytest\assert_identical(true, $result);
-    easytest\assert_identical(easytest\RESULT_PASS, $context->result());
+    strangetest\assert_identical($expected, $actual);
+    strangetest\assert_identical(true, $result);
+    strangetest\assert_identical(strangetest\RESULT_PASS, $context->result());
 }
 
 
@@ -53,16 +53,16 @@ function test_assert_throws_fails(
 
     \assert_log(
         array(
-            easytest\EVENT_FAIL => 1,
+            strangetest\EVENT_FAIL => 1,
             'events' => array(
-                array(easytest\EVENT_FAIL, $test->name, 'Expected to catch ExpectedException but no exception was thrown'),
+                array(strangetest\EVENT_FAIL, $test->name, 'Expected to catch ExpectedException but no exception was thrown'),
             ),
         ),
         $logger
     );
-    easytest\assert_identical(null, $actual);
-    easytest\assert_identical(false, $result);
-    easytest\assert_identical(easytest\RESULT_FAIL, $context->result());
+    strangetest\assert_identical(null, $actual);
+    strangetest\assert_identical(false, $result);
+    strangetest\assert_identical(strangetest\RESULT_FAIL, $context->result());
 }
 
 
@@ -70,7 +70,7 @@ function test_assert_throws_throws_unexpected_exception(
     Context $context, BasicLogger $logger, FunctionTest $test
 ) {
     $to_throw = new \UnexpectedException();
-    $result = easytest\assert_throws(
+    $result = strangetest\assert_throws(
         'Exception',
         function() use ($context, $to_throw) {
             $context->assert_throws(
@@ -82,9 +82,9 @@ function test_assert_throws_throws_unexpected_exception(
         }
     );
 
-    easytest\assert_identical(
+    strangetest\assert_identical(
         'Expected to catch ExpectedException but instead caught UnexpectedException',
         $result->getMessage()
     );
-    easytest\assert_identical($to_throw, $result->getPrevious());
+    strangetest\assert_identical($to_throw, $result->getPrevious());
 }

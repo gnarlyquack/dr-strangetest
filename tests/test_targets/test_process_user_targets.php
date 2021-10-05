@@ -1,15 +1,15 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
 namespace test\process_user_targets;
 
-use easytest;
-use easytest\Context;
-use easytest\Target;
+use strangetest;
+use strangetest\Context;
+use strangetest\Target;
 
 
 // helper functions
@@ -66,7 +66,7 @@ function assert_targets(
 
 function test_uses_cwd_as_default_target(Context $context) {
     namespace\set_cwd($context, __DIR__);
-    $actual = easytest\process_user_targets(array(), $errors);
+    $actual = strangetest\process_user_targets(array(), $errors);
 
     $root = \dirname(\dirname(__DIR__)) . \DIRECTORY_SEPARATOR;
     $targets = array(
@@ -84,7 +84,7 @@ function test_processes_paths_as_path_targets(Context $context) {
     $args = array('test1.php', 'test2.php', 'test_dir');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array();
     foreach ($args as $arg) {
@@ -107,7 +107,7 @@ function test_processes_path_targets(Context $context) {
     }
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array();
     foreach ($paths as $path) {
@@ -126,7 +126,7 @@ function test_processes_function_targets(Context $context) {
     $args = array('test1.php', '--function=foo,bar');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -152,7 +152,7 @@ function test_processes_class_targets(Context $context) {
     $args = array('test1.php', '--class=foo,bar');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -178,7 +178,7 @@ function test_processes_method_targets(Context $context) {
     $args = array('test1.php', '--class=foo,bar::one,two');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -213,7 +213,7 @@ function test_eliminates_duplicate_function_targets(Context $context) {
     $args = array('test1.php', '--function=one,two', '--function=two,three');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -248,7 +248,7 @@ function test_eliminates_duplicate_method_targets(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -294,7 +294,7 @@ function test_overrides_method_targets_with_class_target(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -330,7 +330,7 @@ function test_eliminates_duplicate_targets_in_file(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -360,7 +360,7 @@ function test_overrides_targets_in_file_with_file_target(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -390,7 +390,7 @@ function test_eliminates_duplicate_path_targets(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array(
         "{$root}test2.php" => array(
@@ -423,7 +423,7 @@ function test_reports_error_for_nonexistent_paths(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Path 'foo.php' does not exist",
@@ -442,7 +442,7 @@ function test_reports_error_for_missing_function_name(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--function=' requires a function name",
@@ -464,7 +464,7 @@ function test_reports_error_for_missing_class_name(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--class=' requires a class name",
@@ -486,7 +486,7 @@ function test_reports_error_for_missing_method_name(Context $context) {
     );
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--class=one,two::' requires a method name",
@@ -501,7 +501,7 @@ function test_determines_correct_test_root_from_directory(Context $context) {
     $args = array('test_dir/test_subdir', 'test_dir1');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array();
     foreach ($args as $arg) {
@@ -517,7 +517,7 @@ function test_determines_correct_test_root_from_file(Context $context) {
     $args = array('test_dir1/test2.php', 'test1.php');
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     $targets = array();
     foreach ($args as $arg) {
@@ -533,7 +533,7 @@ function test_reports_error_for_path_outside_test_root(Context $context) {
     $args = array('test1.php', __FILE__);
 
     namespace\set_cwd($context, $root);
-    $actual = easytest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         \sprintf("Path '%s' is outside the test root directory '$root'", __FILE__),

@@ -1,15 +1,15 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
 namespace test\build_targets_from_dependencies;
 
-use easytest;
-use easytest\Dependency;
-use easytest\Target;
+use strangetest;
+use strangetest\Dependency;
+use strangetest\Target;
 
 
 // helper functions
@@ -128,8 +128,8 @@ function test_builds_targets() {
             ),
         ),
     );
-    $actual = easytest\build_targets_from_dependencies($dependencies);
-    easytest\assert_identical(
+    $actual = strangetest\build_targets_from_dependencies($dependencies);
+    strangetest\assert_identical(
         $expected,
         namespace\targets_to_array($actual)
     );

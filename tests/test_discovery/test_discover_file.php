@@ -1,16 +1,16 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
 namespace test\discover\file;
 
-use easytest;
-use easytest\BasicLogger;
-use easytest\BufferingLogger;
-use easytest\State;
+use strangetest;
+use strangetest\BasicLogger;
+use strangetest\BufferingLogger;
+use strangetest\State;
 
 
 
@@ -27,8 +27,8 @@ function filepath($name) {
 
 function assert_file_discovery($filepath, array $events) {
     $state = new State();
-    $logger = new BasicLogger(easytest\LOG_ALL);
-    easytest\discover_file($state, new BufferingLogger($logger), $filepath);
+    $logger = new BasicLogger(strangetest\LOG_ALL);
+    strangetest\discover_file($state, new BufferingLogger($logger), $filepath);
 
     \assert_events($events, $logger);
 }
@@ -37,7 +37,7 @@ function assert_file_discovery($filepath, array $events) {
 function assert_fixture_error($file, $message) {
     $filepath = namespace\filepath($file);
     $events = array(
-        array(easytest\EVENT_ERROR, $filepath, $message),
+        array(strangetest\EVENT_ERROR, $filepath, $message),
     );
     namespace\assert_file_discovery($filepath, $events);
 }
@@ -121,15 +121,15 @@ function test_handles_non_test_definition() {
 
     $filepath = namespace\filepath($file);
     $state = new State();
-    $logger = new BasicLogger(easytest\LOG_ALL);
-    $result = easytest\discover_file($state, new BufferingLogger($logger), $filepath);
+    $logger = new BasicLogger(strangetest\LOG_ALL);
+    $result = strangetest\discover_file($state, new BufferingLogger($logger), $filepath);
 
-    easytest\assert_identical(array(), $logger->get_log()->get_events());
-    easytest\assert_true(
-        $result instanceof easytest\FileTest,
+    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_true(
+        $result instanceof strangetest\FileTest,
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
     );
-    easytest\assert_identical(
+    strangetest\assert_identical(
         array('class definitions\\Test'),
         \array_keys($result->tests)
     );

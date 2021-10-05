@@ -2,7 +2,7 @@
 
 namespace any_noniterable_arglist;
 
-use easytest;
+use strangetest;
 
 
 function setup_runs() {
@@ -31,5 +31,5 @@ function teardown_file($one, $two) {
 
 
 function test_one($one, $two) {
-    easytest\assert_identical(array(2, 3), array($one, $two));
+    strangetest\assert_identical(array(2, 3), array($one, $two));
 }

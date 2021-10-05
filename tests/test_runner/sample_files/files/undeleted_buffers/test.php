@@ -1,7 +1,6 @@
 <?php
 
 namespace undeleted_buffers;
-use easytest;
 
 
 function setup_file() {

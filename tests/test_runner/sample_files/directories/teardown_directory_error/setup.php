@@ -7,5 +7,5 @@ function setup_directory_teardown_error() {
 
 function teardown_directory_teardown_error() {
     echo __DIR__;
-    \easytest\skip('Skip is an error here');
+    strangetest\skip('Skip is an error here');
 }

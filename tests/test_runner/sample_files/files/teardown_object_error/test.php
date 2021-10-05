@@ -1,7 +1,8 @@
 <?php
 
 namespace teardown_object_error;
-use easytest;
+
+use strangetest;
 
 
 function setup_file() {
@@ -32,7 +33,7 @@ class test {
     }
 
     public function teardown_object() {
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
     public function setup() {

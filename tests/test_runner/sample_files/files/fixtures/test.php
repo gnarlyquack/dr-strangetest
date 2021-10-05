@@ -2,7 +2,7 @@
 
 namespace file_fixtures;
 
-use easytest;
+use strangetest;
 
 
 function setup_file() {
@@ -24,14 +24,14 @@ function teardown($one, $two) {
 }
 
 
-function test_one($one, $two, easytest\Context $context) {
+function test_one($one, $two, strangetest\Context $context) {
     $context->teardown(function () { echo "teardown 1\n"; });
     $context->teardown(function () { echo "teardown 2"; });
-    easytest\assert_identical(2 * $one, $two);
+    strangetest\assert_identical(2 * $one, $two);
 }
 
 function test_two($one, $two) {
-    easytest\assert_identical(6 * $one, 3 * $two);
+    strangetest\assert_identical(6 * $one, 3 * $two);
 }
 
 
@@ -63,13 +63,13 @@ class test {
     }
 
 
-    public function test_one(easytest\Context $context) {
+    public function test_one(strangetest\Context $context) {
         $context->teardown(function () { echo "teardown 1\n"; });
         $context->teardown(function () { echo "teardown 2"; });
-        easytest\assert_identical(2 * $this->one, $this->two);
+        strangetest\assert_identical(2 * $this->one, $this->two);
     }
 
     public function test_two() {
-        easytest\assert_identical(6 * $this->one, 3 * $this->two);
+        strangetest\assert_identical(6 * $this->one, 3 * $this->two);
     }
 }

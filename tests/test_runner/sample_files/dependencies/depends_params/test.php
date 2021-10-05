@@ -1,7 +1,8 @@
 <?php
 
 namespace depends_params;
-use easytest;
+
+use strangetest;
 
 
 function setup_runs_for_file() {
@@ -12,18 +13,18 @@ function setup_runs_for_file() {
 }
 
 
-function test_three($arg, easytest\Context $context) {
+function test_three($arg, strangetest\Context $context) {
     $actual = $context->depend_on('test_two');
-    easytest\assert_identical(2 * $arg, $actual);
+    strangetest\assert_identical(2 * $arg, $actual);
 }
 
-function test_two($arg, easytest\Context $context) {
+function test_two($arg, strangetest\Context $context) {
     $actual = $context->depend_on('test_one');
-    easytest\assert_identical(2, $actual);
+    strangetest\assert_identical(2, $actual);
     $context->set($actual + $arg);
 }
 
-function test_one($arg, easytest\Context $context) {
+function test_one($arg, strangetest\Context $context) {
     $context->set($arg);
 }
 
@@ -37,18 +38,18 @@ class test {
     }
 
 
-    public function test_three(easytest\Context $context) {
+    public function test_three(strangetest\Context $context) {
         $actual = $context->depend_on('test_two');
-        easytest\assert_identical(2 * $this->arg, $actual);
+        strangetest\assert_identical(2 * $this->arg, $actual);
     }
 
-    public function test_two(easytest\Context $context) {
+    public function test_two(strangetest\Context $context) {
         $actual = $context->depend_on('test_one');
-        easytest\assert_identical(2, $actual);
+        strangetest\assert_identical(2, $actual);
         $context->set($actual + $this->arg);
     }
 
-    public function test_one(easytest\Context $context) {
+    public function test_one(strangetest\Context $context) {
         $context->set($this->arg);
     }
 }

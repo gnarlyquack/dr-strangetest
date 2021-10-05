@@ -2,7 +2,7 @@
 
 namespace dir_params;
 
-use easytest;
+use strangetest;
 
 
 function setup_runs_for_directory() {
@@ -15,7 +15,7 @@ function setup_runs_for_directory() {
 
 function teardown_runs_for_directory($args) {
     echo __DIR__;
-    easytest\assert_identical(array(array(2, 4), array(8, 16)), $args);
+    strangetest\assert_identical(array(array(2, 4), array(8, 16)), $args);
 }
 
 

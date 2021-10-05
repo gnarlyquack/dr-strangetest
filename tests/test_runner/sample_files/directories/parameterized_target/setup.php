@@ -2,8 +2,6 @@
 
 namespace param_target;
 
-use easytest;
-
 
 function setup_runs_for_directory() {
     echo __DIR__;

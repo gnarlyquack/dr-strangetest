@@ -1,32 +1,33 @@
 <?php
 
 namespace unrun_depends;
-use easytest;
+
+use strangetest;
 
 
-function test_one(easytest\Context $context) {
+function test_one(strangetest\Context $context) {
     $context->depend_on('\foobar');
 }
 
-function test_two(easytest\Context $context) {
+function test_two(strangetest\Context $context) {
     $context->depend_on('test_one');
 }
 
 
-function test_three(easytest\Context $context) {
+function test_three(strangetest\Context $context) {
     $context->depend_on('test1::test_one');
 }
 
-function test_four(easytest\Context $context) {
+function test_four(strangetest\Context $context) {
     $context->depend_on('test_three');
 }
 
 
 function test_five() {
-    easytest\skip('Skip me');
+    strangetest\skip('Skip me');
 }
 
-function test_six(easytest\Context $context) {
+function test_six(strangetest\Context $context) {
     $context->depend_on('test_five');
 }
 
@@ -34,7 +35,7 @@ function test_six(easytest\Context $context) {
 
 class test1 {
     public function setup_object() {
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
     public function test_one() {}
@@ -46,28 +47,28 @@ class test1 {
 
 
 class test2 {
-    function test_one(easytest\Context $context) {
+    function test_one(strangetest\Context $context) {
         $context->depend_on('\frobitz');
     }
 
-    function test_two(easytest\Context $context) {
+    function test_two(strangetest\Context $context) {
         $context->depend_on('test_one');
     }
 
 
-    function test_three(easytest\Context $context) {
+    function test_three(strangetest\Context $context) {
         $context->depend_on('test1::test_one');
     }
 
-    function test_four(easytest\Context $context) {
+    function test_four(strangetest\Context $context) {
         $context->depend_on('test_three');
     }
 
     public function test_five() {
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
-    public function test_six(easytest\Context $context) {
+    public function test_six(strangetest\Context $context) {
         $context->depend_on('test_five');
     }
 }

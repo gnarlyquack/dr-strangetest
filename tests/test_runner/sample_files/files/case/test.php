@@ -2,7 +2,7 @@
 
 namespace FileCase;
 
-use easytest;
+use strangetest;
 
 
 function SetUpFile() {
@@ -25,11 +25,11 @@ function TearDownFunction($one, $two) {
 
 
 function TestOne($one, $two) {
-    easytest\assert_identical(2 * $one, $two);
+    strangetest\assert_identical(2 * $one, $two);
 }
 
 function TestTwo($one, $two) {
-    easytest\assert_identical(6 * $one, 3 * $two);
+    strangetest\assert_identical(6 * $one, 3 * $two);
 }
 
 
@@ -62,10 +62,10 @@ class Test {
 
 
     public function TestOne() {
-        easytest\assert_identical(2 * $this->one, $this->two);
+        strangetest\assert_identical(2 * $this->one, $this->two);
     }
 
     public function TestTwo() {
-        easytest\assert_identical(6 * $this->one, 3 * $this->two);
+        strangetest\assert_identical(6 * $this->one, 3 * $this->two);
     }
 }

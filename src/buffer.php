@@ -1,11 +1,11 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace easytest;
+namespace strangetest;
 
 
 final class BufferingLogger implements Logger {
@@ -127,7 +127,7 @@ function end_buffering(BufferingLogger $logger) {
     if ($level < $logger->ob_level_start) {
         $logger->log_error(
             $source,
-            "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
+            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
         );
     }
     else {
@@ -182,7 +182,7 @@ function _reset_buffer(BufferingLogger $logger) {
     if ($level < $logger->ob_level_start) {
         $logger->log_error(
             $logger->buffer,
-            "EasyTest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
+            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
         );
         \ob_start();
         $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();

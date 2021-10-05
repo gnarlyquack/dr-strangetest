@@ -1,3 +1,3 @@
 <?php
 
-easytest\skip('Skip me');
+strangetest\skip('Skip me');

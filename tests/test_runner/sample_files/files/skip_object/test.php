@@ -1,7 +1,8 @@
 <?php
 
 namespace skip_object;
-use easytest;
+
+use strangetest;
 
 
 function setup_file() {
@@ -28,7 +29,7 @@ function test_one() {}
 
 class test {
     public function setup_object() {
-        easytest\skip('Skip me');
+        strangetest\skip('Skip me');
     }
 
     public function teardown_object() {

@@ -1,7 +1,8 @@
 <?php
 
 namespace teardown_test_error;
-use easytest;
+
+use strangetest;
 
 
 function setup_file() {
@@ -22,8 +23,8 @@ function teardown_function() {
 }
 
 
-function test_one(easytest\Context $context) {
-    $context->teardown(function () { easytest\skip('Skip me'); });
+function test_one(strangetest\Context $context) {
+    $context->teardown(function () { strangetest\skip('Skip me'); });
     $context->teardown(function () { echo 'teardown 2'; });
 }
 
@@ -47,8 +48,8 @@ class test {
         echo '.';
     }
 
-    public function test_one(easytest\Context $context) {
-        $context->teardown(function () { easytest\skip('Skip me'); });
+    public function test_one(strangetest\Context $context) {
+        $context->teardown(function () { strangetest\skip('Skip me'); });
         $context->teardown(function () { echo 'teardown 2'; });
     }
 

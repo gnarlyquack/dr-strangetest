@@ -1,7 +1,8 @@
 <?php
 
 namespace multiple_runs;
-use easytest;
+
+use strangetest;
 
 
 function setup_runs() {
@@ -24,11 +25,11 @@ function setup_function($one, $two) {
 
 
 function test_one($one, $two, $three) {
-    easytest\assert_identical($one + $two, $three);
+    strangetest\assert_identical($one + $two, $three);
 }
 
 function test_two($one, $two) {
-    easytest\assert_identical(2 * $one, $two);
+    strangetest\assert_identical(2 * $one, $two);
 }
 
 
@@ -42,6 +43,6 @@ class test {
     }
 
     public function test_one() {
-        easytest\assert_identical(2 * $this->one, $this->two);
+        strangetest\assert_identical(2 * $this->one, $this->two);
     }
 }

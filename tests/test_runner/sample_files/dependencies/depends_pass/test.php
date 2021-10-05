@@ -1,34 +1,35 @@
 <?php
 
 namespace depends_pass;
-use easytest;
+
+use strangetest;
 
 
-function test_three(easytest\Context $context) {
-    easytest\assert_identical(2, $context->depend_on('test_two'));
+function test_three(strangetest\Context $context) {
+    strangetest\assert_identical(2, $context->depend_on('test_two'));
 }
 
-function test_two(easytest\Context $context) {
-    easytest\assert_identical(1, $context->depend_on('test_one'));
+function test_two(strangetest\Context $context) {
+    strangetest\assert_identical(1, $context->depend_on('test_one'));
     $context->set(2);
 }
 
-function test_one(easytest\Context $context) {
+function test_one(strangetest\Context $context) {
     $context->set(1);
 }
 
 
 class test {
-    public function test_three(easytest\Context $context) {
-        easytest\assert_identical(2, $context->depend_on('test_two'));
+    public function test_three(strangetest\Context $context) {
+        strangetest\assert_identical(2, $context->depend_on('test_two'));
     }
 
-    public function test_two(easytest\Context $context) {
-        easytest\assert_identical(1, $context->depend_on('test_one'));
+    public function test_two(strangetest\Context $context) {
+        strangetest\assert_identical(1, $context->depend_on('test_one'));
         $context->set(2);
     }
 
-    public function test_one(easytest\Context $context) {
+    public function test_one(strangetest\Context $context) {
         $context->set(1);
     }
 }

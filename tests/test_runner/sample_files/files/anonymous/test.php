@@ -1,12 +1,13 @@
 <?php
 
 namespace anonymous;
-use easytest;
+
+use strangetest;
 
 
 function test_anonymous_class() {
     $class = new class {};
-    easytest\assert_true(\is_object($class));
+    strangetest\assert_true(\is_object($class));
 }
 
 function test_i_am_a_function_name() {

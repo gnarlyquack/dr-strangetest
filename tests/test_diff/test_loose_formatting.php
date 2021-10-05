@@ -1,21 +1,21 @@
 <?php
-// This file is part of EasyTest. It is subject to the license terms in the
-// LICENSE.txt file found in the top-level directory of this distribution.
+// This file is part of Dr. Strangetest. It is subject to the license terms in
+// the LICENSE.txt file found in the top-level directory of this distribution.
 // No part of this project, including this file, may be copied, modified,
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
 namespace test\diff\loose_formatting;
 
-use easytest;
+use strangetest;
 
 
 // helper assertions
 
 function assert_diff(&$from, &$to, $expected) {
     $expected = "- from\n+ to\n\n" . $expected;
-    $actual = easytest\diff($from, $to, 'from', 'to', true);
-    easytest\assert_identical($expected, $actual);
+    $actual = strangetest\diff($from, $to, 'from', 'to', true);
+    strangetest\assert_identical($expected, $actual);
 }
 
 
