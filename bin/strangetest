@@ -7,4 +7,4 @@
 // LICENSE.txt file.
 
 require __DIR__ . \sprintf('%1$s..%1$ssrc%1$s%1$smain.php', \DIRECTORY_SEPARATOR);
-exit(strangetest\main($argc, $argv));
+strangetest\main($argc, $argv);
