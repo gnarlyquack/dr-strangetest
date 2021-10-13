@@ -17,10 +17,11 @@ namespace strangetest;
 /**
  * @template T
  * @param callable(mixed...): T $callable
- * @param mixed[] $args
+ * @param iterable<mixed> $args
  * @return T
  */
-function unpack_function($callable, array $args) {
+function unpack_function($callable, $args)
+{
     return $callable(...$args);
 }
 
@@ -28,9 +29,10 @@ function unpack_function($callable, array $args) {
 /**
  * @template T of object
  * @param class-string<T> $class
- * @param mixed[] $args
+ * @param iterable<mixed> $args
  * @return T
  */
-function unpack_construct($class, array $args) {
+function unpack_construct($class, $args)
+{
     return new $class(...$args);
 }

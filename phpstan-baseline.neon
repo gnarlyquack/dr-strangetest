@@ -91,16 +91,6 @@ parameters:
 			path: src/main.php
 
 		-
-			message: "#^Parameter \\#6 \\$targets of function strangetest\\\\run_class_tests expects array\\<string\\>\\|null, array\\<strangetest\\\\Target\\>\\|null given\\.$#"
-			count: 1
-			path: src/tests.php
-
-		-
-			message: "#^Return type \\(array\\(bool, array\\<string\\>\\)\\) of method strangetest\\\\ClassTest\\:\\:find_targets\\(\\) should be compatible with return type \\(array\\(bool, array\\<strangetest\\\\Target\\>\\)\\) of method strangetest\\\\Test\\:\\:find_targets\\(\\)$#"
-			count: 1
-			path: src/tests.php
-
-		-
 			message: "#^Parameter \\#3 \\$m of class strangetest\\\\_Edit constructor expects array\\<int, array\\<int\\>\\>, array\\<int, array\\<int, float\\|int\\>\\> given\\.$#"
 			count: 1
 			path: src/util.php
