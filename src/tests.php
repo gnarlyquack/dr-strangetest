@@ -60,11 +60,11 @@ final class FileTest extends struct {
 
     /** @var ?callable */
     public $setup_function;
-    /** @var string */
+    /** @var ?string */
     public $setup_function_name;
     /** @var ?callable */
     public $teardown_function;
-    /** @var string */
+    /** @var ?string */
     public $teardown_function_name;
 }
 

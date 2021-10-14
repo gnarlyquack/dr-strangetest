@@ -143,25 +143,28 @@ Release
     -   We need to ensure a run name can never clobber the "cumulative" result
         of a test, which it currently can if the name is an empty string
 
-    -   If we cannot find a function or class name in the current namespace,
-        should we try to fallback to the global namespace? Currently we
-        require an identifier in the global namespace to be explicitly
-        qualified if trying to depend on it from a namespaced function
+    -   Names given to Context::depend_on() should respect the current
+        namespace scope and any 'use ...' statements. One exception is
+        providing a function name from inside a class definition. In this case,
+        we should automatically fallback to the current class, but prefixing
+        the name with '::' should apply normal name resolution rules.
 
-    -   What if parameterized tests depend on the non-parameterized result of
-        previous/other tests that are similarly parameterized? It's possible
-        this is handled correctly -- if it is, since all tests are run with
-        one set of parameters before advancing to the next set, it probably
-        means that after iterating through all parameters, progress will have
-        advanced by one test with any remaining subsequent tests postponed
-        again and needing to be re-resolved for another run -- but it seems
-        more likely this could result in a false "positive" since, assuming no
-        failures, the result might be determined by whatever the current
-        "cumulative" result is. Regardless, this needs more testing.
+    -   Eliminate the ability to depend on the outcome of a specific run and
+        instead "just do the right thing." Specifically: if a test depends on
+        another test in the same run group, then the dependency will be
+        satisfied if the requisite has passed the current run. Otherwise the
+        dependency will be satisfied if the requisite has completed and passed
+        all runs associated with the closest parent run. If this should be one
+        test, then we can return state if the requisite saved any, otherwise
+        this will just be a straight up "pass/fail" dependency with no
+        returnable state.
 
-    -   Similarly, what are we returning for state if depending on the total
-        outcome of a parameterized requisite, assuming the requisite saves
-        state?
+    -   Instead of only allowing one 'setup_runs' function, allow for the
+        definition of multiple 'setup_runXXXX' functions. The run name can then
+        be derived from the function name (i.e., 'XXXX', possibly ignoring any
+        leading underscore). This will make runs discoverable before actually
+        executing them. There should then only ever be a 'teardown_runXXXX'
+        function if there's an associated setup_run function.
 
 -   Test parameterization
 
@@ -180,6 +183,13 @@ Release
         when iterated. This mean generator functions that have output escape
         our output buffering. We need to buffer both each iteration and the
         conversion of an iterator to an array in run_test().
+
+-   Test that we don't skip any tokens when parsing files. In many cases,
+    whitespace is optional, so an off-by-one error when iterating through the
+    tokens means we could potentially miss a definition.
+
+-   Remove the Context::assertX() methods and instead go back to one subtest()
+    method. This means there will be one uniform way to run subtests.
 
 
 Future / Wishlist

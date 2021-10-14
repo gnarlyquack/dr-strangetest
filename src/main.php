@@ -14,13 +14,6 @@ const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
 
 
-const ERROR_SETUP             = 0x01;
-const ERROR_TEARDOWN          = 0x02;
-const ERROR_SETUP_FUNCTION    = 0x04;
-const ERROR_TEARDOWN_FUNCTION = 0x08;
-const ERROR_TEARDOWN_RUNS     = 0x10;
-const ERROR_SETUP_RUNS        = 0x20;
-
 const EVENT_PASS   = 1;
 const EVENT_FAIL   = 2;
 const EVENT_ERROR  = 3;
@@ -184,7 +177,7 @@ final class Error extends \ErrorException {
 
 
 final class State extends struct {
-    /** @var string[] */
+    /** @var true[] */
     public $seen = array();
 
     /** @var array<string, DirectoryTest|false> */

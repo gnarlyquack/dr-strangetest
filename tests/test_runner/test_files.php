@@ -425,8 +425,8 @@ class TestFiles {
             array(strangetest\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_one', '.'),
             array(strangetest\EVENT_PASS, 'multiple_object_fixtures\\test_one', null),
 
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple setup fixtures found:\n\tsetup_object\n\tSetUpObject"),
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple teardown fixtures found:\n\tteardown_object\n\tTearDownObject"),
+            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) setup_object\n    2) SetUpObject"),
+            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) teardown_object\n    2) TearDownObject"),
 
             array(strangetest\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_two', '.'),
             array(strangetest\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_two', '.'),

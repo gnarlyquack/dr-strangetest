@@ -464,12 +464,12 @@ class TestDirectories {
             array(
                 strangetest\EVENT_ERROR,
                 "$path/setup.php",
-                "Multiple conflicting fixture functions found:\n    1) setup_directory_multiple_fixtures\n    2) SetupDirectoryMultipleFixtures",
+                "Multiple conflicting fixtures found:\n    1) setup_directory_multiple_fixtures\n    2) SetupDirectoryMultipleFixtures",
             ),
             array(
                 strangetest\EVENT_ERROR,
                 "$path/setup.php",
-                "Multiple conflicting fixture functions found:\n    1) teardown_directory_multiple_fixtures\n    2) TeardownDirectoryMultipleFixtures",
+                "Multiple conflicting fixtures found:\n    1) teardown_directory_multiple_fixtures\n    2) TeardownDirectoryMultipleFixtures",
             ),
         );
         $this->assert_log($expected);
