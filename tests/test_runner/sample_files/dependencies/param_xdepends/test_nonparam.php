@@ -14,7 +14,7 @@ function test_three(strangetest\Context $context) {
 }
 
 function test_four(strangetest\Context $context) {
-    $actual = $context->depend_on('param_xdepend\\param\\test_four(0)');
+    $actual = $context->depend_on('param_xdepend\\param\\test_four');
     strangetest\assert_identical(18, $actual);
 }
 
@@ -26,9 +26,9 @@ function test_four(strangetest\Context $context) {
 function test_five(strangetest\Context $context) {
     $actual = $context->depend_on(
         'test_one',
-        'param_xdepend\\param\\test_four(1)'
+        'param_xdepend\\param\\test_four'
     );
-    strangetest\assert_identical(22, $actual['param_xdepend\\param\\test_four(1)']);
+    strangetest\assert_identical(22, $actual['param_xdepend\\param\\test_four']);
 }
 
 function test_one(strangetest\Context $context) {

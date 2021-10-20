@@ -70,10 +70,6 @@ Release
     -   Actually, the '--path=' specifier isn't necessary because any valid
         test path needs to start with 'test'(?)
 
--   Fix run names so that they don't have to start with a space
-
--   Cleanup parameters to setup(), teardown(), run() test methods
-
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)
@@ -141,24 +137,11 @@ Release
 
     -   Do we handle declaring a dependency on one's self?
 
-    -   We need to ensure a run name can never clobber the "cumulative" result
-        of a test, which it currently can if the name is an empty string
-
     -   Names given to Context::depend_on() should respect the current
         namespace scope and any 'use ...' statements. One exception is
         providing a function name from inside a class definition. In this case,
         we should automatically fallback to the current class, but prefixing
         the name with '::' should apply normal name resolution rules.
-
-    -   Eliminate the ability to depend on the outcome of a specific run and
-        instead "just do the right thing." Specifically: if a test depends on
-        another test in the same run group, then the dependency will be
-        satisfied if the requisite has passed the current run. Otherwise the
-        dependency will be satisfied if the requisite has completed and passed
-        all runs associated with the closest parent run. If this should be one
-        test, then we can return state if the requisite saved any, otherwise
-        this will just be a straight up "pass/fail" dependency with no
-        returnable state.
 
 -   Test parameterization
 

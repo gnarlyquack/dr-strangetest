@@ -757,11 +757,11 @@ function assert_run_file($filepath, $events) {
     $logger = new BasicLogger(strangetest\LOG_ALL);
     $buffed_logger = new BufferingLogger($logger);
 
-    $file = strangetest\discover_file($state, $buffed_logger, $filepath);
+    $file = strangetest\discover_file($state, $buffed_logger, $filepath, 0);
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     strangetest\assert_true($file instanceof FileTest);
 
-    strangetest\_run_file_tests($state, $buffed_logger, $file);
+    strangetest\_run_file_tests($state, $buffed_logger, $file, array(0));
     \assert_events($events, $logger);
 }
 

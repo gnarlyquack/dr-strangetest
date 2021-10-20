@@ -23,7 +23,7 @@ final class Context {
     private $logger;
     /** @var FunctionTest */
     private $test;
-    /** @var string */
+    /** @var int[] */
     private $run;
     /** @var int */
     private $result = namespace\RESULT_PASS;
@@ -31,10 +31,10 @@ final class Context {
     private $teardowns = array();
 
     /**
-     * @param string $run
+     * @param int[] $run
      */
     public function __construct(State $state, Logger $logger,
-        FunctionTest $test, $run
+        FunctionTest $test, array $run
     ) {
         $this->state = $state;
         $this->logger = $logger;
@@ -290,40 +290,62 @@ final class Context {
         $nnames = 0;
         // @bc 5.5 Use func_get_args instead of argument unpacking
         foreach (\func_get_args() as $nnames => $name) {
-            list($normalized, $run) = $this->normalize_name($name);
+            $normalized = $this->normalize_name($name);
 
-            if (!isset($this->state->results[$normalized][$run])) {
-                $dependees[] = array($normalized, $run);
+            $runs = $this->run;
+            if (!isset($this->state->results[$normalized]))
+            {
+                // The dependency hasn't been run
+                $dependees[] = array($normalized, \end($runs));
             }
-            elseif (!$this->state->results[$normalized][$run]) {
-                throw new Skip("This test depends on '{$normalized}{$run}', which did not pass");
-            }
-            elseif (
-                \array_key_exists($normalized, $this->state->fixture)
-                && \array_key_exists($run, $this->state->fixture[$normalized])
-            ) {
-                $result[$name] = $this->state->fixture[$normalized][$run];
+            else
+            {
+                $results = $this->state->results[$normalized];
+                if ($this->test->group !== $results['group'])
+                {
+                    $us = $this->state->groups[$this->test->group];
+                    $them = $this->state->groups[$results['group']];
+                    for ($i = 0, $c = \min(\count($us), \count($them)); $i < $c; ++$i)
+                    {
+                        if ($us[$i] !== $them[$i])
+                        {
+                            break;
+                        }
+                    }
+                    \assert($i > 0);
+                    $runs = \array_slice($runs, 0, $i);
+                }
+
+                $run = \end($runs);
+                if (!isset($results['runs'][$run]))
+                {
+                    // The dependency hasn't been run
+                    $dependees[] = array($normalized, $run);
+                }
+                elseif (!$results['runs'][$run])
+                {
+                    $run_name = namespace\_get_run_name($this->state, $runs);
+                    throw new Skip("This test depends on '{$normalized}{$run_name}', which did not pass");
+                }
+                elseif (isset($this->state->fixture[$normalized][$run]))
+                {
+                    $result[$name] = $this->state->fixture[$normalized][$run];
+                }
             }
         }
 
         if ($dependees) {
             if (!isset($this->state->depends[$this->test->name])) {
-                $dependency = new Dependency(
+                $this->state->depends[$this->test->name] = new Dependency(
                     $this->test->file,
                     $this->test->class,
                     $this->test->function
                 );
-                $this->state->depends[$this->test->name] = $dependency;
             }
-            else {
-                $dependency = $this->state->depends[$this->test->name];
-            }
+            $dependency = $this->state->depends[$this->test->name];
 
             foreach ($dependees as $dependee) {
                 list($name, $run) = $dependee;
-                if (!isset($dependency->dependees[$name])) {
-                    $dependency->dependees[$name] = array();
-                }
                 $dependency->dependees[$name][] = $run;
             }
 
@@ -347,7 +369,8 @@ final class Context {
      * @return void
      */
     public function set($value) {
-        $this->state->fixture[$this->test->name][$this->run] = $value;
+        $run = \end($this->run);
+        $this->state->fixture[$this->test->name][$run] = $value;
     }
 
 
@@ -369,12 +392,12 @@ final class Context {
 
     /**
      * @param string $name
-     * @return array{string, string}
+     * @return string
      */
     private function normalize_name($name) {
         if (
             !\preg_match(
-                '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*(\\((.*)\\))?$~',
+                '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*?$~',
                 $name,
                 $matches
             )
@@ -406,15 +429,7 @@ final class Context {
         }
 
         $name = $namespace . $class . $function;
-
-        if (isset($matches[4])) {
-            $run = ('' === $matches[5]) ? $matches[5] : " {$matches[4]}";
-        }
-        else {
-            $run = $this->run;
-        }
-
-        return array($name, $run);
+        return $name;
     }
 }
 
@@ -444,14 +459,14 @@ function _run_directory_setup(
 
 
 /**
+ * @param int[] $run
  * @param ?mixed[] $args
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function run_directory_tests(
     State $state, BufferingLogger $logger, DirectoryTest $directory,
-    array $args = null, array $run_id = null, array $targets = null
+    array $run, array $args = null, array $targets = null
 ) {
     if ($targets) {
         list($error, $targets) = namespace\find_directory_targets($logger, $directory, $targets);
@@ -460,12 +475,12 @@ function run_directory_tests(
         }
     }
 
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    $run_name = namespace\_get_run_name($state, $run);
     if ($directory->runs)
     {
-        foreach ($directory->runs as $run)
+        foreach ($directory->runs as $run_fixture)
         {
-            $setup = $run->setup;
+            $setup = $run_fixture->setup;
             $name = "{$setup}{$run_name}";
             namespace\start_buffering($logger, $name);
             list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
@@ -482,15 +497,15 @@ function run_directory_tests(
                     $run_args = \iterator_to_array($run_args);
                 }
 
-                $this_run_id = $run_id;
-                $this_run_id[] = $run->name;
+                $run[] = $run_fixture->id;
                 namespace\_run_directory(
-                    $state, $logger, $directory, $run_args, $this_run_id, $targets);
+                    $state, $logger, $directory, $run, $run_args, $targets);
+                \array_pop($run);
             }
 
-            if (isset($run->teardown))
+            if (isset($run_fixture->teardown))
             {
-                $teardown = $run->teardown;
+                $teardown = $run_fixture->teardown;
                 $name = "{$teardown}{$run_name}";
                 namespace\start_buffering($logger, $name);
                 namespace\_run_teardown($logger, $name, $teardown, $run_args);
@@ -500,22 +515,22 @@ function run_directory_tests(
     }
     else
     {
-        namespace\_run_directory($state, $logger, $directory, $args, $run_id, $targets);
+        namespace\_run_directory($state, $logger, $directory, $run, $args, $targets);
     }
 }
 
 
 /**
+ * @param int[] $run
  * @param ?mixed[] $args
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function _run_directory(
     State $state, BufferingLogger $logger, DirectoryTest $directory,
-    array $args = null, array $run_id = null, array $targets = null)
+    array $run, array $args = null, array $targets = null)
 {
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    $run_name = namespace\_get_run_name($state, $run);
     list($result, $args) = namespace\_run_directory_setup(
         $logger, $directory, $args, $run_name);
     if (namespace\RESULT_PASS !== $result) {
@@ -532,14 +547,14 @@ function _run_directory(
         if ($targets) {
             foreach ($targets as $target) {
                 namespace\_run_directory_test(
-                    $state, $logger, $directory, $target->name(), $args, $run_id, $target->subtargets()
+                    $state, $logger, $directory, $target->name(), $run, $args, $target->subtargets()
                 );
             }
         }
         else {
             foreach ($directory->tests as $test => $_) {
                 namespace\_run_directory_test(
-                    $state, $logger, $directory, $test, $args, $run_id);
+                    $state, $logger, $directory, $test, $run, $args);
             }
         }
     }
@@ -555,28 +570,29 @@ function _run_directory(
 
 /**
  * @param string $test
+ * @param int[] $run
  * @param ?mixed[] $arglist
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function _run_directory_test(
     State $state, BufferingLogger $logger, DirectoryTest $directory, $test,
-    $arglist = null, array $run_id = null, array $targets = null
+    array $run, $arglist = null, array $targets = null
 ) {
+    $group = namespace\_get_current_group($state, $run);
     $type = $directory->tests[$test];
     switch ($type) {
     case namespace\TYPE_DIRECTORY:
-        $test = namespace\discover_directory($state, $logger, $test);
+        $test = namespace\discover_directory($state, $logger, $test, $group);
         if ($test) {
-            namespace\run_directory_tests($state, $logger, $test, $arglist, $run_id, $targets);
+            namespace\run_directory_tests($state, $logger, $test, $run, $arglist, $targets);
         }
         break;
 
     case namespace\TYPE_FILE:
-        $test = namespace\discover_file($state, $logger, $test);
+        $test = namespace\discover_file($state, $logger, $test, $group);
         if ($test) {
-            namespace\_run_file_tests($state, $logger, $test, $arglist, $run_id, $targets);
+            namespace\_run_file_tests($state, $logger, $test, $run, $arglist, $targets);
         }
         break;
 
@@ -633,14 +649,14 @@ function _run_file_setup(
 // @todo Consider combining directory tests and file tests
 // The logic for the two types of tests is essentially identical
 /**
+ * @param int[] $run
  * @param ?mixed[] $args
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function _run_file_tests(
     State $state, BufferingLogger $logger, FileTest $file,
-    array $args = null, array $run_id = null, array $targets = null
+    array $run, array $args = null, array $targets = null
 ) {
     if ($targets) {
         list($error, $targets) = namespace\find_file_targets($logger, $file, $targets);
@@ -649,12 +665,12 @@ function _run_file_tests(
         }
     }
 
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    $run_name = namespace\_get_run_name($state, $run);
     if ($file->runs)
     {
-        foreach ($file->runs as $run)
+        foreach ($file->runs as $run_fixture)
         {
-            $setup = $run->setup;
+            $setup = $run_fixture->setup;
             $name = "{$setup}{$run_name}";
             namespace\start_buffering($logger, $name);
             list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
@@ -670,16 +686,14 @@ function _run_file_tests(
                 if (!\is_array($run_args)) {
                     $run_args = \iterator_to_array($run_args);
                 }
-
-                $this_run_id = $run_id;
-                $this_run_id[] = $run->name;
-                namespace\_run_file(
-                    $state, $logger, $file, $run_args, $this_run_id, $targets);
+                $run[] = $run_fixture->id;
+                namespace\_run_file($state, $logger, $file, $run, $run_args, $targets);
+                \array_pop($run);
             }
 
-            if (isset($run->teardown))
+            if (isset($run_fixture->teardown))
             {
-                $teardown = $run->teardown;
+                $teardown = $run_fixture->teardown;
                 $name = "{$teardown}{$run_name}";
                 namespace\start_buffering($logger, $name);
                 namespace\_run_teardown($logger, $name, $teardown, $run_args);
@@ -689,22 +703,22 @@ function _run_file_tests(
     }
     else
     {
-        namespace\_run_file($state, $logger, $file, $args, $run_id, $targets);
+        namespace\_run_file($state, $logger, $file, $run, $args, $targets);
     }
 }
 
 
 /**
+ * @param int[] $run
  * @param ?mixed[] $args
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function _run_file(
     State $state, BufferingLogger $logger, FileTest $file,
-    array $args = null, array $run_id = null, array $targets = null)
+    array $run, array $args = null, array $targets = null)
 {
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    $run_name = namespace\_get_run_name($state, $run);
 
     list($result, $args) = namespace\_run_file_setup($logger, $file, $args, $run_name);
     if (namespace\RESULT_PASS !== $result) {
@@ -720,15 +734,13 @@ function _run_file(
         if ($targets) {
             foreach ($targets as $target) {
                 namespace\_run_file_test(
-                    $state, $logger, $file, $target->name(), $args, $run_id, $target->subtargets()
+                    $state, $logger, $file, $target->name(), $run, $args, $target->subtargets()
                 );
             }
         }
         else {
             foreach ($file->tests as $test => $_) {
-                namespace\_run_file_test(
-                    $state, $logger, $file, $test, $args, $run_id
-                );
+                namespace\_run_file_test($state, $logger, $file, $test, $run, $args);
             }
         }
     }
@@ -744,26 +756,28 @@ function _run_file(
 
 /**
  * @param string $test
+ * @param int[] $run
  * @param ?mixed[] $arglist
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function _run_file_test(
     State $state, BufferingLogger $logger, FileTest $file, $test,
-    $arglist = null, array $run_id = null, array $targets = null
+    array $run, $arglist = null, array $targets = null
 ) {
+    $group = namespace\_get_current_group($state, $run);
     $info = $file->tests[$test];
     switch ($info->type) {
     case namespace\TYPE_CLASS:
-        $test = namespace\discover_class($state, $logger, $info);
+        $test = namespace\discover_class($state, $logger, $info, $group);
         if ($test) {
-            namespace\_run_class_tests($state, $logger, $test, $arglist, $run_id, $targets);
+            namespace\_run_class_tests($state, $logger, $test, $run, $arglist, $targets);
         }
         break;
 
     case namespace\TYPE_FUNCTION:
         $test = new FunctionTest();
+        $test->group = $group;
         $test->file = $info->filename;
         $test->namespace = $info->namespace;
         $test->function = $info->name;
@@ -779,7 +793,7 @@ function _run_file_test(
             $test->teardown = $file->teardown_function;
         }
         \assert(!$targets);
-        namespace\_run_function_test($state, $logger, $test, $arglist, $run_id);
+        namespace\_run_function_test($state, $logger, $test, $run, $arglist);
         break;
 
     default:
@@ -841,14 +855,14 @@ function _run_class_setup(
 
 
 /**
+ * @param int[] $run
  * @param ?mixed[] $arglist
- * @param ?string[] $run_id
  * @param ?Target[] $targets
  * @return void
  */
 function _run_class_tests(
     State $state, BufferingLogger $logger, ClassTest $class,
-    array $arglist = null, array $run_id = null, array $targets = null
+    array $run, array $arglist = null, array $targets = null
 ) {
     if ($targets) {
         list($error, $targets) = namespace\find_class_targets($logger, $class, $targets);
@@ -857,7 +871,7 @@ function _run_class_tests(
         }
     }
 
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    $run_name = namespace\_get_run_name($state, $run);
     list($result, ) = namespace\_run_class_setup($logger, $class, $arglist, $run_name);
     if (namespace\RESULT_PASS !== $result) {
         return;
@@ -865,12 +879,12 @@ function _run_class_tests(
 
     if ($targets) {
         foreach ($targets as $test) {
-            namespace\_run_class_test($state, $logger, $class, $test, $run_id);
+            namespace\_run_class_test($state, $logger, $class, $test, $run);
         }
     }
     else {
         foreach ($class->tests as $test) {
-            namespace\_run_class_test($state, $logger, $class, $test, $run_id);
+            namespace\_run_class_test($state, $logger, $class, $test, $run);
         }
     }
 
@@ -880,13 +894,14 @@ function _run_class_tests(
 
 /**
  * @param string $method
- * @param ?string[] $run_id
+ * @param int[] $run
  * @return void
  */
 function _run_class_test(
-    State $state, BufferingLogger $logger, ClassTest $class, $method, array $run_id = null
-) {
+    State $state, BufferingLogger $logger, ClassTest $class, $method, array $run)
+{
     $test = new FunctionTest();
+    $test->group = namespace\_get_current_group($state, $run);
     $test->file = $class->file;
     $test->namespace = $class->namespace;
     $test->class = $class->name;
@@ -907,7 +922,7 @@ function _run_class_test(
         $test->teardown = $method;
         $test->teardown_name = $class->teardown_function;
     }
-    namespace\_run_function_test($state, $logger, $test, null, $run_id);
+    namespace\_run_function_test($state, $logger, $test, $run, null);
 }
 
 
@@ -983,15 +998,15 @@ function _run_function_setup(
 
 
 /**
+ * @param int[] $run
  * @param ?mixed[] $arglist
- * @param ?string[] $run_id
  * @return void
  */
 function _run_function_test(
-    State $state, BufferingLogger $logger, FunctionTest $test,
-    array $arglist = null, array $run_id = null)
+    State $state, BufferingLogger $logger,
+    FunctionTest $test, array $run, array $arglist = null)
 {
-    $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
+    $run_name = namespace\_get_run_name($state, $run);
 
     list($result, $argset) = namespace\_run_function_setup($logger, $test, $arglist, $run_name);
     if (namespace\RESULT_PASS !== $result) {
@@ -1007,7 +1022,7 @@ function _run_function_test(
         }
         $test_name = "{$test->name}{$run_name}";
         namespace\start_buffering($logger, $test_name);
-        $context = new Context($state, $logger, $test, $run_name);
+        $context = new Context($state, $logger, $test, $run);
         $test->result = namespace\_run_test_function(
             $logger, $test_name, $test->test, $context, $argset
         );
@@ -1017,23 +1032,20 @@ function _run_function_test(
         }
     }
 
-    namespace\_run_function_teardown($state, $logger, $test, $argset, $run_name);
+    namespace\_run_function_teardown($state, $logger, $test, $run, $argset);
 }
 
 
 /**
+ * @param int[] $run
  * @param ?mixed[] $args
- * @param ?string $run
  * @return void
  */
 function _run_function_teardown(
-    State $state,
-    BufferingLogger $logger,
-    FunctionTest $test,
-    array $args = null,
-    $run = null
-) {
-    $test_name = "{$test->name}{$run}";
+    State $state, BufferingLogger $logger,
+    FunctionTest $test, array $run, array $args = null)
+{
+    $test_name = \sprintf('%s%s', $test->name, namespace\_get_run_name($state, $run));
 
     if ($test->teardown) {
         $name = "{$test->teardown_name} for {$test_name}";
@@ -1046,16 +1058,26 @@ function _run_function_teardown(
         return;
     }
     if (!isset($state->results[$test->name])) {
-        $state->results[$test->name] = array('' => true);
+        $state->results[$test->name] = array(
+            'group' => $test->group,
+            'runs' => array(),
+        );
     }
     if (namespace\RESULT_PASS === $test->result) {
         $logger->log_pass($test_name);
-        $state->results[$test->name][$run] = true;
-        $state->results[$test->name][''] = $state->results[$test->name][''];
+        foreach ($run as $id)
+        {
+            if (!isset($state->results[$test->name]['runs'][$id]))
+            {
+                $state->results[$test->name]['runs'][$id] = true;
+            }
+        }
     }
     elseif (namespace\RESULT_FAIL & $test->result) {
-        $state->results[$test->name][$run] = false;
-        $state->results[$test->name][''] = false;
+        foreach ($run as $id)
+        {
+            $state->results[$test->name]['runs'][$id] = false;
+        }
         if (namespace\RESULT_POSTPONE & $test->result) {
             unset($state->depends[$test->name]);
         }
@@ -1176,4 +1198,47 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack =
         $logger->log_error($name, $e);
     }
     return namespace\RESULT_FAIL;
+}
+
+
+/**
+ * @param int[] $run
+ * @return string
+ */
+function _get_run_name(State $state, array $run)
+{
+    $names = array();
+    for ($i = 1, $c = \count($run); $i < $c; ++$i)
+    {
+        $id = $run[$i] - 1;
+        $names[] = $state->runs[$id]->name;
+    }
+    if ($names)
+    {
+        $result = \sprintf(' (%s)', \implode(', ', $names));
+    }
+    else
+    {
+        $result = '';
+    }
+    return $result;
+}
+
+
+/**
+ * @param int[] $run
+ * @return int
+ */
+function _get_current_group(State $state, array $run)
+{
+    $id = \end($run);
+    if ($id)
+    {
+        $group = $state->runs[$id - 1]->group;
+    }
+    else
+    {
+        $group = 0;
+    }
+    return $group;
 }

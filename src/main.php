@@ -177,7 +177,7 @@ final class Error extends \ErrorException {
 
 
 final class State extends struct {
-    /** @var true[] */
+    /** @var array<string, true> */
     public $seen = array();
 
     /** @var array<string, DirectoryTest|false> */
@@ -189,14 +189,20 @@ final class State extends struct {
     /** @var array<string, ClassTest|false> */
     public $classes = array();
 
-    /** @var array<string, bool[]> */
+    /** @var array<string, array{'group': int, 'runs': bool[]}> */
     public $results = array();
 
     /** @var array<string, Dependency> */
     public $depends = array();
 
-    /** @var array<string, array<string, mixed>> */
+    /** @var array<string, mixed[]> */
     public $fixture = array();
+
+    /** @var array<int[]> */
+    public $groups = array(0 => array(0));
+
+    /** @var RunFixture[] */
+    public $runs = array();
 }
 
 

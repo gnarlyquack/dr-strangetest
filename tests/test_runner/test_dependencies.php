@@ -237,8 +237,8 @@ class TestDependencies {
 
 
             array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_three', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_four', "This test depends on 'param_xdepend\\param\\test_four (0)', which did not pass"),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\nonparam\\test_five', null),
+            array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_four', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
+            array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_five', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
             array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (0)', "This test depends on 'param_xdepend\\param\\test_five (0)', which did not pass"),
             array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (1)', "This test depends on 'param_xdepend\\param\\test_five (1)', which did not pass"),
         ));

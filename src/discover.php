@@ -16,13 +16,13 @@ namespace strangetest;
 function discover_tests(BufferingLogger $logger, $dirpath, array $targets)
 {
     $state = new State();
-    $directory = namespace\discover_directory($state, $logger, $dirpath);
+    $directory = namespace\discover_directory($state, $logger, $dirpath, 0);
     if (!$directory)
     {
         return;
     }
 
-    namespace\run_directory_tests($state, $logger, $directory, null, null, $targets);
+    namespace\run_directory_tests($state, $logger, $directory, array(0), null, $targets);
     while ($state->depends)
     {
         $dependencies = namespace\resolve_dependencies($state, $logger);
@@ -32,16 +32,17 @@ function discover_tests(BufferingLogger $logger, $dirpath, array $targets)
         }
         $targets = namespace\build_targets_from_dependencies($dependencies);
         $state->depends = array();
-        namespace\run_directory_tests($state, $logger, $directory, null, null, $targets);
+        namespace\run_directory_tests($state, $logger, $directory, array(0), null, $targets);
     }
 }
 
 
 /**
  * @param string $path
+ * @param int $group
  * @return DirectoryTest|false
  */
-function discover_directory(State $state, BufferingLogger $logger, $path)
+function discover_directory(State $state, BufferingLogger $logger, $path, $group)
 {
     if (isset($state->directories[$path]))
     {
@@ -95,13 +96,14 @@ function discover_directory(State $state, BufferingLogger $logger, $path)
     $directory = false;
     if ($valid)
     {
-        $directory = new DirectoryTest();
+        $directory = new DirectoryTest;
         $directory->name = $path;
+        $directory->group = $group;
         $directory->tests = $tests;
         if ($setup)
         {
             $directory = namespace\_discover_directory_setup(
-                $state, $logger, $directory, $setup[0]);
+                $state, $logger, $directory, $setup[0], $group);
         }
     }
 
@@ -112,9 +114,10 @@ function discover_directory(State $state, BufferingLogger $logger, $path)
 
 /**
  * @param string $filepath
+ * @param int $group
  * @return FileTest|false
  */
-function discover_file(State $state, BufferingLogger $logger, $filepath)
+function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
 {
     if (isset($state->files[$filepath]))
     {
@@ -330,49 +333,7 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
         }
     }
 
-    foreach ($input['runs'] as $run_info)
-    {
-        $teardown = null;
-        if (isset($run_info['teardown']))
-        {
-            $teardowns = $run_info['teardown'];
-            if (\count($teardowns) > 1)
-            {
-                namespace\_log_fixture_error($logger, $filepath, $teardowns);
-                $valid = false;
-            }
-            elseif (!isset($run_info['setup']))
-            {
-                $message = \sprintf(
-                    "Teardown run function '%s' has no matching setup run function",
-                    $teardowns[0]
-                );
-                $logger->log_error($filepath, $message);
-                $valid = false;
-            }
-            else
-            {
-                $teardown = $teardowns[0];
-            }
-        }
-        if (isset($run_info['setup']))
-        {
-            $setups = $run_info['setup'];
-            if (\count($setups) > 1)
-            {
-                namespace\_log_fixture_error($logger, $filepath, $setups);
-                $valid = false;
-            }
-            else
-            {
-                $run = new RunFixture;
-                $run->name = $run_info['name'];
-                $run->setup = $run_info['setup'][0];
-                $run->teardown = $teardown;
-                $output['runs'][] = $run;
-            }
-        }
-    }
+    $output['runs'] = namespace\_validate_runs($state, $logger, $filepath, $group, $input['runs']);
 
     if ($input['tests'])
     {
@@ -385,10 +346,11 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
     }
 
     $file = false;
-    if ($valid)
+    if ($valid && false !== $output['runs'])
     {
-        $file = new FileTest();
+        $file = new FileTest;
         $file->name = $filepath;
+        $file->group = $group;
         $file->tests = $output['tests'];
         $file->setup_function = $output['setup_function'];
         $file->setup_function_name = $output['setup_function_name'];
@@ -405,9 +367,10 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
 
 
 /**
+ * @param int $group
  * @return ClassTest|false
  */
-function discover_class(State $state, Logger $logger, TestInfo $info)
+function discover_class(State $state, Logger $logger, TestInfo $info, $group)
 {
     $classname = $info->name;
     \assert(\class_exists($classname));
@@ -476,6 +439,7 @@ function discover_class(State $state, Logger $logger, TestInfo $info)
     if ($valid)
     {
         $class = new ClassTest();
+        $class->group = $group;
         $class->file = $info->filename;
         $class->namespace = $info->namespace;
         $class->name = $classname;
@@ -496,11 +460,12 @@ function discover_class(State $state, Logger $logger, TestInfo $info)
  * @param BufferingLogger $logger
  * @param DirectoryTest $directory
  * @param string $filepath
+ * @param int $group
  * @return DirectoryTest|false
  */
 function _discover_directory_setup(
     State $state, BufferingLogger $logger,
-    DirectoryTest $directory, $filepath)
+    DirectoryTest $directory, $filepath, $group)
 {
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)
@@ -601,82 +566,14 @@ function _discover_directory_setup(
     }
 
     $output = array(
-        'runs'=> array(),
-        'setup_directory' => null,
-        'teardown_directory' => null,
+        'runs'=> namespace\_validate_runs($state, $logger, $filepath, $group, $input['runs']),
+        'setup_directory' => namespace\_validate_fixture($logger, $filepath, $input['setup_directory']),
+        'teardown_directory' => namespace\_validate_fixture($logger, $filepath, $input['teardown_directory']),
     );
 
-    if ($input['setup_directory'])
-    {
-        if (\count($input['setup_directory']) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $input['setup_directory']);
-            $valid = false;
-        }
-        else
-        {
-            $output['setup_directory'] = $input['setup_directory'][0];
-        }
-    }
-
-    if ($input['teardown_directory'])
-    {
-        if (\count($input['teardown_directory']) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $input['teardown_directory']);
-            $valid = false;
-        }
-        else
-        {
-            $output['teardown_directory'] = $input['teardown_directory'][0];
-        }
-    }
-
-    foreach ($input['runs'] as $run_info)
-    {
-        $teardown = null;
-        if (isset($run_info['teardown']))
-        {
-            $teardowns = $run_info['teardown'];
-            if (\count($teardowns) > 1)
-            {
-                namespace\_log_fixture_error($logger, $filepath, $teardowns);
-                $valid = false;
-            }
-            elseif (!isset($run_info['setup']))
-            {
-                $message = \sprintf(
-                    "Teardown run function '%s' has no matching setup run function",
-                    $teardowns[0]
-                );
-                $logger->log_error($filepath, $message);
-                $valid = false;
-            }
-            else
-            {
-                $teardown = $teardowns[0];
-            }
-        }
-        if (isset($run_info['setup']))
-        {
-            $setups = $run_info['setup'];
-            if (\count($setups) > 1)
-            {
-                namespace\_log_fixture_error($logger, $filepath, $setups);
-                $valid = false;
-            }
-            else
-            {
-                $run = new RunFixture;
-                $run->name = $run_info['name'];
-                $run->setup = $run_info['setup'][0];
-                $run->teardown = $teardown;
-                $output['runs'][] = $run;
-            }
-        }
-    }
-
-    if ($valid)
+    if ((false !== $output['runs'])
+        && (false !== $output['setup_directory'])
+        && (false !== $output['teardown_directory']))
     {
         $directory->runs = $output['runs'];
         $directory->setup = $output['setup_directory'];
@@ -687,6 +584,131 @@ function _discover_directory_setup(
     {
         return false;
     }
+}
+
+
+/**
+ * @param BufferingLogger $logger
+ * @param string $filepath
+ * @param ?callable-string[] $fixtures
+ * @return false|null|callable-string
+ */
+function _validate_fixture(BufferingLogger $logger, $filepath, $fixtures)
+{
+    $result = null;
+    if ($fixtures)
+    {
+        if (\count($fixtures) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $fixtures);
+            $result = false;
+        }
+        else
+        {
+            $result = $fixtures[0];
+        }
+    }
+    return $result;
+}
+
+
+/**
+ * @param State $state
+ * @param BufferingLogger $logger
+ * @param string $filepath
+ * @param int $group
+ * @param array{'name'?: string,
+ *              'setup'?: callable-string[],
+ *              'teardown'?: callable-string[]}[] $runs
+ * @return false|RunFixture[]
+ */
+function _validate_runs(State $state, BufferingLogger $logger, $filepath, $group, $runs)
+{
+    $valid = true;
+    $result = array();
+    if ($runs)
+    {
+        $group = namespace\_new_run_group($state, $group);
+        foreach ($runs as $run_info)
+        {
+            $teardown = null;
+            if (isset($run_info['teardown']))
+            {
+                $teardowns = $run_info['teardown'];
+                if (\count($teardowns) > 1)
+                {
+                    namespace\_log_fixture_error($logger, $filepath, $teardowns);
+                    $valid = false;
+                }
+                elseif (!isset($run_info['setup']))
+                {
+                    $message = \sprintf(
+                        "Teardown run function '%s' has no matching setup run function",
+                        $teardowns[0]
+                    );
+                    $logger->log_error($filepath, $message);
+                    $valid = false;
+                }
+                else
+                {
+                    $teardown = $teardowns[0];
+                }
+            }
+            if (isset($run_info['setup']))
+            {
+                \assert(isset($run_info['name']));
+                $setups = $run_info['setup'];
+                if (\count($setups) > 1)
+                {
+                    namespace\_log_fixture_error($logger, $filepath, $setups);
+                    $valid = false;
+                }
+                else
+                {
+                    $result[] = namespace\_new_run(
+                        $state,
+                        $run_info['name'], $run_info['setup'][0], $teardown, $group);
+                }
+            }
+        }
+    }
+
+    return $valid ? $result : false;
+}
+
+
+/**
+ * @param State $state
+ * @param int $parent_group_id
+ * @return int
+ */
+function _new_run_group(State $state, $parent_group_id)
+{
+    $id = \count($state->groups);
+    $groups = $state->groups[$parent_group_id];
+    $groups[] = $id;
+    $state->groups[$id] = $groups;
+    return $id;
+}
+
+
+/**
+ * @param string $name
+ * @param callable-string $setup
+ * @param ?callable-string $teardown
+ * @param int $group
+ * @return RunFixture
+ */
+function _new_run(State $state, $name, $setup, $teardown, $group)
+{
+    $run = new RunFixture;
+    $run->group = $group;
+    $run->id = \count($state->runs) + 1;
+    $run->name = $name;
+    $run->setup = $setup;
+    $run->teardown = $teardown;
+    $state->runs[] = $run;
+    return $run;
 }
 
 

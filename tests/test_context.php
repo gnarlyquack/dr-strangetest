@@ -18,7 +18,7 @@ function setup() {
     $logger = new BasicLogger(true);
     $test = new FunctionTest();
     $test->name = 'test_function';
-    $context = new Context(new State(), $logger, $test, null);
+    $context = new Context(new State(), $logger, $test, array());
     return array($context, $logger, $test);
 }
 

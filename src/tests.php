@@ -27,6 +27,11 @@ final class TestInfo extends struct {
 
 
 final class RunFixture extends struct {
+    // @todo Remove this from here!
+    /** @var int */
+    public $group;
+    /** @var int */
+    public $id;
     /** @var string */
     public $name;
     /** @var callable-string */
@@ -39,6 +44,9 @@ final class RunFixture extends struct {
 final class DirectoryTest extends struct {
     /** @var string */
     public $name;
+
+    /** @var int */
+    public $group;
 
     /** @var ?callable-string */
     public $setup = null;
@@ -57,6 +65,8 @@ final class DirectoryTest extends struct {
 final class FileTest extends struct {
     /** @var string */
     public $name;
+    /** @var int */
+    public $group;
     /** @var ?callable-string */
     public $setup;
     /** @var ?callable-string */
@@ -81,6 +91,8 @@ final class FileTest extends struct {
 final class ClassTest extends struct {
     /** @var string */
     public $file;
+    /** @var int */
+    public $group;
     /** @var string */
     public $namespace;
 
@@ -112,9 +124,10 @@ final class FunctionTest extends struct {
     /** @var string */
     public $function;
 
-
     /** @var string */
     public $name;
+    /** @var int */
+    public $group;
     /** @var ?callable(mixed ...): mixed */
     public $setup;
     /** @var ?callable(mixed ...): void */

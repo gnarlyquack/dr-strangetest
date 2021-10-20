@@ -56,7 +56,7 @@ function test_directory_targets(Context $context) {
     $state = new State();
     $logger = new BasicLogger(true);
     $path = __DIR__ . "{$ds}targets{$ds}";
-    $test = strangetest\discover_directory($state, new BufferingLogger($logger), $path);
+    $test = strangetest\discover_directory($state, new BufferingLogger($logger), $path, 0);
     strangetest\assert_falsy($logger->get_log()->get_events(), 'Errors during directory discovery');
 
     namespace\set_cwd($context, $path);

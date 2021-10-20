@@ -21,7 +21,7 @@ function test_six($arg, strangetest\Context $context) {
 }
 
 function test_five($arg, strangetest\Context $context) {
-    $actual = $context->depend_on('param_xdepend\\nonparam\\test_six ()');
+    $actual = $context->depend_on('param_xdepend\\nonparam\\test_six');
     strangetest\assert_identical(4 * $arg + 6, $actual);
     $context->set($arg + $actual);
 }
@@ -45,7 +45,7 @@ function test_two($arg, strangetest\Context $context) {
 }
 
 function test_one($arg, strangetest\Context $context) {
-    $actual = $context->depend_on('param_xdepend\\nonparam\\test_one()');
+    $actual = $context->depend_on('param_xdepend\\nonparam\\test_one');
     strangetest\assert_identical(6, $actual);
     $context->set($arg + $actual);
 }

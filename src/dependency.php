@@ -152,7 +152,7 @@ final class _DependencyGraph {
     private function check_run_results($from, array $runs) {
         $result = true;
         foreach ($runs as $run) {
-            if (!isset($this->state->results[$from][$run])) {
+            if (!isset($this->state->results[$from]['runs'][$run])) {
                 $this->logger->log_error(
                     "$from$run",
                     'Other tests depend on this test, but this test was never run'
