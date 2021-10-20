@@ -711,16 +711,12 @@ class TestFiles {
             array(strangetest\EVENT_PASS, 'multiple_runs\\test_one (0)', null),
             array(strangetest\EVENT_PASS, 'multiple_runs\\test_two (0)', null),
             array(strangetest\EVENT_PASS, 'multiple_runs\\test::test_one (0)', null),
+            array(strangetest\EVENT_OUTPUT, 'multiple_runs\\teardown_run0', '2 4'),
 
             array(strangetest\EVENT_PASS, 'multiple_runs\\test_one (1)', null),
             array(strangetest\EVENT_PASS, 'multiple_runs\\test_two (1)', null),
             array(strangetest\EVENT_PASS, 'multiple_runs\\test::test_one (1)', null),
-
-            array(
-                strangetest\EVENT_OUTPUT,
-                'multiple_runs\\teardown_runs',
-                \print_r(array(array(2, 4), array(8, 16)), true),
-            ),
+            array(strangetest\EVENT_OUTPUT, 'multiple_runs\\teardown_run1', '8 16'),
         ));
     }
 
@@ -799,13 +795,15 @@ function test_logs_error_if_arglists_arent_iterable() {
 
 function test_logs_error_if_any_arglist_isnt_iterable() {
     $file = namespace\filepath('test_any_noniterable_arglist.php');
-    $error = "'any_noniterable_arglist\\setup_runs' returned a non-iterable argument set\nfor argument set '%d'";
+    $error = "'any_noniterable_arglist\\%s' returned a non-iterable argument set";
     $events = array(
-        array(strangetest\EVENT_ERROR, $file, \sprintf($error, 0)),
+        array(strangetest\EVENT_ERROR, $file, \sprintf($error, 'setup_run0')),
+        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run0', '1'),
         array(strangetest\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
-        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_file (1)', '.'),
-        array(strangetest\EVENT_ERROR, $file, \sprintf($error, 2)),
-        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_runs', '.'),
+        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_file (1)', '2 3'),
+        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run1', '2 3'),
+        array(strangetest\EVENT_ERROR, $file, \sprintf($error, 'setup_run2')),
+        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run2', '4'),
     );
 
     namespace\assert_run_file($file, $events);

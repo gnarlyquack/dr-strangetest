@@ -77,8 +77,9 @@ Release
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)
-    -   specify a config file
     -   enable/disable autoloading, and specify an autoloader file location?
+    -   specify the test root directory (for cases where it's not correctly
+        detected)
 
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
@@ -96,11 +97,11 @@ Release
     -   Ensure that values formatted in whole by format_variable() match
         how values are formatted when individual elements are diffed
 
-    -   By default, don't treat numerical array keys as significant when
-        comparing arrays. This can give us cleaner diffs, since an insert or
+    -   By default, don't treat keys in arrays that are lists as significant
+        when diffing arrays. This can give us cleaner diffs, since an insert or
         deletion won't cause all the subsequent, reindexed elements to show as
         having been changed. The user should be able to override this so that
-        keys are always considered significant
+        keys are always considered significant.
 
     -   When formatting array and class "headers", it seems we could have a
         non-compact diff if both the keys of the header and initial values are
@@ -114,11 +115,11 @@ Release
     -   If the only difference between two composite values is their key, then
         we only need to diff the first line of each and can then copy the rest
 
--   Do we want/need to implement a UserError exception? E.g., we could throw
-    an error from arglists() or from the ArgumentLists constructor if the
-    argument is not an iterable, however the resulting error backtrace will
-    originate from easytest code. A UserError would need to remove calls
-    within EasyTest from the generated backtrace (like Failure and Skip do)
+-   Do we want/need to implement a UserError exception? E.g., we could throw an
+    error from arglists() or from the ArgumentLists constructor if the argument
+    is not an iterable, however the resulting error backtrace will originate
+    from Dr. Strangetest code. A UserError would need to remove calls within
+    Dr. Strangetest from the generated backtrace (like Failure and Skip do)
 
 -   Any event that is logged using a string as the reason (as opposed to using
     an exception as the reason) will not have a backtrace identifying the
@@ -126,10 +127,10 @@ Release
     probably want to always log an event using an exception as the reason.
 
 -   Should we strip assert() calls (and potentially other debug activity) when
-    building the phar? Since easytest requires assertions to be enabled, they
-    will always be executed even though we would never expect them to trigger
-    in a production release. If so, then we probably want to allow the phar
-    version to be installable with Composer (a la psalm/phar, for example)
+    building the phar? Since Dr. Strangetest requires assertions to be enabled,
+    they will always be executed even though we would never expect them to
+    trigger in a production release. If so, then we probably want to allow the
+    phar version to be installable with Composer (a la psalm/phar, for example)
 
 -   The comparison assertions ('<', '<=', '>', '>=') can operate
     (successfully) on (some) composite values. What implications does this
@@ -159,13 +160,6 @@ Release
         this will just be a straight up "pass/fail" dependency with no
         returnable state.
 
-    -   Instead of only allowing one 'setup_runs' function, allow for the
-        definition of multiple 'setup_runXXXX' functions. The run name can then
-        be derived from the function name (i.e., 'XXXX', possibly ignoring any
-        leading underscore). This will make runs discoverable before actually
-        executing them. There should then only ever be a 'teardown_runXXXX'
-        function if there's an associated setup_run function.
-
 -   Test parameterization
 
     -   Test validation of argument lists returned by directory setup
@@ -178,11 +172,6 @@ Release
 
     -   Test setup_run for directories, including handing of multiple
         setup_run functions
-
-    -   Setup functions that are generators do not execute when called, but
-        when iterated. This mean generator functions that have output escape
-        our output buffering. We need to buffer both each iteration and the
-        conversion of an iterator to an array in run_test().
 
 -   Test that we don't skip any tokens when parsing files. In many cases,
     whitespace is optional, so an off-by-one error when iterating through the

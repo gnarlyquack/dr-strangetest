@@ -26,20 +26,31 @@ final class TestInfo extends struct {
 }
 
 
+final class RunFixture extends struct {
+    /** @var string */
+    public $name;
+    /** @var callable-string */
+    public $setup;
+    /** @var ?callable-string */
+    public $teardown = null;
+}
+
+
 final class DirectoryTest extends struct {
     /** @var string */
     public $name;
-    /** @var ?callable-string */
-    public $setup;
-    /** @var ?callable-string */
-    public $teardown;
-    /** @var ?callable-string */
-    public $setup_runs;
 
     /** @var ?callable-string */
-    public $teardown_runs;
+    public $setup = null;
+
+    /** @var ?callable-string */
+    public $teardown = null;
+
+    /** @var RunFixture[] */
+    public $runs = array();
+
     /** @var array<string, int> */
-    public $tests = array();
+    public $tests;
 }
 
 
@@ -50,13 +61,11 @@ final class FileTest extends struct {
     public $setup;
     /** @var ?callable-string */
     public $teardown;
-    /** @var ?callable-string */
-    public $setup_runs;
 
-    /** @var ?callable-string */
-    public $teardown_runs;
+    /** @var RunFixture[] */
+    public $runs;
     /** @var TestInfo[] */
-    public $tests = array();
+    public $tests;
 
     /** @var ?callable */
     public $setup_function;

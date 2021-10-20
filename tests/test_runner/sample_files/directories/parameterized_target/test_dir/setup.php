@@ -3,15 +3,21 @@
 namespace param_target\dir;
 
 
-function setup_runs_for_directory($one) {
+function setup_run_0($one) {
     echo __DIR__;
-    return array(
-        array($one),
-        array(3)
-    );
+    return array($one);
+}
+
+function teardown_run0($one) {
+    echo $one;
 }
 
 
-function teardown_runs_for_directory($arglists) {
+function setup_run_1($one) {
     echo __DIR__;
+    return array(3);
+}
+
+function teardown_run1($one) {
+    echo $one;
 }

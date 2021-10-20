@@ -5,17 +5,23 @@ namespace dir_params;
 use strangetest;
 
 
-function setup_runs_for_directory() {
+function setup_run_0() {
     echo __DIR__;
-    return array(
-        array(2, 4),
-        array(8, 16)
-    );
+    return array(2, 4);
 }
 
-function teardown_runs_for_directory($args) {
+function teardown_run_0($one, $two) {
+    echo "$one $two";
+}
+
+
+function setup_run_1() {
     echo __DIR__;
-    strangetest\assert_identical(array(array(2, 4), array(8, 16)), $args);
+    return array(8, 16);
+}
+
+function teardown_run_1($one, $two) {
+    echo "$one $two";
 }
 
 

@@ -461,48 +461,41 @@ function run_directory_tests(
     }
 
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-    if ($directory->setup_runs)
+    if ($directory->runs)
     {
-        $name = "{$directory->setup_runs}{$run_name}";
-        namespace\start_buffering($logger, $name);
-        list($result, $args) = namespace\_run_setup(
-            $logger, $name, $directory->setup_runs, $args);
-        if (namespace\RESULT_PASS !== $result) {
-            return;
-        }
+        foreach ($directory->runs as $run)
+        {
+            $setup = $run->setup;
+            $name = "{$setup}{$run_name}";
+            namespace\start_buffering($logger, $name);
+            list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
+            if (namespace\RESULT_PASS !== $result) {
+                continue;
+            }
 
-        if (!\is_iterable($args)) {
-            $message = "'{$directory->setup_runs}' returned a non-iterable argument set";
-            $logger->log_error($directory->name, $message);
-        }
-        else {
-            foreach ($args as $i => $argset) {
-                if (\is_iterable($argset)) {
-                    if (!\is_array($argset)) {
-                        $argset = \iterator_to_array($argset);
-                    }
-                }
-                else {
-                    $message = <<<MSG
-'{$directory->setup_runs}' returned a non-iterable argument set
-for argument set '{$i}'
-MSG;
-                    $logger->log_error($directory->name, $message);
-                    continue;
+            if (!\is_iterable($run_args)) {
+                $message = "'{$name}' returned a non-iterable argument set";
+                $logger->log_error($directory->name, $message);
+            }
+            else {
+                if (!\is_array($run_args)) {
+                    $run_args = \iterator_to_array($run_args);
                 }
 
                 $this_run_id = $run_id;
-                $this_run_id[] = $i;
+                $this_run_id[] = $run->name;
                 namespace\_run_directory(
-                    $state, $logger, $directory, $argset, $this_run_id, $targets);
+                    $state, $logger, $directory, $run_args, $this_run_id, $targets);
             }
-        }
 
-        if ($directory->teardown_runs) {
-            $name = "{$directory->teardown_runs}{$run_name}";
-            namespace\start_buffering($logger, $name);
-            namespace\_run_teardown($logger, $name, $directory->teardown_runs, $args, false);
-            namespace\end_buffering($logger);
+            if (isset($run->teardown))
+            {
+                $teardown = $run->teardown;
+                $name = "{$teardown}{$run_name}";
+                namespace\start_buffering($logger, $name);
+                namespace\_run_teardown($logger, $name, $teardown, $run_args);
+                namespace\end_buffering($logger);
+            }
         }
     }
     else
@@ -657,48 +650,41 @@ function _run_file_tests(
     }
 
     $run_name = $run_id ? \sprintf(' (%s)', \implode(', ', $run_id)) : '';
-    if ($file->setup_runs)
+    if ($file->runs)
     {
-        $name = "{$file->setup_runs}{$run_name}";
-        namespace\start_buffering($logger, $name);
-        list($result, $args) = namespace\_run_setup(
-            $logger, $name, $file->setup_runs, $args);
-        if (namespace\RESULT_PASS !== $result) {
-            return;
-        }
+        foreach ($file->runs as $run)
+        {
+            $setup = $run->setup;
+            $name = "{$setup}{$run_name}";
+            namespace\start_buffering($logger, $name);
+            list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
+            if (namespace\RESULT_PASS !== $result) {
+                continue;
+            }
 
-        if (!\is_iterable($args)) {
-            $message = "'{$file->setup_runs}' returned a non-iterable argument set";
-            $logger->log_error($file->name, $message);
-        }
-        else {
-            foreach ($args as $i => $argset) {
-                if (\is_iterable($argset)) {
-                    if (!\is_array($argset)) {
-                        $argset = \iterator_to_array($argset);
-                    }
-                }
-                else {
-                    $message = <<<MSG
-'{$file->setup_runs}' returned a non-iterable argument set
-for argument set '{$i}'
-MSG;
-                    $logger->log_error($file->name, $message);
-                    continue;
+            if (!\is_iterable($run_args)) {
+                $message = "'{$name}' returned a non-iterable argument set";
+                $logger->log_error($file->name, $message);
+            }
+            else {
+                if (!\is_array($run_args)) {
+                    $run_args = \iterator_to_array($run_args);
                 }
 
                 $this_run_id = $run_id;
-                $this_run_id[] = $i;
+                $this_run_id[] = $run->name;
                 namespace\_run_file(
-                    $state, $logger, $file, $argset, $this_run_id, $targets);
+                    $state, $logger, $file, $run_args, $this_run_id, $targets);
             }
-        }
 
-        if ($file->teardown_runs) {
-            $name = "{$file->teardown_runs}{$run_name}";
-            namespace\start_buffering($logger, $name);
-            namespace\_run_teardown($logger, $name, $file->teardown_runs, $args, false);
-            namespace\end_buffering($logger);
+            if (isset($run->teardown))
+            {
+                $teardown = $run->teardown;
+                $name = "{$teardown}{$run_name}";
+                namespace\start_buffering($logger, $name);
+                namespace\_run_teardown($logger, $name, $teardown, $run_args);
+                namespace\end_buffering($logger);
+            }
         }
     }
     else

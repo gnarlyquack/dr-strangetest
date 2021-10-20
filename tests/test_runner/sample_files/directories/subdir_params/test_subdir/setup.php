@@ -3,18 +3,21 @@
 namespace subdir_params\subdir;
 
 
-function setup_runs_for_directory($one, $two) {
+function setup_run_0($one, $two) {
     echo __DIR__;
-    return array(
-        array($one, 2 * $one),
-        array($two, $two / 2)
-    );
+    return array($one, 2 * $one);
 }
 
-function teardown_runs_for_directory($arglists) {
-    $args = array();
-    foreach ($arglists as $list) {
-        $args = \array_merge($args, $list);
-    }
-    echo \implode(' ', $args);
+function teardown_run_0($one, $two) {
+    echo "$one $two";
+}
+
+
+function setup_run_1($one, $two) {
+    echo __DIR__;
+    return array($two, $two / 2);
+}
+
+function teardown_run_1($one, $two) {
+    echo "$one $two";
 }

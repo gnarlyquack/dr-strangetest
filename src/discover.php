@@ -103,13 +103,6 @@ function discover_directory(State $state, BufferingLogger $logger, $path)
             $directory = namespace\_discover_directory_setup(
                 $state, $logger, $directory, $setup[0]);
         }
-        else
-        {
-            $directory->setup = null;
-            $directory->teardown = null;
-            $directory->setup_runs = null;
-            $directory->teardown_runs = null;
-        }
     }
 
     $state->directories[$path] = $directory;
@@ -135,16 +128,17 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
     }
 
     $namespace = '';
-    $tests = array();
-    $setup_function = array();
-    $setup_function_name = array();
-    $setup_file = array();
-    $setup_runs = array();
-    $teardown_function = array();
-    $teardown_function_name = array();
-    $teardown_file = array();
-    $teardown_runs = array();
-
+    $input = array(
+        'runs' => array(),
+        'setup_file' => array(),
+        'teardown_file' => array(),
+        'setup_function' => array(),
+        'setup_function_name' => array(),
+        'teardown_function' => array(),
+        'teardown_function_name' => array(),
+        'tests' => array(),
+    );
+    $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
         // It's worth keeping in mind that identifiers may be conditionally
@@ -181,7 +175,7 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
                 $info->filename = $filepath;
                 $info->namespace = $namespace;
                 $info->name = $class_name;
-                $tests[$test_name] = $info;
+                $input['tests'][$test_name] = $info;
             }
         }
         elseif ($token instanceof _FunctionToken)
@@ -201,42 +195,65 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
                     $info->filename = $filepath;
                     $info->namespace = $namespace;
                     $info->name = $function_name;
-                    $tests[$test_name] = $info;
+                    $input['tests'][$test_name] = $info;
                 }
-                elseif (\preg_match('~^(setup|teardown)_?(file|runs)?~i', $token->name, $matches))
+                elseif (\preg_match('~^(setup|teardown)_?(file|run)?_?(.*)$~i', $token->name, $matches))
                 {
                     $state->seen[$test_name] = true;
 
                     if (0 === \strcasecmp('setup', $matches[1]))
                     {
-                        if (!isset($matches[2]))
+                        if (0 === \strlen($matches[2]))
                         {
-                            $setup_function[] = $function_name;
-                            $setup_function_name[] = $token->name;
+                            $input['setup_function'][] = $function_name;
+                            $input['setup_function_name'][] = $token->name;
                         }
-                        elseif (0 === \strcasecmp('runs', $matches[2]))
+                        elseif (0 === \strcasecmp('file', $matches[2]))
                         {
-                            $setup_runs[] = $function_name;
+                            $input['setup_file'][] = $function_name;
                         }
                         else
                         {
-                            $setup_file[] = $function_name;
+                            $name = $matches[3];
+                            if (0 === \strlen($name))
+                            {
+                                $message = "Unable to determine run name from setup run function '$function_name'";
+                                $logger->log_error($filepath, $message);
+                                $valid = false;
+                            }
+                            else
+                            {
+                                $run = \strtolower($name);
+                                $input['runs'][$run]['name'] = $name;
+                                $input['runs'][$run]['setup'][] = $function_name;
+                            }
                         }
                     }
                     else
                     {
-                        if (!isset($matches[2]))
+                        if (0 == strlen($matches[2]))
                         {
-                            $teardown_function[] = $function_name;
-                            $teardown_function_name[] = $token->name;
+                            $input['teardown_function'][] = $function_name;
+                            $input['teardown_function_name'][] = $token->name;
                         }
-                        elseif (0 === \strcasecmp('runs', $matches[2]))
+                        elseif (0 === \strcasecmp('file', $matches[2]))
                         {
-                            $teardown_runs[] = $function_name;
+                            $input['teardown_file'][] = $function_name;
                         }
                         else
                         {
-                            $teardown_file[] = $function_name;
+                            $name = $matches[3];
+                            if (0 === \strlen($name))
+                            {
+                                $message = "Unable to determine run name from teardown run function '$function_name'";
+                                $logger->log_error($filepath, $message);
+                                $valid = false;
+                            }
+                            else
+                            {
+                                $run = \strtolower($name);
+                                $input['runs'][$run]['teardown'][] = $function_name;
+                            }
                         }
                     }
                 }
@@ -248,38 +265,120 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
         }
     }
 
-    $valid = true;
-    if (\count($setup_file) > 1)
+    $output = array(
+        'runs' => array(),
+        'setup_file' => null,
+        'teardown_file' => null,
+        'setup_function' => null,
+        'setup_function_name' => null,
+        'teardown_function' => null,
+        'teardown_function_name' => null,
+        'tests' => array(),
+    );
+
+    if ($input['setup_file'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $setup_file);
-        $valid = false;
+        if (\count($input['setup_file']) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $input['setup_file']);
+            $valid = false;
+        }
+        else
+        {
+            $output['setup_file'] = $input['setup_file'][0];
+        }
     }
-    if (\count($setup_runs) > 1)
+
+    if ($input['setup_function'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $setup_runs);
-        $valid = false;
+        if (\count($input['setup_function']) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $input['setup_function']);
+            $valid = false;
+        }
+        else
+        {
+            $output['setup_function'] = $input['setup_function'][0];
+            $output['setup_function_name'] = $input['setup_function_name'][0];
+        }
     }
-    if (\count($setup_function) > 1)
+
+    if ($input['teardown_file'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $setup_function);
-        $valid = false;
+        if (\count($input['teardown_file']) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $input['teardown_file']);
+            $valid = false;
+        }
+        else
+        {
+            $output['teardown_file'] = $input['teardown_file'][0];
+        }
     }
-    if (\count($teardown_file) > 1)
+
+    if ($input['teardown_function'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $teardown_file);
-        $valid = false;
+        if (\count($input['teardown_function']) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $input['teardown_function']);
+            $valid = false;
+        }
+        else
+        {
+            $output['teardown_function'] = $input['teardown_function'][0];
+            $output['teardown_function_name'] = $input['teardown_function_name'][0];
+        }
     }
-    if (\count($teardown_runs) > 1)
+
+    foreach ($input['runs'] as $run_info)
     {
-        namespace\_log_fixture_error($logger, $filepath, $teardown_runs);
-        $valid = false;
+        $teardown = null;
+        if (isset($run_info['teardown']))
+        {
+            $teardowns = $run_info['teardown'];
+            if (\count($teardowns) > 1)
+            {
+                namespace\_log_fixture_error($logger, $filepath, $teardowns);
+                $valid = false;
+            }
+            elseif (!isset($run_info['setup']))
+            {
+                $message = \sprintf(
+                    "Teardown run function '%s' has no matching setup run function",
+                    $teardowns[0]
+                );
+                $logger->log_error($filepath, $message);
+                $valid = false;
+            }
+            else
+            {
+                $teardown = $teardowns[0];
+            }
+        }
+        if (isset($run_info['setup']))
+        {
+            $setups = $run_info['setup'];
+            if (\count($setups) > 1)
+            {
+                namespace\_log_fixture_error($logger, $filepath, $setups);
+                $valid = false;
+            }
+            else
+            {
+                $run = new RunFixture;
+                $run->name = $run_info['name'];
+                $run->setup = $run_info['setup'][0];
+                $run->teardown = $teardown;
+                $output['runs'][] = $run;
+            }
+        }
     }
-    if (\count($teardown_function) > 1)
+
+    if ($input['tests'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $teardown_function);
-        $valid = false;
+        $output['tests'] = $input['tests'];
     }
-    if (!$tests)
+    else
     {
         // @todo How should we handle a test file with no tests?
         $valid = false;
@@ -290,15 +389,14 @@ function discover_file(State $state, BufferingLogger $logger, $filepath)
     {
         $file = new FileTest();
         $file->name = $filepath;
-        $file->tests = $tests;
-        $file->setup_function = $setup_function ? $setup_function[0] : null;
-        $file->setup_function_name = $setup_function_name ? $setup_function_name[0] : null;
-        $file->teardown_function = $teardown_function ? $teardown_function[0] : null;
-        $file->teardown_function_name = $teardown_function_name ? $teardown_function_name[0] : null;
-        $file->setup = $setup_file ? $setup_file[0] : null;
-        $file->teardown = $teardown_file ? $teardown_file[0] : null;
-        $file->setup_runs = $setup_runs ? $setup_runs[0] : null;
-        $file->teardown_runs = $teardown_runs ? $teardown_runs[0] : null;
+        $file->tests = $output['tests'];
+        $file->setup_function = $output['setup_function'];
+        $file->setup_function_name = $output['setup_function_name'];
+        $file->teardown_function = $output['teardown_function'];
+        $file->teardown_function_name = $output['teardown_function_name'];
+        $file->setup = $output['setup_file'];
+        $file->teardown = $output['teardown_file'];
+        $file->runs = $output['runs'];
     }
 
     $state->files[$filepath] = $file;
@@ -411,11 +509,12 @@ function _discover_directory_setup(
     }
 
     $namespace = '';
-    $setup_directory = array();
-    $setup_run = array();
-    $teardown_directory = array();
-    $teardown_run = array();
-
+    $input = array(
+        'runs'=> array(),
+        'setup_directory' => array(),
+        'teardown_directory' => array(),
+    );
+    $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
         // It's worth keeping in mind that identifiers may be conditionally
@@ -440,34 +539,57 @@ function _discover_directory_setup(
         if ($token instanceof _FunctionToken)
         {
             $function_name = "{$namespace}{$token->name}";
-            $test_name = "function {$function_name}";
-            if (!isset($state->seen[$test_name])
+            $id = "function {$function_name}";
+            if (!isset($state->seen[$id])
                 // To make PHPStan happy, use is_callable instead of function_exists
                 && \is_callable($function_name)
-                && \preg_match('~^(setup|teardown)_?(runs)?~i', $token->name, $matches))
+                && \preg_match('~^(setup|teardown)_?(run)?_?(.*)$~i', $token->name, $matches))
             {
-                $state->seen[$test_name] = true;
+                $state->seen[$id] = true;
 
                 if (0 === \strcasecmp('setup', $matches[1]))
                 {
-                    if (isset($matches[2]))
+                    if (0 === \strlen($matches[2]))
                     {
-                        $setup_run[] = $function_name;
+                        $input['setup_directory'][] = $function_name;
                     }
                     else
                     {
-                        $setup_directory[] = $function_name;
+                        $name = $matches[3];
+                        if (0 === \strlen($name))
+                        {
+                            $message = "Unable to determine run name from setup run function '$function_name'";
+                            $logger->log_error($directory->name, $message);
+                            $valid = false;
+                        }
+                        else
+                        {
+                            $run = \strtolower($name);
+                            $input['runs'][$run]['name'] = $name;
+                            $input['runs'][$run]['setup'][] = $function_name;
+                        }
                     }
                 }
                 else
                 {
-                    if (isset($matches[2]))
+                    if (0 === \strlen($matches[2]))
                     {
-                        $teardown_run[] = $function_name;
+                        $input['teardown_directory'][] = $function_name;
                     }
                     else
                     {
-                        $teardown_directory[] = $function_name;
+                        $name = $matches[3];
+                        if (0 === \strlen($name))
+                        {
+                            $message = "Unable to determine run name from teardown run function '$function_name'";
+                            $logger->log_error($directory->name, $message);
+                            $valid = false;
+                        }
+                        else
+                        {
+                            $run = \strtolower($name);
+                            $input['runs'][$run]['teardown'][] = $function_name;
+                        }
                     }
                 }
             }
@@ -478,34 +600,87 @@ function _discover_directory_setup(
         }
     }
 
-    $valid = true;
-    if (\count($setup_directory) > 1)
+    $output = array(
+        'runs'=> array(),
+        'setup_directory' => null,
+        'teardown_directory' => null,
+    );
+
+    if ($input['setup_directory'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $setup_directory);
-        $valid = false;
+        if (\count($input['setup_directory']) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $input['setup_directory']);
+            $valid = false;
+        }
+        else
+        {
+            $output['setup_directory'] = $input['setup_directory'][0];
+        }
     }
-    if (\count($teardown_directory) > 1)
+
+    if ($input['teardown_directory'])
     {
-        namespace\_log_fixture_error($logger, $filepath, $teardown_directory);
-        $valid = false;
+        if (\count($input['teardown_directory']) > 1)
+        {
+            namespace\_log_fixture_error($logger, $filepath, $input['teardown_directory']);
+            $valid = false;
+        }
+        else
+        {
+            $output['teardown_directory'] = $input['teardown_directory'][0];
+        }
     }
-    if (\count($setup_run) > 1)
+
+    foreach ($input['runs'] as $run_info)
     {
-        namespace\_log_fixture_error($logger, $filepath, $setup_run);
-        $valid = false;
-    }
-    if (\count($teardown_run) > 1)
-    {
-        namespace\_log_fixture_error($logger, $filepath, $teardown_run);
-        $valid = false;
+        $teardown = null;
+        if (isset($run_info['teardown']))
+        {
+            $teardowns = $run_info['teardown'];
+            if (\count($teardowns) > 1)
+            {
+                namespace\_log_fixture_error($logger, $filepath, $teardowns);
+                $valid = false;
+            }
+            elseif (!isset($run_info['setup']))
+            {
+                $message = \sprintf(
+                    "Teardown run function '%s' has no matching setup run function",
+                    $teardowns[0]
+                );
+                $logger->log_error($filepath, $message);
+                $valid = false;
+            }
+            else
+            {
+                $teardown = $teardowns[0];
+            }
+        }
+        if (isset($run_info['setup']))
+        {
+            $setups = $run_info['setup'];
+            if (\count($setups) > 1)
+            {
+                namespace\_log_fixture_error($logger, $filepath, $setups);
+                $valid = false;
+            }
+            else
+            {
+                $run = new RunFixture;
+                $run->name = $run_info['name'];
+                $run->setup = $run_info['setup'][0];
+                $run->teardown = $teardown;
+                $output['runs'][] = $run;
+            }
+        }
     }
 
     if ($valid)
     {
-        $directory->setup = $setup_directory ? $setup_directory[0] : null;
-        $directory->teardown = $teardown_directory ? $teardown_directory[0] : null;
-        $directory->setup_runs = $setup_run ? $setup_run[0] : null;
-        $directory->teardown_runs = $teardown_run ? $teardown_run[0] : null;
+        $directory->runs = $output['runs'];
+        $directory->setup = $output['setup_directory'];
+        $directory->teardown = $output['teardown_directory'];
         return $directory;
     }
     else

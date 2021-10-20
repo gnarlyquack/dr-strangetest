@@ -5,11 +5,12 @@ namespace depends_params;
 use strangetest;
 
 
-function setup_runs_for_file() {
-    return array(
-        array(1),
-        array(2),
-    );
+function setup_run_0() {
+    return array(1);
+}
+
+function setup_run_1() {
+    return array(2);
 }
 
 

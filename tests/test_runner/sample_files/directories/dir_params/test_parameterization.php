@@ -3,19 +3,21 @@
 namespace dir_params;
 
 
-function setup_runs_for_file($one, $two) {
-    return array(
-        array($one, 2 * $one),
-        array($two, $two / 2)
-    );
+function setup_run0($one, $two) {
+    return array($one, 2 * $one);
 }
 
-function teardown_runs_for_file($arglists) {
-    $args = array();
-    foreach ($arglists as $list) {
-        $args = \array_merge($args, $list);
-    }
-    echo \implode(' ', $args);
+function teardown_run0($one, $two) {
+    echo "$one $two";
+}
+
+
+function setup_run1($one, $two) {
+    return array($two, $two / 2);
+}
+
+function teardown_run1($one, $two) {
+    echo "$one $two";
 }
 
 

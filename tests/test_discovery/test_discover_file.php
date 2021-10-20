@@ -86,8 +86,8 @@ function test_logs_error_on_multiple_run_teardown_fixtures() {
     $file = 'test_multiple_teardown_run.php';
     $error = <<<'EXPECTED'
 Multiple conflicting fixtures found:
-    1) multiple_teardown_run\teardown_runs_one
-    2) multiple_teardown_run\teardown_runs_two
+    1) multiple_teardown_run\teardown_run_one
+    2) multiple_teardown_run\teardownRunOne
 EXPECTED;
 
     namespace\assert_fixture_error($file, $error);

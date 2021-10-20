@@ -5,11 +5,12 @@ namespace param_xdepend\param;
 use strangetest;
 
 
-function setup_runs() {
-    return array(
-        array(2),
-        array(4)
-    );
+function setup_run0() {
+    return array(2);
+}
+
+function setup_run1() {
+    return array(4);
 }
 
 

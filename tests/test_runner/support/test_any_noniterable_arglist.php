@@ -5,28 +5,36 @@ namespace any_noniterable_arglist;
 use strangetest;
 
 
-function setup_runs() {
-    return array(
-        1,
-        array(2, 3),
-        4,
-    );
+function setup_run0() {
+    return 1;
 }
 
-function teardown_runs($args) {
-    if ($args !== array(1, array(2, 3), 4)) {
-        echo '$args = ', \print_r($arg, true);
-    }
-    echo '.';
+function teardown_run0($one) {
+    echo $one;
 }
+
+
+function setup_run1() {
+    return array(2, 3);
+}
+
+function teardown_run1($one, $two) {
+    echo "$one $two";
+}
+
+
+function setup_run2() {
+    return 4;
+}
+
+function teardown_run2($one) {
+    echo $one;
+}
+
 
 
 function teardown_file($one, $two) {
-    if (array(2, 3) !== array($one, $two)) {
-        echo '$one = ', \print_r($one, true), "\n",
-            '$two = ', \print_r($two, true);
-    }
-    echo '.';
+    echo "$one $two";
 }
 
 

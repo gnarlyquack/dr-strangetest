@@ -5,15 +5,21 @@ namespace multiple_runs;
 use strangetest;
 
 
-function setup_runs() {
-    return array(
-        array(2, 4),
-        array(8, 16)
-    );
+function setup_run0() {
+    return array(2, 4);
 }
 
-function teardown_runs($args) {
-    \print_r($args);
+function teardown_run0($one, $two) {
+    echo "$one $two";
+}
+
+
+function setup_run1() {
+    return array(8, 16);
+}
+
+function teardown_run1($one, $two) {
+    echo "$one $two";
 }
 
 
