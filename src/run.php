@@ -16,7 +16,36 @@ const RESULT_POSTPONE = 0x2;
 /**
  * @api
  */
-final class Context {
+interface Context {
+    /**
+     * @param callable(): void $callback
+     * @return bool
+     */
+    public function subtest($callback);
+
+    /**
+     * @param callable(): void $callback
+     * @return void
+     */
+    public function teardown($callback);
+
+    /**
+     * @param string... $name
+     * @return ?mixed[]
+     * @throws Postpone
+     */
+    public function depend_on($name);
+
+    /**
+     * @param mixed $value
+     * @return void
+     */
+    public function set($value);
+
+}
+
+
+final class _Context implements Context {
     /** @var State */
     private $state;
     /** @var Logger */
@@ -26,15 +55,15 @@ final class Context {
     /** @var int[] */
     private $run;
     /** @var int */
-    private $result = namespace\RESULT_PASS;
-    /** @var (callable(mixed ...): void)[] */
-    private $teardowns = array();
+    public $result = namespace\RESULT_PASS;
+    /** @var array<callable(): void> */
+    public $teardowns = array();
+
 
     /**
      * @param int[] $run
      */
-    public function __construct(
-        State $state, Logger $logger, FunctionTest $test, array $run)
+    public function __construct(State $state, Logger $logger, FunctionTest $test, array $run)
     {
         $this->state = $state;
         $this->logger = $logger;
@@ -42,15 +71,12 @@ final class Context {
         $this->run = $run;
     }
 
-    /**
-     * @param callable(): void $callable
-     * @return bool
-     */
-    public function subtest($callable)
+
+    public function subtest($callback)
     {
         try
         {
-            $callable();
+            $callback();
             return true;
         }
         catch (\AssertionError $e)
@@ -67,21 +93,12 @@ final class Context {
     }
 
 
-    /**
-     * @param callable(mixed ...): void $callable
-     * @return void
-     */
-    public function teardown($callable)
+    public function teardown($callback)
     {
-        $this->teardowns[] = $callable;
+        $this->teardowns[] = $callback;
     }
 
 
-    /**
-     * @param string... $name
-     * @return ?mixed[]
-     * @throws Postpone
-     */
     public function depend_on($name)
     {
         $dependees = array();
@@ -169,32 +186,10 @@ final class Context {
     }
 
 
-    /**
-     * @param mixed $value
-     * @return void
-     */
     public function set($value)
     {
         $run = \end($this->run);
         $this->state->fixture[$this->test->name][$run] = $value;
-    }
-
-
-    /**
-     * @return int
-     */
-    public function result()
-    {
-        return $this->result;
-    }
-
-
-    /**
-     * @return callable[]
-     */
-    public function teardowns()
-    {
-        return $this->teardowns;
     }
 
 
@@ -896,12 +891,12 @@ function _run_function_test(
         }
         $test_name = "{$test->name}{$run_name}";
         namespace\start_buffering($logger, $test_name);
-        $context = new Context($state, $logger, $test, $run);
+        $context = new _Context($state, $logger, $test, $run);
         $test->result = namespace\_run_test_function(
             $logger, $test_name, $test->test, $context, $argset
         );
 
-        foreach($context->teardowns() as $teardown)
+        foreach($context->teardowns as $teardown)
         {
             $test->result |= namespace\_run_teardown($logger, $test_name, $teardown);
         }
@@ -1012,7 +1007,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
  * @return int
  */
 function _run_test_function(
-    Logger $logger, $name, $callable, Context $context, array $args = null)
+    Logger $logger, $name, $callable, _Context $context, array $args = null)
 {
     try
     {
@@ -1027,7 +1022,7 @@ function _run_test_function(
             // @bc 5.3 Invoke (possible) object method using call_user_func()
             \call_user_func($callable, $context);
         }
-        $result = $context->result();
+        $result = $context->result;
     }
     catch (\AssertionError $e)
     {

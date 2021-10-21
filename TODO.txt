@@ -152,8 +152,6 @@ Release
     whitespace is optional, so an off-by-one error when iterating through the
     tokens means we could potentially miss a definition.
 
--   Audit parameter names for functions and methods labeled @api
-
 -   Support PHP 8.1 (when it's released)
 
 

@@ -1543,19 +1543,19 @@ function format_failure_message($assertion, $description = null, $detail = null)
  * handles recursive references.
  *
  * @api
- * @param mixed $var The variable to format. $var is received as a reference in
- *                   order to detect self-referencing values.
+ * @param mixed $variable The variable to format. $variable is received as a
+ *                        reference in order to detect self-referencing values.
  * @return string A string representation of $var
  */
-function format_variable(&$var)
+function format_variable(&$variable)
 {
-    $name = \is_object($var) ? \get_class($var) : \gettype($var);
+    $name = \is_object($variable) ? \get_class($variable) : \gettype($variable);
     $seen = array('byval' => array(), 'byref' => array());
     // We'd really like to make this a constant static variable, but PHP won't
     // let us do that with an object instance. As a mitigation, we'll just
     // create the sentinels once at the start and then pass it around
     $sentinels = array('byref' => null, 'byval' => new \stdClass());
-    return namespace\_format_recursive_variable($var, $name, false, $seen, $sentinels, '');
+    return namespace\_format_recursive_variable($variable, $name, false, $seen, $sentinels, '');
 }
 
 
