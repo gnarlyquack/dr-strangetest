@@ -43,8 +43,20 @@ function assert_targets(
     foreach ($expected as $key => $value) {
         $expected[$key] = namespace\target_to_array($value);
     }
-    $context->assert_identical($expected, $actual, 'Targets were incorrect');
-    $context->assert_identical($events, $logger->get_log()->get_events(), 'Unexpected events while finding targets');
+    $context->subtest(
+        function() use ($expected, $actual)
+        {
+            strangetest\assert_identical($expected, $actual, 'Targets were incorrect');
+        }
+    );
+    $context->subtest(
+        function() use ($events, $logger)
+        {
+            strangetest\assert_identical(
+                $events, $logger->get_log()->get_events(),
+                'Unexpected events while finding targets');
+        }
+    );
 }
 
 

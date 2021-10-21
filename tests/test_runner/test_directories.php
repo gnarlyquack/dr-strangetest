@@ -189,10 +189,30 @@ class TestDirectories {
         }
 
         foreach ($directories as $path => $directory) {
-            $context->assert_falsy($directory['setup'], "setup for $path");
-            $context->assert_falsy($directory['teardown'], "teardown for $path");
-            $context->assert_falsy($directory['dirs'], "dirs for $path");
-            $context->assert_falsy($directory['events'], "events for $path");
+            $context->subtest(
+                function() use ($directory, $path)
+                {
+                    strangetest\assert_falsy($directory['setup'], "setup for $path");
+                }
+            );
+            $context->subtest(
+                function() use ($directory, $path)
+                {
+                    strangetest\assert_falsy($directory['teardown'], "teardown for $path");
+                }
+            );
+            $context->subtest(
+                function() use ($directory, $path)
+                {
+                    strangetest\assert_falsy($directory['dirs'], "dirs for $path");
+                }
+            );
+            $context->subtest(
+                function() use ($directory, $path)
+                {
+                    strangetest\assert_falsy($directory['events'], "events for $path");
+                }
+            );
         }
     }
 

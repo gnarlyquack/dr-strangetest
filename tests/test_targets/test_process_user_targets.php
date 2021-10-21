@@ -36,10 +36,11 @@ function assert_targets(
     Context $context, array $actual, array $actual_errors,
     $expected_root, $expected_targets, array $expected_errors
 ) {
-    $context->assert_identical(
-        $expected_root,
-        $actual[0],
-        'Wrong test root'
+    $context->subtest(
+        function() use ($expected_root, $actual)
+        {
+            strangetest\assert_identical($expected_root, $actual[0], 'Wrong test root');
+        }
     );
 
     $targets = $actual[1];
@@ -48,16 +49,18 @@ function assert_targets(
             $targets[$key] = namespace\target_to_array($value);
         }
     }
-    $context->assert_identical(
-        $expected_targets,
-        $targets,
-        'Incorrect targets'
-    );
 
-    $context->assert_identical(
-        $expected_errors,
-        $actual_errors,
-        'Unexpected errors'
+    $context->subtest(
+        function() use ($expected_targets, $targets)
+        {
+            strangetest\assert_identical($expected_targets, $targets, 'Incorrect targets');
+        }
+    );
+    $context->subtest(
+        function() use ($expected_errors, $actual_errors)
+        {
+            strangetest\assert_identical($expected_errors, $actual_errors, 'Unexpected errors');
+        }
     );
 }
 
