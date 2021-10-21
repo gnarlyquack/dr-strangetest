@@ -80,8 +80,6 @@ Release
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
--   Replace switches with if statements (to enforce strict comparison)
-
 -   Diffs and formatting
 
     -   Cache LCS matrices so they don't need to be recalculated when
@@ -110,12 +108,6 @@ Release
 
     -   If the only difference between two composite values is their key, then
         we only need to diff the first line of each and can then copy the rest
-
--   Do we want/need to implement a UserError exception? E.g., we could throw an
-    error from arglists() or from the ArgumentLists constructor if the argument
-    is not an iterable, however the resulting error backtrace will originate
-    from Dr. Strangetest code. A UserError would need to remove calls within
-    Dr. Strangetest from the generated backtrace (like Failure and Skip do)
 
 -   Any event that is logged using a string as the reason (as opposed to using
     an exception as the reason) will not have a backtrace identifying the

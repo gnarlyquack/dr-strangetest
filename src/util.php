@@ -16,8 +16,10 @@ namespace strangetest;
  * @param bool $loose
  * @return string
  */
-function diff(&$from, &$to, $from_name, $to_name, $loose = false) {
-    if ($from_name === $to_name) {
+function diff(&$from, &$to, $from_name, $to_name, $loose = false)
+{
+    if ($from_name === $to_name)
+    {
         throw new \Exception('Parameters $from_name and $to_name must be different');
     }
 
@@ -50,7 +52,8 @@ final class _DiffState extends struct {
     /**
      * @param bool $loose
      */
-    public function __construct($loose) {
+    public function __construct($loose)
+    {
         $this->loose = $loose;
         $this->sentinels = array('byref' => null, 'byval' => new \stdClass());
     }
@@ -68,11 +71,13 @@ final class _DiffCopy {
     /**
      * @param string $value
      */
-    public function __construct($value) {
+    public function __construct($value)
+    {
         $this->value = $value;
     }
 
-    public function __toString() {
+    public function __toString()
+    {
         return "  {$this->value}";
     }
 }
@@ -85,14 +90,16 @@ final class _DiffInsert {
     /**
      * @param string $value
      */
-    public function __construct($value) {
+    public function __construct($value)
+    {
         $this->value = $value;
     }
 
     /**
      * @return string
      */
-    public function __toString() {
+    public function __toString()
+    {
         return "+ {$this->value}";
     }
 }
@@ -105,14 +112,16 @@ final class _DiffDelete {
     /**
      * @param string $value
      */
-    public function __construct($value) {
+    public function __construct($value)
+    {
         $this->value = $value;
     }
 
     /**
      * @return string
      */
-    public function __toString() {
+    public function __toString()
+    {
         return "- {$this->value}";
     }
 }
@@ -133,7 +142,8 @@ final class _Edit extends struct {
      * @param int $tlen
      * @param array<int, int[]> $m
      */
-    public function __construct($flen, $tlen, $m) {
+    public function __construct($flen, $tlen, $m)
+    {
         $this->flen = $flen;
         $this->tlen = $tlen;
         $this->m = $m;
@@ -171,21 +181,24 @@ final class _NullKey extends struct implements _Key {
     /**
      * @return null;
      */
-    public function key() {
+    public function key()
+    {
         return null;
     }
 
     /**
      * @return ''
      */
-    public function format_key() {
+    public function format_key()
+    {
         return '';
     }
 
     /**
      * @return ''
      */
-    public function line_end() {
+    public function line_end()
+    {
         return '';
     }
 }
@@ -198,28 +211,32 @@ final class _ArrayIndex extends struct implements _Key {
     /**
      * @param int|string $index
      */
-    public function __construct($index) {
+    public function __construct($index)
+    {
         $this->index = $index;
     }
 
     /**
      * @return int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->index;
     }
 
     /**
      * @return string
      */
-    public function format_key() {
+    public function format_key()
+    {
         return \sprintf('%s => ', \var_export($this->index, true));
     }
 
     /**
      * @return string
      */
-    public function line_end() {
+    public function line_end()
+    {
         return ',';
     }
 }
@@ -232,28 +249,32 @@ final class _PropertyName extends struct implements _Key {
     /**
      * @param int|string $name
      */
-    public function __construct($name) {
+    public function __construct($name)
+    {
         $this->name = $name;
     }
 
     /**
      * @return int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->name;
     }
 
     /**
      * @return string
      */
-    public function format_key() {
+    public function format_key()
+    {
         return "\${$this->name} = ";
     }
 
     /**
      * @return string
      */
-    public function line_end() {
+    public function line_end()
+    {
         return ';';
     }
 }
@@ -347,7 +368,8 @@ final class _Array extends struct implements _Value {
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $loose, $indent_level, $cost, array $subvalues) {
+    public function __construct($name, _Key $key, &$value, $loose, $indent_level, $cost, array $subvalues)
+    {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
@@ -360,35 +382,40 @@ final class _Array extends struct implements _Value {
     /**
      * @return _ValueType::ARRAY_
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::ARRAY_;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->key->key();
     }
 
     /**
      * @return mixed[]
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return int
      */
-    public function cost() {
+    public function cost()
+    {
         return $this->cost;
     }
 
     /**
      * @return _Value[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         return $this->subvalues;
     }
 
@@ -396,7 +423,8 @@ final class _Array extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
@@ -410,7 +438,8 @@ final class _Array extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         return "{$indent}{$key}array(";
@@ -419,7 +448,8 @@ final class _Array extends struct implements _Value {
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $line_end = $this->key->line_end();
         return "{$indent}){$line_end}";
@@ -458,7 +488,8 @@ final class _Object extends struct implements _Value {
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $loose, $indent_level, $cost, array $subvalues) {
+    public function __construct($name, _Key $key, &$value, $loose, $indent_level, $cost, array $subvalues)
+    {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
@@ -471,35 +502,40 @@ final class _Object extends struct implements _Value {
     /**
      * @return _ValueType::OBJECT
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::OBJECT;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->key->key();
     }
 
     /**
      * @return object
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return int
      */
-    public function cost() {
+    public function cost()
+    {
         return $this->cost;
     }
 
     /**
      * @return _Value[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         return $this->subvalues;
     }
 
@@ -507,7 +543,8 @@ final class _Object extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
@@ -521,7 +558,8 @@ final class _Object extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $class = namespace\_format_object_start($this->value, $this->loose);
@@ -531,7 +569,8 @@ final class _Object extends struct implements _Value {
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $line_end = $this->key->line_end();
         return "{$indent}}{$line_end}";
@@ -558,7 +597,8 @@ final class _Reference extends struct implements _Value {
      * @param mixed $value
      * @param int $indent_level
      */
-    public function __construct($name, _Key $key, &$value, $indent_level) {
+    public function __construct($name, _Key $key, &$value, $indent_level)
+    {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
@@ -568,35 +608,40 @@ final class _Reference extends struct implements _Value {
     /**
      * @return _ValueType::REFERENCE
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::REFERENCE;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->key->key();
     }
 
     /**
      * @return mixed
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return 1
      */
-    public function cost() {
+    public function cost()
+    {
         return 1;
     }
 
     /**
      * @return _Value[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         throw new InvalidCodePath('References have no subvalues');
     }
 
@@ -604,7 +649,8 @@ final class _Reference extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
@@ -616,14 +662,16 @@ final class _Reference extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
 
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         throw new InvalidCodePath('Cannot end a non-container value');
     }
 }
@@ -644,7 +692,8 @@ final class _Resource extends struct implements _Value {
      * @param resource $value
      * @param int $indent_level
      */
-    public function __construct(_Key $key, &$value, $indent_level) {
+    public function __construct(_Key $key, &$value, $indent_level)
+    {
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
@@ -653,35 +702,40 @@ final class _Resource extends struct implements _Value {
     /**
      * @return _ValueType::RESOURCE
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::RESOURCE;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->key->key();
     }
 
     /**
      * @return resource
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return 1
      */
-    public function cost() {
+    public function cost()
+    {
         return 1;
     }
 
     /**
      * @return _Value[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         throw new InvalidCodePath('Resources have no subvalues');
     }
 
@@ -689,7 +743,8 @@ final class _Resource extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
@@ -701,14 +756,16 @@ final class _Resource extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
 
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         throw new InvalidCodePath('Cannot end a non-container value');
     }
 }
@@ -729,7 +786,8 @@ final class _Scalar extends struct implements _Value {
      * @param bool|float|int|null $value
      * @param int $indent_level
      */
-    public function __construct(_Key $key, &$value, $indent_level) {
+    public function __construct(_Key $key, &$value, $indent_level)
+    {
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
@@ -738,35 +796,40 @@ final class _Scalar extends struct implements _Value {
     /**
      * @return _ValueType::SCALAR
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::SCALAR;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->key->key();
     }
 
     /**
      * @return bool|float|int|null
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return 1
      */
-    public function cost() {
+    public function cost()
+    {
         return 1;
     }
 
     /**
      * @return _Value[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         throw new InvalidCodePath('Scalars have no subvalues');
     }
 
@@ -774,7 +837,8 @@ final class _Scalar extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
@@ -786,14 +850,16 @@ final class _Scalar extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
 
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         throw new InvalidCodePath('Cannot end a non-container value');
     }
 }
@@ -822,7 +888,8 @@ final class _String extends struct implements _Value {
      * @param int $cost
      * @param _StringPart[] $subvalues
      */
-    public function __construct(_Key $key, &$value, $indent_level, $cost, array $subvalues) {
+    public function __construct(_Key $key, &$value, $indent_level, $cost, array $subvalues)
+    {
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
@@ -833,35 +900,40 @@ final class _String extends struct implements _Value {
     /**
      * @return _ValueType::STRING
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::STRING;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->key->key();
     }
 
     /**
      * @return string
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return int
      */
-    public function cost() {
+    public function cost()
+    {
         return $this->cost;
     }
 
     /**
      * @return _StringPart[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         return $this->subvalues;
     }
 
@@ -869,7 +941,8 @@ final class _String extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
@@ -881,14 +954,16 @@ final class _String extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
 
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         throw new InvalidCodePath('Cannot end a non-container value');
     }
 }
@@ -913,7 +988,8 @@ final class _StringPart extends struct implements _Value {
      * @param int $indent_level
      * @param int $index
      */
-    public function __construct(_Key $key, &$value, $indent_level, $index) {
+    public function __construct(_Key $key, &$value, $indent_level, $index)
+    {
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
@@ -923,35 +999,40 @@ final class _StringPart extends struct implements _Value {
     /**
      * @return _ValueType::STRING_PART
      */
-    public function type() {
+    public function type()
+    {
         return _ValueType::STRING_PART;
     }
 
     /**
      * @return null|int|string
      */
-    public function key() {
+    public function key()
+    {
         return $this->index ? null : $this->key->key();
     }
 
     /**
      * @return string
      */
-    public function &value() {
+    public function &value()
+    {
         return $this->value;
     }
 
     /**
      * @return 1
      */
-    public function cost() {
+    public function cost()
+    {
         return 1;
     }
 
     /**
      * @return _Value[]
      */
-    public function subvalues() {
+    public function subvalues()
+    {
         throw new InvalidCodePath('String parts have no subvalues');
     }
 
@@ -959,19 +1040,23 @@ final class _StringPart extends struct implements _Value {
      * @param _DiffPosition::* $pos
      * @return string
      */
-    public function format_value($pos) {
+    public function format_value($pos)
+    {
         $indent = namespace\_format_indent($this->indent_level);
         $key = $this->key->format_key();
         $line_end = $this->key->line_end();
 
         $result = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $this->value);
-        if (_DiffPosition::START === $pos) {
+        if (_DiffPosition::START === $pos)
+        {
             return "{$indent}{$key}'{$result}";
         }
-        elseif (_DiffPosition::END === $pos) {
+        elseif (_DiffPosition::END === $pos)
+        {
             return "{$result}'{$line_end}";
         }
-        else {
+        else
+        {
             return $result;
         }
     }
@@ -979,14 +1064,16 @@ final class _StringPart extends struct implements _Value {
     /**
      * @return string
      */
-    public function start_value() {
+    public function start_value()
+    {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
 
     /**
      * @return string
      */
-    public function end_value() {
+    public function end_value()
+    {
         throw new InvalidCodePath('Cannot end a non-container value');
     }
 }
@@ -1000,34 +1087,42 @@ final class _StringPart extends struct implements _Value {
  * @param int $indent_level
  * @return _Value
  */
-function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_level = 0) {
+function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_level = 0)
+{
     $reference = namespace\_check_reference($value, $name, $state->seen, $state->sentinels);
-    if ($reference) {
+    if ($reference)
+    {
         return new _Reference($reference, $key, $value, $indent_level);
     }
 
-    if (\is_resource($value)) {
+    if (\is_resource($value))
+    {
         return new _Resource($key, $value, $indent_level);
     }
 
-    if (\is_string($value)) {
+    if (\is_string($value))
+    {
         $lines = \explode("\n", $value);
         $cost = 0;
         $subvalues = array();
-        foreach ($lines as $i => &$line) {
+        foreach ($lines as $i => &$line)
+        {
             ++$cost;
             $subvalues[] = new _StringPart($key, $line, $indent_level, $i);
         }
         return new _String($key, $value, $indent_level, $cost, $subvalues);
     }
 
-    if (\is_array($value)) {
-        if ($state->loose) {
+    if (\is_array($value))
+    {
+        if ($state->loose)
+        {
             \ksort($value);
         }
         $cost = 1;
         $subvalues = array();
-        foreach ($value as $k => &$v) {
+        foreach ($value as $k => &$v)
+        {
             $subname = \sprintf('%s[%s]', $name, \var_export($k, true));
             $subkey = new _ArrayIndex($k);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
@@ -1037,12 +1132,14 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         return new _Array($name, $key, $value, $state->loose, $indent_level, $cost, $subvalues);
     }
 
-    if (\is_object($value)) {
+    if (\is_object($value))
+    {
         $cost = 1;
         $subvalues = array();
         // @bc 5.4 use variable for array cast in order to create references
         $values = (array)$value;
-        foreach ($values as $k => &$v) {
+        foreach ($values as $k => &$v)
+        {
             $subname = \sprintf('%s->%s', $name, $k);
             $subkey = new _PropertyName($k);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
@@ -1059,30 +1156,36 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
 /**
  * @return void
  */
-function _diff_values(_Value $from, _Value $to, _DiffState $state) {
-    if (namespace\_lcs_values($from, $to, $state->loose, $lcs)) {
+function _diff_values(_Value $from, _Value $to, _DiffState $state)
+{
+    if (namespace\_lcs_values($from, $to, $state->loose, $lcs))
+    {
         namespace\_copy_value($state->diff, $from);
     }
-    elseif (0 === $lcs) {
+    elseif (0 === $lcs)
+    {
         namespace\_insert_value($state->diff, $to);
         namespace\_delete_value($state->diff, $from);
     }
-    elseif (_ValueType::STRING === $from->type()) {
+    elseif (_ValueType::STRING === $from->type())
+    {
         $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->loose);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
     }
-    else {
+    else
+    {
         namespace\_copy_string($state->diff, $from->end_value());
 
         $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->loose);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
-        if ($from->key() === $to->key()
-            && ($state->loose || _ValueType::ARRAY_ === $from->type())
-        ) {
+        if (($from->key() === $to->key())
+            && ($state->loose || (_ValueType::ARRAY_ === $from->type())))
+        {
             namespace\_copy_string($state->diff, $from->start_value());
         }
-        else {
+        else
+        {
             namespace\_insert_string($state->diff, $to->start_value());
             namespace\_delete_string($state->diff, $from->start_value());
         }
@@ -1095,27 +1198,33 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state) {
  * @param int $lcs
  * @return bool
  */
-function _lcs_values(_Value $from, _Value $to, $loose, &$lcs) {
-    if (namespace\_compare_values($from, $to, $loose)) {
+function _lcs_values(_Value $from, _Value $to, $loose, &$lcs)
+{
+    if (namespace\_compare_values($from, $to, $loose))
+    {
         $lcs = \max($from->cost(), $to->cost());
         return true;
     }
 
     $lcs = 0;
-    if ($from->type() === $to->type()) {
-        if (_ValueType::STRING === $from->type()) {
-            if ($from->cost() > 1 || $to->cost() > 1) {
+    if ($from->type() === $to->type())
+    {
+        if (_ValueType::STRING === $from->type())
+        {
+            if (($from->cost() > 1) || ($to->cost() > 1))
+            {
                 $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $loose);
                 $lcs = $edit->m[$edit->flen][$edit->tlen];
             }
         }
         elseif (
-            _ValueType::ARRAY_ === $from->type()
-            || (_ValueType::OBJECT === $from->type()
-                && \get_class($from->value()) === \get_class($to->value()))
-        ) {
+            (_ValueType::ARRAY_ === $from->type())
+            || ((_ValueType::OBJECT === $from->type())
+                && (\get_class($from->value()) === \get_class($to->value()))))
+        {
             $lcs = 1;
-            if ($from->cost() > 1 && $to->cost() > 1) {
+            if (($from->cost() > 1) && ($to->cost() > 1))
+            {
                 $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $loose);
                 $lcs += $edit->m[$edit->flen][$edit->tlen];
             }
@@ -1131,26 +1240,33 @@ function _lcs_values(_Value $from, _Value $to, $loose, &$lcs) {
  * @param bool $loose
  * @return _Edit
  */
-function _lcs_array(array $from, array $to, $loose) {
+function _lcs_array(array $from, array $to, $loose)
+{
     $m = array();
     $flen = \count($from);
     $tlen = \count($to);
 
-    for ($f = 0; $f <= $flen; ++$f) {
-        for ($t = 0; $t <= $tlen; ++$t) {
-            if (!$f || !$t) {
+    for ($f = 0; $f <= $flen; ++$f)
+    {
+        for ($t = 0; $t <= $tlen; ++$t)
+        {
+            if (!$f || !$t)
+            {
                 $m[$f][$t] = 0;
                 continue;
             }
 
             $fvalue = $from[$f-1];
             $tvalue = $to[$t-1];
-            if (namespace\_lcs_values($fvalue, $tvalue, $loose, $lcs)) {
+            if (namespace\_lcs_values($fvalue, $tvalue, $loose, $lcs))
+            {
                 $lcs += $m[$f-1][$t-1];
             }
-            else {
+            else
+            {
                 $max = \max($m[$f-1][$t], $m[$f][$t-1]);
-                if ($lcs) {
+                if ($lcs)
+                {
                     $max = \max($max, $m[$f-1][$t-1] + $lcs);
                 }
                 $lcs = $max;
@@ -1166,13 +1282,17 @@ function _lcs_array(array $from, array $to, $loose) {
  * @param bool $loose
  * @return bool
  */
-function _compare_values(_Value $from, _Value $to, $loose) {
+function _compare_values(_Value $from, _Value $to, $loose)
+{
     $result = $from->key() === $to->key();
-    if ($result) {
-        if ($loose) {
+    if ($result)
+    {
+        if ($loose)
+        {
             $result = $from->value() == $to->value();
         }
-        else {
+        else
+        {
             $result = $from->value() === $to->value();
         }
     }
@@ -1185,21 +1305,28 @@ function _compare_values(_Value $from, _Value $to, $loose) {
  * @param _Value[] $to
  * @return void
  */
-function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $state) {
+function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $state)
+{
     $m = $edit->m;
     $f = $edit->flen;
     $t = $edit->tlen;
 
-    while ($f || $t) {
-        if ($f > 0 && $t > 0) {
-            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->loose)) {
-                if ($f === 1 && $t === 1) {
+    while ($f || $t)
+    {
+        if ($f > 0 && $t > 0)
+        {
+            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->loose))
+            {
+                if ($f === 1 && $t === 1)
+                {
                     $pos = _DiffPosition::START;
                 }
-                elseif ($f === $edit->flen && $t === $edit->tlen) {
+                elseif ($f === $edit->flen && $t === $edit->tlen)
+                {
                     $pos = _DiffPosition::END;
                 }
-                else {
+                else
+                {
                     $pos = _DiffPosition::MIDDLE;
                 }
 
@@ -1207,33 +1334,42 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
                 --$t;
                 namespace\_copy_value($state->diff, $from[$f], $pos);
             }
-            elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t]) {
+            elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t])
+            {
                 --$f;
                 --$t;
                 namespace\_diff_values($from[$f], $to[$t], $state);
             }
-            elseif ($m[$f][$t-1] >= $m[$f-1][$t]) {
-                if ($t === 1) {
+            elseif ($m[$f][$t-1] >= $m[$f-1][$t])
+            {
+                if ($t === 1)
+                {
                     $pos = _DiffPosition::START;
                 }
-                elseif ($t === $edit->tlen) {
+                elseif ($t === $edit->tlen)
+                {
                     $pos = _DiffPosition::END;
                 }
-                else {
+                else
+                {
                     $pos = _DiffPosition::MIDDLE;
                 }
 
                 --$t;
                 namespace\_insert_value($state->diff, $to[$t], $pos);
             }
-            else {
-                if ($f === 1) {
+            else
+            {
+                if ($f === 1)
+                {
                     $pos = _DiffPosition::START;
                 }
-                elseif ($f === $edit->flen) {
+                elseif ($f === $edit->flen)
+                {
                     $pos = _DiffPosition::END;
                 }
-                else {
+                else
+                {
                     $pos = _DiffPosition::MIDDLE;
                 }
 
@@ -1241,28 +1377,36 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
                 namespace\_delete_value($state->diff, $from[$f], $pos);
             }
         }
-        elseif ($f) {
-            if ($f === 1) {
+        elseif ($f)
+        {
+            if ($f === 1)
+            {
                 $pos = _DiffPosition::START;
             }
-            elseif ($f === $edit->flen) {
+            elseif ($f === $edit->flen)
+            {
                 $pos = _DiffPosition::END;
             }
-            else {
+            else
+            {
                 $pos = _DiffPosition::MIDDLE;
             }
 
             --$f;
             namespace\_delete_value($state->diff, $from[$f], $pos);
         }
-        else {
-            if ($t === 1) {
+        else
+        {
+            if ($t === 1)
+            {
                 $pos = _DiffPosition::START;
             }
-            elseif ($t === $edit->tlen) {
+            elseif ($t === $edit->tlen)
+            {
                 $pos = _DiffPosition::END;
             }
-            else {
+            else
+            {
                 $pos = _DiffPosition::MIDDLE;
             }
 
@@ -1279,7 +1423,8 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
  * @param _DiffPosition::* $pos
  * @return void
  */
-function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
+function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE)
+{
     namespace\_copy_string($diff, $value->format_value($pos));
 }
 
@@ -1289,7 +1434,8 @@ function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
  * @param _DiffPosition::* $pos
  * @return void
  */
-function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
+function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE)
+{
     namespace\_insert_string($diff, $value->format_value($pos));
 }
 
@@ -1299,7 +1445,8 @@ function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) 
  * @param _DiffPosition::* $pos
  * @return void
  */
-function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) {
+function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE)
+{
     namespace\_delete_string($diff, $value->format_value($pos));
 }
 
@@ -1309,8 +1456,10 @@ function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE) 
  * @param string $string
  * @return void
  */
-function _copy_string(array &$diff, $string) {
-    foreach (\array_reverse(\explode("\n", $string)) as $v) {
+function _copy_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
         $diff[] = new _DiffCopy($v);
     }
 }
@@ -1321,8 +1470,10 @@ function _copy_string(array &$diff, $string) {
  * @param string $string
  * @return void
  */
-function _insert_string(array &$diff, $string) {
-    foreach (\array_reverse(\explode("\n", $string)) as $v) {
+function _insert_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
         $diff[] = new _DiffInsert($v);
     }
 }
@@ -1333,8 +1484,10 @@ function _insert_string(array &$diff, $string) {
  * @param string $string
  * @return void
  */
-function _delete_string(array &$diff, $string) {
-    foreach (\array_reverse(\explode("\n", $string)) as $v) {
+function _delete_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
         $diff[] = new _DiffDelete($v);
     }
 }
@@ -1344,7 +1497,8 @@ function _delete_string(array &$diff, $string) {
  * @param int $indent_level
  * @return string
  */
-function _format_indent($indent_level) {
+function _format_indent($indent_level)
+{
     return \str_repeat(namespace\_FORMAT_INDENT, $indent_level);
 }
 
@@ -1356,18 +1510,23 @@ function _format_indent($indent_level) {
  * @param ?string $detail
  * @return string
  */
-function format_failure_message($assertion, $description = null, $detail = null) {
+function format_failure_message($assertion, $description = null, $detail = null)
+{
     $message = array();
-    if ($assertion) {
+    if ($assertion)
+    {
         $message[] = $assertion;
     }
-    if ($description) {
+    if ($description)
+    {
         $message[] = $description;
     }
-    if (!$message) {
+    if (!$message)
+    {
         $message[] = 'Assertion failed';
     }
-    if ($detail) {
+    if ($detail)
+    {
         $message[] = '';
         $message[] = $detail;
     }
@@ -1388,7 +1547,8 @@ function format_failure_message($assertion, $description = null, $detail = null)
  *                   order to detect self-referencing values.
  * @return string A string representation of $var
  */
-function format_variable(&$var) {
+function format_variable(&$var)
+{
     $name = \is_object($var) ? \get_class($var) : \gettype($var);
     $seen = array('byval' => array(), 'byref' => array());
     // We'd really like to make this a constant static variable, but PHP won't
@@ -1408,21 +1568,27 @@ function format_variable(&$var) {
  * @param string $indent
  * @return string
  */
-function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $indent) {
+function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $indent)
+{
     $reference = namespace\_check_reference($var, $name, $seen, $sentinels);
-    if ($reference) {
+    if ($reference)
+    {
         return $reference;
     }
-    if (\is_scalar($var) || null === $var) {
+    if (\is_scalar($var) || null === $var)
+    {
         return namespace\_format_scalar($var);
     }
-    if (\is_resource($var)) {
+    if (\is_resource($var))
+    {
         return namespace\_format_resource($var);
     }
-    if (\is_array($var)) {
+    if (\is_array($var))
+    {
         return namespace\_format_array($var, $name, $loose, $seen, $sentinels, $indent);
     }
-    if (\is_object($var)) {
+    if (\is_object($var))
+    {
         return namespace\_format_object($var, $name, $loose, $seen, $sentinels, $indent);
     }
     throw new \Exception(
@@ -1435,7 +1601,8 @@ function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $i
  * @param scalar $var
  * @return string
  */
-function _format_scalar(&$var) {
+function _format_scalar(&$var)
+{
     return \var_export($var, true);
 }
 
@@ -1444,7 +1611,8 @@ function _format_scalar(&$var) {
  * @param resource $var
  * @return string
  */
-function _format_resource(&$var) {
+function _format_resource(&$var)
+{
     return \sprintf(
         '%s of type "%s"',
         \print_r($var, true),
@@ -1463,12 +1631,15 @@ function _format_resource(&$var) {
  * @param string $padding
  * @return string
  */
-function _format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding) {
+function _format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding)
+{
     $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
-    if ($var) {
-        foreach ($var as $key => &$value) {
+    if ($var)
+    {
+        foreach ($var as $key => &$value)
+        {
             $key = \var_export($key, true);
             $out .= \sprintf(
                 "\n%s%s => %s,",
@@ -1499,14 +1670,17 @@ function _format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding)
  * @param string $padding
  * @return string
  */
-function _format_object(&$var, $name, $loose, &$seen, $sentinels, $padding) {
+function _format_object(&$var, $name, $loose, &$seen, $sentinels, $padding)
+{
     $indent = $padding . namespace\_FORMAT_INDENT;
     $out = '';
 
     $start = namespace\_format_object_start($var, $loose, $class);
     $values = (array)$var;
-    if ($values) {
-        foreach ($values as $key => &$value) {
+    if ($values)
+    {
+        foreach ($values as $key => &$value)
+        {
             // Object properties are cast to array keys as follows:
             //     public    $property -> "property"
             //     protected $property -> "\0*\0property"
@@ -1515,7 +1689,8 @@ function _format_object(&$var, $name, $loose, &$seen, $sentinels, $padding) {
             //         property is declared
             $key = \explode("\0", $key);
             $property = '$' . \array_pop($key);
-            if ($key && $key[1] !== '*' && $key[1] !== $class) {
+            if ($key && $key[1] !== '*' && $key[1] !== $class)
+            {
                 $property = "$key[1]::$property";
             }
             $out .= \sprintf(
@@ -1545,9 +1720,11 @@ function _format_object(&$var, $name, $loose, &$seen, $sentinels, $padding) {
  * @param ?string $class
  * @return string
  */
-function _format_object_start(&$object, $loose, &$class = null) {
+function _format_object_start(&$object, $loose, &$class = null)
+{
     $class = \get_class($object);
-    if (!$loose) {
+    if (!$loose)
+    {
         // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \function_exists('spl_object_id')
             ? \spl_object_id($object)
@@ -1561,7 +1738,8 @@ function _format_object_start(&$object, $loose, &$class = null) {
 /**
  * @return string
  */
-function _format_object_end() {
+function _format_object_end()
+{
     return '}';
 }
 
@@ -1583,30 +1761,38 @@ function _format_object_end() {
  * @param array{'byref': null, 'byval': \stdClass} $sentinels
  * @return false|string
  */
-function _check_reference(&$var, $name, &$seen, $sentinels) {
-    if (\is_scalar($var) || \is_array($var) || null === $var) {
+function _check_reference(&$var, $name, &$seen, $sentinels)
+{
+    if (\is_scalar($var) || \is_array($var) || null === $var)
+    {
         $copy = $var;
         $var = $sentinels['byval'];
         $reference = \array_search($var, $seen['byval'], true);
-        if (false === $reference) {
+        if (false === $reference)
+        {
             $seen['byval'][$name] = &$var;
         }
-        else {
+        else
+        {
             $reference = "&$reference";
         }
         $var = $copy;
     }
-    else {
+    else
+    {
         $reference = \array_search($var, $seen['byref'], true);
-        if (false === $reference) {
+        if (false === $reference)
+        {
             $seen['byref'][$name] = &$var;
         }
-        else {
+        else
+        {
             \assert(\is_string($reference));
             \assert(\strlen($reference) > 0);
             $copy = $var;
             $var = $sentinels['byref'];
-            if ($var === $seen['byref'][$reference]) {
+            if ($var === $seen['byref'][$reference])
+            {
                 $reference = "&$reference";
             }
             $var = $copy;
@@ -1622,8 +1808,10 @@ function _check_reference(&$var, $name, &$seen, $sentinels) {
  * @param mixed[] $seen
  * @return void
  */
-function ksort_recursive(&$array, &$seen = array()) {
-    if (!\is_array($array)) {
+function ksort_recursive(&$array, &$seen = array())
+{
+    if (!\is_array($array))
+    {
         return;
     }
 
@@ -1634,12 +1822,14 @@ function ksort_recursive(&$array, &$seen = array()) {
     $array = $temp;
     unset($temp);
 
-    if (false !== $sorted) {
+    if (false !== $sorted)
+    {
         return;
     }
     $seen[] = &$array;
     \ksort($array);
-    foreach ($array as &$value) {
+    foreach ($array as &$value)
+    {
         namespace\ksort_recursive($value, $seen);
     }
 }

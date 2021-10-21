@@ -121,7 +121,8 @@ abstract class struct {
      * @return never
      * @throws \Exception
      */
-    final public function __set($name, $value) {
+    final public function __set($name, $value)
+    {
         throw new \Exception(
             \sprintf("Undefined property: %s::%s", \get_class($this), $name)
         );
@@ -133,7 +134,8 @@ abstract class struct {
      * @return never
      * @throws \Exception
      */
-    final public function __get($name) {
+    final public function __get($name)
+    {
         throw new \Exception(
             \sprintf("Undefined property: %s::%s", \get_class($this), $name)
         );
@@ -151,15 +153,18 @@ final class Error extends \ErrorException {
      * @param string $file
      * @param int $line
      */
-    public function __construct($message, $severity, $file, $line) {
+    public function __construct($message, $severity, $file, $line)
+    {
         parent::__construct($message, 0, $severity, $file, $line);
     }
 
     /**
      * @return string
      */
-    public function __toString() {
-        if (!$this->string) {
+    public function __toString()
+    {
+        if (!$this->string)
+        {
             $this->string =  \sprintf(
                 "%s\nin %s on line %s\n\nStack trace:\n%s",
                 $this->message,
@@ -212,15 +217,18 @@ final class State extends struct {
  * @param string[] $argv
  * @return never
  */
-function main($argc, $argv) {
+function main($argc, $argv)
+{
     namespace\_enable_error_handling();
     namespace\_try_loading_composer();
     namespace\_load_strangetest();
 
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
     list($root, $targets) = namespace\process_user_targets($args, $errors);
-    if ($errors) {
-        foreach ($errors as $error) {
+    if ($errors)
+    {
+        foreach ($errors as $error)
+        {
             \fwrite(\STDERR, "{$error}\n");
         }
         exit(namespace\EXIT_FAILURE);
@@ -252,14 +260,17 @@ function main($argc, $argv) {
 /**
  * @return void
  */
-function _enable_error_handling() {
+function _enable_error_handling()
+{
     // @bc 5.3 Include E_STRICT in error_reporting()
     \error_reporting(\E_ALL | \E_STRICT);
     \set_error_handler('strangetest\\_handle_error', \error_reporting());
 
     // @bc 5.6 Check if PHP 7 assertion options are supported
-    if (\version_compare(\PHP_VERSION, '7.0', '>=')) {
-        if ('-1' === \ini_get('zend.assertions')) {
+    if (\version_compare(\PHP_VERSION, '7.0', '>='))
+    {
+        if ('-1' === \ini_get('zend.assertions'))
+        {
             \fwrite(\STDERR, "Dr. Strangetest should not be run in a production environment.\n");
             exit(namespace\EXIT_FAILURE);
         }
@@ -268,7 +279,8 @@ function _enable_error_handling() {
         // @bc 7.1 Check whether or not to enable assert.exception
         // Since PHP 7.2 deprecates calling assert() with a string assertion,
         // there seems to be no reason to keep assert's legacy behavior enabled
-        if (\version_compare(\PHP_VERSION, '7.2', '>=')) {
+        if (\version_compare(\PHP_VERSION, '7.2', '>='))
+        {
             \ini_set('assert.exception', '1');
         }
     }
@@ -279,7 +291,8 @@ function _enable_error_handling() {
     \assert_options(\ASSERT_WARNING, 0); // Default is 1
     \assert_options(\ASSERT_BAIL, 0);
     // @bc 7.4 check if ASSERT_QUIET_EVAL is defined
-    if (\defined('ASSERT_QUIET_EVAL')) {
+    if (\defined('ASSERT_QUIET_EVAL'))
+    {
         \assert_options(\ASSERT_QUIET_EVAL, 0);
     }
     \assert_options(\ASSERT_CALLBACK, 'strangetest\\_handle_assertion');
@@ -294,11 +307,14 @@ function _enable_error_handling() {
  * @return void
  * @throws Failure
  */
-function _handle_assertion($file, $line, $code, $desc = null) {
-    if (!\ini_get('assert.exception')) {
+function _handle_assertion($file, $line, $code, $desc = null)
+{
+    if (!\ini_get('assert.exception'))
+    {
         // @bc 7.4 Check that $code is not an empty string
         // PHP 8 appears to pass null instead of an empty string if $code is empty
-        if (isset($code) && \strlen($code) > 0) {
+        if (isset($code) && \strlen($code) > 0)
+        {
             $code = "assert($code) failed";
         }
         $message = namespace\format_failure_message($code, $desc);
@@ -315,8 +331,10 @@ function _handle_assertion($file, $line, $code, $desc = null) {
  * @return bool
  * @throws Error
  */
-function _handle_error($errno, $errstr, $errfile, $errline) {
-    if (!(\error_reporting() & $errno)) {
+function _handle_error($errno, $errstr, $errfile, $errline)
+{
+    if (!(\error_reporting() & $errno))
+    {
         // This error code is not included in error_reporting
         return false;
     }
@@ -327,13 +345,15 @@ function _handle_error($errno, $errstr, $errfile, $errline) {
 /**
  * @return void
  */
-function _try_loading_composer() {
+function _try_loading_composer()
+{
     // Assume (reasonably?) users are working in their root source directory
     $composer = \sprintf(
         '%1$s%2$svendor%2$sautoload.php',
         \getcwd(), \DIRECTORY_SEPARATOR
     );
-    if (\file_exists($composer)) {
+    if (\file_exists($composer))
+    {
         require $composer;
     }
 }
@@ -342,7 +362,8 @@ function _try_loading_composer() {
 /**
  * @return void
  */
-function _load_strangetest() {
+function _load_strangetest()
+{
     $files = array(
         'assertions',
         'buffer',
@@ -362,17 +383,21 @@ function _load_strangetest() {
     // the unpacking for us. When support for PHP < 5.6 is dropped, this can
     // all be eliminated and we can just use the argument unpacking syntax
     // directly at the call site.
-    if (\version_compare(\PHP_VERSION, '5.6', '<')) {
+    if (\version_compare(\PHP_VERSION, '5.6', '<'))
+    {
         $files[] = 'unpack5.5';
     }
-    else {
+    else
+    {
         $files[] = 'unpack';
     }
     // @bc 7.0 Include implementation for is_iterable()
-    if (!\function_exists('is_iterable')) {
+    if (!\function_exists('is_iterable'))
+    {
         $files[] = 'is_iterable';
     }
-    foreach ($files as $file) {
+    foreach ($files as $file)
+    {
         require \sprintf('%s%s%s.php', __DIR__, \DIRECTORY_SEPARATOR, $file);
     }
 }
@@ -381,13 +406,16 @@ function _load_strangetest() {
 /**
  * @return float
  */
-function _microtime() {
-    if (\function_exists('hrtime')) {
+function _microtime()
+{
+    if (\function_exists('hrtime'))
+    {
         list($sec, $nsec) = hrtime();
         return 1000000 * $sec + $nsec / 1000;
     }
     // @bc 7.2 Use microtime for timing
-    else {
+    else
+    {
         list($usec, $sec) = \explode(' ', \microtime());
         return 1000000 * (int)$sec + (int)(1000000 * (float)$usec);
     }
@@ -399,27 +427,34 @@ function _microtime() {
  * @param string[] $argv
  * @return array{array<string, mixed>, string[]}
  */
-function _parse_arguments($argc, $argv) {
+function _parse_arguments($argc, $argv)
+{
     $opts = array('verbose' => false);
     $args = \array_slice($argv, 1);
 
-    while ($args) {
+    while ($args)
+    {
         $arg = $args[0];
 
-        if ('--' === \substr($arg, 0, 2)) {
-            if ('--' === $arg) {
+        if ('--' === \substr($arg, 0, 2))
+        {
+            if ('--' === $arg)
+            {
                 \array_shift($args);
                 break;
             }
             list($opts, $args) = namespace\_parse_long_option($args, $opts);
         }
-        elseif ('-' === \substr($arg, 0, 1)) {
-            if ('-' === $arg) {
+        elseif ('-' === \substr($arg, 0, 1))
+        {
+            if ('-' === $arg)
+            {
                 break;
             }
             list($opts, $args) = namespace\_parse_short_option($args, $opts);
         }
-        else {
+        else
+        {
             break;
         }
     }
@@ -433,7 +468,8 @@ function _parse_arguments($argc, $argv) {
  * @param array<string, int> $opts
  * @return array{array<string, mixed>, string[]}
  */
-function _parse_long_option($args, $opts) {
+function _parse_long_option($args, $opts)
+{
     $opt = \array_shift($args);
     \assert(\is_string($opt));
     // Remove the leading dashes
@@ -447,17 +483,20 @@ function _parse_long_option($args, $opts) {
  * @param array<string, int> $opts
  * @return array{array<string, mixed>, string[]}
  */
-function _parse_short_option($args, $opts) {
+function _parse_short_option($args, $opts)
+{
     // Remove the leading dash, but don't remove the option from $args in
     // case the option is concatenated with a value or other short options
     $args[0] = \substr($args[0], 1);
     $nargs = \count($args);
 
-    while ($nargs === \count($args)) {
+    while ($nargs === \count($args))
+    {
         $opt = \substr($args[0], 0, 1);
         $args[0] = \substr($args[0], 1);
         // @bc 5.6 Loose comparison in case substr() returned false
-        if ('' == $args[0]) {
+        if ('' == $args[0])
+        {
             \array_shift($args);
         }
         list($opts, $args) = namespace\_parse_option($opt, $args, $opts);
@@ -472,8 +511,10 @@ function _parse_short_option($args, $opts) {
  * @param array<string, int> $opts
  * @return array{array<string, mixed>, string[]}
  */
-function _parse_option($opt, $args, $opts) {
-    switch ($opt) {
+function _parse_option($opt, $args, $opts)
+{
+    switch ($opt)
+    {
         case 'q':
         case 'quiet':
             $opts['verbose'] = namespace\LOG_QUIET;
@@ -504,7 +545,8 @@ function _parse_option($opt, $args, $opts) {
 /**
  * @return string
  */
-function _get_version() {
+function _get_version()
+{
     return \sprintf(
         '%s %s',
         namespace\PROGRAM_NAME,
@@ -516,7 +558,8 @@ function _get_version() {
 /**
  * @return string
  */
-function _get_help() {
+function _get_help()
+{
     return <<<'HELP'
 Usage: strangetest [OPTION]... [PATH]...
 

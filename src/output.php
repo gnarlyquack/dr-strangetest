@@ -10,7 +10,8 @@ namespace strangetest;
 
 final class LiveUpdatingLogger implements Logger {
 
-    public function __construct(Logger $logger) {
+    public function __construct(Logger $logger)
+    {
         $this->logger = $logger;
     }
 
@@ -19,7 +20,8 @@ final class LiveUpdatingLogger implements Logger {
      * @param string $source
      * @return void
      */
-    public function log_pass($source) {
+    public function log_pass($source)
+    {
         namespace\output_pass();
         $this->logger->log_pass($source);
     }
@@ -30,7 +32,8 @@ final class LiveUpdatingLogger implements Logger {
      * @param string|\Throwable $reason
      * @return void
      */
-    public function log_failure($source, $reason) {
+    public function log_failure($source, $reason)
+    {
         namespace\output_failure();
         $this->logger->log_failure($source, $reason);
     }
@@ -41,7 +44,8 @@ final class LiveUpdatingLogger implements Logger {
      * @param string|\Throwable $reason
      * @return void
      */
-    public function log_error($source, $reason) {
+    public function log_error($source, $reason)
+    {
         namespace\output_error();
         $this->logger->log_error($source, $reason);
     }
@@ -53,7 +57,8 @@ final class LiveUpdatingLogger implements Logger {
      * @param ?bool $during_error
      * @return void
      */
-    public function log_skip($source, $reason, $during_error = false) {
+    public function log_skip($source, $reason, $during_error = false)
+    {
         namespace\output_skip();
         $this->logger->log_skip($source, $reason, $during_error);
     }
@@ -65,7 +70,8 @@ final class LiveUpdatingLogger implements Logger {
      * @param ?bool $during_error
      * @return void
      */
-    public function log_output($source, $reason, $during_error = false) {
+    public function log_output($source, $reason, $during_error = false)
+    {
         namespace\output_output();
         $this->logger->log_output($source, $reason, $during_error);
     }
@@ -81,7 +87,8 @@ final class LiveUpdatingLogger implements Logger {
  * @param string $text
  * @return void
  */
-function output($text) {
+function output($text)
+{
     echo "$text\n";
 }
 
@@ -90,7 +97,8 @@ function output($text) {
  * @param string $text
  * @return void
  */
-function output_header($text) {
+function output_header($text)
+{
     echo "$text\n\n";
 }
 
@@ -98,7 +106,8 @@ function output_header($text) {
 /**
  * @return void
  */
-function output_pass() {
+function output_pass()
+{
     echo '.';
 }
 
@@ -106,7 +115,8 @@ function output_pass() {
 /**
  * @return void
  */
-function output_error() {
+function output_error()
+{
     echo 'E';
 }
 
@@ -114,7 +124,8 @@ function output_error() {
 /**
  * @return void
  */
-function output_failure() {
+function output_failure()
+{
     echo 'F';
 }
 
@@ -122,7 +133,8 @@ function output_failure() {
 /**
  * @return void
  */
-function output_skip() {
+function output_skip()
+{
     echo 'S';
 }
 
@@ -130,7 +142,8 @@ function output_skip() {
 /**
  * @return void
  */
-function output_output() {
+function output_output()
+{
     echo 'O';
 }
 
@@ -138,7 +151,8 @@ function output_output() {
 /**
  * @return void
  */
-function output_log(Log $log) {
+function output_log(Log $log)
+{
     $event_types = array(
         namespace\EVENT_FAIL => 'FAILED',
         namespace\EVENT_ERROR => 'ERROR',
@@ -148,9 +162,11 @@ function output_log(Log $log) {
 
     $output_count = 0;
     $skip_count = 0;
-    foreach ($log->get_events() as $entry) {
+    foreach ($log->get_events() as $entry)
+    {
         list($type, $source, $message) = $entry;
-        switch ($type) {
+        switch ($type)
+        {
             case namespace\EVENT_OUTPUT:
                 ++$output_count;
                 break;
@@ -169,13 +185,16 @@ function output_log(Log $log) {
     $skipped = $log->skip_count();
     $output = $log->output_count();
     $omitted = array();
-    if ($output_count !== $output) {
+    if ($output_count !== $output)
+    {
         $omitted[] = 'output';
     }
-    if ($skip_count !== $skipped) {
+    if ($skip_count !== $skipped)
+    {
         $omitted[] = 'skipped tests';
     }
-    if ($omitted) {
+    if ($omitted)
+    {
         \printf(
             "\n\n\nThis report omitted %s.\nTo view, rerun Dr. Strangetest with the --verbose option.",
             \implode(' and ', $omitted)
@@ -183,30 +202,37 @@ function output_log(Log $log) {
     }
 
     $summary = array();
-    if ($passed) {
+    if ($passed)
+    {
         $summary[] = \sprintf('Passed: %d', $passed);
     }
-    if ($failed) {
+    if ($failed)
+    {
         $summary[] = \sprintf('Failed: %d', $failed);
     }
-    if ($errors) {
+    if ($errors)
+    {
         $summary[] = \sprintf('Errors: %d', $errors);
     }
-    if ($skipped) {
+    if ($skipped)
+    {
         $summary[] = \sprintf('Skipped: %d', $skipped);
     }
-    if ($output) {
+    if ($output)
+    {
         $summary[] = \sprintf('Output: %d', $output);
     }
 
-    if ($summary) {
+    if ($summary)
+    {
         echo
             ($omitted ? "\n\n" : "\n\n\n"),
             "Seconds elapsed: ", $log->seconds_elapsed(),
             "\nMemory used: ", $log->memory_used(), " MB\n",
             \implode(', ', $summary), "\n";
     }
-    else {
+    else
+    {
         echo "No tests found!\n";
     }
 }

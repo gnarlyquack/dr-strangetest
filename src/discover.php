@@ -1082,9 +1082,11 @@ function _consume_statement(_TokenIterator $iterator)
  * @param string[] $fixtures
  * @return void
  */
-function _log_fixture_error(Logger $logger, $source, $fixtures) {
+function _log_fixture_error(Logger $logger, $source, $fixtures)
+{
     $message = 'Multiple conflicting fixtures found:';
-    foreach ($fixtures as $i => $fixture) {
+    foreach ($fixtures as $i => $fixture)
+    {
         ++$i;
         $message .= "\n    {$i}) {$fixture}";
     }

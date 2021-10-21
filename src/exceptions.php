@@ -16,7 +16,8 @@ namespace strangetest;
  * @return never
  * @throws Skip
  */
-function skip($reason) {
+function skip($reason)
+{
     throw new Skip($reason);
 }
 
@@ -27,7 +28,8 @@ function skip($reason) {
  * @return never
  * @throws Failure
  */
-function fail($reason) {
+function fail($reason)
+{
     throw new Failure($reason);
 }
 
@@ -37,7 +39,8 @@ function fail($reason) {
 
 
 // @bc 5.6 Extend Failure from Exception
-if (\version_compare(\PHP_VERSION, '7.0', '<')) {
+if (\version_compare(\PHP_VERSION, '7.0', '<'))
+{
     /**
      * @api
      */
@@ -46,10 +49,12 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
         /**
          * @param string $message
          */
-        public function __construct($message) {
+        public function __construct($message)
+        {
             parent::__construct($message);
             $result = namespace\_find_client_call_site();
-            if ($result) {
+            if ($result)
+            {
                 list($this->file, $this->line, $this->trace) = $result;
             }
         }
@@ -57,8 +62,10 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
         /**
          * @return string
          */
-        public function __toString() {
-            if (!$this->string) {
+        public function __toString()
+        {
+            if (!$this->string)
+            {
                 $this->string = namespace\_format_exception_string(
                     "%s\n\nin %s on line %s",
                     $this->message, $this->file, $this->line, $this->trace
@@ -74,7 +81,8 @@ if (\version_compare(\PHP_VERSION, '7.0', '<')) {
     }
 
 }
-else {
+else
+{
     /**
      * @api
      */
@@ -83,10 +91,12 @@ else {
         /**
          * @param string $message
          */
-        public function __construct($message) {
+        public function __construct($message)
+        {
             parent::__construct($message);
             $result = namespace\_find_client_call_site();
-            if ($result) {
+            if ($result)
+            {
                 list($this->file, $this->line, $this->trace) = $result;
             }
         }
@@ -94,8 +104,10 @@ else {
         /**
          * @return string
          */
-        public function __toString() {
-            if (!$this->string) {
+        public function __toString()
+        {
+            if (!$this->string)
+            {
                 $this->string = namespace\_format_exception_string(
                     "%s\n\nin %s on line %s",
                     $this->message, $this->file, $this->line, $this->trace
@@ -121,10 +133,12 @@ final class Skip extends \Exception {
     /**
      * @param string $message
      */
-    public function __construct($message, \Throwable $previous = null) {
+    public function __construct($message, \Throwable $previous = null)
+    {
         parent::__construct($message, 0, $previous);
         $result = namespace\_find_client_call_site();
-        if ($result) {
+        if ($result)
+        {
             list($this->file, $this->line, $this->trace) = $result;
         }
     }
@@ -133,16 +147,20 @@ final class Skip extends \Exception {
     /**
      * @return string
      */
-    public function __toString() {
-        if (!$this->string) {
+    public function __toString()
+    {
+        if (!$this->string)
+        {
             $prev = $this->getPrevious();
-            if ($prev) {
+            if ($prev)
+            {
                 $message = $prev->getMessage() . "\n{$this->message}";
                 $file = $prev->getFile();
                 $line = $prev->getLine();
                 $trace = $prev->getTrace();
             }
-            else {
+            else
+            {
                 $message = $this->message;
                 $file = $this->file;
                 $line = $this->line;
@@ -170,13 +188,15 @@ final class InvalidCodePath extends \Exception {}
 /**
  * @return ?mixed[]
  */
-function _find_client_call_site() {
+function _find_client_call_site()
+{
     // Find the first call in a backtrace that's outside of Dr. Strangetest
     // @bc 5.3 Pass false for debug_backtrace() $option parameter
     $trace = \defined('DEBUG_BACKTRACE_IGNORE_ARGS')
            ? \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS)
            : \debug_backtrace(0);
-    foreach ($trace as $i => $frame) {
+    foreach ($trace as $i => $frame)
+    {
         // Apparently there's no file if we were thrown from the error
         // handler
         if (isset($frame['file'])
@@ -186,7 +206,8 @@ function _find_client_call_site() {
         }
     }
 
-    if (isset($i, $frame['file'], $frame['line'])) {
+    if (isset($i, $frame['file'], $frame['line']))
+    {
         return array(
             $frame['file'],
             $frame['line'],
@@ -207,19 +228,23 @@ function _find_client_call_site() {
  * @param array<array<string, mixed>> $trace
  * @return string
  */
-function _format_exception_string($format, $message, $file, $line, $trace) {
+function _format_exception_string($format, $message, $file, $line, $trace)
+{
     $string = \sprintf($format, $message, $file, $line);
 
     // Create a backtrace excluding calls made within Dr. Strangetest
     $buffer = array();
-    foreach ($trace as $frame) {
+    foreach ($trace as $frame)
+    {
         // @bc 5.3 Functions have no file if executed in call_user_func()
         // call_user_func() specifically was giving us a (fatal) error, but
         // possibly we should guard against this regardless?
-        if (!isset($frame['file'])) {
+        if (!isset($frame['file']))
+        {
             continue;
         }
-        if ( __DIR__ === \dirname($frame['file'])) {
+        if ( __DIR__ === \dirname($frame['file']))
+        {
             // We don't want to walk the entire call stack, because Dr.
             // Strangetest's entry point is probably outside the src directory,
             // and we don't want to erroneously show that as a client call. We
@@ -228,20 +253,23 @@ function _format_exception_string($format, $message, $file, $line, $trace) {
             // can set that checkpoint, as clients can throw exceptions in a
             // variety of places (e.g., setup fixtures) all of which are
             // subsumed by discover_tests
-            if ('strangetest\\discover_tests' === $frame['function']) {
+            if ('strangetest\\discover_tests' === $frame['function'])
+            {
                 break;
             }
             continue;
         }
 
         $callee = $frame['function'];
-        if (isset($frame['class'])) {
+        if (isset($frame['class']))
+        {
             $callee = "{$frame['class']}{$frame['type']}{$callee}";
         }
 
         $buffer[] = "{$frame['file']}({$frame['line']}): {$callee}()";
     }
-    if ($buffer) {
+    if ($buffer)
+    {
         $string = \sprintf(
             "%s\n\nCalled from:\n%s",
             $string, \implode("\n", $buffer)

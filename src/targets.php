@@ -39,21 +39,24 @@ final class _Target extends struct implements Target {
     /**
      * @param string $name
      */
-    public function __construct($name) {
+    public function __construct($name)
+    {
         $this->name = $name;
     }
 
     /**
      * @return string
      */
-    public function name() {
+    public function name()
+    {
         return $this->name;
     }
 
     /**
      * @return Target[]
      */
-    public function subtargets() {
+    public function subtargets()
+    {
         return $this->subtargets;
     }
 }
@@ -64,8 +67,10 @@ final class _Target extends struct implements Target {
  * @param string[] $errors
  * @return array{?string, ?Target[]}
  */
-function process_user_targets(array $args, &$errors) {
-    if (!$args) {
+function process_user_targets(array $args, &$errors)
+{
+    if (!$args)
+    {
         $cwd = \getcwd();
         // @todo What should we do if getcwd() fails?
         \assert(\is_string($cwd));
@@ -75,53 +80,62 @@ function process_user_targets(array $args, &$errors) {
 
     $root = $file = $subtarget_count = null;
     $targets = array();
-    foreach ($args as $arg) {
+    foreach ($args as $arg)
+    {
         if (0 === \substr_compare($arg, namespace\_TARGET_CLASS,
-                                  0, namespace\_TARGET_CLASS_LEN, true)
-        ) {
+                                  0, namespace\_TARGET_CLASS_LEN, true))
+        {
             $class = \substr($arg, namespace\_TARGET_CLASS_LEN);
-            if (!\strlen($class)) {
+            if (!\strlen($class))
+            {
                 $errors[] = "Test target '$arg' requires a class name";
                 continue;
             }
-            if (!isset($file)) {
+            if (!isset($file))
+            {
                 $errors[] = "Test target '$arg' must be specified for a file";
                 continue;
             }
-            if ($subtarget_count) {
+            if ($subtarget_count)
+            {
                 namespace\_process_class_target($targets[$file]->subtargets, $class, $errors);
             }
         }
         elseif (0 === \substr_compare($arg, namespace\_TARGET_FUNCTION,
-                                      0, namespace\_TARGET_FUNCTION_LEN, true)
-        ) {
+                                      0, namespace\_TARGET_FUNCTION_LEN, true))
+        {
             $function = \substr($arg, namespace\_TARGET_FUNCTION_LEN);
-            if (!\strlen($function)) {
+            if (!\strlen($function))
+            {
                 $errors[] = "Test target '$arg' requires a function name";
                 continue;
             }
-            if (!isset($file)) {
+            if (!isset($file))
+            {
                 $errors[] = "Test target '$arg' must be specified for a file";
                 continue;
             }
-            if ($subtarget_count) {
+            if ($subtarget_count)
+            {
                 namespace\_process_function_target($targets[$file]->subtargets, $function, $errors);
             }
         }
-        else {
+        else
+        {
             if ($subtarget_count > 0
-                && \count($targets[$file]->subtargets) === $subtarget_count
-            ) {
+                && \count($targets[$file]->subtargets) === $subtarget_count)
+            {
                 $targets[$file]->subtargets = array();
             }
             $file = $subtarget_count = null;
 
             $path = $arg;
             if (0 === \substr_compare($path, namespace\_TARGET_PATH,
-                                      0, namespace\_TARGET_PATH_LEN, true)
-            ) {
+                                      0, namespace\_TARGET_PATH_LEN, true))
+            {
                 $path = \substr($path, namespace\_TARGET_PATH_LEN);
-                if (!\strlen($path)) {
+                if (!\strlen($path))
+                {
                     $errors[] = "Test target '$arg' requires a directory or file name";
                     continue;
                 }
@@ -130,34 +144,38 @@ function process_user_targets(array $args, &$errors) {
                 = namespace\_process_path_target($targets, $root, $path, $errors);
         }
     }
-    if ($subtarget_count > 0
-        && \count($targets[$file]->subtargets) === $subtarget_count
-    ) {
+    if (($subtarget_count > 0)
+        && (\count($targets[$file]->subtargets) === $subtarget_count))
+    {
         $targets[$file]->subtargets = array();
     }
 
-    if ($errors) {
+    if ($errors)
+    {
         return array(null, null);
     }
 
     $keys = \array_keys($targets);
     \sort($keys, \SORT_STRING);
     $key = \current($keys);
-    while ($key !== false) {
+    while ($key !== false)
+    {
         \assert(\is_string($key));
-        if (\is_dir($key)) {
+        if (\is_dir($key))
+        {
             $keylen = \strlen($key);
             $next = \next($keys);
             while (
-                $next !== false
-                && 0 === \substr_compare((string)$next, $key, 0, $keylen)
-            ) {
+                ($next !== false)
+                && (0 === \substr_compare((string)$next, $key, 0, $keylen)))
+            {
                 unset($targets[$next]);
                 $next = \next($keys);
             }
             $key = $next;
         }
-        else {
+        else
+        {
             $key = \next($keys);
         }
     }
@@ -171,20 +189,25 @@ function process_user_targets(array $args, &$errors) {
  * @param string[] $errors
  * @return void
  */
-function _process_class_target(array &$targets, $target, array &$errors) {
+function _process_class_target(array &$targets, $target, array &$errors)
+{
     $split = \strpos($target, '::');
-    if (false === $split) {
+    if (false === $split)
+    {
         $classes = $target;
         $methods = null;
     }
-    else {
+    else
+    {
         $classes = \substr($target, 0, $split);
         $methods = \substr($target, $split + 2);
-        if (!\strlen($classes)) {
+        if (!\strlen($classes))
+        {
             $errors[] = "Test target '--class=$target' requires a class name";
             return;
         }
-        if (!\strlen($methods)) {
+        if (!\strlen($methods))
+        {
             $errors[] = "Test target '--class=$target' requires a method name";
             return;
         }
@@ -194,40 +217,50 @@ function _process_class_target(array &$targets, $target, array &$errors) {
     $max_index = \count($classes) - 1;
     $subtarget_count = 0;
     $class = null;
-    foreach ($classes as $index => $class) {
+    foreach ($classes as $index => $class)
+    {
         // functions and classes with identical names can coexist!
-        if (!\strlen($class)) {
+        if (!\strlen($class))
+        {
             $errors[] = "Test target '--class=$target' is missing one or more class names";
             return;
         }
 
         $class = "class $class";
-        if (!isset($targets[$class])) {
+        if (!isset($targets[$class]))
+        {
             $targets[$class] = new _Target($class);
             $subtarget_count = -1;
         }
-        elseif ($index < $max_index) {
+        elseif ($index < $max_index)
+        {
             $targets[$class]->subtargets = array();
         }
-        else {
+        else
+        {
             $subtarget_count = \count($targets[$class]->subtargets);
         }
     }
 
-    if ($methods && $subtarget_count) {
+    if ($methods && $subtarget_count)
+    {
         $targets = &$targets[$class]->subtargets;
-        foreach (\explode(',', $methods) as $method) {
-            if (!\strlen($method)) {
+        foreach (\explode(',', $methods) as $method)
+        {
+            if (!\strlen($method))
+            {
                 $errors[] = "Test target '--class=$target' is missing one or more method names";
                 return;
             }
 
-            if (!isset($targets[$method])) {
+            if (!isset($targets[$method]))
+            {
                 $targets[$method] = new _Target($method);
             }
         }
     }
-    elseif ($subtarget_count > 0) {
+    elseif ($subtarget_count > 0)
+    {
         $targets[$class]->subtargets = array();
     }
 }
@@ -239,16 +272,20 @@ function _process_class_target(array &$targets, $target, array &$errors) {
  * @param string[] $errors
  * @return void
  */
-function _process_function_target(array &$targets, $functions, array &$errors) {
-    foreach (\explode(',', $functions) as $function) {
-        if (!\strlen($function)) {
+function _process_function_target(array &$targets, $functions, array &$errors)
+{
+    foreach (\explode(',', $functions) as $function)
+    {
+        if (!\strlen($function))
+        {
             $errors[] = "Test target '--function=$functions' is missing one or more function names";
             return;
         }
 
         // functions and classes with identical names can coexist!
         $function = "function $function";
-        if (!isset($targets[$function])) {
+        if (!isset($targets[$function]))
+        {
             $targets[$function] = new _Target($function);
         }
     }
@@ -262,33 +299,41 @@ function _process_function_target(array &$targets, $functions, array &$errors) {
  * @param string[] $errors
  * @return array{?string, ?int}
  */
-function _process_path_target(array &$targets, &$root, $path, array &$errors) {
+function _process_path_target(array &$targets, &$root, $path, array &$errors)
+{
     $realpath = \realpath($path);
     $file = null;
-    if (!$realpath) {
+    if (!$realpath)
+    {
         $errors[] = "Path '$path' does not exist";
         return array(null, null);
     }
 
-    if (isset($targets[$realpath])) {
-        if (\is_dir($realpath)) {
+    if (isset($targets[$realpath]))
+    {
+        if (\is_dir($realpath))
+        {
             return array(null, null);
         }
         return array($realpath, \count($targets[$realpath]->subtargets));
     }
 
-    if (!isset($root)) {
+    if (!isset($root))
+    {
         $root = namespace\_determine_test_root($realpath);
     }
-    elseif (0 !== \substr_compare($realpath, $root, 0, \strlen($root))) {
+    elseif (0 !== \substr_compare($realpath, $root, 0, \strlen($root)))
+    {
         $errors[] = "Path '$path' is outside the test root directory '$root'";
         return array(null, null);
     }
 
-    if (\is_dir($realpath)) {
+    if (\is_dir($realpath))
+    {
         $realpath .= \DIRECTORY_SEPARATOR;
     }
-    else {
+    else
+    {
         $file = $realpath;
     }
 
@@ -301,18 +346,21 @@ function _process_path_target(array &$targets, &$root, $path, array &$errors) {
  * @param string $path
  * @return string
  */
-function _determine_test_root($path) {
+function _determine_test_root($path)
+{
     // The test root directory is the first directory above $path whose
     // case-insensitive name does not begin with 'test'. If $path is a
     // directory, this could be $path itself. This is done to ensure that
     // directory fixtures are properly discovered when testing individual
     // subpaths within a test suite; discovery will begin at the root directory
     // and descend towards the specified path.
-    if (!\is_dir($path)) {
+    if (!\is_dir($path))
+    {
         $path = \dirname($path);
     }
 
-    while (0 === \substr_compare(\basename($path), 'test', 0, 4, true)) {
+    while (0 === \substr_compare(\basename($path), 'test', 0, 4, true))
+    {
         $path = \dirname($path);
     }
     return $path . \DIRECTORY_SEPARATOR;
@@ -323,39 +371,48 @@ function _determine_test_root($path) {
  * @param Target[] $targets
  * @return array{bool, Target[]}
  */
-function find_directory_targets(Logger $logger, DirectoryTest $test, array $targets) {
+function find_directory_targets(Logger $logger, DirectoryTest $test, array $targets)
+{
     $error = false;
     $result = array();
     $current = null;
     $testnamelen = \strlen($test->name);
-    foreach ($targets as $target) {
-        if ($target->name() === $test->name) {
+    foreach ($targets as $target)
+    {
+        if ($target->name() === $test->name)
+        {
             \assert(!$result);
             \assert(!$error);
             break;
         }
 
         $i = \strpos($target->name(), \DIRECTORY_SEPARATOR, $testnamelen);
-        if (false === $i) {
+        if (false === $i)
+        {
             $childpath = $target->name();
         }
-        else {
+        else
+        {
             $childpath = \substr($target->name(), 0, $i + 1);
         }
 
-        if (!isset($test->tests[$childpath])) {
+        if (!isset($test->tests[$childpath]))
+        {
             $error = true;
             $logger->log_error(
                 $target->name(),
                 'This path is not a valid test ' . (\is_dir($target->name()) ? 'directory' : 'file')
             );
         }
-        elseif ($childpath === $target->name()) {
+        elseif ($childpath === $target->name())
+        {
             $result[] = $target;
             $current = null;
         }
-        else {
-            if (!isset($current) || $current->name !== $childpath) {
+        else
+        {
+            if (!isset($current) || $current->name !== $childpath)
+            {
                 $current = new _Target($childpath);
                 $result[] = $current;
             }
@@ -370,14 +427,18 @@ function find_directory_targets(Logger $logger, DirectoryTest $test, array $targ
  * @param Target[] $targets
  * @return array{bool, Target[]}
  */
-function find_file_targets(Logger $logger, FileTest $test, array $targets) {
+function find_file_targets(Logger $logger, FileTest $test, array $targets)
+{
     $error = false;
     $result = array();
-    foreach ($targets as $target) {
-        if (isset($test->tests[$target->name()])) {
+    foreach ($targets as $target)
+    {
+        if (isset($test->tests[$target->name()]))
+        {
             $result[] = $target;
         }
-        else {
+        else
+        {
             $error = true;
             $logger->log_error(
                 $target->name(),
@@ -393,14 +454,18 @@ function find_file_targets(Logger $logger, FileTest $test, array $targets) {
  * @param Target[] $targets
  * @return array{bool, string[]}
  */
-function find_class_targets(Logger $logger, ClassTest $test, array $targets) {
+function find_class_targets(Logger $logger, ClassTest $test, array $targets)
+{
     $error = false;
     $result = array();
-    foreach ($targets as $target) {
-        if (\method_exists($test->name, $target->name())) {
+    foreach ($targets as $target)
+    {
+        if (\method_exists($test->name, $target->name()))
+        {
             $result[] = $target->name();
         }
-        else {
+        else
+        {
             $error = true;
             $logger->log_error(
                 $target->name(),
@@ -416,24 +481,30 @@ function find_class_targets(Logger $logger, ClassTest $test, array $targets) {
  * @param Dependency[] $dependencies
  * @return Target[]
  */
-function build_targets_from_dependencies(array $dependencies) {
+function build_targets_from_dependencies(array $dependencies)
+{
     $targets = array();
     $current_file = $current_class = null;
-    foreach ($dependencies as $dependency) {
-        if (!isset($current_file) || $current_file->name !== $dependency->file) {
+    foreach ($dependencies as $dependency)
+    {
+        if (!isset($current_file) || $current_file->name !== $dependency->file)
+        {
             $current_class = null;
             $current_file = new _Target($dependency->file);
             $targets[] = $current_file;
         }
-        if ($dependency->class) {
+        if ($dependency->class)
+        {
             $class = "class {$dependency->class}";
-            if (!isset($current_class) || $current_class->name !== $class) {
+            if (!isset($current_class) || $current_class->name !== $class)
+            {
                 $current_class = new _Target($class);
                 $current_file->subtargets[] = $current_class;
             }
             $current_class->subtargets[] = new _Target($dependency->function);
         }
-        else {
+        else
+        {
             $current_class = null;
             $function = "function {$dependency->function}";
             $current_file->subtargets[] = new _Target($function);

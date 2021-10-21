@@ -11,6 +11,7 @@
  * @param mixed $var
  * @return bool
  */
-function is_iterable($var) {
+function is_iterable($var)
+{
     return \is_array($var) || ($var instanceof \Traversable);
 }

@@ -26,48 +26,57 @@ final class BasicLog implements Log {
      * @param int[] $count
      * @param array{int, string, string|\Throwable|null}[] $events
      */
-    public function __construct(array $count, array $events) {
+    public function __construct(array $count, array $events)
+    {
         $this->count = $count;
         $this->events = $events;
     }
 
 
-    public function pass_count() {
+    public function pass_count()
+    {
         return $this->count[namespace\EVENT_PASS];
     }
 
 
-    public function failure_count() {
+    public function failure_count()
+    {
         return $this->count[namespace\EVENT_FAIL];
     }
 
 
-    public function error_count() {
+    public function error_count()
+    {
         return $this->count[namespace\EVENT_ERROR];
     }
 
 
-    public function skip_count() {
+    public function skip_count()
+    {
         return $this->count[namespace\EVENT_SKIP];
     }
 
 
-    public function output_count() {
+    public function output_count()
+    {
         return $this->count[namespace\EVENT_OUTPUT];
     }
 
 
-    public function seconds_elapsed() {
+    public function seconds_elapsed()
+    {
         return $this->seconds_elapsed;
     }
 
 
-    public function memory_used() {
+    public function memory_used()
+    {
         return $this->megabytes_used;
     }
 
 
-    public function get_events() {
+    public function get_events()
+    {
         // This is safe because PHP arrays are copy-on-write
         return $this->events;
     }
@@ -95,47 +104,57 @@ final class BasicLogger implements Logger {
     /**
      * @param bool $verbose
      */
-    public function __construct($verbose) {
+    public function __construct($verbose)
+    {
         $this->verbose = $verbose;
     }
 
 
-    public function log_pass($source) {
+    public function log_pass($source)
+    {
         ++$this->count[namespace\EVENT_PASS];
-        if ($this->verbose & namespace\LOG_PASS) {
+        if ($this->verbose & namespace\LOG_PASS)
+        {
             $this->events[] = array(namespace\EVENT_PASS, $source, null);
         }
     }
 
 
-    public function log_failure($source, $reason) {
+    public function log_failure($source, $reason)
+    {
         ++$this->count[namespace\EVENT_FAIL];
         $this->events[] = array(namespace\EVENT_FAIL, $source, $reason);
     }
 
 
-    public function log_error($source, $reason) {
+    public function log_error($source, $reason)
+    {
         ++$this->count[namespace\EVENT_ERROR];
         $this->events[] = array(namespace\EVENT_ERROR, $source, $reason);
     }
 
 
-    public function log_skip($source, $reason, $during_error = false) {
+    public function log_skip($source, $reason, $during_error = false)
+    {
         ++$this->count[namespace\EVENT_SKIP];
-        if ($during_error) {
+        if ($during_error)
+        {
             \assert($reason instanceof \Throwable);
             $reason = new Skip('Although this test was skipped, there was also an error', $reason);
             $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
         }
-        elseif ($this->verbose & namespace\LOG_SKIP) {
+        elseif ($this->verbose & namespace\LOG_SKIP)
+        {
             $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
         }
     }
 
 
-    public function log_output($source, $reason, $during_error = false) {
+    public function log_output($source, $reason, $during_error = false)
+    {
         ++$this->count[namespace\EVENT_OUTPUT];
-        if (($this->verbose & namespace\LOG_OUTPUT) || $during_error) {
+        if (($this->verbose & namespace\LOG_OUTPUT) || $during_error)
+        {
             $this->events[] = array(namespace\EVENT_OUTPUT, $source, $reason);
         }
     }
@@ -144,7 +163,8 @@ final class BasicLogger implements Logger {
     /**
      * @return BasicLog
      */
-    public function get_log() {
+    public function get_log()
+    {
         return new BasicLog($this->count, $this->events);
     }
 }

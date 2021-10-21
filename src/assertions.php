@@ -18,8 +18,10 @@ namespace strangetest;
  * @return void
  * @throws Failure
  */
-function assert_different($expected, $actual, $description = null) {
-    if ($expected !== $actual) {
+function assert_different($expected, $actual, $description = null)
+{
+    if ($expected !== $actual)
+    {
         return;
     }
 
@@ -40,8 +42,10 @@ function assert_different($expected, $actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_equal($expected, $actual, $description = null) {
-    if ($expected == $actual) {
+function assert_equal($expected, $actual, $description = null)
+{
+    if ($expected == $actual)
+    {
         return;
     }
 
@@ -61,8 +65,10 @@ function assert_equal($expected, $actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_false($actual, $description = null) {
-    if ($actual === false) {
+function assert_false($actual, $description = null)
+{
+    if ($actual === false)
+    {
         return;
     }
 
@@ -82,8 +88,10 @@ function assert_false($actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_falsy($actual, $description = null) {
-    if (!$actual) {
+function assert_falsy($actual, $description = null)
+{
+    if (!$actual)
+    {
         return;
     }
 
@@ -104,8 +112,10 @@ function assert_falsy($actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_greater($actual, $min, $description = null) {
-    if ($actual > $min) {
+function assert_greater($actual, $min, $description = null)
+{
+    if ($actual > $min)
+    {
         return;
     }
 
@@ -126,8 +136,10 @@ function assert_greater($actual, $min, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_greater_or_equal($actual, $min, $description = null) {
-    if ($actual >= $min) {
+function assert_greater_or_equal($actual, $min, $description = null)
+{
+    if ($actual >= $min)
+    {
         return;
     }
 
@@ -148,8 +160,10 @@ function assert_greater_or_equal($actual, $min, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_identical($expected, $actual, $description = null) {
-    if ($expected === $actual) {
+function assert_identical($expected, $actual, $description = null)
+{
+    if ($expected === $actual)
+    {
         return;
     }
 
@@ -170,8 +184,10 @@ function assert_identical($expected, $actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_less($actual, $max, $description = null) {
-    if ($actual < $max) {
+function assert_less($actual, $max, $description = null)
+{
+    if ($actual < $max)
+    {
         return;
     }
 
@@ -192,8 +208,10 @@ function assert_less($actual, $max, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_less_or_equal($actual, $max, $description = null) {
-    if ($actual <= $max) {
+function assert_less_or_equal($actual, $max, $description = null)
+{
+    if ($actual <= $max)
+    {
         return;
     }
 
@@ -215,15 +233,18 @@ function assert_less_or_equal($actual, $max, $description = null) {
  * @return T
  * @throws Failure|\Exception
  */
-function assert_throws($expected, $callback, $description = null) {
-    try {
+function assert_throws($expected, $callback, $description = null)
+{
+    try
+    {
         $callback();
     }
     // @bc 5.6 Catch Exception
     catch (\Exception $e) {}
     catch (\Throwable $e) {}
 
-    if (!isset($e)) {
+    if (!isset($e))
+    {
         $message = namespace\format_failure_message(
             "Expected to catch $expected but no exception was thrown",
             $description
@@ -231,7 +252,8 @@ function assert_throws($expected, $callback, $description = null) {
         throw new Failure($message);
     }
 
-    if ($e instanceof $expected) {
+    if ($e instanceof $expected)
+    {
         return $e;
     }
 
@@ -250,8 +272,10 @@ function assert_throws($expected, $callback, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_true($actual, $description = null) {
-    if ($actual === true) {
+function assert_true($actual, $description = null)
+{
+    if ($actual === true)
+    {
         return;
     }
 
@@ -271,8 +295,10 @@ function assert_true($actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_truthy($actual, $description = null) {
-    if ($actual) {
+function assert_truthy($actual, $description = null)
+{
+    if ($actual)
+    {
         return;
     }
 
@@ -293,14 +319,17 @@ function assert_truthy($actual, $description = null) {
  * @return void
  * @throws Failure
  */
-function assert_unequal($expected, $actual, $description = null) {
-    if ($expected != $actual) {
+function assert_unequal($expected, $actual, $description = null)
+{
+    if ($expected != $actual)
+    {
         return;
     }
 
     // Since $expected and $actual may have differing (though equal) values,
     // let's display a strict diff so as not to omit any information
-    if (\is_array($expected) && \is_array($actual)) {
+    if (\is_array($expected) && \is_array($actual))
+    {
         namespace\ksort_recursive($expected);
         namespace\ksort_recursive($actual);
     }
