@@ -144,6 +144,11 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
+        // @todo Use reflection to ensure we discovered an identifier
+        // We know we've discovered an identifier if it exists and it was
+        // defined in the current file and we haven't already discovered it.
+        // We'll need to use reflection anyway to support attributes.
+        //
         // It's worth keeping in mind that identifiers may be conditionally
         // defined at runtime, so just because we got a token back doesn't mean
         // we've found an actual definition. Similarly, we may also come upon
@@ -482,6 +487,11 @@ function _discover_directory_setup(
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
+        // @todo Use reflection to ensure we discovered an identifier
+        // We know we've discovered an identifier if it exists and it was
+        // defined in the current file and we haven't already discovered it.
+        // We'll need to use reflection anyway to support attributes.
+        //
         // It's worth keeping in mind that identifiers may be conditionally
         // defined at runtime, so just because we got a token back doesn't mean
         // we've found an actual definition. Similarly, we may also come upon

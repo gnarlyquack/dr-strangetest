@@ -27,7 +27,14 @@ final class TestInfo extends struct {
 
 
 final class RunFixture extends struct {
-    // @todo Remove this from here!
+    // @todo Remove $group from RunFixture
+    // If we first discovered all tests before running them, we could just keep
+    // track of run groups during the discovery process and assign each test to
+    // its appropriate group. However, since we immediately run tests after
+    // discovering them, we need to keep track of the group during run time so
+    // we can assign it to new tests upon discovering them. This is all a bit
+    // janky though, because we're potentially "discovering" tests multiple
+    // times (once per run) when this could be initially done just once.
     /** @var int */
     public $group;
     /** @var int */

@@ -343,6 +343,7 @@ function _process_path_target(array &$targets, &$root, $path, array &$errors)
 
 
 /**
+ * @todo Just use the current working directory instead of finding a test root
  * @param string $path
  * @return string
  */

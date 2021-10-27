@@ -74,8 +74,6 @@ Release
 
 -   Implement additional CLI options(?)
     -   enable/disable autoloading, and specify an autoloader file location?
-    -   specify the test root directory (for cases where it's not correctly
-        detected)
 
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
@@ -154,6 +152,8 @@ Release
 
 -   Support PHP 8.1 (when it's released)
 
+-   Only show file name and line number in stack traces
+
 
 Future / Wishlist
 -----------------
@@ -173,9 +173,6 @@ Future / Wishlist
     exceptions as failures instead of errors?
 
 -   Allow targeting of a specific parameterized test run?
-
--   Allow test functions and function fixtures to be moved into a class and
-    "just work"?
 
 -   Support "higher-level" dependencies, i.e., declaring a dependency on an
     entire class, file, or directory, all of whose tests must pass in order

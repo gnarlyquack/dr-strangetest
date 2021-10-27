@@ -30,6 +30,7 @@ interface Context {
     public function teardown($callback);
 
     /**
+     * @todo Change Context::depend_on() to Context::require()
      * @param string... $name
      * @return ?mixed[]
      * @throws Postpone
