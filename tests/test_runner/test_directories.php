@@ -503,21 +503,25 @@ class TestDirectories {
         $expected = array(
             array(
                 strangetest\EVENT_OUTPUT,
+                'dir_params\\setup_directory',
+                'dir_params\\setup_directory',
+            ),
+
+            array(
+                strangetest\EVENT_OUTPUT,
                 'dir_params\\setup_run_0',
                 $path,
             ),
 
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\setup_directory (0)',
+                'dir_params\\setup_file (0)',
                 '2 4',
             ),
-
-
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\setup_file (0, 0)',
-                '2 4',
+                'dir_params\\setup_run0 (0)',
+                'dir_params\\setup_run0',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
@@ -538,11 +542,6 @@ class TestDirectories {
                 strangetest\EVENT_PASS,
                 'dir_params\\TestClass::test (0, 0)',
                 null,
-            ),
-            array(
-                strangetest\EVENT_OUTPUT,
-                'dir_params\\teardown_file (0, 0)',
-                '2 4',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
@@ -552,8 +551,8 @@ class TestDirectories {
 
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\setup_file (0, 1)',
-                '4 2',
+                'dir_params\\setup_run1 (0)',
+                'dir_params\\setup_run1',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
@@ -574,21 +573,15 @@ class TestDirectories {
                 strangetest\EVENT_PASS,
                 'dir_params\\TestClass::test (0, 1)',
                 null,
-            ),
-            array(
-                strangetest\EVENT_OUTPUT,
-                'dir_params\\teardown_file (0, 1)',
-                '4 2',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
                 'dir_params\\teardown_run1 (0)',
                 '4 2',
             ),
-
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\teardown_directory (0)',
+                'dir_params\\teardown_file (0)',
                 '2 4',
             ),
             array(
@@ -605,14 +598,13 @@ class TestDirectories {
             ),
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\setup_directory (1)',
+                'dir_params\\setup_file (1)',
                 '8 16',
             ),
-
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\setup_file (1, 0)',
-                '8 16',
+                'dir_params\\setup_run0 (1)',
+                'dir_params\\setup_run0',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
@@ -633,11 +625,6 @@ class TestDirectories {
                 strangetest\EVENT_PASS,
                 'dir_params\\TestClass::test (1, 0)',
                 null,
-            ),
-            array(
-                strangetest\EVENT_OUTPUT,
-                'dir_params\\teardown_file (1, 0)',
-                '8 16',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
@@ -647,8 +634,8 @@ class TestDirectories {
 
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\setup_file (1, 1)',
-                '16 8',
+                'dir_params\\setup_run1 (1)',
+                'dir_params\\setup_run1',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
@@ -669,27 +656,26 @@ class TestDirectories {
                 strangetest\EVENT_PASS,
                 'dir_params\\TestClass::test (1, 1)',
                 null,
-            ),
-            array(
-                strangetest\EVENT_OUTPUT,
-                'dir_params\\teardown_file (1, 1)',
-                '16 8',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
                 'dir_params\\teardown_run1 (1)',
                 '16 8',
             ),
-
             array(
                 strangetest\EVENT_OUTPUT,
-                'dir_params\\teardown_directory (1)',
+                'dir_params\\teardown_file (1)',
                 '8 16',
             ),
             array(
                 strangetest\EVENT_OUTPUT,
                 'dir_params\\teardown_run_1',
                 '8 16',
+            ),
+            array(
+                strangetest\EVENT_OUTPUT,
+                'dir_params\\teardown_directory',
+                'dir_params\\teardown_directory',
             ),
         );
         $this->assert_log($expected);

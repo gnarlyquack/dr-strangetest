@@ -33,11 +33,6 @@ function teardown_run2($one) {
 
 
 
-function teardown_file($one, $two) {
-    echo "$one $two";
-}
-
-
 function test_one($one, $two) {
     strangetest\assert_identical(array(2, 3), array($one, $two));
 }

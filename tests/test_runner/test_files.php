@@ -817,7 +817,6 @@ function test_logs_error_if_any_arglist_isnt_iterable() {
         array(strangetest\EVENT_ERROR, $file, \sprintf($error, 'setup_run0')),
         array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run0', '1'),
         array(strangetest\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
-        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_file (1)', '2 3'),
         array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run1', '2 3'),
         array(strangetest\EVENT_ERROR, $file, \sprintf($error, 'setup_run2')),
         array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run2', '4'),
