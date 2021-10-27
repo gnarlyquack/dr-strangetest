@@ -30,12 +30,11 @@ interface Context {
     public function teardown($callback);
 
     /**
-     * @todo Change Context::depend_on() to Context::require()
      * @param string... $name
      * @return ?mixed[]
      * @throws Postpone
      */
-    public function depend_on($name);
+    public function requires($name);
 
     /**
      * @param mixed $value
@@ -100,7 +99,7 @@ final class _Context implements Context {
     }
 
 
-    public function depend_on($name)
+    public function requires($name)
     {
         $dependees = array();
         $result = array();

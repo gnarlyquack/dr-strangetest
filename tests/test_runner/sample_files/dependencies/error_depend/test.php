@@ -14,7 +14,7 @@ function teardown_function() {
 
 function test_one(strangetest\Context $context) {
     test::$test = __FUNCTION__;
-    $context->depend_on('test_two');
+    $context->requires('test_two');
 }
 
 function test_two() {
@@ -34,7 +34,7 @@ class test {
 
     public function test_one(strangetest\Context $context) {
         self::$test = __FUNCTION__;
-        $context->depend_on('test_two');
+        $context->requires('test_two');
     }
 
     public function test_two() {

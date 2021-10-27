@@ -6,11 +6,11 @@ use strangetest;
 
 
 function test_three(strangetest\Context $context) {
-    strangetest\assert_identical(2, $context->depend_on('test_two'));
+    strangetest\assert_identical(2, $context->requires('test_two'));
 }
 
 function test_two(strangetest\Context $context) {
-    strangetest\assert_identical(1, $context->depend_on('test_one'));
+    strangetest\assert_identical(1, $context->requires('test_one'));
     $context->set(2);
 }
 
@@ -21,11 +21,11 @@ function test_one(strangetest\Context $context) {
 
 class test {
     public function test_three(strangetest\Context $context) {
-        strangetest\assert_identical(2, $context->depend_on('test_two'));
+        strangetest\assert_identical(2, $context->requires('test_two'));
     }
 
     public function test_two(strangetest\Context $context) {
-        strangetest\assert_identical(1, $context->depend_on('test_one'));
+        strangetest\assert_identical(1, $context->requires('test_one'));
         $context->set(2);
     }
 

@@ -15,12 +15,12 @@ function setup_run_1() {
 
 
 function test_three($arg, strangetest\Context $context) {
-    $actual = $context->depend_on('test_two');
+    $actual = $context->requires('test_two');
     strangetest\assert_identical(2 * $arg, $actual);
 }
 
 function test_two($arg, strangetest\Context $context) {
-    $actual = $context->depend_on('test_one');
+    $actual = $context->requires('test_one');
     strangetest\assert_identical(2, $actual);
     $context->set($actual + $arg);
 }
@@ -40,12 +40,12 @@ class test {
 
 
     public function test_three(strangetest\Context $context) {
-        $actual = $context->depend_on('test_two');
+        $actual = $context->requires('test_two');
         strangetest\assert_identical(2 * $this->arg, $actual);
     }
 
     public function test_two(strangetest\Context $context) {
-        $actual = $context->depend_on('test_one');
+        $actual = $context->requires('test_one');
         strangetest\assert_identical(2, $actual);
         $context->set($actual + $this->arg);
     }
