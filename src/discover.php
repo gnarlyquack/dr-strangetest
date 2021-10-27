@@ -936,7 +936,7 @@ function _include_file(Logger $logger, $file)
 function _guard_include($file)
 {
     // Isolate included files to prevent them from meddling with local state
-    include $file;
+    include_once $file;
 }
 
 
