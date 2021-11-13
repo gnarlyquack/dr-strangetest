@@ -138,7 +138,7 @@ final class _Context implements Context {
                     $runs = \array_slice($runs, 0, $i);
                 }
 
-                $run = \end($runs);
+                $run = \implode(',', $runs);
                 if (!isset($results['runs'][$run]))
                 {
                     // The dependency hasn't been run
@@ -193,7 +193,7 @@ final class _Context implements Context {
 
     public function set($value)
     {
-        $run = \end($this->run);
+        $run = \implode(',', $this->run);
         $this->state->fixture[$this->test->name][$run] = $value;
     }
 }
@@ -897,8 +897,9 @@ function _run_function_teardown(
     if (namespace\RESULT_PASS === $test->result)
     {
         $logger->log_pass($test_name);
-        foreach ($run as $id)
+        for ($i = 0, $c = \count($run); $i < $c; ++$i)
         {
+            $id = \implode(',', \array_slice($run, 0, $i + 1));
             if (!isset($state->results[$test->name]['runs'][$id]))
             {
                 $state->results[$test->name]['runs'][$id] = true;
@@ -907,8 +908,9 @@ function _run_function_teardown(
     }
     elseif (namespace\RESULT_FAIL & $test->result)
     {
-        foreach ($run as $id)
+        for ($i = 0, $c = \count($run); $i < $c; ++$i)
         {
+            $id = \implode(',', \array_slice($run, 0, $i + 1));
             $state->results[$test->name]['runs'][$id] = false;
         }
         if (namespace\RESULT_POSTPONE & $test->result)
