@@ -149,3 +149,62 @@ final class FunctionTest extends struct {
     /** @var ?string */
     public $teardown_name;
 }
+
+
+/**
+ * @param string $name
+ * @param string $default_namespace
+ * @param string $default_class
+ * @return ?string
+ */
+function resolve_test_name($name, $default_namespace = '', $default_class = '')
+{
+    // Ensure that the namespace ends in a trailing namespace separator
+    \assert(
+        (0 === \strlen($default_namespace))
+        || ('\\' === \substr($default_namespace, -1)));
+    // Ensure that the namespace is included in the classname (because we
+    // probably want want to change this)
+    \assert(
+        (0 === \strlen($default_class))
+        || (0 === \strpos($default_class, $default_namespace)));
+
+    $result = null;
+    if (\preg_match(
+            '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*?$~',
+            $name,
+            $matches))
+    {
+        /** @var string[] $matches */
+        list(, $namespace, $class, $function) = $matches;
+        if ($namespace)
+        {
+            // This is a qualified name, so don't attempt any name resolution
+            $namespace = \ltrim($namespace, '\\');
+        }
+        else
+        {
+            // Resolve the unqualified name to the current namespace and/or class
+            if ($class)
+            {
+                $namespace = $default_namespace;
+            }
+            elseif ($default_class)
+            {
+                // the namespace is already included in the class name
+                $class = $default_class . '::';
+            }
+            else
+            {
+                $namespace = $default_namespace;
+            }
+        }
+
+        if ('::' === $class)
+        {
+            $class = '';
+        }
+        $result = $namespace . $class . $function;
+    }
+    return $result;
+}

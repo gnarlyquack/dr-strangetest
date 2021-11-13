@@ -107,17 +107,22 @@ final class _Context implements Context {
         // @bc 5.5 Use func_get_args instead of argument unpacking
         foreach (\func_get_args() as $nnames => $name)
         {
-            $normalized = $this->normalize_name($name);
+            $resolved = namespace\resolve_test_name(
+                $name, $this->test->namespace, (string)$this->test->class);
+            if (!isset($resolved))
+            {
+                \trigger_error("Invalid test name: $name");
+            }
 
             $runs = $this->run;
-            if (!isset($this->state->results[$normalized]))
+            if (!isset($this->state->results[$resolved]))
             {
                 // The dependency hasn't been run
-                $dependees[] = array($normalized, \end($runs));
+                $dependees[] = array($resolved, \end($runs));
             }
             else
             {
-                $results = $this->state->results[$normalized];
+                $results = $this->state->results[$resolved];
                 if ($this->test->group !== $results['group'])
                 {
                     $us = $this->state->groups[$this->test->group];
@@ -137,16 +142,16 @@ final class _Context implements Context {
                 if (!isset($results['runs'][$run]))
                 {
                     // The dependency hasn't been run
-                    $dependees[] = array($normalized, $run);
+                    $dependees[] = array($resolved, $run);
                 }
                 elseif (!$results['runs'][$run])
                 {
                     $run_name = namespace\_get_run_name($this->state, $runs);
-                    throw new Skip("This test depends on '{$normalized}{$run_name}', which did not pass");
+                    throw new Skip("This test depends on '{$resolved}{$run_name}', which did not pass");
                 }
-                elseif (isset($this->state->fixture[$normalized][$run]))
+                elseif (isset($this->state->fixture[$resolved][$run]))
                 {
-                    $result[$name] = $this->state->fixture[$normalized][$run];
+                    $result[$name] = $this->state->fixture[$resolved][$run];
                 }
             }
         }
@@ -190,54 +195,6 @@ final class _Context implements Context {
     {
         $run = \end($this->run);
         $this->state->fixture[$this->test->name][$run] = $value;
-    }
-
-
-    /**
-     * @param string $name
-     * @return string
-     */
-    private function normalize_name($name)
-    {
-        if (!\preg_match(
-                '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*?$~',
-                $name,
-                $matches))
-        {
-            \trigger_error("Invalid test name: $name");
-        }
-
-        /** @var string[] $matches */
-        list(, $namespace, $class, $function) = $matches;
-
-        if (!$namespace)
-        {
-            if (!$class && $this->test->class)
-            {
-                // the namespace is already included in the class name
-                $class = $this->test->class;
-            }
-            else
-            {
-                $namespace = $this->test->namespace;
-                if ($class)
-                {
-                    $class = \rtrim($class, ':');
-                }
-            }
-        }
-        else
-        {
-            $namespace = \ltrim($namespace, '\\');
-        }
-
-        if ($class)
-        {
-            $class .= '::';
-        }
-
-        $name = $namespace . $class . $function;
-        return $name;
     }
 }
 
