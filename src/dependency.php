@@ -21,7 +21,7 @@ final class Dependency extends struct {
     /** @var string */
     public $function;
 
-    /** @var array<string, string[]> */
+    /** @var array<string, array<?int>> */
     public $dependees = array();
 
 
@@ -77,8 +77,9 @@ final class _DependencyGraph {
 
 
     /**
+     * @todo Ensure dependencies are resolved by run, not just by test
      * @param string $from
-     * @param string[] $runs
+     * @param array<?int> $runs
      * @return bool
      */
     private function postorder($from, array $runs = array())
@@ -164,7 +165,7 @@ final class _DependencyGraph {
 
     /**
      * @param string $from
-     * @param string[] $runs
+     * @param array<?int> $runs
      * @return bool
      */
     private function check_run_results($from, array $runs)
@@ -172,9 +173,13 @@ final class _DependencyGraph {
         $result = true;
         foreach ($runs as $run)
         {
-            if (!isset($this->state->results[$from]['runs'][$run]))
+            if (isset($run)
+                && !isset($this->state->results[$from]['runs'][$run]))
             {
                 $this->logger->log_error(
+                    // @fixme Generate correct run name for non-existent prerequisite
+                    // $run now carries a run id instead of a run name, so this doesn't
+                    // shows the correct run name
                     "$from$run",
                     'Other tests depend on this test, but this test was never run'
                 );

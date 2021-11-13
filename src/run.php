@@ -118,7 +118,7 @@ final class _Context implements Context {
             if (!isset($this->state->results[$resolved]))
             {
                 // The dependency hasn't been run
-                $dependees[] = array($resolved, \end($runs));
+                $dependees[] = array($resolved, null);
             }
             else
             {
