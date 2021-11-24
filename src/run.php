@@ -267,6 +267,7 @@ function run_directory_tests(
                 $name = "{$setup}{$run_name}";
                 namespace\start_buffering($logger, $name);
                 list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
+                namespace\end_buffering($logger);
                 if (namespace\RESULT_PASS !== $result)
                 {
                     continue;
@@ -473,6 +474,7 @@ function _run_file_tests(
                 $name = "{$setup}{$run_name}";
                 namespace\start_buffering($logger, $name);
                 list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
+                namespace\end_buffering($logger);
                 if (namespace\RESULT_PASS !== $result)
                 {
                     continue;
