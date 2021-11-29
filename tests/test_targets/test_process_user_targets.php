@@ -152,7 +152,7 @@ function test_processes_function_targets(Context $context) {
 
 function test_processes_class_targets(Context $context) {
     $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
-    $args = array('test1.php', '--class=foo,bar');
+    $args = array('test1.php', '--class=foo;bar');
 
     namespace\set_cwd($context, $root);
     $actual = strangetest\process_user_targets($args, $errors);
@@ -178,7 +178,7 @@ function test_processes_class_targets(Context $context) {
 
 function test_processes_method_targets(Context $context) {
     $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
-    $args = array('test1.php', '--class=foo,bar::one,two');
+    $args = array('test1.php', '--class=foo::one,two;bar::one,two');
 
     namespace\set_cwd($context, $root);
     $actual = strangetest\process_user_targets($args, $errors);
@@ -189,7 +189,16 @@ function test_processes_method_targets(Context $context) {
             'subtargets' => array(
                 'class foo' => array(
                     'name' => 'class foo',
-                    'subtargets' => array(),
+                    'subtargets' => array(
+                        'one' => array(
+                            'name' => 'one',
+                            'subtargets' => array(),
+                        ),
+                        'two' => array(
+                            'name' => 'two',
+                            'subtargets' => array(),
+                        ),
+                    ),
                 ),
                 'class bar' => array(
                     'name' => 'class bar',
@@ -245,7 +254,7 @@ function test_eliminates_duplicate_method_targets(Context $context) {
     $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
-        '--class=foo,bar::one,two',
+        '--class=foo;bar::one,two',
         '--class=foo::one,two',
         '--class=bar::two,three',
     );
@@ -292,7 +301,7 @@ function test_overrides_method_targets_with_class_target(Context $context) {
         '--class=foo::one,two',
         '--class=bar::one,two',
         '--class=cat::one,two',
-        '--class=foo,bar',
+        '--class=foo;bar',
         '--class=cat',
     );
 
@@ -328,7 +337,7 @@ function test_eliminates_duplicate_targets_in_file(Context $context) {
         'test1.php',
         'test2.php',
         'test1.php',
-        '--class=foo,bar::one,two',
+        '--class=foo;bar::one,two',
         '--function=one,two',
     );
 
@@ -356,7 +365,7 @@ function test_overrides_targets_in_file_with_file_target(Context $context) {
         '--class=foo::one,two',
         '--class=bar::one,two',
         '--class=cat::one,two',
-        '--class=foo,bar',
+        '--class=foo;bar',
         '--class=cat',
         'test2.php',
         'test1.php',
@@ -460,10 +469,10 @@ function test_reports_error_for_missing_class_name(Context $context) {
     $args = array(
         'test1.php',
         '--class=',
-        '--class=one,,two',
-        '--class=foo,bar,::one,,two,',
+        '--class=one;;two',
+        '--class=foo;bar;::one,,two,',
         '--class=::one,two',
-        '--class=,,,',
+        '--class=;;;',
     );
 
     namespace\set_cwd($context, $root);
@@ -471,10 +480,10 @@ function test_reports_error_for_missing_class_name(Context $context) {
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--class=' requires a class name",
-        "Test target '--class=one,,two' is missing one or more class names",
-        "Test target '--class=foo,bar,::one,,two,' is missing one or more class names",
-        "Test target '--class=::one,two' requires a class name",
-        "Test target '--class=,,,' is missing one or more class names",
+        "Test target '--class=one;;two' is missing one or more class names",
+        "Test target '--class=foo;bar;::one,,two,' is missing one or more class names",
+        "Test target '--class=::one,two' is missing one or more class names",
+        "Test target '--class=;;;' is missing one or more class names",
     ));
 }
 
@@ -483,18 +492,18 @@ function test_reports_error_for_missing_method_name(Context $context) {
     $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
-        '--class=one,two::',
-        '--class=foo,bar::one,,two',
-        '--class=foo,bar::,,,',
+        '--class=one::',
+        '--class=foo::one,,two',
+        '--class=foo::,,,',
     );
 
     namespace\set_cwd($context, $root);
     $actual = strangetest\process_user_targets($args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
-        "Test target '--class=one,two::' requires a method name",
-        "Test target '--class=foo,bar::one,,two' is missing one or more method names",
-        "Test target '--class=foo,bar::,,,' is missing one or more method names",
+        "Test target '--class=one::' is missing one or more method names",
+        "Test target '--class=foo::one,,two' is missing one or more method names",
+        "Test target '--class=foo::,,,' is missing one or more method names",
     ));
 }
 

@@ -191,37 +191,24 @@ function process_user_targets(array $args, &$errors)
  */
 function _process_class_target(array &$targets, $target, array &$errors)
 {
-    $split = \strpos($target, '::');
-    if (false === $split)
+    $classes = \explode(';', $target);
+    foreach ($classes as $class)
     {
-        $classes = $target;
         $methods = null;
-    }
-    else
-    {
-        $classes = \substr($target, 0, $split);
-        $methods = \substr($target, $split + 2);
-        if (!\strlen($classes))
+        $split = \strpos($class, '::');
+        if (false !== $split)
         {
-            $errors[] = "Test target '--class=$target' requires a class name";
-            return;
+            $methods = \explode(',', \substr($class, $split + 2));
+            $class = \substr($class, 0, $split);
         }
-        if (!\strlen($methods))
-        {
-            $errors[] = "Test target '--class=$target' requires a method name";
-            return;
-        }
-    }
 
-    $classes = \explode(',', $classes);
-    $max_index = \count($classes) - 1;
-    $subtarget_count = 0;
-    $class = null;
-    foreach ($classes as $index => $class)
-    {
-        // functions and classes with identical names can coexist!
         if (!\strlen($class))
         {
+            // @todo Report errors for all class names in a class target
+            // We could provide a more detailed error message here, e.g.,
+            // "target $i has no class name". We could also potentially report
+            // errors for invalid targets while continuing to run tests for
+            // valid ones.
             $errors[] = "Test target '--class=$target' is missing one or more class names";
             return;
         }
@@ -232,36 +219,40 @@ function _process_class_target(array &$targets, $target, array &$errors)
             $targets[$class] = new _Target($class);
             $subtarget_count = -1;
         }
-        elseif ($index < $max_index)
-        {
-            $targets[$class]->subtargets = array();
-        }
         else
         {
             $subtarget_count = \count($targets[$class]->subtargets);
         }
-    }
 
-    if ($methods && $subtarget_count)
-    {
-        $targets = &$targets[$class]->subtargets;
-        foreach (\explode(',', $methods) as $method)
+        if ($subtarget_count)
         {
-            if (!\strlen($method))
+            if ($methods)
             {
-                $errors[] = "Test target '--class=$target' is missing one or more method names";
-                return;
-            }
+                foreach ($methods as $method)
+                {
+                    if (!\strlen($method))
+                    {
+                        // @todo Report errors for all method names in a class target
+                        // We could provide a more detailed error message here,
+                        // e.g., "target method $i for class $class has no
+                        // name". We could also potentially report errors for
+                        // invalid targets while continuing to run tests for
+                        // valid ones.
+                        $errors[] = "Test target '--class=$target' is missing one or more method names";
+                        return;
+                    }
 
-            if (!isset($targets[$method]))
+                    if (!isset($targets[$class]->subtargets[$method]))
+                    {
+                        $targets[$class]->subtargets[$method] = new _Target($method);
+                    }
+                }
+            }
+            else
             {
-                $targets[$method] = new _Target($method);
+                $targets[$class]->subtargets = array();
             }
         }
-    }
-    elseif ($subtarget_count > 0)
-    {
-        $targets[$class]->subtargets = array();
     }
 }
 
