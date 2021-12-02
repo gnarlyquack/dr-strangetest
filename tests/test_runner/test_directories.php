@@ -5,15 +5,18 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+namespace test\runner;
+use strangetest;
 
-class TestDirectories {
+
+class TestRunDirectories {
     private $logger;
     private $path;
 
 
     public function setup() {
         $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
-        $this->path = __DIR__ . '/sample_files/directories/';
+        $this->path = __DIR__ . '/resources/directories/';
     }
 
 
@@ -23,11 +26,13 @@ class TestDirectories {
         list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
         strangetest\assert_falsy($errors);
 
-        strangetest\discover_tests(
-            new strangetest\BufferingLogger($this->logger),
-            $root,
-            $targets
-        );
+        $logger = new strangetest\BufferingLogger($this->logger);
+        $state = new strangetest\State;
+
+        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
+
+        strangetest\run_tests($state, $logger, $tests, $targets);
 
         $root = null;
         $current = null;
@@ -221,10 +226,13 @@ class TestDirectories {
         list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
         strangetest\assert_falsy($errors);
 
-        strangetest\discover_tests(
-            new strangetest\BufferingLogger($this->logger),
-            $root, $targets
-        );
+        $logger = new strangetest\BufferingLogger($this->logger);
+        $state = new strangetest\State;
+
+        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
+
+        strangetest\run_tests($state, $logger, $tests, $targets);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event) {
@@ -242,156 +250,193 @@ class TestDirectories {
     }
 
 
+    private function assert_run($tests, $targets, $expected)
+    {
+        $tests = make_test($tests);
+        $logger = new strangetest\BufferingLogger($this->logger);
+        $state = new strangetest\State;
+        strangetest\run_tests($state, $logger, $tests, $targets);
+
+        $actual = $this->logger->get_log()->get_events();
+        foreach ($actual as $i => $event)
+        {
+            list($type, $source, $reason) = $event;
+            // #BC(5.6): Check if reason is instance of Exception
+            if ($reason instanceof \Throwable
+                || $reason instanceof \Exception)
+            {
+                $reason = $reason->getMessage();
+            }
+
+            $actual[$i] = array($type, $source, $reason);
+        }
+        strangetest\assert_identical($expected, $actual);
+    }
+
+
     // tests
 
-    public function test_discover_directory(strangetest\Context $context) {
-        $this->path .= 'discover_directory';
-        $path = $this->path;
-        $this->assert_events(
-            array(
-                $path => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'dirs' => array("$path/TEST_DIR1", "$path/test_dir2"),
-                    'events' => array(
-                        "$path/test.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$path/test.php"
+    public function test_individual_paths()
+    {
+        $tests = array(
+            'directory' => 'tests/',
+            'setup' => 'test\\runner\\dir_setup',
+            'teardown' => 'test\\runner\\dir_teardown',
+            'tests' => array(
+                array(
+                    'file' => 'test.php',
+                    'tests' => array(
+                        array('function' => 'dir1_test1', 'namespace' => __NAMESPACE__),
+                        array('function' => 'dir1_test2', 'namespace' => __NAMESPACE__),
+                    ),
+                ),
+                array(
+                    'directory' => 'test_dir1/',
+                    'setup' => 'test\\runner\\dir1_setup',
+                    'teardown' => 'test\\runner\\dir1_teardown',
+                    'tests' => array(
+                        array(
+                            'file' => 'test1.php',
+                            'tests' => array(
+                                array(
+                                    'function' => 'dir1_test1',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                                array(
+                                    'function' => 'dir1_test2',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                            ),
+                        ),
+                        array(
+                            'file' => 'test2.php',
+                            'tests' => array(
+                                array(
+                                    'function' => 'dir1_test3',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                                array(
+                                    'function' => 'dir1_test4',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                            ),
+                        ),
+                        array(
+                            'file' => 'test3.php',
+                            'tests' => array(
+                                array(
+                                    'function' => 'dir1_test5',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                                array(
+                                    'function' => 'dir1_test6',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                            ),
                         ),
                     ),
                 ),
-
-                "$path/TEST_DIR1" => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'parent' => $path,
-                    'events' => array(
-                        "$path/TEST_DIR1/TEST1.PHP" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$path/TEST_DIR1/TEST1.PHP",
+                array(
+                    'directory' => 'test_dir2/',
+                    'setup' => 'test\\runner\\dir2_setup',
+                    'teardown' => 'test\\runner\\dir2_teardown',
+                    'tests' => array(
+                        array(
+                            'file' => 'test.php',
+                            'tests' => array(
+                                array(
+                                    'function' => 'dir2_test1',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                                array(
+                                    'function' => 'dir2_test2',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                            ),
                         ),
-                        "$path/TEST_DIR1/TEST2.PHP" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$path/TEST_DIR1/TEST2.PHP",
+                        array(
+                            'directory' => 'test_subdir/',
+                            'setup' => 'test\\runner\\subdir_setup',
+                            'teardown' => 'test\\runner\\subdir_teardown',
+                            'tests' => array(
+                                array(
+                                    'file' => 'test1.php',
+                                    'tests' => array(
+                                        array(
+                                            'function' => 'subdir_test1',
+                                            'namespace' => __NAMESPACE__,
+                                        ),
+                                        array(
+                                            'function' => 'subdir_test2',
+                                            'namespace' => __NAMESPACE__,
+                                        ),
+                                    ),
+                                ),
+                                array(
+                                    'file' => 'test2.php',
+                                    'tests' => array(
+                                        array(
+                                            'function' => 'subdir_test3',
+                                            'namespace' => __NAMESPACE__,
+                                        ),
+                                        array(
+                                            'function' => 'subdir_test4',
+                                            'namespace' => __NAMESPACE__,
+                                        ),
+                                    ),
+                                ),
+                            ),
                         ),
                     ),
                 ),
-
-                "$path/test_dir2" => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'parent' => $path,
-                    'events' => array(
-                        "$path/test_dir2/test1.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$path/test_dir2/test1.php",
-                        ),
-                        "$path/test_dir2/test2.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$path/test_dir2/test2.php",
+                array(
+                    'directory' => 'test_dir3/',
+                    'setup' => 'test\\runner\\dir3_setup',
+                    'teardown' => 'test\\runner\\dir3_teardown',
+                    'tests' => array(
+                        array(
+                            'file' => 'test.php',
+                            'tests' => array(
+                                array(
+                                    'function' => 'dir3_test1',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                                array(
+                                    'function' => 'dir3_test2',
+                                    'namespace' => __NAMESPACE__,
+                                ),
+                            ),
                         ),
                     ),
                 ),
             ),
-            $context
         );
-    }
-
-
-    public function test_does_not_find_conditionally_nondeclared_tests(strangetest\Context $context) {
-        $this->path .= 'conditional';
-
-        $this->assert_events(
-            array(
-                $this->path => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'events' => array(
-                        'condition\\TestA::test' => array(strangetest\EVENT_PASS , null),
-                        'condition\\TestB::test' => array(strangetest\EVENT_PASS , null),
-                    ),
-                ),
-            ),
-            $context
+        $targets = array(
+            new strangetest\_Target('tests/test_dir1/test2.php'),
+            new strangetest\_Target('tests/test_dir1/test3.php'),
+            new strangetest\_Target('tests/test_dir2/test_subdir/'),
         );
-    }
-
-
-    public function test_individual_paths(strangetest\Context $context) {
-        $root = $this->path . 'test_individual_paths';
-        $this->path = array(
-            "$root/test_dir1/test2.php",
-            "$root/test_dir1/test3.php",
-            "$root/test_dir2/test_subdir",
-        );
-
-        $this->assert_events(
-            array(
-                $root => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'dirs' => array("$root/test_dir1", "$root/test_dir2"),
-                ),
-
-                "$root/test_dir1" => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'parent' => $root,
-                    'events' => array(
-                        "$root/test_dir1/test2.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$root/test_dir1/test2.php",
-                        ),
-                        "$root/test_dir1/test3.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$root/test_dir1/test3.php",
-                        ),
-                    ),
-                ),
-
-                "$root/test_dir2" => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'parent' => $root,
-                    'dirs' => array("$root/test_dir2/test_subdir"),
-                ),
-
-                "$root/test_dir2/test_subdir" => array(
-                    'setup' => 1,
-                    'teardown' => 1,
-                    'parent' => "$root/test_dir2",
-                    'events' => array(
-                        "$root/test_dir2/test_subdir/test1.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$root/test_dir2/test_subdir/test1.php",
-                        ),
-                        "$root/test_dir2/test_subdir/test2.php" => array(
-                            strangetest\EVENT_OUTPUT,
-                            "$root/test_dir2/test_subdir/test2.php",
-                        ),
-                    ),
-                ),
-            ),
-            $context
-        );
-    }
-
-
-    public function test_handles_error_in_setup_file() {
-        $this->path .= 'setup_error';
-
-        // Note that any exception thrown while including a file, including a
-        // skip, is reported as an error
         $expected = array(
-            array(
-                strangetest\EVENT_ERROR,
-                "{$this->path}/setup.php",
-                'Skip me',
-            ),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir_setup', 'dir_setup'),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir1_setup', 'dir1_setup'),
+            array(strangetest\EVENT_PASS, 'test\\runner\\dir1_test3', null),
+            array(strangetest\EVENT_PASS, 'test\\runner\\dir1_test4', null),
+            array(strangetest\EVENT_PASS, 'test\\runner\\dir1_test5', null),
+            array(strangetest\EVENT_PASS, 'test\\runner\\dir1_test6', null),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir1_teardown', 'dir1_teardown'),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir2_setup', 'dir2_setup'),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\subdir_setup', 'subdir_setup'),
+            array(strangetest\EVENT_PASS, 'test\\runner\\subdir_test1', null),
+            array(strangetest\EVENT_PASS, 'test\\runner\\subdir_test2', null),
+            array(strangetest\EVENT_PASS, 'test\\runner\\subdir_test3', null),
+            array(strangetest\EVENT_PASS, 'test\\runner\\subdir_test4', null),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\subdir_teardown', 'subdir_teardown'),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir2_teardown', 'dir2_teardown'),
+            array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir_teardown', 'dir_teardown'),
         );
-        $this->assert_log($expected);
-    }
 
+        $this->assert_run($tests, $targets, $expected);
+    }
 
     public function test_handles_error_in_setup_directory() {
         $this->path .= 'setup_directory_error';
@@ -473,26 +518,6 @@ class TestDirectories {
             ),
         );
         $this->assert_events($expected, $context);
-    }
-
-
-    public function test_reports_error_for_multiple_directory_fixtures() {
-        $this->path .= 'multiple_fixtures';
-        $path = $this->path;
-
-        $expected = array(
-            array(
-                strangetest\EVENT_ERROR,
-                "$path/setup.php",
-                "Multiple conflicting fixtures found:\n    1) setup_directory_multiple_fixtures\n    2) SetupDirectoryMultipleFixtures",
-            ),
-            array(
-                strangetest\EVENT_ERROR,
-                "$path/setup.php",
-                "Multiple conflicting fixtures found:\n    1) teardown_directory_multiple_fixtures\n    2) TeardownDirectoryMultipleFixtures",
-            ),
-        );
-        $this->assert_log($expected);
     }
 
 
@@ -1034,3 +1059,76 @@ class TestDirectories {
         $this->assert_log($expected);
     }
 }
+
+
+
+function dir_setup()
+{
+    echo 'dir_setup';
+}
+
+function dir_teardown()
+{
+    echo 'dir_teardown';
+}
+
+function dir1_setup()
+{
+    echo 'dir1_setup';
+}
+
+function dir1_teardown()
+{
+    echo 'dir1_teardown';
+}
+
+function dir2_setup()
+{
+    echo 'dir2_setup';
+}
+
+function dir2_teardown()
+{
+    echo 'dir2_teardown';
+}
+
+function dir3_setup()
+{
+    echo 'dir3_setup';
+}
+
+function dir3_teardown()
+{
+    echo 'dir3_teardown';
+}
+
+function subdir_setup()
+{
+    echo 'subdir_setup';
+}
+
+function subdir_teardown()
+{
+    echo 'subdir_teardown';
+}
+
+function dir_test1() {}
+function dir_test2() {}
+
+function dir1_test1() {}
+function dir1_test2() {}
+function dir1_test3() {}
+function dir1_test4() {}
+function dir1_test5() {}
+function dir1_test6() {}
+
+function dir2_test1() {}
+function dir2_test2() {}
+
+function subdir_test1() {}
+function subdir_test2() {}
+function subdir_test3() {}
+function subdir_test4() {}
+
+function dir3_test1() {}
+function dir3_test2() {}

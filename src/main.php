@@ -185,15 +185,6 @@ final class State extends struct {
     /** @var array<string, true> */
     public $seen = array();
 
-    /** @var array<string, DirectoryTest|false> */
-    public $directories = array();
-
-    /** @var array<string, FileTest|false> */
-    public $files = array();
-
-    /** @var array<string, ClassTest|false> */
-    public $classes = array();
-
     /** @var array<string, array{'group': int, 'runs': bool[]}> */
     public $results = array();
 
@@ -233,16 +224,21 @@ function main($argc, $argv)
         }
         exit(namespace\EXIT_FAILURE);
     }
+    \assert(\is_string($root));
 
     $logger = new BasicLogger($options['verbose']);
+    $buffering = new BufferingLogger(new LiveUpdatingLogger($logger));
+    $state = new State();
+
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-    namespace\discover_tests(
-        new BufferingLogger(new LiveUpdatingLogger($logger)),
-        $root, $targets
-    );
-    $end = namespace\_microtime();
 
+    $tests = namespace\discover_directory($state, $buffering, $root, 0);
+    if ($tests)
+    {
+        namespace\run_tests($state, $buffering, $tests, $targets);
+    }
+    $end = namespace\_microtime();
 
     $log = $logger->get_log();
     $log->megabytes_used = \round(\memory_get_peak_usage() / 1048576, 3);

@@ -245,19 +245,11 @@ function _format_exception_string($format, $message, $file, $line, $trace)
         }
         if ( __DIR__ === \dirname($frame['file']))
         {
-            // We don't want to walk the entire call stack, because Dr.
-            // Strangetest's entry point is probably outside the src directory,
-            // and we don't want to erroneously show that as a client call. We
-            // need a checkpoint so, once we hit it, we know we can't be in
-            // client code anymore. It seems "discover_tests" is the lowest we
-            // can set that checkpoint, as clients can throw exceptions in a
-            // variety of places (e.g., setup fixtures) all of which are
-            // subsumed by discover_tests
-            if ('strangetest\\discover_tests' === $frame['function'])
-            {
-                break;
-            }
             continue;
+        }
+        if ('strangetest\\main' === $frame['function'])
+        {
+            break;
         }
 
         $callee = $frame['function'];

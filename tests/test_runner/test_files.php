@@ -15,27 +15,33 @@ use strangetest\Logger;
 use strangetest\State;
 
 
-class TestFiles {
+class TestFiles
+{
     private $logger;
     private $path;
 
 
     public function setup() {
-        $this->path = __DIR__ . '/sample_files/files/';
+        $this->path = __DIR__ . '/resources/files/';
         $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
     }
 
 
     // helper assertions
 
-    private function assert_events($expected) {
+    private function assert_events($expected)
+    {
         list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
         strangetest\assert_falsy($errors);
 
-        strangetest\discover_tests(
-            new strangetest\BufferingLogger($this->logger),
-            $root, $targets
-        );
+        $state = new State;
+        $logger = new BufferingLogger($this->logger);
+        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        if ($tests)
+        {
+            strangetest\run_tests($state, $logger, $tests, $targets);
+        }
+
         assert_events($expected, $this->logger);
     }
 
@@ -419,14 +425,14 @@ class TestFiles {
         $this->path .= 'multiple_object_fixtures/test.php';
 
         $this->assert_events(array(
+            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) setup_object\n    2) SetUpObject"),
+            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) teardown_object\n    2) TearDownObject"),
+
             array(strangetest\EVENT_OUTPUT, 'multiple_object_fixtures\\setup_file', '.'),
 
             array(strangetest\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_one', '.'),
             array(strangetest\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_one', '.'),
             array(strangetest\EVENT_PASS, 'multiple_object_fixtures\\test_one', null),
-
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) setup_object\n    2) SetUpObject"),
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) teardown_object\n    2) TearDownObject"),
 
             array(strangetest\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_two', '.'),
             array(strangetest\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_two', '.'),
@@ -761,7 +767,7 @@ class TestFiles {
 
 function filepath($name) {
     $ds = \DIRECTORY_SEPARATOR;
-    return  __DIR__ . "{$ds}support{$ds}{$name}";
+    return  __DIR__ . "{$ds}resources{$ds}files{$ds}{$name}";
 }
 
 

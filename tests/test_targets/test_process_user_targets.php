@@ -83,7 +83,7 @@ function test_uses_cwd_as_default_target(Context $context) {
 
 
 function test_processes_paths_as_path_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', 'test2.php', 'test_dir');
 
     namespace\set_cwd($context, $root);
@@ -102,7 +102,7 @@ function test_processes_paths_as_path_targets(Context $context) {
 
 
 function test_processes_path_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $paths = array('test1.php', 'test2.php', 'test_dir');
     $args = array();
     foreach ($paths as $path) {
@@ -125,7 +125,7 @@ function test_processes_path_targets(Context $context) {
 
 
 function test_processes_function_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--function=foo,bar');
 
     namespace\set_cwd($context, $root);
@@ -151,7 +151,7 @@ function test_processes_function_targets(Context $context) {
 
 
 function test_processes_class_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--class=foo;bar');
 
     namespace\set_cwd($context, $root);
@@ -177,7 +177,7 @@ function test_processes_class_targets(Context $context) {
 
 
 function test_processes_method_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--class=foo::one,two;bar::one,two');
 
     namespace\set_cwd($context, $root);
@@ -221,7 +221,7 @@ function test_processes_method_targets(Context $context) {
 
 
 function test_eliminates_duplicate_function_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--function=one,two', '--function=two,three');
 
     namespace\set_cwd($context, $root);
@@ -251,7 +251,7 @@ function test_eliminates_duplicate_function_targets(Context $context) {
 
 
 function test_eliminates_duplicate_method_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         '--class=foo;bar::one,two',
@@ -295,7 +295,7 @@ function test_eliminates_duplicate_method_targets(Context $context) {
 
 
 function test_overrides_method_targets_with_class_target(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         '--class=foo::one,two',
@@ -332,7 +332,7 @@ function test_overrides_method_targets_with_class_target(Context $context) {
 
 
 function test_eliminates_duplicate_targets_in_file(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         'test2.php',
@@ -359,7 +359,7 @@ function test_eliminates_duplicate_targets_in_file(Context $context) {
 
 
 function test_overrides_targets_in_file_with_file_target(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         '--class=foo::one,two',
@@ -389,7 +389,7 @@ function test_overrides_targets_in_file_with_file_target(Context $context) {
 
 
 function test_eliminates_duplicate_path_targets(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test2.php',
         'test1.php',
@@ -427,7 +427,7 @@ function test_eliminates_duplicate_path_targets(Context $context) {
 
 
 function test_reports_error_for_nonexistent_paths(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'foo.php',
         'test1.php',
@@ -445,7 +445,7 @@ function test_reports_error_for_nonexistent_paths(Context $context) {
 
 
 function test_reports_error_for_missing_function_name(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         '--function=',
@@ -465,7 +465,7 @@ function test_reports_error_for_missing_function_name(Context $context) {
 
 
 function test_reports_error_for_missing_class_name(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         '--class=',
@@ -489,7 +489,7 @@ function test_reports_error_for_missing_class_name(Context $context) {
 
 
 function test_reports_error_for_missing_method_name(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array(
         'test1.php',
         '--class=one::',
@@ -509,7 +509,7 @@ function test_reports_error_for_missing_method_name(Context $context) {
 
 
 function test_determines_correct_test_root_from_directory(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test_dir/test_subdir', 'test_dir1');
 
     namespace\set_cwd($context, $root);
@@ -525,7 +525,7 @@ function test_determines_correct_test_root_from_directory(Context $context) {
 
 
 function test_determines_correct_test_root_from_file(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test_dir1/test2.php', 'test1.php');
 
     namespace\set_cwd($context, $root);
@@ -541,7 +541,7 @@ function test_determines_correct_test_root_from_file(Context $context) {
 
 
 function test_reports_error_for_path_outside_test_root(Context $context) {
-    $root = \sprintf('%1$s%2$stargets%2$s', __DIR__, \DIRECTORY_SEPARATOR);
+    $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', __FILE__);
 
     namespace\set_cwd($context, $root);

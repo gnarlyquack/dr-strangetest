@@ -27,16 +27,6 @@ final class TestInfo extends struct {
 
 
 final class RunFixture extends struct {
-    // @todo Remove $group from RunFixture
-    // If we first discovered all tests before running them, we could just keep
-    // track of run groups during the discovery process and assign each test to
-    // its appropriate group. However, since we immediately run tests after
-    // discovering them, we need to keep track of the group during run time so
-    // we can assign it to new tests upon discovering them. This is all a bit
-    // janky though, because we're potentially "discovering" tests multiple
-    // times (once per run) when this could be initially done just once.
-    /** @var int */
-    public $group;
     /** @var int */
     public $id;
     /** @var string */
@@ -64,7 +54,7 @@ final class DirectoryTest extends struct {
     /** @var RunFixture[] */
     public $runs = array();
 
-    /** @var array<string, int> */
+    /** @var array<string, DirectoryTest|FileTest> */
     public $tests;
 }
 
@@ -81,17 +71,8 @@ final class FileTest extends struct {
 
     /** @var RunFixture[] */
     public $runs;
-    /** @var TestInfo[] */
+    /** @var array<string, ClassTest|FunctionTest> */
     public $tests;
-
-    /** @var ?callable */
-    public $setup_function;
-    /** @var ?string */
-    public $setup_function_name;
-    /** @var ?callable */
-    public $teardown_function;
-    /** @var ?string */
-    public $teardown_function_name;
 }
 
 
@@ -112,11 +93,7 @@ final class ClassTest extends struct {
     /** @var ?string */
     public $teardown;
 
-    /** @var ?string */
-    public $setup_function;
-    /** @var ?string */
-    public $teardown_function;
-    /** @var string[] */
+    /** @var array<string, FunctionTest> */
     public $tests = array();
 }
 

@@ -12,7 +12,7 @@ class TestDependencies {
 
 
     public function setup() {
-        $this->path = __DIR__ . '/sample_files/dependencies/';
+        $this->path = __DIR__ . '/resources/dependencies/';
         $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
     }
 
@@ -23,10 +23,12 @@ class TestDependencies {
         list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
         strangetest\assert_falsy($errors);
 
-        strangetest\discover_tests(
-            new strangetest\BufferingLogger($this->logger),
-            $root, $targets
-        );
+        $state = new strangetest\State;
+        $logger = new strangetest\BufferingLogger($this->logger);
+        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        strangetest\assert_truthy($tests);
+        strangetest\run_tests($state, $logger, $tests, $targets);
+
         assert_events($expected, $this->logger);
     }
 

@@ -16,14 +16,9 @@ parameters:
 			path: src/exceptions.php
 
 		-
-			message: "#^Parameter \\#2 \\$dirpath of function strangetest\\\\discover_tests expects string, string\\|null given\\.$#"
+			message: "#^Property strangetest\\\\FunctionTest\\:\\:\\$test \\(callable\\(\\.\\.\\.mixed\\)\\: void\\) does not accept null\\.$#"
 			count: 1
-			path: src/main.php
-
-		-
-			message: "#^Parameter \\#3 \\$targets of function strangetest\\\\discover_tests expects array\\<strangetest\\\\Target\\>, array\\<strangetest\\\\Target\\>\\|null given\\.$#"
-			count: 1
-			path: src/main.php
+			path: src/run.php
 
 		-
 			message: "#^Parameter \\#3 \\$m of class strangetest\\\\_Edit constructor expects array\\<int, array\\<int\\>\\>, array\\<int, array\\<int, float\\|int\\>\\> given\\.$#"

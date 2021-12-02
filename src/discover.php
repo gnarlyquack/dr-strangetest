@@ -9,45 +9,13 @@ namespace strangetest;
 
 
 /**
- * @param string $dirpath
- * @param Target[] $targets
- * @return void
- */
-function discover_tests(BufferingLogger $logger, $dirpath, array $targets)
-{
-    $state = new State();
-    $directory = namespace\discover_directory($state, $logger, $dirpath, 0);
-    if (!$directory)
-    {
-        return;
-    }
-
-    namespace\run_directory_tests($state, $logger, $directory, array(0), null, $targets);
-    while ($state->depends)
-    {
-        $dependencies = namespace\resolve_dependencies($state, $logger);
-        if (!$dependencies)
-        {
-            break;
-        }
-        $targets = namespace\build_targets_from_dependencies($dependencies);
-        $state->depends = array();
-        namespace\run_directory_tests($state, $logger, $directory, array(0), null, $targets);
-    }
-}
-
-
-/**
  * @param string $path
  * @param int $group
  * @return DirectoryTest|false
  */
 function discover_directory(State $state, BufferingLogger $logger, $path, $group)
 {
-    if (isset($state->directories[$path]))
-    {
-        return $state->directories[$path];
-    }
+    \assert(\DIRECTORY_SEPARATOR === \substr($path, -1));
 
     $tests = array();
     $setup = array();
@@ -99,15 +67,46 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
         $directory = new DirectoryTest;
         $directory->name = $path;
         $directory->group = $group;
-        $directory->tests = $tests;
-        if ($setup)
+        if (!$setup
+            || namespace\_discover_directory_setup($state, $logger, $directory, $setup[0]))
         {
-            $directory = namespace\_discover_directory_setup(
-                $state, $logger, $directory, $setup[0], $group);
+            if ($directory->runs)
+            {
+                $group = namespace\_new_run_group($state, $group);
+            }
+
+            foreach ($tests as $name => $type)
+            {
+                if (namespace\TYPE_DIRECTORY === $type)
+                {
+                    $test = namespace\discover_directory($state, $logger, $name, $group);
+                }
+                elseif (namespace\TYPE_FILE === $type)
+                {
+                    $test = namespace\discover_file($state, $logger, $name, $group);
+                }
+                else
+                {
+                    throw new \Exception("Unknown directory test type: {$type}");
+                }
+
+                if ($test)
+                {
+                    $directory->tests[$name] = $test;
+                }
+            }
+
+            if (!$directory->tests)
+            {
+                $directory = false;
+            }
+        }
+        else
+        {
+            $directory = false;
         }
     }
 
-    $state->directories[$path] = $directory;
     return $directory;
 }
 
@@ -119,11 +118,6 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
  */
 function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
 {
-    if (isset($state->files[$filepath]))
-    {
-        return $state->files[$filepath];
-    }
-
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)
     {
@@ -338,7 +332,7 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
         }
     }
 
-    $output['runs'] = namespace\_validate_runs($state, $logger, $filepath, $group, $input['runs']);
+    $output['runs'] = namespace\_validate_runs($state, $logger, $filepath, $input['runs']);
 
     if ($input['tests'])
     {
@@ -356,17 +350,58 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
         $file = new FileTest;
         $file->name = $filepath;
         $file->group = $group;
-        $file->tests = $output['tests'];
-        $file->setup_function = $output['setup_function'];
-        $file->setup_function_name = $output['setup_function_name'];
-        $file->teardown_function = $output['teardown_function'];
-        $file->teardown_function_name = $output['teardown_function_name'];
         $file->setup = $output['setup_file'];
         $file->teardown = $output['teardown_file'];
         $file->runs = $output['runs'];
+
+        if ($file->runs)
+        {
+            $group = namespace\_new_run_group($state, $group);
+        }
+        foreach ($output['tests'] as $name => $info)
+        {
+            if (namespace\TYPE_CLASS === $info->type)
+            {
+                $test = namespace\discover_class($state, $logger, $info, $group);
+            }
+            elseif (namespace\TYPE_FUNCTION === $info->type)
+            {
+                $test = new FunctionTest();
+                $test->group = $group;
+                $test->file = $info->filename;
+                $test->namespace = $info->namespace;
+                $test->function = $info->name;
+                $test->name = $info->name;
+                \assert(\is_callable($info->name));
+                $test->test = $info->name;
+                if ($output['setup_function'])
+                {
+                    $test->setup_name = $output['setup_function_name'];
+                    $test->setup = $output['setup_function'];
+                }
+                if ($output['teardown_function'])
+                {
+                    $test->teardown_name = $output['teardown_function_name'];
+                    $test->teardown = $output['teardown_function'];
+                }
+            }
+            else
+            {
+                throw new \Exception("Unknown file test type {$info->type}");
+            }
+
+            if ($test)
+            {
+                $file->tests[$name] = $test;
+            }
+        }
+
+        if (!$file->tests)
+        {
+            $file = false;
+        }
     }
 
-    $state->files[$filepath] = $file;
     return $file;
 }
 
@@ -379,10 +414,6 @@ function discover_class(State $state, Logger $logger, TestInfo $info, $group)
 {
     $classname = $info->name;
     \assert(\class_exists($classname));
-    if (isset($state->classes[$classname]))
-    {
-        return $state->classes[$classname];
-    }
 
     $tests = array();
     $setup_object = array();
@@ -448,14 +479,31 @@ function discover_class(State $state, Logger $logger, TestInfo $info, $group)
         $class->file = $info->filename;
         $class->namespace = $info->namespace;
         $class->name = $classname;
-        $class->tests = $tests;
         $class->setup = $setup_object ? $setup_object[0] : null;
         $class->teardown = $teardown_object ? $teardown_object[0] : null;
-        $class->setup_function = $setup_function;
-        $class->teardown_function = $teardown_function;
+
+        foreach ($tests as $name)
+        {
+            $test = new FunctionTest();
+            $test->group = $group;
+            $test->file = $class->file;
+            $test->namespace = $class->namespace;
+            $test->class = $class->name;
+            $test->function = $name;
+            $test->name = "{$class->name}::{$name}";
+            if ($setup_function)
+            {
+                $test->setup_name = $setup_function;
+            }
+            if ($teardown_function)
+            {
+                $test->teardown_name = $teardown_function;
+            }
+
+            $class->tests[$name] = $test;
+        }
     }
 
-    $state->classes[$classname] = $class;
     return $class;
 }
 
@@ -465,12 +513,11 @@ function discover_class(State $state, Logger $logger, TestInfo $info, $group)
  * @param BufferingLogger $logger
  * @param DirectoryTest $directory
  * @param string $filepath
- * @param int $group
- * @return DirectoryTest|false
+ * @return bool
  */
 function _discover_directory_setup(
     State $state, BufferingLogger $logger,
-    DirectoryTest $directory, $filepath, $group)
+    DirectoryTest $directory, $filepath)
 {
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)
@@ -575,8 +622,9 @@ function _discover_directory_setup(
         }
     }
 
+    // @fixme $valid is set above but never checked. Presumably this should happen here?
     $output = array(
-        'runs'=> namespace\_validate_runs($state, $logger, $filepath, $group, $input['runs']),
+        'runs'=> namespace\_validate_runs($state, $logger, $filepath, $input['runs']),
         'setup_directory' => namespace\_validate_fixture($logger, $filepath, $input['setup_directory']),
         'teardown_directory' => namespace\_validate_fixture($logger, $filepath, $input['teardown_directory']),
     );
@@ -588,7 +636,7 @@ function _discover_directory_setup(
         $directory->runs = $output['runs'];
         $directory->setup = $output['setup_directory'];
         $directory->teardown = $output['teardown_directory'];
-        return $directory;
+        return true;
     }
     else
     {
@@ -626,19 +674,17 @@ function _validate_fixture(BufferingLogger $logger, $filepath, $fixtures)
  * @param State $state
  * @param BufferingLogger $logger
  * @param string $filepath
- * @param int $group
  * @param array{'name'?: string,
  *              'setup'?: callable-string[],
  *              'teardown'?: callable-string[]}[] $runs
  * @return false|RunFixture[]
  */
-function _validate_runs(State $state, BufferingLogger $logger, $filepath, $group, $runs)
+function _validate_runs(State $state, BufferingLogger $logger, $filepath, $runs)
 {
     $valid = true;
     $result = array();
     if ($runs)
     {
-        $group = namespace\_new_run_group($state, $group);
         foreach ($runs as $run_info)
         {
             $teardown = null;
@@ -677,7 +723,7 @@ function _validate_runs(State $state, BufferingLogger $logger, $filepath, $group
                 {
                     $result[] = namespace\_new_run(
                         $state,
-                        $run_info['name'], $run_info['setup'][0], $teardown, $group);
+                        $run_info['name'], $run_info['setup'][0], $teardown);
                 }
             }
         }
@@ -706,13 +752,11 @@ function _new_run_group(State $state, $parent_group_id)
  * @param string $name
  * @param callable-string $setup
  * @param ?callable-string $teardown
- * @param int $group
  * @return RunFixture
  */
-function _new_run(State $state, $name, $setup, $teardown, $group)
+function _new_run(State $state, $name, $setup, $teardown)
 {
     $run = new RunFixture;
-    $run->group = $group;
     $run->id = \count($state->runs) + 1;
     $run->name = $name;
     $run->setup = $setup;

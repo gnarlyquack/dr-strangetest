@@ -67,7 +67,7 @@ function test_directory_targets(Context $context) {
 
     $state = new State();
     $logger = new BasicLogger(true);
-    $path = __DIR__ . "{$ds}targets{$ds}";
+    $path = __DIR__ . "{$ds}resources{$ds}";
     $test = strangetest\discover_directory($state, new BufferingLogger($logger), $path, 0);
     strangetest\assert_falsy($logger->get_log()->get_events(), 'Errors during directory discovery');
 

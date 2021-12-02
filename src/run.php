@@ -226,12 +226,34 @@ function _run_directory_setup(
 
 
 /**
+ * @param ?Target[] $targets
+ * @return void
+ */
+function run_tests(
+    State $state, BufferingLogger $logger, DirectoryTest $tests, array $targets = null)
+{
+    namespace\_run_directory_tests($state, $logger, $tests, array(0), null, $targets);
+    while ($state->depends)
+    {
+        $dependencies = namespace\resolve_dependencies($state, $logger);
+        if (!$dependencies)
+        {
+            break;
+        }
+        $targets = namespace\build_targets_from_dependencies($dependencies);
+        $state->depends = array();
+        namespace\_run_directory_tests($state, $logger, $tests, array(0), null, $targets);
+    }
+}
+
+
+/**
  * @param int[] $run
  * @param ?mixed[] $args
  * @param ?Target[] $targets
  * @return void
  */
-function run_directory_tests(
+function _run_directory_tests(
     State $state, BufferingLogger $logger, DirectoryTest $directory,
     array $run, array $args = null, array $targets = null)
 {
@@ -349,38 +371,28 @@ function _run_directory(
 
 
 /**
- * @param string $test
+ * @param string $name
  * @param int[] $run
  * @param ?mixed[] $arglist
  * @param ?Target[] $targets
  * @return void
  */
 function _run_directory_test(
-    State $state, BufferingLogger $logger, DirectoryTest $directory, $test,
+    State $state, BufferingLogger $logger, DirectoryTest $directory, $name,
     array $run, $arglist = null, array $targets = null)
 {
-    $group = namespace\_get_current_group($state, $run);
-    $type = $directory->tests[$test];
-    switch ($type)
+    $test = $directory->tests[$name];
+    if ($test instanceof DirectoryTest)
     {
-        case namespace\TYPE_DIRECTORY:
-            $test = namespace\discover_directory($state, $logger, $test, $group);
-            if ($test)
-            {
-                namespace\run_directory_tests($state, $logger, $test, $run, $arglist, $targets);
-            }
-            break;
-
-        case namespace\TYPE_FILE:
-            $test = namespace\discover_file($state, $logger, $test, $group);
-            if ($test)
-            {
-                namespace\_run_file_tests($state, $logger, $test, $run, $arglist, $targets);
-            }
-            break;
-
-        default:
-            throw new \Exception("Unkown directory test type: {$type}");
+        namespace\_run_directory_tests($state, $logger, $test, $run, $arglist, $targets);
+    }
+    elseif ($test instanceof FileTest)
+    {
+        namespace\_run_file_tests($state, $logger, $test, $run, $arglist, $targets);
+    }
+    else
+    {
+        throw new \Exception("Unknown directory test {$test}");
     }
 }
 
@@ -553,55 +565,29 @@ function _run_file(
 
 
 /**
- * @param string $test
+ * @param string $name
  * @param int[] $run
  * @param ?mixed[] $arglist
  * @param ?Target[] $targets
  * @return void
  */
 function _run_file_test(
-    State $state, BufferingLogger $logger, FileTest $file, $test,
+    State $state, BufferingLogger $logger, FileTest $file, $name,
     array $run, $arglist = null, array $targets = null)
 {
-    $group = namespace\_get_current_group($state, $run);
-    $info = $file->tests[$test];
-    switch ($info->type)
+    $test = $file->tests[$name];
+    if ($test instanceof ClassTest)
     {
-        case namespace\TYPE_CLASS:
-            $test = namespace\discover_class($state, $logger, $info, $group);
-            if ($test)
-            {
-                namespace\_run_class_tests($state, $logger, $test, $run, $arglist, $targets);
-            }
-            break;
-
-        case namespace\TYPE_FUNCTION:
-            $test = new FunctionTest();
-            $test->group = $group;
-            $test->file = $info->filename;
-            $test->namespace = $info->namespace;
-            $test->function = $info->name;
-            $test->name = $info->name;
-            \assert(\is_callable($info->name));
-            $test->test = $info->name;
-            if ($file->setup_function)
-            {
-                $test->setup_name = $file->setup_function_name;
-                $test->setup = $file->setup_function;
-            }
-            if ($file->teardown_function)
-            {
-                $test->teardown_name = $file->teardown_function_name;
-                $test->teardown = $file->teardown_function;
-            }
-            \assert(!$targets);
-            namespace\_run_function_test($state, $logger, $test, $run, $arglist);
-            break;
-
-        default:
-            throw new \Exception("Unknown file test type {$info->type}");
+        namespace\_run_class_tests($state, $logger, $test, $run, $arglist, $targets);
     }
-
+    elseif ($test instanceof FunctionTest)
+    {
+        namespace\_run_function_test($state, $logger, $test, $run, $arglist);
+    }
+    else
+    {
+        throw new \Exception("Unknown file test {$test}");
+    }
 }
 
 
@@ -684,19 +670,21 @@ function _run_class_tests(
     {
         return;
     }
+    \assert(\is_object($class->object));
 
     if ($targets)
     {
-        foreach ($targets as $test)
+        foreach ($targets as $name)
         {
-            namespace\_run_class_test($state, $logger, $class, $test, $run);
+            $test = $class->tests[$name];
+            namespace\_run_class_test($state, $logger, $class->object, $test, $run);
         }
     }
     else
     {
         foreach ($class->tests as $test)
         {
-            namespace\_run_class_test($state, $logger, $class, $test, $run);
+            namespace\_run_class_test($state, $logger, $class->object, $test, $run);
         }
     }
 
@@ -705,38 +693,32 @@ function _run_class_tests(
 
 
 /**
- * @param string $method
+ * @param object $object
  * @param int[] $run
  * @return void
  */
 function _run_class_test(
-    State $state, BufferingLogger $logger, ClassTest $class, $method, array $run)
+    State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
 {
-    $test = new FunctionTest();
-    $test->group = namespace\_get_current_group($state, $run);
-    $test->file = $class->file;
-    $test->namespace = $class->namespace;
-    $test->class = $class->name;
-    $test->function =  $method;
-    $test->name = "{$class->name}::{$method}";
-    $method = array($class->object, $method);
+    $method = array($object, $test->function);
     \assert(\is_callable($method));
     $test->test = $method;
-    if ($class->setup_function)
+    if ($test->setup_name)
     {
-        $method = array($class->object, $class->setup_function);
+        $method = array($object, $test->setup_name);
         \assert(\is_callable($method));
         $test->setup = $method;
-        $test->setup_name = $class->setup_function;
     }
-    if ($class->teardown_function)
+    if ($test->teardown_name)
     {
-        $method = array($class->object, $class->teardown_function);
+        $method = array($object, $test->teardown_name);
         \assert(\is_callable($method));
         $test->teardown = $method;
-        $test->teardown_name = $class->teardown_function;
     }
     namespace\_run_function_test($state, $logger, $test, $run, null);
+
+    // Release reference to $object
+    $test->test = $test->setup = $test->teardown = null;
 }
 
 
@@ -833,6 +815,11 @@ function _run_function_test(
 {
     $run_name = namespace\_get_run_name($state, $run);
 
+    // @todo Ensure function setup works properly for methods
+    // Setup methods shouldn't return arguments, and it looks like we just
+    // assume this is the case here. If they do return something, then we
+    // should ignore it (or potentially raise an error). Perhaps we should just
+    // handle methods and functions separately?
     list($result, $argset) = namespace\_run_function_setup($logger, $test, $arglist, $run_name);
     if (namespace\RESULT_PASS !== $result)
     {
@@ -1083,23 +1070,4 @@ function _get_run_name(State $state, array $run)
         $result = '';
     }
     return $result;
-}
-
-
-/**
- * @param int[] $run
- * @return int
- */
-function _get_current_group(State $state, array $run)
-{
-    $id = \end($run);
-    if ($id)
-    {
-        $group = $state->runs[$id - 1]->group;
-    }
-    else
-    {
-        $group = 0;
-    }
-    return $group;
 }
