@@ -63,22 +63,22 @@ final class _Target extends struct implements Target {
 
 
 /**
+ * @param string $root
  * @param string[] $args
  * @param string[] $errors
- * @return array{?string, ?Target[]}
+ * @return ?Target[]
  */
-function process_user_targets(array $args, &$errors)
+function process_user_targets($root, array $args, &$errors)
 {
+    \assert(\DIRECTORY_SEPARATOR === \substr($root, -1));
+
     if (!$args)
     {
-        $cwd = \getcwd();
-        // @todo What should we do if getcwd() fails?
-        \assert(\is_string($cwd));
-        $args[] = $cwd;
+        $args[] = $root;
     }
     $errors = array();
 
-    $root = $file = $subtarget_count = null;
+    $file = $subtarget_count = null;
     $targets = array();
     foreach ($args as $arg)
     {
@@ -152,7 +152,7 @@ function process_user_targets(array $args, &$errors)
 
     if ($errors)
     {
-        return array(null, null);
+        return null;
     }
 
     $keys = \array_keys($targets);
@@ -179,7 +179,7 @@ function process_user_targets(array $args, &$errors)
             $key = \next($keys);
         }
     }
-    return array($root, $targets);
+    return $targets;
 }
 
 
@@ -285,19 +285,28 @@ function _process_function_target(array &$targets, $functions, array &$errors)
 
 /**
  * @param _Target[] $targets
- * @param ?string $root
+ * @param string $root
  * @param string $path
  * @param string[] $errors
  * @return array{?string, ?int}
  */
-function _process_path_target(array &$targets, &$root, $path, array &$errors)
+function _process_path_target(array &$targets, $root, $path, array &$errors)
 {
+    if (\DIRECTORY_SEPARATOR !== \substr($path, 0, 1))
+    {
+        $path = $root . $path;
+    }
     $realpath = \realpath($path);
     $file = null;
     if (!$realpath)
     {
         $errors[] = "Path '$path' does not exist";
         return array(null, null);
+    }
+    elseif (\is_dir($realpath))
+    {
+        \assert(\DIRECTORY_SEPARATOR !== \substr($realpath, -1));
+        $realpath .= \DIRECTORY_SEPARATOR;
     }
 
     if (isset($targets[$realpath]))
@@ -309,53 +318,19 @@ function _process_path_target(array &$targets, &$root, $path, array &$errors)
         return array($realpath, \count($targets[$realpath]->subtargets));
     }
 
-    if (!isset($root))
-    {
-        $root = namespace\_determine_test_root($realpath);
-    }
-    elseif (0 !== \substr_compare($realpath, $root, 0, \strlen($root)))
+    if (0 !== \substr_compare($realpath, $root, 0, \strlen($root)))
     {
         $errors[] = "Path '$path' is outside the test root directory '$root'";
         return array(null, null);
     }
 
-    if (\is_dir($realpath))
-    {
-        $realpath .= \DIRECTORY_SEPARATOR;
-    }
-    else
+    if (!\is_dir($realpath))
     {
         $file = $realpath;
     }
 
     $targets[$realpath] = new _Target($realpath);
     return array($file, -1);
-}
-
-
-/**
- * @todo Just use the current working directory instead of finding a test root
- * @param string $path
- * @return string
- */
-function _determine_test_root($path)
-{
-    // The test root directory is the first directory above $path whose
-    // case-insensitive name does not begin with 'test'. If $path is a
-    // directory, this could be $path itself. This is done to ensure that
-    // directory fixtures are properly discovered when testing individual
-    // subpaths within a test suite; discovery will begin at the root directory
-    // and descend towards the specified path.
-    if (!\is_dir($path))
-    {
-        $path = \dirname($path);
-    }
-
-    while (0 === \substr_compare(\basename($path), 'test', 0, 4, true))
-    {
-        $path = \dirname($path);
-    }
-    return $path . \DIRECTORY_SEPARATOR;
 }
 
 

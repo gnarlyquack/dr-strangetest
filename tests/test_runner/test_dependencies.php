@@ -8,11 +8,13 @@
 
 class TestDependencies {
     private $logger;
+    private $root;
     private $path;
 
 
     public function setup() {
-        $this->path = __DIR__ . '/resources/dependencies/';
+        $this->root = __DIR__ . '/resources/dependencies/';
+        $this->path = '';
         $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
     }
 
@@ -20,7 +22,8 @@ class TestDependencies {
     // helper assertions
 
     private function assert_events($expected) {
-        list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
+        $root = $this->root;
+        $targets = strangetest\process_user_targets($root, array(), $errors);
         strangetest\assert_falsy($errors);
 
         $state = new strangetest\State;
@@ -36,7 +39,8 @@ class TestDependencies {
     // tests
 
     public function test_tests_are_run_in_order_of_dependencies() {
-        $this->path .= 'depends_pass/test.php';
+        $this->root .= 'depends_pass/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'depends_pass\\test_one', null),
@@ -52,7 +56,8 @@ class TestDependencies {
 
 
     public function test_tests_are_skipped_if_depending_on_a_failed_test() {
-        $this->path .= 'depends_fail/test.php';
+        $this->root .= 'depends_fail/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_FAIL, 'depends_fail\\test_one', 'I fail'),
@@ -68,7 +73,8 @@ class TestDependencies {
 
 
     public function test_dependencies_resolve_to_correct_test_run() {
-        $this->path .= 'depends_params/test.php';
+        $this->root .= 'depends_params/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'depends_params\\test_one (0)', null),
@@ -103,7 +109,8 @@ class TestDependencies {
 
 
     public function test_dependee_tests_that_are_never_run_is_an_error() {
-        $this->path .= 'unrun_depends/test.php';
+        $this->root .= 'unrun_depends/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test_five', 'Skip me'),
@@ -131,8 +138,8 @@ class TestDependencies {
 
 
     public function test_cyclical_dependencies_are_an_error() {
-        $this->path .= 'cyclical_depends/test.php';
-
+        $this->root .= 'cyclical_depends/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_ERROR, 'cyclical_depends\\test_five', "This test has a cyclical dependency with the following tests:\n\tcyclical_depends\\test_four\n\tcyclical_depends\\test_three"),
@@ -151,7 +158,8 @@ class TestDependencies {
 
 
     public function test_multiple_dependencies_can_be_declared() {
-        $this->path .= 'multiple_depends/test.php';
+        $this->root .= 'multiple_depends/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'multiple_depends\\test_seven', null),
@@ -178,7 +186,8 @@ class TestDependencies {
 
 
     public function test_multiple_dependencies_can_be_declared_separately() {
-        $this->path .= 'separate_depends/test.php';
+        $this->root .= 'separate_depends/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'separate_depends\\test_seven', null),
@@ -205,12 +214,11 @@ class TestDependencies {
 
 
     public function test_dependencies_between_parameterized_tests() {
-        $path = $this->path;
-        $paths = array(
-            "{$path}param_xdepends/test_nonparam.php",
-            "{$path}param_xdepends/test_param.php",
+        $this->root .= 'param_xdepends/';
+        $this->path = array(
+            'test_nonparam.php',
+            'test_param.php',
         );
-        $this->path = $paths;
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'param_xdepend\\nonparam\\test_one', null),
@@ -248,7 +256,8 @@ class TestDependencies {
 
 
     public function test_an_error_supersedes_dependencies() {
-        $this->path .= 'error_depend/test.php';
+        $this->root .= 'error_depend/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_ERROR, 'teardown_function for error_depend\\test_one', 'I erred'),

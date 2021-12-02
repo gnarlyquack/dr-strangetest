@@ -23,7 +23,8 @@ class TestRunDirectories {
     // helper assertions
 
     private function assert_events($directories, strangetest\Context $context) {
-        list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
+        $root = $this->path . \DIRECTORY_SEPARATOR;
+        $targets = strangetest\process_user_targets($root, array(), $errors);
         strangetest\assert_falsy($errors);
 
         $logger = new strangetest\BufferingLogger($this->logger);
@@ -223,7 +224,8 @@ class TestRunDirectories {
 
 
     private function assert_log($expected) {
-        list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
+        $root = $this->path . \DIRECTORY_SEPARATOR;
+        $targets = strangetest\process_user_targets($root, array(), $errors);
         strangetest\assert_falsy($errors);
 
         $logger = new strangetest\BufferingLogger($this->logger);

@@ -14,12 +14,6 @@ use strangetest\Target;
 
 // helper functions
 
-function set_cwd(Context $context, $dir) {
-    $cwd = \getcwd();
-    $context->teardown(function() use ($cwd) { \chdir($cwd); });
-    \chdir($dir);
-}
-
 
 function target_to_array(Target $target) {
     $result = (array)$target;
@@ -33,17 +27,9 @@ function target_to_array(Target $target) {
 // helper assertions
 
 function assert_targets(
-    Context $context, array $actual, array $actual_errors,
+    Context $context, $targets, array $actual_errors,
     $expected_root, $expected_targets, array $expected_errors
 ) {
-    $context->subtest(
-        function() use ($expected_root, $actual)
-        {
-            strangetest\assert_identical($expected_root, $actual[0], 'Wrong test root');
-        }
-    );
-
-    $targets = $actual[1];
     if ($targets) {
         foreach ($targets as $key => $value) {
             $targets[$key] = namespace\target_to_array($value);
@@ -67,27 +53,11 @@ function assert_targets(
 
 // tests
 
-function test_uses_cwd_as_default_target(Context $context) {
-    namespace\set_cwd($context, __DIR__);
-    $actual = strangetest\process_user_targets(array(), $errors);
-
-    $root = \dirname(\dirname(__DIR__)) . \DIRECTORY_SEPARATOR;
-    $targets = array(
-        __DIR__ . \DIRECTORY_SEPARATOR => array(
-            'name' => __DIR__ . \DIRECTORY_SEPARATOR,
-            'subtargets' => array()
-        )
-    );
-    namespace\assert_targets($context, $actual, $errors, $root, $targets, array());
-}
-
-
 function test_processes_paths_as_path_targets(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', 'test2.php', 'test_dir');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array();
     foreach ($args as $arg) {
@@ -109,8 +79,7 @@ function test_processes_path_targets(Context $context) {
         $args[] = "--path=$path";
     }
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array();
     foreach ($paths as $path) {
@@ -128,8 +97,7 @@ function test_processes_function_targets(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--function=foo,bar');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -154,8 +122,7 @@ function test_processes_class_targets(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--class=foo;bar');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -180,8 +147,7 @@ function test_processes_method_targets(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--class=foo::one,two;bar::one,two');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -224,8 +190,7 @@ function test_eliminates_duplicate_function_targets(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', '--function=one,two', '--function=two,three');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -259,8 +224,7 @@ function test_eliminates_duplicate_method_targets(Context $context) {
         '--class=bar::two,three',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -305,8 +269,7 @@ function test_overrides_method_targets_with_class_target(Context $context) {
         '--class=cat',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -341,8 +304,7 @@ function test_eliminates_duplicate_targets_in_file(Context $context) {
         '--function=one,two',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -371,8 +333,7 @@ function test_overrides_targets_in_file_with_file_target(Context $context) {
         'test1.php',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test1.php" => array(
@@ -401,8 +362,7 @@ function test_eliminates_duplicate_path_targets(Context $context) {
         'test_dir1/test1.php',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array(
         "{$root}test2.php" => array(
@@ -434,12 +394,11 @@ function test_reports_error_for_nonexistent_paths(Context $context) {
         'foo_dir',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
-        "Path 'foo.php' does not exist",
-        "Path 'foo_dir' does not exist",
+        "Path '{$root}foo.php' does not exist",
+        "Path '{$root}foo_dir' does not exist",
     ));
 }
 
@@ -453,8 +412,7 @@ function test_reports_error_for_missing_function_name(Context $context) {
         '--function=,,,',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--function=' requires a function name",
@@ -475,8 +433,7 @@ function test_reports_error_for_missing_class_name(Context $context) {
         '--class=;;;',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--class=' requires a class name",
@@ -497,8 +454,7 @@ function test_reports_error_for_missing_method_name(Context $context) {
         '--class=foo::,,,',
     );
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         "Test target '--class=one::' is missing one or more method names",
@@ -512,8 +468,7 @@ function test_determines_correct_test_root_from_directory(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test_dir/test_subdir', 'test_dir1');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array();
     foreach ($args as $arg) {
@@ -528,8 +483,7 @@ function test_determines_correct_test_root_from_file(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test_dir1/test2.php', 'test1.php');
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     $targets = array();
     foreach ($args as $arg) {
@@ -544,8 +498,7 @@ function test_reports_error_for_path_outside_test_root(Context $context) {
     $root = \sprintf('%1$s%2$sresources%2$s', __DIR__, \DIRECTORY_SEPARATOR);
     $args = array('test1.php', __FILE__);
 
-    namespace\set_cwd($context, $root);
-    $actual = strangetest\process_user_targets($args, $errors);
+    $actual = strangetest\process_user_targets($root, $args, $errors);
 
     namespace\assert_targets($context, $actual, $errors, null, null, array(
         \sprintf("Path '%s' is outside the test root directory '$root'", __FILE__),

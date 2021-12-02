@@ -211,11 +211,22 @@ final class State extends struct {
 function main($argc, $argv)
 {
     namespace\_enable_error_handling();
-    namespace\_try_loading_composer();
+
+    $cwd = \getcwd();
+    if (false === $cwd)
+    {
+        \fwrite(\STDERR, "Unable to determine current working directory (getcwd failed)\n");
+        exit(namespace\EXIT_FAILURE);
+    }
+    \assert(\DIRECTORY_SEPARATOR !== \substr($cwd, -1));
+    $cwd .= \DIRECTORY_SEPARATOR;
+
+    namespace\_try_loading_composer($cwd);
     namespace\_load_strangetest();
 
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
-    list($root, $targets) = namespace\process_user_targets($args, $errors);
+    // @todo Add configuration option to explicitly set the test root directory
+    $targets = namespace\process_user_targets($cwd, $args, $errors);
     if ($errors)
     {
         foreach ($errors as $error)
@@ -224,7 +235,6 @@ function main($argc, $argv)
         }
         exit(namespace\EXIT_FAILURE);
     }
-    \assert(\is_string($root));
 
     $logger = new BasicLogger($options['verbose']);
     $buffering = new BufferingLogger(new LiveUpdatingLogger($logger));
@@ -233,7 +243,7 @@ function main($argc, $argv)
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
 
-    $tests = namespace\discover_directory($state, $buffering, $root, 0);
+    $tests = namespace\discover_directory($state, $buffering, $cwd, 0);
     if ($tests)
     {
         namespace\run_tests($state, $buffering, $tests, $targets);
@@ -339,18 +349,20 @@ function _handle_error($errno, $errstr, $errfile, $errline)
 
 
 /**
+ * @param string $cwd
  * @return void
  */
-function _try_loading_composer()
+function _try_loading_composer($cwd)
 {
-    // Assume (reasonably?) users are working in their root source directory
-    $composer = \sprintf(
-        '%1$s%2$svendor%2$sautoload.php',
-        \getcwd(), \DIRECTORY_SEPARATOR
-    );
-    if (\file_exists($composer))
+    \assert(\DIRECTORY_SEPARATOR === \substr($cwd, -1));
+    // @todo Check for composer.json before attempting to load the autoloader?
+    $autoloader = \sprintf('%svendor%sautoload.php', $cwd, \DIRECTORY_SEPARATOR);
+    // @todo Check composer.json if the autoloader isn't in the default location
+    // By default, the autoloader is placed in the vendor directory, but this
+    // can be overridden with the vendor-dir config option.
+    if (\file_exists($autoloader))
     {
-        require $composer;
+        require $autoloader;
     }
 }
 

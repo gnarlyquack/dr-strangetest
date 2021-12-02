@@ -18,11 +18,13 @@ use strangetest\State;
 class TestFiles
 {
     private $logger;
+    private $root;
     private $path;
 
 
     public function setup() {
-        $this->path = __DIR__ . '/resources/files/';
+        $this->root =  __DIR__ . '/resources/files/';
+        $this->path = '';
         $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
     }
 
@@ -31,7 +33,8 @@ class TestFiles
 
     private function assert_events($expected)
     {
-        list($root, $targets) = strangetest\process_user_targets((array)$this->path, $errors);
+        $root = $this->root;
+        $targets = strangetest\process_user_targets($root, (array)$this->path, $errors);
         strangetest\assert_falsy($errors);
 
         $state = new State;
@@ -49,7 +52,8 @@ class TestFiles
     // tests
 
     public function test_parses_and_runs_only_tests() {
-        $this->path .= 'run_tests/test.php';
+        $this->root .= 'run_tests/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'test_one', null),
@@ -65,7 +69,8 @@ class TestFiles
 
 
     public function test_parses_and_runs_tests_and_fixtures() {
-        $this->path .= 'fixtures/test.php';
+        $this->root .= 'fixtures/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test_one', '2 4'),
@@ -96,7 +101,8 @@ class TestFiles
 
 
     public function test_names_are_case_insensitive() {
-        $this->path .= 'case/test.php';
+        $this->root .= 'case/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'SetUpFunction for FileCase\\TestOne', '2 4'),
@@ -125,7 +131,8 @@ class TestFiles
 
 
     public function test_parses_multiple_simple_namespaces() {
-        $this->path .= 'simple_namespaces/test.php';
+        $this->root .= 'simple_namespaces/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'ns02\\TestNamespaces::test', null),
@@ -135,7 +142,8 @@ class TestFiles
 
 
     public function test_parses_multiple_bracketed_namespaces() {
-        $this->path .= 'bracketed_namespaces/test.php';
+        $this->root .= 'bracketed_namespaces/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'ns01\\ns1\\TestNamespaces::test', null),
@@ -151,7 +159,8 @@ class TestFiles
             strangetest\skip('PHP 7 introduced anonymous classes');
         }
 
-        $this->path .= 'anonymous/test.php';
+        $this->root .= 'anonymous/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'anonymous\\test_anonymous_class', null),
@@ -162,7 +171,8 @@ class TestFiles
 
 
     public function test_handles_failed_tests() {
-        $this->path .= 'failures/test.php';
+        $this->root .= 'failures/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'file_failures\\setup_file', '.'),
@@ -217,16 +227,18 @@ class TestFiles
 
 
     public function test_logs_error_when_loading_file() {
-        $this->path .= 'file_error/test.php';
+        $this->root .= 'file_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, $this->path, 'Skip me'),
+            array(strangetest\EVENT_ERROR, $this->root . $this->path, 'Skip me'),
         ));
     }
 
 
     public function test_logs_error_in_setup_file() {
-        $this->path .= 'setup_file_error/test.php';
+        $this->root .= 'setup_file_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_ERROR, 'setup_file_error\\setup_file', 'An error happened'),
@@ -235,7 +247,8 @@ class TestFiles
 
 
     public function test_logs_error_in_constructor() {
-        $this->path .= 'constructor_error/test.php';
+        $this->root .= 'constructor_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'constructor_error\\setup_file', '.'),
@@ -256,7 +269,8 @@ class TestFiles
 
 
     public function test_logs_error_in_setup_object() {
-        $this->path .= 'setup_object_error/test.php';
+        $this->root .= 'setup_object_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'setup_object_error\\setup_file', '.'),
@@ -277,7 +291,8 @@ class TestFiles
 
 
     public function test_logs_error_in_setup() {
-        $this->path .= 'setup_error/test.php';
+        $this->root .= 'setup_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'setup_error\\setup_file', '.'),
@@ -298,7 +313,8 @@ class TestFiles
 
 
     function test_logs_error_in_function_teardown() {
-        $this->path .= 'teardown_test_error/test.php';
+        $this->root .= 'teardown_test_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\setup_file', '.'),
@@ -331,7 +347,8 @@ class TestFiles
 
 
     public function test_logs_error_in_teardown() {
-        $this->path .= 'teardown_error/test.php';
+        $this->root .= 'teardown_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'teardown_error\\setup_file', '.'),
@@ -358,7 +375,8 @@ class TestFiles
 
 
     public function test_logs_error_in_teardown_object() {
-        $this->path .= 'teardown_object_error/test.php';
+        $this->root .= 'teardown_object_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'teardown_object_error\\setup_file', '.'),
@@ -390,7 +408,8 @@ class TestFiles
 
 
     public function test_logs_error_in_teardown_file() {
-        $this->path .= 'teardown_file_error/test.php';
+        $this->root .= 'teardown_file_error/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'teardown_file_error\\setup_file', '.'),
@@ -422,7 +441,8 @@ class TestFiles
 
 
     public function test_logs_error_for_multiple_object_fixtures() {
-        $this->path .= 'multiple_object_fixtures/test.php';
+        $this->root .= 'multiple_object_fixtures/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) setup_object\n    2) SetUpObject"),
@@ -444,7 +464,8 @@ class TestFiles
 
 
     public function test_skips_file() {
-        $this->path .= 'skip_file/test.php';
+        $this->root .= 'skip_file/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_SKIP, 'skip_file\\setup_file', 'Skip me'),
@@ -453,7 +474,8 @@ class TestFiles
 
 
     public function test_skips_object() {
-        $this->path .= 'skip_object/test.php';
+        $this->root .= 'skip_object/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'skip_object\\setup_file', '.'),
@@ -474,7 +496,8 @@ class TestFiles
 
 
     public function test_skips_in_setup() {
-        $this->path .= 'skip_setup/test.php';
+        $this->root .= 'skip_setup/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'skip_setup\\setup_file', '.'),
@@ -495,7 +518,8 @@ class TestFiles
 
 
     public function test_skips_test() {
-        $this->path .= 'skip_test/test.php';
+        $this->root .= 'skip_test/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'skip_test\\setup_file', '.'),
@@ -526,16 +550,18 @@ class TestFiles
 
 
     public function test_logs_file_output() {
-        $this->path .= 'file_output/test.php';
+        $this->root .= 'file_output/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, $this->path, '.'),
+            array(strangetest\EVENT_OUTPUT, $this->root . $this->path, '.'),
         ));
     }
 
 
     public function test_logs_constructor_output() {
-        $this->path .= 'constructor_output/test.php';
+        $this->root .= 'constructor_output/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'constructor_output\\test_one', null),
@@ -549,7 +575,8 @@ class TestFiles
 
 
     public function test_logs_test_output() {
-        $this->path .= 'output/test.php';
+        $this->root .= 'output/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'test_output\\test', '.'),
@@ -562,7 +589,8 @@ class TestFiles
 
 
     public function test_supports_output_buffering() {
-        $this->path .= 'buffering/test.php';
+        $this->root .= 'buffering/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'setup_function for buffering\\test_skip', 'setup output that should be seen'),
@@ -603,7 +631,8 @@ class TestFiles
 
 
     public function test_logs_errors_for_undeleted_output_buffers() {
-        $this->path .= 'undeleted_buffers/test.php';
+        $this->root .= 'undeleted_buffers/';
+        $this->path .= 'test.php';
 
         // Note that since the test itself didn't fail, we log a pass, but we
         // also get errors due to dangling output buffers. This seems
@@ -676,7 +705,8 @@ class TestFiles
 
 
     public function test_logs_errors_when_deleting_strangetest_output_buffers() {
-        $this->path .= 'deleted_buffers/test.php';
+        $this->root .= 'deleted_buffers/';
+        $this->path .= 'test.php';
 
         // Note that since the test itself didn't fail, we log a pass, but we
         // also get errors due to deleting Dr. Strangetest's output buffers. This
@@ -711,7 +741,8 @@ class TestFiles
 
 
     public function test_runs_tests_once_per_arg_list() {
-        $this->path .= 'multiple_runs/test.php';
+        $this->root .= 'multiple_runs/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_PASS, 'multiple_runs\\test_one (0)', null),
@@ -728,7 +759,8 @@ class TestFiles
 
 
     function test_supports_subtests() {
-        $this->path .= 'subtests/test.php';
+        $this->root .= 'subtests/';
+        $this->path .= 'test.php';
 
         $this->assert_events(array(
             array(strangetest\EVENT_FAIL, 'subtests\\test_one', 'I fail'),
@@ -745,8 +777,9 @@ class TestFiles
 
 
     function test_runs_only_targeted_tests() {
+        $this->root .= 'targets/';
         $this->path = array(
-            "{$this->path}targets/test.php",
+            'test.php',
             '--function=targets\\test_two',
             '--class=targets\\test::test_two',
             '--function=targets\\test_one',

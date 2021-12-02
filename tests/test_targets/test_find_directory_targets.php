@@ -71,7 +71,7 @@ function test_directory_targets(Context $context) {
     $test = strangetest\discover_directory($state, new BufferingLogger($logger), $path, 0);
     strangetest\assert_falsy($logger->get_log()->get_events(), 'Errors during directory discovery');
 
-    namespace\set_cwd($context, $path);
+    $root = $path;
     $args = array(
         'test1.php',
         "test_dir{$ds}test_subdir{$ds}test1.php",
@@ -84,7 +84,7 @@ function test_directory_targets(Context $context) {
         "test_dir{$ds}test_subdir{$ds}test2.php",
     );
 
-    list($root, $targets) = strangetest\process_user_targets($args, $errors);
+    $targets = strangetest\process_user_targets($root, $args, $errors);
     strangetest\assert_falsy($errors, 'Errors during target processing');
 
     list($error, $actual) = strangetest\find_directory_targets($logger, $test, $targets);
