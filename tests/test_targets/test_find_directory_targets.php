@@ -18,6 +18,12 @@ use strangetest\Target;
 
 // helper functions
 
+function logger()
+{
+    return new strangetest\BasicLogger(strangetest\LOG_ALL);
+}
+
+
 function set_cwd(Context $context, $dir) {
     $cwd = \getcwd();
     $context->teardown(function() use ($cwd) { \chdir($cwd); });
@@ -84,7 +90,7 @@ function test_directory_targets(Context $context) {
         "test_dir{$ds}test_subdir{$ds}test2.php",
     );
 
-    $targets = strangetest\process_user_targets($root, $args, $errors);
+    $targets = strangetest\process_user_targets(logger(), $root, $args, $errors);
     strangetest\assert_falsy($errors, 'Errors during target processing');
 
     list($error, $actual) = strangetest\find_directory_targets($logger, $test, $targets);

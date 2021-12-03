@@ -34,7 +34,8 @@ class TestFiles
     private function assert_events($expected)
     {
         $root = $this->root;
-        $targets = strangetest\process_user_targets($root, (array)$this->path, $errors);
+        $targets = strangetest\process_user_targets(
+            $this->logger, $root, (array)$this->path, $errors);
         strangetest\assert_falsy($errors);
 
         $state = new State;

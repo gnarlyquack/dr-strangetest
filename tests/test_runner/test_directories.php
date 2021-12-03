@@ -24,7 +24,7 @@ class TestRunDirectories {
 
     private function assert_events($directories, strangetest\Context $context) {
         $root = $this->path . \DIRECTORY_SEPARATOR;
-        $targets = strangetest\process_user_targets($root, array(), $errors);
+        $targets = strangetest\process_user_targets($this->logger, $root, array(), $errors);
         strangetest\assert_falsy($errors);
 
         $logger = new strangetest\BufferingLogger($this->logger);
@@ -225,7 +225,7 @@ class TestRunDirectories {
 
     private function assert_log($expected) {
         $root = $this->path . \DIRECTORY_SEPARATOR;
-        $targets = strangetest\process_user_targets($root, array(), $errors);
+        $targets = strangetest\process_user_targets($this->logger, $root, array(), $errors);
         strangetest\assert_falsy($errors);
 
         $logger = new strangetest\BufferingLogger($this->logger);

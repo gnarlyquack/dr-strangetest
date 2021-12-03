@@ -8,9 +8,9 @@
 namespace strangetest;
 
 
-const _TARGET_CLASS    = '--class=';
-const _TARGET_FUNCTION = '--function=';
-const _TARGET_PATH     = '--path=';
+const _TARGET_CLASS     = '--class=';
+const _TARGET_FUNCTION  = '--function=';
+const _TARGET_PATH      = '--path=';
 \define('strangetest\\_TARGET_CLASS_LEN', \strlen(namespace\_TARGET_CLASS));
 \define('strangetest\\_TARGET_FUNCTION_LEN', \strlen(namespace\_TARGET_FUNCTION));
 \define('strangetest\\_TARGET_PATH_LEN', \strlen(namespace\_TARGET_PATH));
@@ -68,9 +68,10 @@ final class _Target extends struct implements Target {
  * @param string[] $errors
  * @return ?Target[]
  */
-function process_user_targets($root, array $args, &$errors)
+function process_user_targets(Logger $logger, $root, array $args, &$errors)
 {
     \assert(\DIRECTORY_SEPARATOR === \substr($root, -1));
+    namespace\_parse_targets($logger, $args, $root);
 
     if (!$args)
     {
@@ -180,6 +181,245 @@ function process_user_targets($root, array $args, &$errors)
         }
     }
     return $targets;
+}
+
+
+final class _TargetIterator
+{
+    /** @var string[] */
+    public $args;
+
+    /** @var int */
+    public $count;
+
+    /** @var int */
+    public $index = 0;
+
+    /**
+     * @param string[] $args
+     */
+    public function __construct(array $args)
+    {
+        $this->args = $args;
+        $this->count = \count($args);
+    }
+}
+
+
+/**
+ * @param string[] $args
+ * @param string $root
+ * @return void
+ */
+function _parse_targets(Logger $logger, $args, $root)
+{
+    $valid = true;
+    $targets = array();
+    $iter = new _TargetIterator($args);
+    while ($iter->index < $iter->count)
+    {
+        $target = _parse_path_target($logger, $iter, $root);
+        if ($target)
+        {
+            $targets[] = $target;
+        }
+        else
+        {
+            $valid = false;
+        }
+    }
+
+    if ($valid)
+    {
+        // do something here
+    }
+}
+
+
+/**
+ * @param string $root
+ * @return ?_Target
+ */
+function _parse_path_target(Logger $logger, _TargetIterator $iter, $root)
+{
+    $valid = false;
+    $target = $leaf = null;
+    $dir = false;
+    $arg = $iter->args[$iter->index++];
+
+    $path = (\DIRECTORY_SEPARATOR === \substr($arg, 0, 1)) ? $arg : ($root . $arg);
+    $realpath = \realpath($path);
+
+    if (false === $realpath)
+    {
+        $logger->log_error($path, 'This path does not exist');
+    }
+    else
+    {
+        if (\is_dir($realpath))
+        {
+            $dir = true;
+            \assert(\DIRECTORY_SEPARATOR !== \substr($realpath, -1));
+            $realpath .= \DIRECTORY_SEPARATOR;
+        }
+
+        if (0 === \substr_compare($realpath, $root, 0, \strlen($root)))
+        {
+            $valid = true;
+            $target = $leaf = new _Target($root);
+            $pos = \strpos($path, \DIRECTORY_SEPARATOR, \strlen($root));
+            while (false !== $pos)
+            {
+                ++$pos;
+                $temp = new _Target(\substr($realpath, 0, $pos));
+                $leaf->subtargets[] = $temp;
+                $leaf = $temp;
+                $pos = \strpos($realpath, \DIRECTORY_SEPARATOR, $pos);
+            }
+            if ($leaf->name !== $realpath)
+            {
+                $temp = new _Target($realpath);
+                $leaf->subtargets[] = $temp;
+                $leaf = $temp;
+            }
+        }
+        else
+        {
+            $logger->log_error($path, "This path is outside the test root directory '$root'");
+        }
+    }
+
+    while (
+        ($iter->index < $iter->count)
+        && \preg_match('~^--(class|function)=(.*)$~', $iter->args[$iter->index], $matches))
+    {
+        if ($leaf)
+        {
+            if ('class' === $matches[1])
+            {
+                if ($dir)
+                {
+                    $logger->log_error(
+                        $iter->args[$iter->index++],
+                        'Functions can only be specified for a file');
+                    $valid = false;
+                }
+                elseif (!namespace\_parse_class_target($logger, $iter, $leaf))
+                {
+                    $valid = false;
+                }
+            }
+            elseif ('function' === $matches[1])
+            {
+                if ($dir)
+                {
+                    $logger->log_error(
+                        $iter->args[$iter->index++],
+                        'Classes can only be specified for a file');
+                    $valid = false;
+                }
+                elseif (!namespace\_parse_function_target($logger, $iter, $leaf))
+                {
+                    $valid = false;
+                }
+            }
+            else
+            {
+                throw new \Exception("Unexpected path specifier: {$matches[1]}");
+            }
+        }
+        else
+        {
+            // Consume specifiers that apply to an invalid path
+            ++$iter->index;
+        }
+    }
+
+    \assert(!$valid || $target);
+    return $valid ? $target : null;
+}
+
+
+/**
+ *
+ * @return bool
+ */
+function _parse_function_target(Logger $logger, _TargetIterator $iter, _Target $parent)
+{
+    $valid = true;
+    $arg = $iter->args[$iter->index++];
+    $functions = \substr($arg, namespace\_TARGET_FUNCTION_LEN);
+    foreach (\explode(',', $functions) as $function)
+    {
+        if (\strlen($function))
+        {
+            $function = "function $function";
+            $parent->subtargets[] = new _Target($function);
+        }
+        else
+        {
+            $logger->log_error($arg, 'This specifier is missing one or more function names');
+            $valid = false;
+            break;
+        }
+    }
+
+    return $valid;
+}
+
+
+/**
+ * @return bool
+ */
+function _parse_class_target(Logger $logger, _TargetIterator $iter, _Target $parent)
+{
+    $valid = true;
+    $arg = $iter->args[$iter->index++];
+    $classes = \substr($arg, namespace\_TARGET_CLASS_LEN);
+    foreach (\explode(';', $classes) as $class)
+    {
+        $split = \strpos($class, '::');
+        if (false === $split)
+        {
+            $methods = array();
+        }
+        else
+        {
+            $methods = \explode(',', \substr($class, $split + 2));
+            $class = \substr($class, 0, $split);
+        }
+
+        if (\strlen($class))
+        {
+            $class = "class $class";
+            $target = new _Target($class);
+            $parent->subtargets[] = $target;
+
+            foreach ($methods as $method)
+            {
+                if (\strlen($method))
+                {
+                    $target->subtargets[] = new _Target($method);
+                }
+                else
+                {
+                    $logger->log_error(
+                        $arg,
+                        'This specifier is missing one or more method names');
+                    $valid = false;
+                    break 2;
+                }
+            }
+        }
+        else
+        {
+            $logger->log_error($arg, 'This specifier is missing one or more class names');
+            $valid = false;
+            break;
+        }
+    }
+
+    return $valid;
 }
 
 

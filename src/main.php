@@ -224,9 +224,11 @@ function main($argc, $argv)
     namespace\_try_loading_composer($cwd);
     namespace\_load_strangetest();
 
-    list($options, $args) = namespace\_parse_arguments($argc, $argv);
     // @todo Add configuration option to explicitly set the test root directory
-    $targets = namespace\process_user_targets($cwd, $args, $errors);
+    list($options, $args) = namespace\_parse_arguments($argc, $argv);
+
+    $logger = new BasicLogger($options['verbose']);
+    $targets = namespace\process_user_targets($logger, $cwd, $args, $errors);
     if ($errors)
     {
         foreach ($errors as $error)
@@ -236,7 +238,6 @@ function main($argc, $argv)
         exit(namespace\EXIT_FAILURE);
     }
 
-    $logger = new BasicLogger($options['verbose']);
     $buffering = new BufferingLogger(new LiveUpdatingLogger($logger));
     $state = new State();
 
