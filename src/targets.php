@@ -10,10 +10,8 @@ namespace strangetest;
 
 const _TARGET_CLASS     = '--class=';
 const _TARGET_FUNCTION  = '--function=';
-const _TARGET_PATH      = '--path=';
 \define('strangetest\\_TARGET_CLASS_LEN', \strlen(namespace\_TARGET_CLASS));
 \define('strangetest\\_TARGET_FUNCTION_LEN', \strlen(namespace\_TARGET_FUNCTION));
-\define('strangetest\\_TARGET_PATH_LEN', \strlen(namespace\_TARGET_PATH));
 
 
 interface Target {
@@ -32,16 +30,18 @@ interface Target {
 final class _Target extends struct implements Target {
     /** @var string */
     public $name;
-    /** @var Target[] */
-    public $subtargets = array();
+    /** @var ?_Target[] */
+    public $subtargets;
 
 
     /**
      * @param string $name
+     * @param ?_Target[] $subtargets
      */
-    public function __construct($name)
+    public function __construct($name, $subtargets = array())
     {
         $this->name = $name;
+        $this->subtargets = $subtargets;
     }
 
     /**
@@ -53,7 +53,7 @@ final class _Target extends struct implements Target {
     }
 
     /**
-     * @return Target[]
+     * @return ?_Target[]
      */
     public function subtargets()
     {
@@ -63,128 +63,37 @@ final class _Target extends struct implements Target {
 
 
 /**
- * @param string $root
  * @param string[] $args
- * @param string[] $errors
  * @return ?Target[]
  */
-function process_user_targets(Logger $logger, $root, array $args, &$errors)
+function process_user_targets(Logger $logger, DirectoryTest $tests, array $args)
 {
-    \assert(\DIRECTORY_SEPARATOR === \substr($root, -1));
-    namespace\_parse_targets($logger, $args, $root);
+    \assert(\DIRECTORY_SEPARATOR === \substr($tests->name, -1));
+    \assert(\count($args) > 0);
 
-    if (!$args)
-    {
-        $args[] = $root;
-    }
-    $errors = array();
+    $targets = namespace\_parse_targets($logger, $args, $tests->name);
+    $targets = namespace\_validate_targets($logger, $tests, $targets);
 
-    $file = $subtarget_count = null;
-    $targets = array();
-    foreach ($args as $arg)
+    if ($targets->had_errors)
     {
-        if (0 === \substr_compare($arg, namespace\_TARGET_CLASS,
-                                  0, namespace\_TARGET_CLASS_LEN, true))
+        $result = null;
+    }
+    else
+    {
+        \assert(\count($targets->targets) > 0);
+        $result = new _Target('');
+        foreach ($targets->targets as $target)
         {
-            $class = \substr($arg, namespace\_TARGET_CLASS_LEN);
-            if (!\strlen($class))
-            {
-                $errors[] = "Test target '$arg' requires a class name";
-                continue;
-            }
-            if (!isset($file))
-            {
-                $errors[] = "Test target '$arg' must be specified for a file";
-                continue;
-            }
-            if ($subtarget_count)
-            {
-                namespace\_process_class_target($targets[$file]->subtargets, $class, $errors);
-            }
+            namespace\_deduplicate_target($target, $result);
         }
-        elseif (0 === \substr_compare($arg, namespace\_TARGET_FUNCTION,
-                                      0, namespace\_TARGET_FUNCTION_LEN, true))
-        {
-            $function = \substr($arg, namespace\_TARGET_FUNCTION_LEN);
-            if (!\strlen($function))
-            {
-                $errors[] = "Test target '$arg' requires a function name";
-                continue;
-            }
-            if (!isset($file))
-            {
-                $errors[] = "Test target '$arg' must be specified for a file";
-                continue;
-            }
-            if ($subtarget_count)
-            {
-                namespace\_process_function_target($targets[$file]->subtargets, $function, $errors);
-            }
-        }
-        else
-        {
-            if ($subtarget_count > 0
-                && \count($targets[$file]->subtargets) === $subtarget_count)
-            {
-                $targets[$file]->subtargets = array();
-            }
-            $file = $subtarget_count = null;
+        $result = $result->subtargets[$tests->name]->subtargets;
+    }
+    return $result;
 
-            $path = $arg;
-            if (0 === \substr_compare($path, namespace\_TARGET_PATH,
-                                      0, namespace\_TARGET_PATH_LEN, true))
-            {
-                $path = \substr($path, namespace\_TARGET_PATH_LEN);
-                if (!\strlen($path))
-                {
-                    $errors[] = "Test target '$arg' requires a directory or file name";
-                    continue;
-                }
-            }
-            list($file, $subtarget_count)
-                = namespace\_process_path_target($targets, $root, $path, $errors);
-        }
-    }
-    if (($subtarget_count > 0)
-        && (\count($targets[$file]->subtargets) === $subtarget_count))
-    {
-        $targets[$file]->subtargets = array();
-    }
-
-    if ($errors)
-    {
-        return null;
-    }
-
-    $keys = \array_keys($targets);
-    \sort($keys, \SORT_STRING);
-    $key = \current($keys);
-    while ($key !== false)
-    {
-        \assert(\is_string($key));
-        if (\is_dir($key))
-        {
-            $keylen = \strlen($key);
-            $next = \next($keys);
-            while (
-                ($next !== false)
-                && (0 === \substr_compare((string)$next, $key, 0, $keylen)))
-            {
-                unset($targets[$next]);
-                $next = \next($keys);
-            }
-            $key = $next;
-        }
-        else
-        {
-            $key = \next($keys);
-        }
-    }
-    return $targets;
 }
 
 
-final class _TargetIterator
+final class _ParseTargetIterator
 {
     /** @var string[] */
     public $args;
@@ -206,50 +115,187 @@ final class _TargetIterator
 }
 
 
-/**
- * @param string[] $args
- * @param string $root
- * @return void
- */
-function _parse_targets(Logger $logger, $args, $root)
+final class ParsedTargets
 {
-    $valid = true;
-    $targets = array();
-    $iter = new _TargetIterator($args);
-    while ($iter->index < $iter->count)
-    {
-        $target = _parse_path_target($logger, $iter, $root);
-        if ($target)
-        {
-            $targets[] = $target;
-        }
-        else
-        {
-            $valid = false;
-        }
-    }
+    /** @var _PathTarget[] */
+    public $targets = array();
 
-    if ($valid)
+    /** @var bool */
+    public $had_errors = false;
+}
+
+
+final class _PathTarget
+{
+    /** @var string */
+    public $arg;
+
+    /** @var int */
+    public $argnum;
+
+    /** @var string */
+    public $path;
+
+    /**
+     * @var array<_PathTarget|_ClassTarget|_FunctionTarget>
+     * */
+    public $targets = array();
+
+    /**
+     * @param string $arg
+     * @param int $argnum
+     * @param string $path
+     */
+    public function __construct($arg, $argnum, $path)
     {
-        // do something here
+        $this->arg = $arg;
+        $this->argnum = $argnum;
+        $this->path = $path;
+    }
+}
+
+final class _ClassTarget
+{
+    /** @var string */
+    public $arg;
+
+    /** @var int */
+    public $argnum;
+
+    /** @var string */
+    public $class;
+
+    /** @var int */
+    public $classnum;
+
+    /** @var _MethodTarget[] */
+    public $targets = array();
+
+    /**
+     * @param string $arg
+     * @param int $argnum
+     * @param string $class
+     * @param int $classnum
+     */
+    public function __construct($arg, $argnum, $class, $classnum)
+    {
+        $this->arg = $arg;
+        $this->argnum = $argnum;
+        $this->class = $class;
+        $this->classnum = $classnum;
+    }
+}
+
+
+final class _MethodTarget
+{
+    /** @var string */
+    public $arg;
+
+    /** @var int */
+    public $argnum;
+
+    /** @var string */
+    public $class;
+
+    /** @var int */
+    public $classnum;
+
+    /** @var string */
+    public $method;
+
+    /** @var int */
+    public $methodnum;
+
+    /**
+     * @param string $arg
+     * @param int $argnum
+     * @param string $class
+     * @param int $classnum
+     * @param string $method
+     * @param int $methodnum
+     */
+    public function __construct($arg, $argnum, $class, $classnum, $method, $methodnum)
+    {
+        $this->arg = $arg;
+        $this->argnum = $argnum;
+        $this->class = $class;
+        $this->classnum = $classnum;
+        $this->method = $method;
+        $this->methodnum = $methodnum;
+    }
+}
+
+
+final class _FunctionTarget
+{
+    /** @var string */
+    public $arg;
+
+    /** @var int */
+    public $argnum;
+
+    /** @var string */
+    public $function;
+
+    /** @var int */
+    public $functionnum;
+
+    /**
+     * @param string $arg
+     * @param int $argnum
+     * @param string $function
+     * @param int $functionnum
+     */
+    public function __construct($arg, $argnum, $function, $functionnum)
+    {
+        $this->arg = $arg;
+        $this->argnum = $argnum;
+        $this->function = $function;
+        $this->functionnum = $functionnum;
     }
 }
 
 
 /**
+ * @param string[] $args
  * @param string $root
- * @return ?_Target
+ * @return ParsedTargets
  */
-function _parse_path_target(Logger $logger, _TargetIterator $iter, $root)
+function _parse_targets(Logger $logger, array $args, $root)
+{
+    $parsed = new ParsedTargets;
+    $iter = new _ParseTargetIterator($args);
+    // @todo Ensure all identifiers are trimmed
+    while ($iter->index < $iter->count)
+    {
+        $target = namespace\_parse_path_target($logger, $iter, $root);
+        if ($target)
+        {
+            $parsed->targets[] = $target;
+        }
+        else
+        {
+            $parsed->had_errors = true;
+        }
+    }
+    return $parsed;
+}
+
+
+/**
+ * @param string $root
+ * @return ?_PathTarget
+ */
+function _parse_path_target(Logger $logger, _ParseTargetIterator $iter, $root)
 {
     $valid = false;
     $target = $leaf = null;
     $dir = false;
     $arg = $iter->args[$iter->index++];
-
     $path = (\DIRECTORY_SEPARATOR === \substr($arg, 0, 1)) ? $arg : ($root . $arg);
-    $realpath = \realpath($path);
 
+    $realpath = \realpath($path);
     if (false === $realpath)
     {
         $logger->log_error($path, 'This path does not exist');
@@ -266,26 +312,26 @@ function _parse_path_target(Logger $logger, _TargetIterator $iter, $root)
         if (0 === \substr_compare($realpath, $root, 0, \strlen($root)))
         {
             $valid = true;
-            $target = $leaf = new _Target($root);
-            $pos = \strpos($path, \DIRECTORY_SEPARATOR, \strlen($root));
+            $target = $leaf = new _PathTarget($arg, $iter->index, $root);
+            $pos = \strpos($realpath, \DIRECTORY_SEPARATOR, \strlen($root));
             while (false !== $pos)
             {
                 ++$pos;
-                $temp = new _Target(\substr($realpath, 0, $pos));
-                $leaf->subtargets[] = $temp;
+                $temp = new _PathTarget($arg, $iter->index, \substr($realpath, 0, $pos));
+                $leaf->targets[] = $temp;
                 $leaf = $temp;
                 $pos = \strpos($realpath, \DIRECTORY_SEPARATOR, $pos);
             }
-            if ($leaf->name !== $realpath)
+            if (!$dir)
             {
-                $temp = new _Target($realpath);
-                $leaf->subtargets[] = $temp;
+                $temp = new _PathTarget($arg, $iter->index, $realpath);
+                $leaf->targets[] = $temp;
                 $leaf = $temp;
             }
         }
         else
         {
-            $logger->log_error($path, "This path is outside the test root directory '$root'");
+            $logger->log_error($path, "This path is outside the test root directory $root");
         }
     }
 
@@ -344,17 +390,18 @@ function _parse_path_target(Logger $logger, _TargetIterator $iter, $root)
  *
  * @return bool
  */
-function _parse_function_target(Logger $logger, _TargetIterator $iter, _Target $parent)
+function _parse_function_target(
+    Logger $logger, _ParseTargetIterator $iter, _PathTarget $parent)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
     $functions = \substr($arg, namespace\_TARGET_FUNCTION_LEN);
-    foreach (\explode(',', $functions) as $function)
+    foreach (\explode(',', $functions) as $i => $function)
     {
         if (\strlen($function))
         {
-            $function = "function $function";
-            $parent->subtargets[] = new _Target($function);
+            $parent->targets[] = new _FunctionTarget(
+                $arg, $iter->index, $function, $i + 1);
         }
         else
         {
@@ -371,12 +418,13 @@ function _parse_function_target(Logger $logger, _TargetIterator $iter, _Target $
 /**
  * @return bool
  */
-function _parse_class_target(Logger $logger, _TargetIterator $iter, _Target $parent)
+function _parse_class_target(
+    Logger $logger, _ParseTargetIterator $iter, _PathTarget $parent)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
     $classes = \substr($arg, namespace\_TARGET_CLASS_LEN);
-    foreach (\explode(';', $classes) as $class)
+    foreach (\explode(';', $classes) as $i => $class)
     {
         $split = \strpos($class, '::');
         if (false === $split)
@@ -391,15 +439,15 @@ function _parse_class_target(Logger $logger, _TargetIterator $iter, _Target $par
 
         if (\strlen($class))
         {
-            $class = "class $class";
-            $target = new _Target($class);
-            $parent->subtargets[] = $target;
+            $target = new _ClassTarget($arg, $iter->index, $class, $i + 1);
+            $parent->targets[] = $target;
 
-            foreach ($methods as $method)
+            foreach ($methods as $j => $method)
             {
                 if (\strlen($method))
                 {
-                    $target->subtargets[] = new _Target($method);
+                    $target->targets[] = new _MethodTarget(
+                        $arg, $iter->index, $class, $i + 1, $method, $j + 1);
                 }
                 else
                 {
@@ -423,264 +471,195 @@ function _parse_class_target(Logger $logger, _TargetIterator $iter, _Target $par
 }
 
 
-/**
- * @param _Target[] $targets
- * @param string $target
- * @param string[] $errors
- * @return void
- */
-function _process_class_target(array &$targets, $target, array &$errors)
+final class ValidatedTargets
 {
-    $classes = \explode(';', $target);
-    foreach ($classes as $class)
+    /** @var _Target[] */
+    public $targets = array();
+
+    /** @var bool */
+    public $had_errors;
+
+    /**
+     * @param bool $had_errors
+     */
+    public function __construct($had_errors)
     {
-        $methods = null;
-        $split = \strpos($class, '::');
-        if (false !== $split)
-        {
-            $methods = \explode(',', \substr($class, $split + 2));
-            $class = \substr($class, 0, $split);
-        }
+        $this->had_errors = $had_errors;
+    }
+}
 
-        if (!\strlen($class))
-        {
-            // @todo Report errors for all class names in a class target
-            // We could provide a more detailed error message here, e.g.,
-            // "target $i has no class name". We could also potentially report
-            // errors for invalid targets while continuing to run tests for
-            // valid ones.
-            $errors[] = "Test target '--class=$target' is missing one or more class names";
-            return;
-        }
 
-        $class = "class $class";
-        if (!isset($targets[$class]))
+/**
+ * @return ValidatedTargets
+ */
+function _validate_targets(Logger $logger, DirectoryTest $tests, ParsedTargets $parsed)
+{
+    $validated = new ValidatedTargets($parsed->had_errors);
+    $suite = new DirectoryTest;
+    $suite->tests[$tests->name] = $tests;
+    foreach ($parsed->targets as $target)
+    {
+        $target = namespace\_validate_target($logger, $suite, $target);
+        if ($target)
         {
-            $targets[$class] = new _Target($class);
-            $subtarget_count = -1;
+            $validated->targets[] = $target;
         }
         else
         {
-            $subtarget_count = \count($targets[$class]->subtargets);
+            $validated->had_errors = true;
         }
+    }
+    return $validated;
+}
 
-        if ($subtarget_count)
+
+/**
+ * @param DirectoryTest|FileTest|ClassTest $test
+ * @param _ClassTarget|_FunctionTarget|_PathTarget|_MethodTarget $unvalidated
+ * @return ?_Target
+ */
+function _validate_target(Logger $logger, $test, $unvalidated)
+{
+    $valid = false;
+    $validated = null;
+
+    if ($unvalidated instanceof _PathTarget)
+    {
+        $name = $unvalidated->path;
+        if (isset($test->tests[$name]))
         {
-            if ($methods)
+            $valid = true;
+            $validated = new _Target($name);
+            if ($unvalidated->targets)
             {
-                foreach ($methods as $method)
+                $test = $test->tests[$name];
+                \assert(!($test instanceof FunctionTest));
+                foreach ($unvalidated->targets as $subtarget)
                 {
-                    if (!\strlen($method))
+                    $subtarget = namespace\_validate_target($logger, $test, $subtarget);
+                    if ($subtarget)
                     {
-                        // @todo Report errors for all method names in a class target
-                        // We could provide a more detailed error message here,
-                        // e.g., "target method $i for class $class has no
-                        // name". We could also potentially report errors for
-                        // invalid targets while continuing to run tests for
-                        // valid ones.
-                        $errors[] = "Test target '--class=$target' is missing one or more method names";
-                        return;
+                        $validated->subtargets[] = $subtarget;
                     }
-
-                    if (!isset($targets[$class]->subtargets[$method]))
+                    else
                     {
-                        $targets[$class]->subtargets[$method] = new _Target($method);
+                        $valid = false;
                     }
                 }
             }
-            else
-            {
-                $targets[$class]->subtargets = array();
-            }
+        }
+        else
+        {
+            $logger->log_error(
+                $unvalidated->arg,
+                "Path {$unvalidated->path} is not a test path"
+            );
         }
     }
+    elseif ($unvalidated instanceof _ClassTarget)
+    {
+        $name = "class {$unvalidated->class}";
+        if (isset($test->tests[$name]))
+        {
+            $valid = true;
+            $validated = new _Target($name);
+            if ($unvalidated->targets)
+            {
+                $test = $test->tests[$name];
+                \assert(!($test instanceof FunctionTest));
+                foreach ($unvalidated->targets as $subtarget)
+                {
+                    $subtarget = namespace\_validate_target($logger, $test, $subtarget);
+                    if ($subtarget)
+                    {
+                        $validated->subtargets[] = $subtarget;
+                    }
+                    else
+                    {
+                        $valid = false;
+                    }
+                }
+            }
+        }
+        else
+        {
+            $logger->log_error(
+                $unvalidated->arg,
+                "Class {$unvalidated->class} is not a test class"
+            );
+        }
+    }
+    elseif ($unvalidated instanceof _FunctionTarget)
+    {
+        $name = "function {$unvalidated->function}";
+        if (isset($test->tests[$name]))
+        {
+            $valid = true;
+            $validated = new _Target($name);
+        }
+        else
+        {
+            $logger->log_error(
+                $unvalidated->arg,
+                "Function {$unvalidated->function} is not a test function"
+            );
+        }
+    }
+    elseif ($unvalidated instanceof _MethodTarget)
+    {
+        $name = $unvalidated->method;
+        if (isset($test->tests[$name]))
+        {
+            $valid = true;
+            $validated = new _Target($name);
+        }
+        else
+        {
+            $logger->log_error(
+                $unvalidated->arg,
+                "Method {$unvalidated->method} is not a test method"
+            );
+        }
+    }
+    else
+    {
+        throw new \Exception("Unxpected subtarget type: " . \get_class($unvalidated));
+    }
+
+    \assert(!$valid || $validated);
+    return $valid ? $validated : null;
 }
 
 
 /**
- * @param _Target[] $targets
- * @param string $functions
- * @param string[] $errors
  * @return void
  */
-function _process_function_target(array &$targets, $functions, array &$errors)
+function _deduplicate_target(_Target $child, _Target $parent)
 {
-    foreach (\explode(',', $functions) as $function)
-    {
-        if (!\strlen($function))
-        {
-            $errors[] = "Test target '--function=$functions' is missing one or more function names";
-            return;
-        }
+    \assert(isset($parent->subtargets));
 
-        // functions and classes with identical names can coexist!
-        $function = "function $function";
-        if (!isset($targets[$function]))
-        {
-            $targets[$function] = new _Target($function);
-        }
-    }
-}
-
-
-/**
- * @param _Target[] $targets
- * @param string $root
- * @param string $path
- * @param string[] $errors
- * @return array{?string, ?int}
- */
-function _process_path_target(array &$targets, $root, $path, array &$errors)
-{
-    if (\DIRECTORY_SEPARATOR !== \substr($path, 0, 1))
+    $name = $child->name;
+    if (isset($parent->subtargets[$name]))
     {
-        $path = $root . $path;
+        $to = $parent->subtargets[$name];
     }
-    $realpath = \realpath($path);
-    $file = null;
-    if (!$realpath)
+    else
     {
-        $errors[] = "Path '$path' does not exist";
-        return array(null, null);
-    }
-    elseif (\is_dir($realpath))
-    {
-        \assert(\DIRECTORY_SEPARATOR !== \substr($realpath, -1));
-        $realpath .= \DIRECTORY_SEPARATOR;
+        $to = new _Target($name);
+        $parent->subtargets[$name] = $to;
     }
 
-    if (isset($targets[$realpath]))
+    if (!$child->subtargets)
     {
-        if (\is_dir($realpath))
-        {
-            return array(null, null);
-        }
-        return array($realpath, \count($targets[$realpath]->subtargets));
+        $to->subtargets = null;
     }
-
-    if (0 !== \substr_compare($realpath, $root, 0, \strlen($root)))
+    elseif (isset($to->subtargets))
     {
-        $errors[] = "Path '$path' is outside the test root directory '$root'";
-        return array(null, null);
-    }
-
-    if (!\is_dir($realpath))
-    {
-        $file = $realpath;
-    }
-
-    $targets[$realpath] = new _Target($realpath);
-    return array($file, -1);
-}
-
-
-/**
- * @param Target[] $targets
- * @return array{bool, Target[]}
- */
-function find_directory_targets(Logger $logger, DirectoryTest $test, array $targets)
-{
-    $error = false;
-    $result = array();
-    $current = null;
-    $testnamelen = \strlen($test->name);
-    foreach ($targets as $target)
-    {
-        if ($target->name() === $test->name)
+        foreach ($child->subtargets as $subtarget)
         {
-            \assert(!$result);
-            \assert(!$error);
-            break;
-        }
-
-        $i = \strpos($target->name(), \DIRECTORY_SEPARATOR, $testnamelen);
-        if (false === $i)
-        {
-            $childpath = $target->name();
-        }
-        else
-        {
-            $childpath = \substr($target->name(), 0, $i + 1);
-        }
-
-        if (!isset($test->tests[$childpath]))
-        {
-            $error = true;
-            $logger->log_error(
-                $target->name(),
-                'This path is not a valid test ' . (\is_dir($target->name()) ? 'directory' : 'file')
-            );
-        }
-        elseif ($childpath === $target->name())
-        {
-            $result[] = $target;
-            $current = null;
-        }
-        else
-        {
-            if (!isset($current) || $current->name !== $childpath)
-            {
-                $current = new _Target($childpath);
-                $result[] = $current;
-            }
-            $current->subtargets[] = $target;
+            namespace\_deduplicate_target($subtarget, $to);
         }
     }
-    return array($error, $result);
-}
-
-
-/**
- * @param Target[] $targets
- * @return array{bool, Target[]}
- */
-function find_file_targets(Logger $logger, FileTest $test, array $targets)
-{
-    $error = false;
-    $result = array();
-    foreach ($targets as $target)
-    {
-        if (isset($test->tests[$target->name()]))
-        {
-            $result[] = $target;
-        }
-        else
-        {
-            $error = true;
-            $logger->log_error(
-                $target->name(),
-                "This identifier is not a valid test in {$test->name}"
-            );
-        }
-    }
-    return array($error, $result);
-}
-
-
-/**
- * @param Target[] $targets
- * @return array{bool, string[]}
- */
-function find_class_targets(Logger $logger, ClassTest $test, array $targets)
-{
-    $error = false;
-    $result = array();
-    foreach ($targets as $target)
-    {
-        if (\method_exists($test->name, $target->name()))
-        {
-            $result[] = $target->name();
-        }
-        else
-        {
-            $error = true;
-            $logger->log_error(
-                $target->name(),
-                "This identifier is not a valid test method in class {$test->name}"
-            );
-        }
-    }
-    return array($error, $result);
 }
 
 

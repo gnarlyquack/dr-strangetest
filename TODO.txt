@@ -36,39 +36,15 @@ Release
 
 -   Targets:
 
-    -   find_class_target: don't use 'method_exists' to check if a target
-        exists since this will cause non-test methods to be found as targets
-
     -   Allow namespaces for user-provided function and class targets to be
         automatically discovered so they don't need to be specified on the
         command line. This will probably require caching the list of declared
         namespaces within a file test
 
-    -   Only user-provided targets need to be validated against discovered
-        test names and this validation only needs to happen once. Targets
-        built from dependencies should never need to be checked since they
-        should always be valid, we should just be able to run them.
-
-    -   Show a notice when duplicate user-provided targets are removed?
-
-    -   Currently, user-provided class and function target declarations may be
-        ignored if it's trivially determined that they're duplicates (e.g., we
-        know we're already testing the entire file they're in). However, that
-        means potentially-invalid target declarations won't cause an error. We
-        may want to parse and validate all target declarations and report (and
-        exit on) any errors. Although, a valid target declaration may still
-        contain invalid targets, e.g., a non-existent identifier or a non-test
-        identifier. These won't cause an error either since identifiers aren't
-        validated until source files are parsed, by which time we've discarded
-        any duplicate targets. Unless we want to hold them for validation?
-
     -   Class and function targets should be found without regard to case
         since PHP identifiers are case-insensitive. Presumably, this isn't an
         issue with paths since we're validating all user-provided paths with
         realpath()?
-
-    -   Actually, the '--path=' specifier isn't necessary because any valid
-        test path needs to start with 'test'(?)
 
 -   Add support for config files(?)
 
@@ -153,6 +129,10 @@ Release
 -   Support PHP 8.1 (when it's released)
 
 -   Only show file name and line number in stack traces
+
+-   How do we (and should we) handle calling user functions with bad
+    signatures, i.e., fixture functions or test functions with extraneous
+    parameters and/or incorrect type declarations?
 
 
 Future / Wishlist

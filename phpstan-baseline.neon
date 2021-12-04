@@ -21,6 +21,11 @@ parameters:
 			path: src/run.php
 
 		-
+			message: "#^Offset string does not exist on array\\<strangetest\\\\_Target\\>\\|null\\.$#"
+			count: 1
+			path: src/targets.php
+
+		-
 			message: "#^Parameter \\#3 \\$m of class strangetest\\\\_Edit constructor expects array\\<int, array\\<int\\>\\>, array\\<int, array\\<int, float\\|int\\>\\> given\\.$#"
 			count: 1
 			path: src/util.php

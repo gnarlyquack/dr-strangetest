@@ -228,26 +228,26 @@ function main($argc, $argv)
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
     $logger = new BasicLogger($options['verbose']);
-    $targets = namespace\process_user_targets($logger, $cwd, $args, $errors);
-    if ($errors)
-    {
-        foreach ($errors as $error)
-        {
-            \fwrite(\STDERR, "{$error}\n");
-        }
-        exit(namespace\EXIT_FAILURE);
-    }
-
     $buffering = new BufferingLogger(new LiveUpdatingLogger($logger));
     $state = new State();
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-
     $tests = namespace\discover_directory($state, $buffering, $cwd, 0);
     if ($tests)
     {
-        namespace\run_tests($state, $buffering, $tests, $targets);
+        if ($args)
+        {
+            $targets = namespace\process_user_targets($logger, $tests, $args);
+            if (0 === $logger->get_log()->error_count())
+            {
+                namespace\run_tests($state, $buffering, $tests, $targets);
+            }
+        }
+        else
+        {
+            namespace\run_tests($state, $buffering, $tests);
+        }
     }
     $end = namespace\_microtime();
 

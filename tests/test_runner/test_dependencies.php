@@ -22,15 +22,11 @@ class TestDependencies {
     // helper assertions
 
     private function assert_events($expected) {
-        $root = $this->root;
-        $targets = strangetest\process_user_targets($this->logger, $root, array(), $errors);
-        strangetest\assert_falsy($errors);
-
         $state = new strangetest\State;
         $logger = new strangetest\BufferingLogger($this->logger);
-        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        $tests = strangetest\discover_directory($state, $logger, $this->root, 0);
         strangetest\assert_truthy($tests);
-        strangetest\run_tests($state, $logger, $tests, $targets);
+        strangetest\run_tests($state, $logger, $tests);
 
         assert_events($expected, $this->logger);
     }
@@ -214,13 +210,13 @@ class TestDependencies {
 
 
     public function test_dependencies_between_parameterized_tests() {
-        $this->root .= 'param_xdepends/';
-        $this->path = array(
+        $root = $this->root . 'param_xdepends/';
+        $args = array(
             'test_nonparam.php',
             'test_param.php',
         );
 
-        $this->assert_events(array(
+        $events = array(
             array(strangetest\EVENT_PASS, 'param_xdepend\\nonparam\\test_one', null),
             array(strangetest\EVENT_FAIL, 'param_xdepend\\nonparam\\test_six', 'I fail'),
 
@@ -251,7 +247,17 @@ class TestDependencies {
             array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_five', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
             array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (0)', "This test depends on 'param_xdepend\\param\\test_five (0)', which did not pass"),
             array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (1)', "This test depends on 'param_xdepend\\param\\test_five (1)', which did not pass"),
-        ));
+        );
+
+        $state = new strangetest\State;
+        $logger = new strangetest\BufferingLogger($this->logger);
+        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        strangetest\assert_truthy($tests);
+
+        $targets = strangetest\process_user_targets($logger, $tests, $args);
+        strangetest\run_tests($state, $logger, $tests, $targets);
+
+        assert_events($events, $this->logger);
     }
 
 

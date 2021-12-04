@@ -257,15 +257,6 @@ function _run_directory_tests(
     State $state, BufferingLogger $logger, DirectoryTest $directory,
     array $run, array $args = null, array $targets = null)
 {
-    if ($targets)
-    {
-        list($error, $targets) = namespace\find_directory_targets($logger, $directory, $targets);
-        if (!$targets && $error)
-        {
-            return;
-        }
-    }
-
     $run_name = namespace\_get_run_name($state, $run);
     list($result, $args) = namespace\_run_directory_setup(
         $logger, $directory, $args, $run_name);
@@ -456,15 +447,6 @@ function _run_file_tests(
     State $state, BufferingLogger $logger, FileTest $file,
     array $run, array $args = null, array $targets = null)
 {
-    if ($targets)
-    {
-        list($error, $targets) = namespace\find_file_targets($logger, $file, $targets);
-        if (!$targets && $error)
-        {
-            return;
-        }
-    }
-
     $run_name = namespace\_get_run_name($state, $run);
     list($result, $args) = namespace\_run_file_setup($logger, $file, $args, $run_name);
     if (namespace\RESULT_PASS !== $result)
@@ -655,15 +637,6 @@ function _run_class_tests(
     State $state, BufferingLogger $logger, ClassTest $class,
     array $run, array $arglist = null, array $targets = null)
 {
-    if ($targets)
-    {
-        list($error, $targets) = namespace\find_class_targets($logger, $class, $targets);
-        if (!$targets && $error)
-        {
-            return;
-        }
-    }
-
     $run_name = namespace\_get_run_name($state, $run);
     list($result, ) = namespace\_run_class_setup($logger, $class, $arglist, $run_name);
     if (namespace\RESULT_PASS !== $result)
@@ -674,9 +647,9 @@ function _run_class_tests(
 
     if ($targets)
     {
-        foreach ($targets as $name)
+        foreach ($targets as $target)
         {
-            $test = $class->tests[$name];
+            $test = $class->tests[$target->name()];
             namespace\_run_class_test($state, $logger, $class->object, $test, $run);
         }
     }

@@ -33,16 +33,14 @@ class TestFiles
 
     private function assert_events($expected)
     {
-        $root = $this->root;
-        $targets = strangetest\process_user_targets(
-            $this->logger, $root, (array)$this->path, $errors);
-        strangetest\assert_falsy($errors);
-
         $state = new State;
         $logger = new BufferingLogger($this->logger);
-        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        $tests = strangetest\discover_directory($state, $logger, $this->root, 0);
+
         if ($tests)
         {
+            $targets = strangetest\process_user_targets(
+                $logger, $tests, (array)$this->path);
             strangetest\run_tests($state, $logger, $tests, $targets);
         }
 

@@ -24,8 +24,6 @@ class TestRunDirectories {
 
     private function assert_events($directories, strangetest\Context $context) {
         $root = $this->path . \DIRECTORY_SEPARATOR;
-        $targets = strangetest\process_user_targets($this->logger, $root, array(), $errors);
-        strangetest\assert_falsy($errors);
 
         $logger = new strangetest\BufferingLogger($this->logger);
         $state = new strangetest\State;
@@ -33,7 +31,7 @@ class TestRunDirectories {
         $tests = strangetest\discover_directory($state, $logger, $root, 0);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
-        strangetest\run_tests($state, $logger, $tests, $targets);
+        strangetest\run_tests($state, $logger, $tests);
 
         $root = null;
         $current = null;
@@ -225,8 +223,6 @@ class TestRunDirectories {
 
     private function assert_log($expected) {
         $root = $this->path . \DIRECTORY_SEPARATOR;
-        $targets = strangetest\process_user_targets($this->logger, $root, array(), $errors);
-        strangetest\assert_falsy($errors);
 
         $logger = new strangetest\BufferingLogger($this->logger);
         $state = new strangetest\State;
@@ -234,7 +230,7 @@ class TestRunDirectories {
         $tests = strangetest\discover_directory($state, $logger, $root, 0);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
-        strangetest\run_tests($state, $logger, $tests, $targets);
+        strangetest\run_tests($state, $logger, $tests);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event) {
@@ -414,9 +410,19 @@ class TestRunDirectories {
             ),
         );
         $targets = array(
-            new strangetest\_Target('tests/test_dir1/test2.php'),
-            new strangetest\_Target('tests/test_dir1/test3.php'),
-            new strangetest\_Target('tests/test_dir2/test_subdir/'),
+            new strangetest\_Target(
+                'tests/test_dir1/',
+                array(
+                    new strangetest\_Target('tests/test_dir1/test2.php'),
+                    new strangetest\_Target('tests/test_dir1/test3.php'),
+                )
+            ),
+            new strangetest\_Target(
+                'tests/test_dir2/',
+                array(
+                    new strangetest\_Target('tests/test_dir2/test_subdir/'),
+                )
+            ),
         );
         $expected = array(
             array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir_setup', 'dir_setup'),
