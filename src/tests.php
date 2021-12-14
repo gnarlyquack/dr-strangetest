@@ -38,40 +38,24 @@ final class RunFixture extends struct {
 }
 
 
-final class DirectoryTest extends struct {
+final class PathTest extends struct
+{
     /** @var string */
     public $name;
 
     /** @var int */
     public $group;
 
-    /** @var ?callable-string */
-    public $setup = null;
-
-    /** @var ?callable-string */
-    public $teardown = null;
-
-    /** @var RunFixture[] */
-    public $runs = array();
-
-    /** @var array<string, DirectoryTest|FileTest> */
-    public $tests;
-}
-
-
-final class FileTest extends struct {
-    /** @var string */
-    public $name;
-    /** @var int */
-    public $group;
     /** @var ?callable-string */
     public $setup;
+
     /** @var ?callable-string */
     public $teardown;
 
     /** @var RunFixture[] */
     public $runs;
-    /** @var array<string, ClassTest|FunctionTest> */
+
+    /** @var array<string, PathTest>|array<string, ClassTest|FunctionTest> */
     public $tests;
 }
 

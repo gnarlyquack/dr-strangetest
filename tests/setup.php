@@ -96,7 +96,7 @@ function make_directory_test($spec, $parent = null)
     $spec = \array_merge($default, $spec);
     \assert(isset($spec['directory']));
 
-    $dir = new strangetest\DirectoryTest;
+    $dir = new strangetest\PathTest;
     $dir->name = $parent ? "{$parent->name}{$spec['directory']}" : $spec['directory'];
     $dir->group = $spec['group'];
     $dir->setup = $spec['setup'];
@@ -142,7 +142,7 @@ function make_file_test($spec, $dir)
     $spec = \array_merge($default, $spec);
     \assert(isset($spec['file']));
 
-    $file = new strangetest\FileTest;
+    $file = new strangetest\PathTest;
     $file->name = "{$dir->name}{$spec['file']}";
     $file->group = $spec['group'];
     $file->setup = $spec['setup'];

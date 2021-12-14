@@ -200,39 +200,13 @@ final class _Context implements Context {
 
 
 /**
- * @param ?mixed[] $args
- * @param ?string $run
- * @return array{int, mixed}
- */
-function _run_directory_setup(
-    BufferingLogger $logger,
-    DirectoryTest $directory,
-    array $args = null,
-    $run = null)
-{
-    if ($directory->setup)
-    {
-        $name = "{$directory->setup}{$run}";
-        namespace\start_buffering($logger, $name);
-        $result = namespace\_run_setup($logger, $name, $directory->setup, $args);
-        namespace\end_buffering($logger);
-    }
-    else
-    {
-        $result = array(namespace\RESULT_PASS, $args);
-    }
-    return $result;
-}
-
-
-/**
  * @param ?Target[] $targets
  * @return void
  */
 function run_tests(
-    State $state, BufferingLogger $logger, DirectoryTest $tests, array $targets = null)
+    State $state, BufferingLogger $logger, PathTest $tests, array $targets = null)
 {
-    namespace\_run_directory_tests($state, $logger, $tests, array(0), null, $targets);
+    namespace\_run_path_tests($state, $logger, $tests, array(0), null, $targets);
     while ($state->depends)
     {
         $dependencies = namespace\resolve_dependencies($state, $logger);
@@ -242,7 +216,7 @@ function run_tests(
         }
         $targets = namespace\build_targets_from_dependencies($dependencies);
         $state->depends = array();
-        namespace\_run_directory_tests($state, $logger, $tests, array(0), null, $targets);
+        namespace\_run_path_tests($state, $logger, $tests, array(0), null, $targets);
     }
 }
 
@@ -253,13 +227,12 @@ function run_tests(
  * @param ?Target[] $targets
  * @return void
  */
-function _run_directory_tests(
-    State $state, BufferingLogger $logger, DirectoryTest $directory,
-    array $run, array $args = null, array $targets = null)
+function _run_path_tests(
+    State $state, BufferingLogger $logger,
+    PathTest $path, array $run, array $args = null, array $targets = null)
 {
     $run_name = namespace\_get_run_name($state, $run);
-    list($result, $args) = namespace\_run_directory_setup(
-        $logger, $directory, $args, $run_name);
+    list($result, $args) = namespace\_run_path_setup($logger, $path, $args, $run_name);
     if (namespace\RESULT_PASS !== $result)
     {
         return;
@@ -272,9 +245,9 @@ function _run_directory_tests(
         {
             $args = \iterator_to_array($args);
         }
-        if ($directory->runs)
+        if ($path->runs)
         {
-            foreach ($directory->runs as $run_fixture)
+            foreach ($path->runs as $run_fixture)
             {
                 $setup = $run_fixture->setup;
                 $name = "{$setup}{$run_name}";
@@ -289,7 +262,7 @@ function _run_directory_tests(
                 if (!\is_iterable($run_args))
                 {
                     $message = "'{$name}' returned a non-iterable argument set";
-                    $logger->log_error($directory->name, $message);
+                    $logger->log_error($path->name, $message);
                 }
                 else
                 {
@@ -299,8 +272,7 @@ function _run_directory_tests(
                     }
 
                     $run[] = $run_fixture->id;
-                    namespace\_run_directory(
-                        $state, $logger, $directory, $run, $run_args, $targets);
+                    namespace\_run_path($state, $logger, $path, $run, $run_args, $targets);
                     \array_pop($run);
                 }
 
@@ -316,96 +288,16 @@ function _run_directory_tests(
         }
         else
         {
-            namespace\_run_directory($state, $logger, $directory, $run, $args, $targets);
+            namespace\_run_path($state, $logger, $path, $run, $args, $targets);
         }
     }
     else
     {
-        $message = "'{$directory->setup}{$run_name}' returned a non-iterable argument set";
-        $logger->log_error($directory->name, $message);
+        $message = "'{$path->setup}{$run_name}' returned a non-iterable argument set";
+        $logger->log_error($path->name, $message);
     }
 
-    namespace\_run_directory_teardown($logger, $directory, $args, $run_name);
-
-}
-
-
-/**
- * @param int[] $run
- * @param ?mixed[] $args
- * @param ?Target[] $targets
- * @return void
- */
-function _run_directory(
-    State $state, BufferingLogger $logger, DirectoryTest $directory,
-    array $run, array $args = null, array $targets = null)
-{
-    $run_name = namespace\_get_run_name($state, $run);
-    if ($targets)
-    {
-        foreach ($targets as $target)
-        {
-            namespace\_run_directory_test(
-                $state, $logger, $directory, $target->name(), $run, $args, $target->subtargets()
-            );
-        }
-    }
-    else
-    {
-        foreach ($directory->tests as $test => $_)
-        {
-            namespace\_run_directory_test(
-                $state, $logger, $directory, $test, $run, $args);
-        }
-    }
-}
-
-
-/**
- * @param string $name
- * @param int[] $run
- * @param ?mixed[] $arglist
- * @param ?Target[] $targets
- * @return void
- */
-function _run_directory_test(
-    State $state, BufferingLogger $logger, DirectoryTest $directory, $name,
-    array $run, $arglist = null, array $targets = null)
-{
-    $test = $directory->tests[$name];
-    if ($test instanceof DirectoryTest)
-    {
-        namespace\_run_directory_tests($state, $logger, $test, $run, $arglist, $targets);
-    }
-    elseif ($test instanceof FileTest)
-    {
-        namespace\_run_file_tests($state, $logger, $test, $run, $arglist, $targets);
-    }
-    else
-    {
-        throw new \Exception("Unknown directory test {$test}");
-    }
-}
-
-
-/**
- * @param ?mixed $args
- * @param ?string $run
- * @return void
- */
-function _run_directory_teardown(
-    BufferingLogger $logger,
-    DirectoryTest $directory,
-    $args = null,
-    $run = null)
-{
-    if ($directory->teardown)
-    {
-        $name = "{$directory->teardown}{$run}";
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $directory->teardown, $args);
-        namespace\end_buffering($logger);
-    }
+    namespace\_run_path_teardown($logger, $path, $args, $run_name);
 }
 
 
@@ -414,17 +306,15 @@ function _run_directory_teardown(
  * @param ?string $run
  * @return array{int, mixed}
  */
-function _run_file_setup(
+function _run_path_setup(
     BufferingLogger $logger,
-    FileTest $file,
-    array $args = null,
-    $run = null)
+    PathTest $path, array $args = null, $run = null)
 {
-    if ($file->setup)
+    if ($path->setup)
     {
-        $name = "{$file->setup}{$run}";
+        $name = "{$path->setup}{$run}";
         namespace\start_buffering($logger, $name);
-        $result = namespace\_run_setup($logger, $name, $file->setup, $args);
+        $result = namespace\_run_setup($logger, $name, $path->setup, $args);
         namespace\end_buffering($logger);
     }
     else
@@ -435,83 +325,22 @@ function _run_file_setup(
 }
 
 
-// @todo Consider combining directory tests and file tests
-// The logic for the two types of tests is essentially identical
 /**
- * @param int[] $run
- * @param ?mixed[] $args
- * @param ?Target[] $targets
+ * @param ?mixed $args
+ * @param ?string $run
  * @return void
  */
-function _run_file_tests(
-    State $state, BufferingLogger $logger, FileTest $file,
-    array $run, array $args = null, array $targets = null)
+function _run_path_teardown(
+    BufferingLogger $logger,
+    PathTest $path, $args = null, $run = null)
 {
-    $run_name = namespace\_get_run_name($state, $run);
-    list($result, $args) = namespace\_run_file_setup($logger, $file, $args, $run_name);
-    if (namespace\RESULT_PASS !== $result)
+    if ($path->teardown)
     {
-        return;
+        $name = "{$path->teardown}{$run}";
+        namespace\start_buffering($logger, $name);
+        namespace\_run_teardown($logger, $name, $path->teardown, $args);
+        namespace\end_buffering($logger);
     }
-
-    if (($args === null) || \is_iterable($args))
-    {
-        if ($args !== null && !\is_array($args))
-        {
-            $args = \iterator_to_array($args);
-        }
-        if ($file->runs)
-        {
-            foreach ($file->runs as $run_fixture)
-            {
-                $setup = $run_fixture->setup;
-                $name = "{$setup}{$run_name}";
-                namespace\start_buffering($logger, $name);
-                list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
-                namespace\end_buffering($logger);
-                if (namespace\RESULT_PASS !== $result)
-                {
-                    continue;
-                }
-
-                if (!\is_iterable($run_args))
-                {
-                    $message = "'{$name}' returned a non-iterable argument set";
-                    $logger->log_error($file->name, $message);
-                }
-                else
-                {
-                    if (!\is_array($run_args))
-                    {
-                        $run_args = \iterator_to_array($run_args);
-                    }
-                    $run[] = $run_fixture->id;
-                    namespace\_run_file($state, $logger, $file, $run, $run_args, $targets);
-                    \array_pop($run);
-                }
-
-                if (isset($run_fixture->teardown))
-                {
-                    $teardown = $run_fixture->teardown;
-                    $name = "{$teardown}{$run_name}";
-                    namespace\start_buffering($logger, $name);
-                    namespace\_run_teardown($logger, $name, $teardown, $run_args);
-                    namespace\end_buffering($logger);
-                }
-            }
-        }
-        else
-        {
-            namespace\_run_file($state, $logger, $file, $run, $args, $targets);
-        }
-    }
-    else
-    {
-        $message = "'{$file->setup}{$run_name}' returned a non-iterable argument set";
-        $logger->log_error($file->name, $message);
-    }
-
-    namespace\_run_file_teardown($logger, $file, $args, $run_name);
 }
 
 
@@ -521,26 +350,25 @@ function _run_file_tests(
  * @param ?Target[] $targets
  * @return void
  */
-function _run_file(
-    State $state, BufferingLogger $logger, FileTest $file,
-    array $run, array $args = null, array $targets = null)
+function _run_path(
+    State $state, BufferingLogger $logger,
+    PathTest $path, array $run, array $args = null, array $targets = null)
 {
     $run_name = namespace\_get_run_name($state, $run);
-
     if ($targets)
     {
         foreach ($targets as $target)
         {
-            namespace\_run_file_test(
-                $state, $logger, $file, $target->name(), $run, $args, $target->subtargets()
+            namespace\_run_path_test(
+                $state, $logger, $path, $target->name(), $run, $args, $target->subtargets()
             );
         }
     }
     else
     {
-        foreach ($file->tests as $test => $_)
+        foreach ($path->tests as $test => $_)
         {
-            namespace\_run_file_test($state, $logger, $file, $test, $run, $args);
+            namespace\_run_path_test($state, $logger, $path, $test, $run, $args);
         }
     }
 }
@@ -553,43 +381,23 @@ function _run_file(
  * @param ?Target[] $targets
  * @return void
  */
-function _run_file_test(
-    State $state, BufferingLogger $logger, FileTest $file, $name,
-    array $run, $arglist = null, array $targets = null)
+function _run_path_test(
+    State $state, BufferingLogger $logger,
+    PathTest $path, $name, array $run, $arglist = null, array $targets = null)
 {
-    $test = $file->tests[$name];
-    if ($test instanceof ClassTest)
+    $test = $path->tests[$name];
+    if ($test instanceof PathTest)
+    {
+        namespace\_run_path_tests($state, $logger, $test, $run, $arglist, $targets);
+    }
+    elseif ($test instanceof ClassTest)
     {
         namespace\_run_class_tests($state, $logger, $test, $run, $arglist, $targets);
     }
-    elseif ($test instanceof FunctionTest)
-    {
-        namespace\_run_function_test($state, $logger, $test, $run, $arglist);
-    }
     else
     {
-        throw new \Exception("Unknown file test {$test}");
-    }
-}
-
-
-/**
- * @param ?mixed[] $args
- * @param ?string $run
- * @return void
- */
-function _run_file_teardown(
-    BufferingLogger $logger,
-    FileTest $file,
-    $args = null,
-    $run = null)
-{
-    if ($file->teardown)
-    {
-        $name = "{$file->teardown}{$run}";
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $file->teardown, $args);
-        namespace\end_buffering($logger);
+        \assert($test instanceof FunctionTest);
+        namespace\_run_function_test($state, $logger, $test, $run, $arglist);
     }
 }
 

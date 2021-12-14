@@ -10,7 +10,7 @@ namespace test\run\file;
 use strangetest;
 use strangetest\BasicLogger;
 use strangetest\BufferingLogger;
-use strangetest\FileTest;
+use strangetest\PathTest;
 use strangetest\Logger;
 use strangetest\State;
 
@@ -814,9 +814,9 @@ function assert_run_file($filepath, $events) {
 
     $file = strangetest\discover_file($state, $buffed_logger, $filepath, 0);
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
-    strangetest\assert_true($file instanceof FileTest);
+    strangetest\assert_true($file instanceof PathTest);
 
-    strangetest\_run_file_tests($state, $buffed_logger, $file, array(0));
+    strangetest\_run_path_tests($state, $buffed_logger, $file, array(0));
     \assert_events($events, $logger);
 }
 

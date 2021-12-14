@@ -126,7 +126,7 @@ function test_handles_non_test_definition() {
 
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     strangetest\assert_true(
-        $result instanceof strangetest\FileTest,
+        $result instanceof strangetest\PathTest,
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
     );
     strangetest\assert_identical(

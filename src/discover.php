@@ -11,7 +11,7 @@ namespace strangetest;
 /**
  * @param string $path
  * @param int $group
- * @return DirectoryTest|false
+ * @return PathTest|false
  */
 function discover_directory(State $state, BufferingLogger $logger, $path, $group)
 {
@@ -64,7 +64,7 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
     $directory = false;
     if ($valid)
     {
-        $directory = new DirectoryTest;
+        $directory = new PathTest;
         $directory->name = $path;
         $directory->group = $group;
         if (!$setup
@@ -114,7 +114,7 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
 /**
  * @param string $filepath
  * @param int $group
- * @return FileTest|false
+ * @return PathTest|false
  */
 function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
 {
@@ -347,7 +347,7 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
     $file = false;
     if ($valid && false !== $output['runs'])
     {
-        $file = new FileTest;
+        $file = new PathTest;
         $file->name = $filepath;
         $file->group = $group;
         $file->setup = $output['setup_file'];
@@ -511,13 +511,13 @@ function discover_class(State $state, Logger $logger, TestInfo $info, $group)
 /**
  * @param State $state
  * @param BufferingLogger $logger
- * @param DirectoryTest $directory
+ * @param PathTest $directory
  * @param string $filepath
  * @return bool
  */
 function _discover_directory_setup(
     State $state, BufferingLogger $logger,
-    DirectoryTest $directory, $filepath)
+    PathTest $directory, $filepath)
 {
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)

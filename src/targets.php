@@ -66,7 +66,7 @@ final class _Target extends struct implements Target {
  * @param string[] $args
  * @return ?Target[]
  */
-function process_user_targets(Logger $logger, DirectoryTest $tests, array $args)
+function process_user_targets(Logger $logger, PathTest $tests, array $args)
 {
     \assert(\DIRECTORY_SEPARATOR === \substr($tests->name, -1));
     \assert(\count($args) > 0);
@@ -492,10 +492,10 @@ final class ValidatedTargets
 /**
  * @return ValidatedTargets
  */
-function _validate_targets(Logger $logger, DirectoryTest $tests, ParsedTargets $parsed)
+function _validate_targets(Logger $logger, PathTest $tests, ParsedTargets $parsed)
 {
     $validated = new ValidatedTargets($parsed->had_errors);
-    $suite = new DirectoryTest;
+    $suite = new PathTest;
     $suite->tests[$tests->name] = $tests;
     foreach ($parsed->targets as $target)
     {
@@ -514,7 +514,7 @@ function _validate_targets(Logger $logger, DirectoryTest $tests, ParsedTargets $
 
 
 /**
- * @param DirectoryTest|FileTest|ClassTest $test
+ * @param PathTest|ClassTest $test
  * @param _ClassTarget|_FunctionTarget|_PathTarget|_MethodTarget $unvalidated
  * @return ?_Target
  */
