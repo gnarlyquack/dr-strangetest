@@ -31,7 +31,7 @@ class TestRunDirectories {
         $tests = strangetest\discover_directory($state, $logger, $root, 0);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
-        strangetest\run_tests($state, $logger, $tests);
+        strangetest\run_tests($state, $logger, $tests, $tests);
 
         $root = null;
         $current = null;
@@ -230,7 +230,7 @@ class TestRunDirectories {
         $tests = strangetest\discover_directory($state, $logger, $root, 0);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
-        strangetest\run_tests($state, $logger, $tests);
+        strangetest\run_tests($state, $logger, $tests, $tests);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event) {
@@ -253,7 +253,7 @@ class TestRunDirectories {
         $tests = make_test($tests);
         $logger = new strangetest\BufferingLogger($this->logger);
         $state = new strangetest\State;
-        strangetest\run_tests($state, $logger, $tests, $targets);
+        strangetest\run_tests($state, $logger, $tests, $tests, $targets);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event)
@@ -412,6 +412,7 @@ class TestRunDirectories {
         $targets = array(
             new strangetest\_Target(
                 'tests/test_dir1/',
+                array(),
                 array(
                     new strangetest\_Target('tests/test_dir1/test2.php'),
                     new strangetest\_Target('tests/test_dir1/test3.php'),
@@ -419,6 +420,7 @@ class TestRunDirectories {
             ),
             new strangetest\_Target(
                 'tests/test_dir2/',
+                array(),
                 array(
                     new strangetest\_Target('tests/test_dir2/test_subdir/'),
                 )

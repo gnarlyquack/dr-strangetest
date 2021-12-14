@@ -188,8 +188,8 @@ final class State extends struct {
     /** @var array<string, array{'group': int, 'runs': bool[]}> */
     public $results = array();
 
-    /** @var array<string, Dependency> */
-    public $depends = array();
+    /** @var array<string, FunctionDependency> */
+    public $postponed = array();
 
     /** @var array<string, mixed[]> */
     public $fixture = array();
@@ -238,15 +238,15 @@ function main($argc, $argv)
     {
         if ($args)
         {
-            $targets = namespace\process_user_targets($logger, $tests, $args);
-            if (0 === $logger->get_log()->error_count())
+            $targets = namespace\process_specifiers($logger, $tests, $args);
+            if ($targets)
             {
                 namespace\run_tests($state, $buffering, $tests, $targets);
             }
         }
         else
         {
-            namespace\run_tests($state, $buffering, $tests);
+            namespace\run_tests($state, $buffering, $tests, $tests);
         }
     }
     $end = namespace\_microtime();

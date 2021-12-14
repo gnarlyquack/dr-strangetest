@@ -5,83 +5,12 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace test\process_user_targets;
-
-use strangetest;
 use strangetest\BasicLogger;
 use strangetest\BufferingLogger;
 use strangetest\Context;
-use strangetest\DirectoryTest;
-use strangetest\Target;
-
-
-
-// helper functions
-
-function logger()
-{
-    return new strangetest\BasicLogger(strangetest\LOG_ALL);
-}
-
-
-function target_to_array(Target $target)
-{
-    $result = (array)$target;
-    if (isset($result['subtargets']))
-    {
-        foreach ($result['subtargets'] as $key => $value)
-        {
-            $result['subtargets'][$key] = target_to_array($value);
-        }
-    }
-    return $result;
-}
-
-
-// helper assertions
-
-function assert_targets(
-    Context $context, $targets, array $actual_errors,
-    $expected_root, $expected_targets, array $expected_errors
-) {
-    if ($targets) {
-        foreach ($targets as $key => $value) {
-            $targets[$key] = namespace\target_to_array($value);
-        }
-    }
-
-    $context->subtest(
-        function() use ($expected_targets, $targets)
-        {
-            strangetest\assert_identical($expected_targets, $targets, 'Incorrect targets');
-        }
-    );
-    $context->subtest(
-        function() use ($expected_errors, $actual_errors)
-        {
-            strangetest\assert_identical($expected_errors, $actual_errors, 'Unexpected errors');
-        }
-    );
-}
 
 
 // tests
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class TestProcessUserTargets
 {
@@ -97,7 +26,7 @@ class TestProcessUserTargets
     {
         $state = new strangetest\State;
         $logger = new BasicLogger(strangetest\LOG_ALL);
-        $path = __DIR__ . \DIRECTORY_SEPARATOR . 'resources' . \DIRECTORY_SEPARATOR;
+        $path = __DIR__ . '/resources/';
         $tests = strangetest\discover_directory($state, new BufferingLogger($logger), $path, 0);
         \assert(!$logger->get_log()->get_events());
 
@@ -116,13 +45,14 @@ class TestProcessUserTargets
     {
         $this->args = array('test1.php', 'test2.php', 'test_dir');
 
-        foreach ($this->args as $arg) {
-            $target = $this->root . $arg;
-            if (\is_dir($target)) {
-                $target .= \DIRECTORY_SEPARATOR;
-            }
-            $this->targets[$target] = array('name' => $target, 'subtargets' => null);
-        }
+        $this->targets = array(
+            'path' => $this->root,
+            'tests' => array(
+                array('path' => "{$this->root}test1.php"),
+                array('path' => "{$this->root}test2.php"),
+                array('path' => "{$this->root}test_dir/"),
+            ),
+        );
         $this->assert_targets($context);
     }
 
@@ -131,17 +61,11 @@ class TestProcessUserTargets
         $this->args = array('test1.php', '--function=test1_2,test1_1');
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => array(
-                    'function test1_2' => array(
-                        'name' => 'function test1_2',
-                        'subtargets' => null,
-                    ),
-                    'function test1_1' => array(
-                        'name' => 'function test1_1',
-                        'subtargets' => null,
-                    ),
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array('function test1_2', 'function test1_1'),
                 ),
             ),
         );
@@ -153,16 +77,13 @@ class TestProcessUserTargets
         $this->args = array('test1.php', '--class=test1_2;test1_3');
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => array(
-                    'class test1_2' => array(
-                        'name' => 'class test1_2',
-                        'subtargets' => null,
-                    ),
-                    'class test1_3' => array(
-                        'name' => 'class test1_3',
-                        'subtargets' => null,
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        array('class' => 'class test1_2'),
+                        array('class' => 'class test1_3'),
                     ),
                 ),
             ),
@@ -177,34 +98,19 @@ class TestProcessUserTargets
             '--class=test1_1::testone,testtwo;test1_2::testone,testtwo');
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => array(
-                    'class test1_1' => array(
-                        'name' => 'class test1_1',
-                        'subtargets' => array(
-                            'testone' => array(
-                                'name' => 'testone',
-                                'subtargets' => null,
-                            ),
-                            'testtwo' => array(
-                                'name' => 'testtwo',
-                                'subtargets' => null,
-                            ),
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        array(
+                            'class' => 'class test1_1',
+                            'tests' => array('testone', 'testtwo'),
                         ),
-                    ),
-                    'class test1_2' => array(
-                        'name' => 'class test1_2',
-                        'subtargets' => array(
-                            'testone' => array(
-                                'name' => 'testone',
-                                'subtargets' => null,
-                            ),
-                            'testtwo' => array(
-                                'name' => 'testtwo',
-                                'subtargets' => null,
-                            ),
-                        ),
+                        array(
+                            'class' => 'class test1_2',
+                            'tests' => array('testone', 'testtwo'),
+                        )
                     ),
                 ),
             ),
@@ -220,20 +126,14 @@ class TestProcessUserTargets
             '--function=test1_1,test1_3');
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => array(
-                    'function test1_1' => array(
-                        'name' => 'function test1_1',
-                        'subtargets' => null,
-                    ),
-                    'function test1_2' => array(
-                        'name' => 'function test1_2',
-                        'subtargets' => null,
-                    ),
-                    'function test1_3' => array(
-                        'name' => 'function test1_3',
-                        'subtargets' => null,
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        'function test1_1',
+                        'function test1_2',
+                        'function test1_3',
                     ),
                 ),
             ),
@@ -253,34 +153,18 @@ class TestProcessUserTargets
         );
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => array(
-                    'class test1_1' => array(
-                        'name' => 'class test1_1',
-                        'subtargets' => null,
-                    ),
-                    'class test1_2' => array(
-                        'name' => 'class test1_2',
-                        'subtargets' => array(
-                            'testthree' => array(
-                                'name' => 'testthree',
-                                'subtargets' => null,
-                            ),
-                            'testtwo' => array(
-                                'name' => 'testtwo',
-                                'subtargets' => null,
-                            ),
-                            'testone' => array(
-                                'name' => 'testone',
-                                'subtargets' => null,
-                            ),
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        array('class' => 'class test1_1'),
+                        array(
+                            'class' => 'class test1_2',
+                            'tests' => array('testthree', 'testtwo', 'testone'),
                         ),
-                    ),
-                    'class test1_3' => array(
-                        'name' => 'class test1_3',
-                        'subtargets' => null,
-                    ),
+                        array('class' => 'class test1_3'),
+                    )
                 ),
             ),
         );
@@ -299,18 +183,15 @@ class TestProcessUserTargets
         );
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => array(
-                    'class test1_1' => array(
-                        'name' => 'class test1_1',
-                        'subtargets' => null,
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        array('class' => 'class test1_1'),
+                        array('class' => 'class test1_2'),
                     ),
-                    'class test1_2' => array(
-                        'name' => 'class test1_2',
-                        'subtargets' => null,
-                    ),
-                ),
+                )
             ),
         );
         $this->assert_targets($context);
@@ -327,13 +208,10 @@ class TestProcessUserTargets
         );
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => null,
-            ),
-            "{$this->root}test2.php" => array(
-                'name' => "{$this->root}test2.php",
-                'subtargets' => null,
+            'path' => $this->root,
+            'tests' => array(
+                array('path' => "{$this->root}test1.php"),
+                array('path' => "{$this->root}test2.php"),
             ),
         );
         $this->assert_targets($context);
@@ -349,13 +227,10 @@ class TestProcessUserTargets
         );
 
         $this->targets = array(
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => null,
-            ),
-            "{$this->root}test2.php" => array(
-                'name' => "{$this->root}test2.php",
-                'subtargets' => null,
+            'path' => $this->root,
+            'tests' => array(
+                array('path' => "{$this->root}test1.php"),
+                array('path' => "{$this->root}test2.php"),
             ),
         );
         $this->assert_targets($context);
@@ -375,21 +250,12 @@ class TestProcessUserTargets
         );
 
         $this->targets = array(
-            "{$this->root}test2.php" => array(
-                'name' => "{$this->root}test2.php",
-                'subtargets' => null,
-            ),
-            "{$this->root}test1.php" => array(
-                'name' => "{$this->root}test1.php",
-                'subtargets' => null,
-            ),
-            "{$this->root}test_dir/" => array(
-                'name' => "{$this->root}test_dir/",
-                'subtargets' => null,
-            ),
-            "{$this->root}test_dir1/" => array(
-                'name' => "{$this->root}test_dir1/",
-                'subtargets' => null,
+            'path' => $this->root,
+            'tests' => array(
+                array('path' => "{$this->root}test2.php"),
+                array('path' => "{$this->root}test1.php"),
+                array('path' => "{$this->root}test_dir/"),
+                array('path' => "{$this->root}test_dir1/"),
             ),
         );
         $this->assert_targets($context);
@@ -521,37 +387,143 @@ class TestProcessUserTargets
         $this->assert_targets($context);
     }
 
+    public function test_parses_runs(Context $context)
+    {
+        $this->args = array('test1.php', '--run=run1');
+
+        $this->targets = array(
+            'path' => $this->root,
+            'runs' => array(
+                array(
+                    'run' => 'run1',
+                    'tests' => array(
+                        array('path' => "{$this->root}test1.php"),
+                    ),
+                ),
+            ),
+        );
+        $this->assert_targets($context);
+    }
+
+
+    // helper methods
 
     private function assert_targets(Context $context)
     {
-        $targets = strangetest\process_user_targets($this->logger, $this->tests, $this->args);
+        $expected = $this->make_tests_from_targets();
+        $actual = strangetest\process_specifiers($this->logger, $this->tests, $this->args);
 
-        if ($targets)
-        {
-            foreach ($targets as $key => $value) {
-                $targets[$key] = namespace\target_to_array($value);
-            }
-        }
-
-        $expected_targets = $this->targets;
         $context->subtest(
-            function() use ($expected_targets, $targets)
+            function() use ($expected, $actual)
             {
-                strangetest\assert_identical(
-                    $expected_targets, $targets,
+                strangetest\assert_equal(
+                    $expected, $actual,
                     'Incorrect targets');
             }
         );
 
-        $events = $this->logger->get_log()->get_events();
-        $expected_events = $this->events;
+        $expected = $this->events;
+        $actual = $this->logger->get_log()->get_events();
         $context->subtest(
-            function() use ($expected_events, $events)
+            function() use ($expected, $actual)
             {
                 strangetest\assert_identical(
-                    $expected_events, $events,
+                    $expected, $actual,
                     'Unexpected events');
             }
         );
+    }
+
+    private function make_tests_from_targets()
+    {
+        $result = null;
+        if ($this->targets)
+        {
+            \assert($this->targets['path'] === $this->tests->name);
+            $result = $this->make_test_from_path_target($this->targets, $this->tests);
+        }
+        return $result;
+    }
+
+
+    private function make_test_from_path_target($target, strangetest\PathTest $tests)
+    {
+        $result = new strangetest\PathTest;
+        $result->name = $tests->name;
+        $result->group = $tests->group;
+        $result->setup = $tests->setup;
+        $result->teardown = $tests->teardown;
+        if (isset($target['runs']))
+        {
+            foreach ($target['runs'] as $run)
+            {
+                $result->runs[] = $this->make_test_from_run_target(
+                    $run, $tests->runs[$run['run']]);
+            }
+        }
+        else
+        {
+            foreach ($tests->runs as $run)
+            {
+                $result->runs[] = $this->make_test_from_run_target($target, $run);
+            }
+        }
+        return $result;
+    }
+
+    private function make_test_from_run_target($target, strangetest\TestRun $tests)
+    {
+        $result = new strangetest\TestRun;
+        $result->name = $tests->name;
+        $result->run_info = $tests->run_info;
+        if (isset($target['tests']))
+        {
+            foreach ($target['tests'] as $test)
+            {
+                if (\is_string($test))
+                {
+                    $test = $tests->tests[$test];
+                }
+                elseif (isset($test['path']))
+                {
+                    $test = $this->make_test_from_path_target(
+                        $test, $tests->tests[$test['path']]);
+                }
+                else
+                {
+                    $test = $this->make_test_from_class_target(
+                        $test, $tests->tests[$test['class']]);
+                }
+                $result->tests[] = $test;
+            }
+        }
+        else
+        {
+            $result->tests = $tests->tests;
+        }
+        return $result;
+    }
+
+    private function make_test_from_class_target($target, strangetest\ClassTest $tests)
+    {
+        $result = new strangetest\ClassTest;
+        $result->file = $tests->file;
+        $result->group = $tests->group;
+        $result->namespace = $tests->namespace;
+        $result->name = $tests->name;
+        $result->setup = $tests->setup;
+        $result->teardown = $tests->teardown;
+        if (isset($target['tests']))
+        {
+            foreach ($target['tests'] as $test)
+            {
+                $result->tests[] = $tests->tests[$test];
+            }
+        }
+        else
+        {
+            $result->tests = $tests->tests;
+        }
+        return $result;
     }
 }

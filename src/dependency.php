@@ -8,52 +8,63 @@
 namespace strangetest;
 
 
-final class Postpone extends \Exception {}
+final class Postpone extends \Exception
+{
+}
 
 
-final class Dependency extends struct {
-    /** @var string */
-    public $file;
+final class FunctionDependency extends struct
+{
+    /** @var FunctionTest */
+    public $test;
 
-    /** @var ?string */
-    public $class;
-
-    /** @var string */
-    public $function;
-
-    /** @var array<string, array<?int>> */
-    public $dependees = array();
-
+    /** @var array<string, RunDependency> */
+    public $runs = array();
 
     /**
-     * @param string $file
-     * @param ?string $class
-     * @param string $function
+     * @param FunctionTest $test
      */
-    public function __construct($file, $class, $function)
+    public function __construct($test)
     {
-        $this->file = $file;
-        $this->class = $class;
-        $this->function = $function;
+        $this->test = $test;
     }
 }
 
 
-final class _DependencyGraph {
+final class RunDependency extends struct
+{
+    /** @var int[] */
+    public $run;
+
+    /** @var array<string, ?int[]> */
+    public $prerequisites = array();
+
+    /**
+     * @param int[] $run
+     */
+    public function __construct(array $run)
+    {
+        $this->run = $run;
+    }
+}
+
+
+final class _DependencyGraph extends struct
+{
     /** @var State */
-    private $state;
+    public $state;
 
     /** @var Logger */
-    private $logger;
+    public $logger;
 
-    /** @var Dependency[] */
-    private $postorder = array();
-
-    /** @var array<string, bool> */
-    private $marked = array();
+    /** @var FunctionDependency[] */
+    public $postorder = array();
 
     /** @var array<string, bool> */
-    private $stack = array();
+    public $marked = array();
+
+    /** @var array<string, bool> */
+    public $stack = array();
 
 
     public function __construct(State $state, Logger $logger)
@@ -61,141 +72,105 @@ final class _DependencyGraph {
         $this->state = $state;
         $this->logger = $logger;
     }
-
-
-    /**
-     * @return Dependency[]
-     */
-    public function sort()
-    {
-        foreach ($this->state->depends as $from => $_)
-        {
-            $this->postorder($from);
-        }
-        return $this->postorder;
-    }
-
-
-    /**
-     * @todo Ensure dependencies are resolved by run, not just by test
-     * @param string $from
-     * @param array<?int> $runs
-     * @return bool
-     */
-    private function postorder($from, array $runs = array())
-    {
-        if (isset($this->marked[$from]))
-        {
-            if (!$this->marked[$from])
-            {
-                return false;
-            }
-
-            if (!isset($this->state->results[$from]))
-            {
-                return true;
-            }
-
-            return $this->check_run_results($from, $runs);
-        }
-
-        $this->marked[$from] = true;
-        $this->stack[$from] = true;
-
-        if (isset($this->state->depends[$from]))
-        {
-            $dependency = $this->state->depends[$from];
-            foreach ($dependency->dependees as $to => $runs)
-            {
-                if (isset($this->stack[$to]))
-                {
-                    $cycle = array();
-                    \end($this->stack);
-                    do
-                    {
-                        \prev($this->stack);
-                        $key = \key($this->stack);
-                        $cycle[] = $key;
-                    } while ($key !== $to);
-
-                    $this->marked[$from] = false;
-                    $this->logger->log_error(
-                        $from,
-                        \sprintf(
-                            "This test has a cyclical dependency with the following tests:\n\t%s",
-                            \implode("\n\t", $cycle)
-                        )
-                    );
-                }
-                else
-                {
-                    $this->marked[$from] = $this->postorder($to, $runs);
-                    if (!$this->marked[$from])
-                    {
-                        $this->logger->log_skip($from, "This test depends on '$to', which did not pass");
-                    }
-                }
-            }
-
-            if ($this->marked[$from])
-            {
-                $this->postorder[] = $dependency;
-            }
-        }
-        else
-        {
-            if (!isset($this->state->results[$from]))
-            {
-                $this->marked[$from] = false;
-                $this->logger->log_error(
-                    $from,
-                    'Other tests depend on this test, but this test was never run'
-                );
-            }
-            else
-            {
-                $result = $this->check_run_results($from, $runs);
-            }
-        }
-
-        \array_pop($this->stack);
-        return isset($result) ? $result : $this->marked[$from];
-    }
-
-
-    /**
-     * @param string $from
-     * @param array<?int> $runs
-     * @return bool
-     */
-    private function check_run_results($from, array $runs)
-    {
-        $result = true;
-        foreach ($runs as $run)
-        {
-            if (isset($run)
-                && !isset($this->state->results[$from]['runs'][$run]))
-            {
-                $this->logger->log_error(
-                    // @fixme Generate correct run name for non-existent prerequisite
-                    // $run now carries a run id instead of a run name, so this doesn't
-                    // shows the correct run name
-                    "$from$run",
-                    'Other tests depend on this test, but this test was never run'
-                );
-                $result = false;
-            }
-        }
-        return $result;
-    }
 }
 
 
 /**
- * @return Dependency[]
+ * @return FunctionDependency[]
  */
 function resolve_dependencies(State $state, Logger $logger)
 {
     $graph = new _DependencyGraph($state, $logger);
-    return $graph->sort();
+    foreach ($state->postponed as $postponed)
+    {
+        namespace\_resolve_dependency($graph, $postponed);
+    }
+    return $graph->postorder;
+}
+
+
+/**
+ * @todo Ensure dependencies are resolved by run, not just by test
+ * @return bool
+ */
+function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $dependency)
+{
+    $name = $dependency->test->name;
+    if (isset($graph->marked[$name]))
+    {
+        $valid = $graph->marked[$name];
+    }
+    else
+    {
+        $graph->stack[$name] = true;
+        $valid = true;
+        foreach ($dependency->runs as $run)
+        {
+            foreach ($run->prerequisites as $pre_name => $pre_run)
+            {
+                if (isset($graph->state->postponed[$pre_name]))
+                {
+                    if (isset($graph->stack[$pre_name]))
+                    {
+                        $cycle = array();
+                        \end($graph->stack);
+                        do
+                        {
+                            $key = \key($graph->stack);
+                            $cycle[] = $key;
+                            \prev($graph->stack);
+                        } while ($key !== $pre_name);
+
+                        $valid = false;
+                        $graph->logger->log_error(
+                            $name,
+                            \sprintf(
+                                "This test has a cyclical dependency with the following tests:\n\t%s",
+                                \implode("\n\t", \array_slice($cycle, 1))
+                            )
+                        );
+                    }
+                    else
+                    {
+                        $valid = namespace\_resolve_dependency(
+                            $graph, $graph->state->postponed[$pre_name]);
+                        if (!$valid)
+                        {
+                            $graph->logger->log_skip(
+                                $name,
+                                "This test depends on '{$pre_name}', which did not pass");
+                        }
+                    }
+                }
+                elseif (!isset($graph->state->results[$pre_name]))
+                {
+                    $valid = false;
+                    $graph->logger->log_error(
+                        $name,
+                        "This test depends on test '{$pre_name}', which was never run");
+                }
+                else
+                {
+                    \assert((null === $pre_run) || (\count($pre_run) > 0));
+                    $pre_run_id = isset($pre_run) ? \implode(',', $pre_run) : '';
+                    \assert(
+                        !isset($pre_run)
+                        || isset($graph->state->results[$pre_name]['runs'][$pre_run_id]));
+                }
+
+                if (!$valid)
+                {
+                    break 2;
+                }
+            }
+        }
+        \array_pop($graph->stack);
+        $graph->marked[$name] = $valid;
+
+        if ($valid)
+        {
+            $graph->postorder[] = $dependency;
+        }
+    }
+    return $valid;
 }

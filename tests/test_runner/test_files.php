@@ -39,8 +39,7 @@ class TestFiles
 
         if ($tests)
         {
-            $targets = strangetest\process_user_targets(
-                $logger, $tests, (array)$this->path);
+            $targets = strangetest\process_specifiers($logger, $tests, (array)$this->path);
             strangetest\run_tests($state, $logger, $tests, $targets);
         }
 

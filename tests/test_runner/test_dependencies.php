@@ -26,7 +26,7 @@ class TestDependencies {
         $logger = new strangetest\BufferingLogger($this->logger);
         $tests = strangetest\discover_directory($state, $logger, $this->root, 0);
         strangetest\assert_truthy($tests);
-        strangetest\run_tests($state, $logger, $tests);
+        strangetest\run_tests($state, $logger, $tests, $tests);
 
         assert_events($expected, $this->logger);
     }
@@ -115,19 +115,16 @@ class TestDependencies {
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_five', 'Skip me'),
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_six', "This test depends on 'unrun_depends\\test2::test_five', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'foobar', 'Other tests depend on this test, but this test was never run'),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test_one', "This test depends on 'foobar', which did not pass"),
+            array(strangetest\EVENT_ERROR, 'unrun_depends\\test_one', "This test depends on test 'foobar', which was never run"),
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test_two', "This test depends on 'unrun_depends\\test_one', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'unrun_depends\\test1::test_one', 'Other tests depend on this test, but this test was never run'),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test_three', "This test depends on 'unrun_depends\\test1::test_one', which did not pass"),
+            array(strangetest\EVENT_ERROR, 'unrun_depends\\test_three', "This test depends on test 'unrun_depends\\test1::test_one', which was never run"),
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test_four', "This test depends on 'unrun_depends\\test_three', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'frobitz', 'Other tests depend on this test, but this test was never run'),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_one', "This test depends on 'frobitz', which did not pass"),
+            array(strangetest\EVENT_ERROR, 'unrun_depends\\test2::test_one', "This test depends on test 'frobitz', which was never run"),
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_two', "This test depends on 'unrun_depends\\test2::test_one', which did not pass"),
 
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_three', "This test depends on 'unrun_depends\\test1::test_one', which did not pass"),
+            array(strangetest\EVENT_ERROR, 'unrun_depends\\test2::test_three', "This test depends on test 'unrun_depends\\test1::test_one', which was never run"),
             array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_four', "This test depends on 'unrun_depends\\test2::test_three', which did not pass"),
         ));
     }
@@ -254,7 +251,7 @@ class TestDependencies {
         $tests = strangetest\discover_directory($state, $logger, $root, 0);
         strangetest\assert_truthy($tests);
 
-        $targets = strangetest\process_user_targets($logger, $tests, $args);
+        $targets = strangetest\process_specifiers($logger, $tests, $args);
         strangetest\run_tests($state, $logger, $tests, $targets);
 
         assert_events($events, $this->logger);

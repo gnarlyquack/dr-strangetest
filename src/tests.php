@@ -101,7 +101,7 @@ final class ClassTest extends struct {
     /** @var ?string */
     public $teardown;
 
-    /** @var array<string, FunctionTest> */
+    /** @var FunctionTest[] */
     public $tests = array();
 }
 

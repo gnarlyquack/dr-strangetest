@@ -114,14 +114,15 @@ final class _Context implements Context {
                 \trigger_error("Invalid test name: $name");
             }
 
-            $runs = $this->run;
             if (!isset($this->state->results[$resolved]))
             {
                 // The dependency hasn't been run
+                // @todo Always resolve a prerequisite to a specific run?
                 $dependees[] = array($resolved, null);
             }
             else
             {
+                $runs = $this->run;
                 $results = $this->state->results[$resolved];
                 if ($this->test->group !== $results['group'])
                 {
@@ -142,7 +143,7 @@ final class _Context implements Context {
                 if (!isset($results['runs'][$run]))
                 {
                     // The dependency hasn't been run
-                    $dependees[] = array($resolved, $run);
+                    $dependees[] = array($resolved, $runs);
                 }
                 elseif (!$results['runs'][$run])
                 {
@@ -158,20 +159,24 @@ final class _Context implements Context {
 
         if ($dependees)
         {
-            if (!isset($this->state->depends[$this->test->name]))
+            if (!isset($this->state->postponed[$this->test->name]))
             {
-                $this->state->depends[$this->test->name] = new Dependency(
-                    $this->test->file,
-                    $this->test->class,
-                    $this->test->function
-                );
+                $this->state->postponed[$this->test->name]
+                    = new FunctionDependency($this->test);
             }
-            $dependency = $this->state->depends[$this->test->name];
+            $dependency = $this->state->postponed[$this->test->name];
 
-            foreach ($dependees as $dependee)
+            $run_name = namespace\_get_run_name($this->state, $this->run);
+            if (!isset($dependency->runs[$run_name]))
             {
-                list($name, $run) = $dependee;
-                $dependency->dependees[$name][] = $run;
+                $dependency->runs[$run_name] = new RunDependency($this->run);
+            }
+            $dependency = $dependency->runs[$run_name];
+
+            foreach ($dependees as $prerequisite)
+            {
+                list($name, $run) = $prerequisite;
+                $dependency->prerequisites[$name] = $run;
             }
 
             throw new Postpone();
@@ -204,18 +209,19 @@ final class _Context implements Context {
  * @return void
  */
 function run_tests(
-    State $state, BufferingLogger $logger, PathTest $tests, array $targets = null)
+    State $state, BufferingLogger $logger, PathTest $suite,
+    PathTest $tests, array $targets = null)
 {
     namespace\_run_path_tests($state, $logger, $tests, array(0), null, $targets);
-    while ($state->depends)
+    while ($state->postponed)
     {
         $dependencies = namespace\resolve_dependencies($state, $logger);
         if (!$dependencies)
         {
             break;
         }
-        $targets = namespace\build_targets_from_dependencies($dependencies);
-        $state->depends = array();
+        $state->postponed = array();
+        $tests = namespace\build_test_from_dependencies($state, $suite, $dependencies);
         namespace\_run_path_tests($state, $logger, $tests, array(0), null, $targets);
     }
 }
@@ -696,7 +702,7 @@ function _run_function_teardown(
         }
         if (namespace\RESULT_POSTPONE & $test->result)
         {
-            unset($state->depends[$test->name]);
+            unset($state->postponed[$test->name]);
         }
     }
 }
