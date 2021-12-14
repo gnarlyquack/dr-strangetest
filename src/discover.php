@@ -8,6 +8,19 @@
 namespace strangetest;
 
 
+class _DirectoryFixture
+{
+    /** @var ?callable-string */
+    public $setup = null;
+
+    /** @var ?callable-string */
+    public $teardown = null;
+
+    /** @var ?RunInfo[] */
+    public $runs = null;
+}
+
+
 /**
  * @param string $path
  * @param int $group
@@ -62,43 +75,71 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
     }
 
     $directory = false;
+    $fixture = null;
     if ($valid)
     {
+        if ($setup)
+        {
+            $fixture = namespace\_discover_directory_setup($state, $logger, $setup[0]);
+            $valid = (bool)$fixture;
+        }
+        else
+        {
+            $fixture = new _DirectoryFixture;
+        }
+    }
+
+    if ($valid)
+    {
+        \assert($fixture instanceof _DirectoryFixture);
+
         $directory = new PathTest;
         $directory->name = $path;
         $directory->group = $group;
-        if (!$setup
-            || namespace\_discover_directory_setup($state, $logger, $directory, $setup[0]))
+        $directory->setup = $fixture->setup;
+        $directory->teardown = $fixture->teardown;
+
+        if ($fixture->runs)
         {
-            if ($directory->runs)
+            $group = namespace\_new_run_group($state, $group);
+        }
+        foreach ($tests as $name => $type)
+        {
+            if (namespace\TYPE_DIRECTORY === $type)
             {
-                $group = namespace\_new_run_group($state, $group);
+                $test = namespace\discover_directory($state, $logger, $name, $group);
+            }
+            else
+            {
+                \assert(namespace\TYPE_FILE === $type);
+                $test = namespace\discover_file($state, $logger, $name, $group);
             }
 
-            foreach ($tests as $name => $type)
+            if ($test)
             {
-                if (namespace\TYPE_DIRECTORY === $type)
-                {
-                    $test = namespace\discover_directory($state, $logger, $name, $group);
-                }
-                elseif (namespace\TYPE_FILE === $type)
-                {
-                    $test = namespace\discover_file($state, $logger, $name, $group);
-                }
-                else
-                {
-                    throw new \Exception("Unknown directory test type: {$type}");
-                }
+                $directory->tests[$name] = $test;
+            }
+        }
 
-                if ($test)
+        if ($directory->tests)
+        {
+            if ($fixture->runs)
+            {
+                foreach ($fixture->runs as $run_info)
                 {
-                    $directory->tests[$name] = $test;
+                    $run = new TestRun;
+                    $run->name = $directory->name;
+                    $run->run_info = $run_info;
+                    $run->tests = $directory->tests;
+                    $directory->runs[$run_info->name] = $run;
                 }
             }
-
-            if (!$directory->tests)
+            else
             {
-                $directory = false;
+                $run = new TestRun;
+                $run->name = $directory->name;
+                $run->tests = $directory->tests;
+                $directory->runs[''] = $run;
             }
         }
         else
@@ -352,20 +393,21 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
         $file->group = $group;
         $file->setup = $output['setup_file'];
         $file->teardown = $output['teardown_file'];
-        $file->runs = $output['runs'];
 
-        if ($file->runs)
+        if ($output['runs'])
         {
             $group = namespace\_new_run_group($state, $group);
         }
+
         foreach ($output['tests'] as $name => $info)
         {
             if (namespace\TYPE_CLASS === $info->type)
             {
                 $test = namespace\discover_class($state, $logger, $info, $group);
             }
-            elseif (namespace\TYPE_FUNCTION === $info->type)
+            else
             {
+                \assert(namespace\TYPE_FUNCTION === $info->type);
                 $test = new FunctionTest();
                 $test->group = $group;
                 $test->file = $info->filename;
@@ -385,10 +427,6 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
                     $test->teardown = $output['teardown_function'];
                 }
             }
-            else
-            {
-                throw new \Exception("Unknown file test type {$info->type}");
-            }
 
             if ($test)
             {
@@ -396,7 +434,28 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
             }
         }
 
-        if (!$file->tests)
+        if ($file->tests)
+        {
+            if ($output['runs'])
+            {
+                foreach ($output['runs'] as $run_info)
+                {
+                    $run = new TestRun;
+                    $run->name = $file->name;
+                    $run->run_info = $run_info;
+                    $run->tests = $file->tests;
+                    $file->runs[$run_info->name] = $run;
+                }
+            }
+            else
+            {
+                $run = new TestRun;
+                $run->name = $file->name;
+                $run->tests = $file->tests;
+                $file->runs[''] = $run;
+            }
+        }
+        else
         {
             $file = false;
         }
@@ -511,18 +570,15 @@ function discover_class(State $state, Logger $logger, TestInfo $info, $group)
 /**
  * @param State $state
  * @param BufferingLogger $logger
- * @param PathTest $directory
  * @param string $filepath
- * @return bool
+ * @return ?_DirectoryFixture
  */
-function _discover_directory_setup(
-    State $state, BufferingLogger $logger,
-    PathTest $directory, $filepath)
+function _discover_directory_setup(State $state, BufferingLogger $logger, $filepath)
 {
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)
     {
-        return false;
+        return null;
     }
 
     $namespace = '';
@@ -581,7 +637,7 @@ function _discover_directory_setup(
                         if (0 === \strlen($name))
                         {
                             $message = "Unable to determine run name from setup run function '$function_name'";
-                            $logger->log_error($directory->name, $message);
+                            $logger->log_error($filepath, $message);
                             $valid = false;
                         }
                         else
@@ -604,7 +660,7 @@ function _discover_directory_setup(
                         if (0 === \strlen($name))
                         {
                             $message = "Unable to determine run name from teardown run function '$function_name'";
-                            $logger->log_error($directory->name, $message);
+                            $logger->log_error($filepath, $message);
                             $valid = false;
                         }
                         else
@@ -629,19 +685,17 @@ function _discover_directory_setup(
         'teardown_directory' => namespace\_validate_fixture($logger, $filepath, $input['teardown_directory']),
     );
 
+    $fixture = null;
     if ((false !== $output['runs'])
         && (false !== $output['setup_directory'])
         && (false !== $output['teardown_directory']))
     {
-        $directory->runs = $output['runs'];
-        $directory->setup = $output['setup_directory'];
-        $directory->teardown = $output['teardown_directory'];
-        return true;
+        $fixture = new _DirectoryFixture;
+        $fixture->setup = $output['setup_directory'];
+        $fixture->teardown = $output['teardown_directory'];
+        $fixture->runs = $output['runs'];
     }
-    else
-    {
-        return false;
-    }
+    return $fixture;
 }
 
 
@@ -677,7 +731,7 @@ function _validate_fixture(BufferingLogger $logger, $filepath, $fixtures)
  * @param array{'name'?: string,
  *              'setup'?: callable-string[],
  *              'teardown'?: callable-string[]}[] $runs
- * @return false|RunFixture[]
+ * @return false|RunInfo[]
  */
 function _validate_runs(State $state, BufferingLogger $logger, $filepath, $runs)
 {
@@ -752,11 +806,11 @@ function _new_run_group(State $state, $parent_group_id)
  * @param string $name
  * @param callable-string $setup
  * @param ?callable-string $teardown
- * @return RunFixture
+ * @return RunInfo
  */
 function _new_run(State $state, $name, $setup, $teardown)
 {
-    $run = new RunFixture;
+    $run = new RunInfo;
     $run->id = \count($state->runs) + 1;
     $run->name = $name;
     $run->setup = $setup;

@@ -245,50 +245,9 @@ function _run_path_tests(
         {
             $args = \iterator_to_array($args);
         }
-        if ($path->runs)
+        foreach ($path->runs as $tests)
         {
-            foreach ($path->runs as $run_fixture)
-            {
-                $setup = $run_fixture->setup;
-                $name = "{$setup}{$run_name}";
-                namespace\start_buffering($logger, $name);
-                list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
-                namespace\end_buffering($logger);
-                if (namespace\RESULT_PASS !== $result)
-                {
-                    continue;
-                }
-
-                if (!\is_iterable($run_args))
-                {
-                    $message = "'{$name}' returned a non-iterable argument set";
-                    $logger->log_error($path->name, $message);
-                }
-                else
-                {
-                    if (!\is_array($run_args))
-                    {
-                        $run_args = \iterator_to_array($run_args);
-                    }
-
-                    $run[] = $run_fixture->id;
-                    namespace\_run_path($state, $logger, $path, $run, $run_args, $targets);
-                    \array_pop($run);
-                }
-
-                if (isset($run_fixture->teardown))
-                {
-                    $teardown = $run_fixture->teardown;
-                    $name = "{$teardown}{$run_name}";
-                    namespace\start_buffering($logger, $name);
-                    namespace\_run_teardown($logger, $name, $teardown, $run_args);
-                    namespace\end_buffering($logger);
-                }
-            }
-        }
-        else
-        {
-            namespace\_run_path($state, $logger, $path, $run, $args, $targets);
+            namespace\_run_test_run($state, $logger, $tests, $run, $args, $targets);
         }
     }
     else
@@ -350,32 +309,85 @@ function _run_path_teardown(
  * @param ?Target[] $targets
  * @return void
  */
+function _run_test_run(
+    State $state, BufferingLogger $logger,
+    TestRun $tests, array $run, array $args = null, array $targets = null)
+{
+    if ($tests->run_info)
+    {
+        $run_name = namespace\_get_run_name($state, $run);
+        $setup = $tests->run_info->setup;
+        $name = $setup . $run_name;
+        namespace\start_buffering($logger, $name);
+        list($result, $args) = namespace\_run_setup($logger, $name, $setup, $args);
+        namespace\end_buffering($logger);
+        if (namespace\RESULT_PASS === $result)
+        {
+            if (\is_iterable($args))
+            {
+                if (!\is_array($args))
+                {
+                    $args = \iterator_to_array($args);
+                }
+
+                $run[] = $tests->run_info->id;
+                namespace\_run_path($state, $logger, $tests, $run, $args, $targets);
+            }
+            else
+            {
+                $message = "'{$name}' returned a non-iterable argument set";
+                $logger->log_error($tests->name, $message);
+            }
+
+            if (isset($tests->run_info->teardown))
+            {
+                $teardown = $tests->run_info->teardown;
+                $name = $teardown . $run_name;
+                namespace\start_buffering($logger, $name);
+                namespace\_run_teardown($logger, $name, $teardown, $args);
+                namespace\end_buffering($logger);
+            }
+        }
+    }
+    else
+    {
+        namespace\_run_path($state, $logger, $tests, $run, $args, $targets);
+    }
+}
+
+/**
+ * @param int[] $run
+ * @param ?mixed[] $args
+ * @param ?Target[] $targets
+ * @return void
+ */
 function _run_path(
     State $state, BufferingLogger $logger,
-    PathTest $path, array $run, array $args = null, array $targets = null)
+    TestRun $tests, array $run, array $args = null, array $targets = null)
 {
     $run_name = namespace\_get_run_name($state, $run);
     if ($targets)
     {
         foreach ($targets as $target)
         {
+            $test = $tests->tests[$target->name()];
             namespace\_run_path_test(
-                $state, $logger, $path, $target->name(), $run, $args, $target->subtargets()
+                $state, $logger, $test, $run, $args, $target->subtargets()
             );
         }
     }
     else
     {
-        foreach ($path->tests as $test => $_)
+        foreach ($tests->tests as $test)
         {
-            namespace\_run_path_test($state, $logger, $path, $test, $run, $args);
+            namespace\_run_path_test($state, $logger, $test, $run, $args);
         }
     }
 }
 
 
 /**
- * @param string $name
+ * @param PathTest|ClassTest|FunctionTest $test
  * @param int[] $run
  * @param ?mixed[] $arglist
  * @param ?Target[] $targets
@@ -383,9 +395,8 @@ function _run_path(
  */
 function _run_path_test(
     State $state, BufferingLogger $logger,
-    PathTest $path, $name, array $run, $arglist = null, array $targets = null)
+    $test, array $run, $arglist = null, array $targets = null)
 {
-    $test = $path->tests[$name];
     if ($test instanceof PathTest)
     {
         namespace\_run_path_tests($state, $logger, $test, $run, $arglist, $targets);

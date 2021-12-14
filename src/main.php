@@ -197,7 +197,7 @@ final class State extends struct {
     /** @var array<int[]> */
     public $groups = array(0 => array(0));
 
-    /** @var RunFixture[] */
+    /** @var RunInfo[] */
     public $runs = array();
 }
 

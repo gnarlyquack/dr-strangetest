@@ -121,14 +121,19 @@ function make_directory_test($spec, $parent = null)
             );
         }
     }
+
+    \assert(!isset($spec['runs']));
+    $run = new strangetest\TestRun;
+    $run->name = $dir->name;
+    $run->tests = $dir->tests;
+    $dir->runs[''] = $run;
+
     if ($parent)
     {
         $parent->tests[$dir->name] = $dir;
     }
-    else
-    {
-        return $dir;
-    }
+
+    return $dir;
 }
 
 
@@ -168,6 +173,12 @@ function make_file_test($spec, $dir)
             );
         }
     }
+
+    \assert(!isset($spec['runs']));
+    $run = new strangetest\TestRun;
+    $run->name = $file->name;
+    $run->tests = $file->tests;
+    $file->runs[''] = $run;
 }
 
 

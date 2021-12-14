@@ -26,15 +26,39 @@ final class TestInfo extends struct {
 }
 
 
-final class RunFixture extends struct {
+final class RunInfo extends struct
+{
     /** @var int */
     public $id;
+
     /** @var string */
     public $name;
+
     /** @var callable-string */
     public $setup;
+
     /** @var ?callable-string */
     public $teardown = null;
+}
+
+
+final class TestRun extends struct
+{
+    // @todo Remove TestRun::$name property
+    // This is used to identify the file when a setup_run function returns
+    // invalid (i.e., non-iterable) arguments. But instead of keeping raw
+    // function names (as strings), we probably want a structure that contains
+    // function definition information. Or we could use introspection, but
+    // since we're already parsing files for these identifiers, it's probably
+    // more efficient(?) to just save it for reference.
+    /** @var string */
+    public $name;
+
+    /** @var ?RunInfo */
+    public $run_info;
+
+    /** @var array<PathTest>|array<ClassTest|FunctionTest>|array<FunctionTest> */
+    public $tests;
 }
 
 
@@ -52,7 +76,7 @@ final class PathTest extends struct
     /** @var ?callable-string */
     public $teardown;
 
-    /** @var RunFixture[] */
+    /** @var TestRun[] */
     public $runs;
 
     /** @var array<string, PathTest>|array<string, ClassTest|FunctionTest> */
