@@ -815,7 +815,7 @@ function assert_run_file($filepath, $events) {
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     strangetest\assert_true($file instanceof PathTest);
 
-    strangetest\_run_path_tests($state, $buffed_logger, $file, array(0));
+    strangetest\_run_path_test($state, $buffed_logger, $file, array(0));
     \assert_events($events, $logger);
 }
 

@@ -9,63 +9,9 @@ namespace strangetest;
 
 
 const _SPECIFIER_PATTERN = '~^--(class|function|run)=(.*)$~';
-\define('strangetest\\_TARGET_CLASS_LEN', \strlen('--class='));
-\define('strangetest\\_TARGET_FUNCTION_LEN', \strlen('--function='));
-\define('strangetest\\_TARGET_RUN_LEN', \strlen('--run='));
-
-
-interface Target {
-    /**
-     * @return string
-     */
-    public function name();
-
-    /**
-     * @return Target[]
-     */
-    public function subtargets();
-}
-
-
-final class _Target extends struct implements Target {
-    /** @var string */
-    public $name;
-
-    /** @var string[] */
-    public $runs;
-
-    /** @var ?_Target[] */
-    public $subtargets;
-
-
-    /**
-     * @param string $name
-     * @param string[] $runs
-     * @param ?_Target[] $subtargets
-     */
-    public function __construct($name, $runs = array(), $subtargets = array())
-    {
-        $this->name = $name;
-        $this->runs = $runs;
-        $this->subtargets = $subtargets;
-    }
-
-    /**
-     * @return string
-     */
-    public function name()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return ?_Target[]
-     */
-    public function subtargets()
-    {
-        return $this->subtargets;
-    }
-}
+\define('strangetest\\_CLASS_SPECIFIER_LEN', \strlen('--class='));
+\define('strangetest\\_FUNCTION_SPECIFER_LEN', \strlen('--function='));
+\define('strangetest\\_RUN_SPECIFIER_LEN', \strlen('--run='));
 
 
 /**
@@ -90,11 +36,10 @@ function process_specifiers(Logger $logger, PathTest $tests, array $args)
         $result = namespace\_build_test_from_path_target($result, $tests);
     }
     return $result;
-
 }
 
 
-final class _ArgIterator
+final class _SpeciferIterator
 {
     /** @var string[] */
     public $args;
@@ -290,7 +235,7 @@ final class _ParsedFunctionSpecifier
 function _parse_specifiers(Logger $logger, array $args, $root)
 {
     $parsed = new _ParsedSpecifiers;
-    $iter = new _ArgIterator($args);
+    $iter = new _SpeciferIterator($args);
     // @todo Ensure all identifiers are trimmed
     while ($iter->index < $iter->count)
     {
@@ -312,7 +257,7 @@ function _parse_specifiers(Logger $logger, array $args, $root)
  * @param string $root
  * @return ?_ParsedPathSpecifier
  */
-function _parse_path_specifier(Logger $logger, _ArgIterator $iter, $root)
+function _parse_path_specifier(Logger $logger, _SpeciferIterator $iter, $root)
 {
     $valid = false;
     $specifier = $leaf = null;
@@ -421,11 +366,11 @@ function _parse_path_specifier(Logger $logger, _ArgIterator $iter, $root)
  * @return bool
  */
 function _parse_function_specifier(
-    Logger $logger, _ArgIterator $iter, _ParsedPathSpecifier $parent)
+    Logger $logger, _SpeciferIterator $iter, _ParsedPathSpecifier $parent)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
-    $functions = \substr($arg, namespace\_TARGET_FUNCTION_LEN);
+    $functions = \substr($arg, namespace\_FUNCTION_SPECIFER_LEN);
     foreach (\explode(',', $functions) as $i => $function)
     {
         if (\strlen($function))
@@ -449,11 +394,11 @@ function _parse_function_specifier(
  * @return bool
  */
 function _parse_class_specifier(
-    Logger $logger, _ArgIterator $iter, _ParsedPathSpecifier $parent)
+    Logger $logger, _SpeciferIterator $iter, _ParsedPathSpecifier $parent)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
-    $classes = \substr($arg, namespace\_TARGET_CLASS_LEN);
+    $classes = \substr($arg, namespace\_CLASS_SPECIFIER_LEN);
     foreach (\explode(';', $classes) as $i => $class)
     {
         $split = \strpos($class, '::');
@@ -505,11 +450,11 @@ function _parse_class_specifier(
  * @return bool
  */
 function _parse_run_specifier(
-    Logger $logger, _ArgIterator $iter, _ParsedPathSpecifier $parent)
+    Logger $logger, _SpeciferIterator $iter, _ParsedPathSpecifier $parent)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
-    $runs = \substr($arg, namespace\_TARGET_RUN_LEN);
+    $runs = \substr($arg, namespace\_RUN_SPECIFIER_LEN);
     foreach (\explode(';', $runs) as $run)
     {
         $names = \explode(',', $run);

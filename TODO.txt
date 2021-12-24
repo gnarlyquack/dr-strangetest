@@ -152,8 +152,6 @@ Future / Wishlist
     entirely clear what this would even entail: perhaps allow treating custom
     exceptions as failures instead of errors?
 
--   Allow targeting of a specific parameterized test run?
-
 -   Support "higher-level" dependencies, i.e., declaring a dependency on an
     entire class, file, or directory, all of whose tests must pass in order
     for the dependency to be satisfied. This probably means we want setup

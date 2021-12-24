@@ -248,12 +248,12 @@ class TestRunDirectories {
     }
 
 
-    private function assert_run($tests, $targets, $expected)
+    private function assert_run($tests, $expected)
     {
         $tests = make_test($tests);
         $logger = new strangetest\BufferingLogger($this->logger);
         $state = new strangetest\State;
-        strangetest\run_tests($state, $logger, $tests, $tests, $targets);
+        strangetest\run_tests($state, $logger, $tests, $tests);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event)
@@ -282,30 +282,10 @@ class TestRunDirectories {
             'teardown' => 'test\\runner\\dir_teardown',
             'tests' => array(
                 array(
-                    'file' => 'test.php',
-                    'tests' => array(
-                        array('function' => 'dir1_test1', 'namespace' => __NAMESPACE__),
-                        array('function' => 'dir1_test2', 'namespace' => __NAMESPACE__),
-                    ),
-                ),
-                array(
                     'directory' => 'test_dir1/',
                     'setup' => 'test\\runner\\dir1_setup',
                     'teardown' => 'test\\runner\\dir1_teardown',
                     'tests' => array(
-                        array(
-                            'file' => 'test1.php',
-                            'tests' => array(
-                                array(
-                                    'function' => 'dir1_test1',
-                                    'namespace' => __NAMESPACE__,
-                                ),
-                                array(
-                                    'function' => 'dir1_test2',
-                                    'namespace' => __NAMESPACE__,
-                                ),
-                            ),
-                        ),
                         array(
                             'file' => 'test2.php',
                             'tests' => array(
@@ -339,19 +319,6 @@ class TestRunDirectories {
                     'setup' => 'test\\runner\\dir2_setup',
                     'teardown' => 'test\\runner\\dir2_teardown',
                     'tests' => array(
-                        array(
-                            'file' => 'test.php',
-                            'tests' => array(
-                                array(
-                                    'function' => 'dir2_test1',
-                                    'namespace' => __NAMESPACE__,
-                                ),
-                                array(
-                                    'function' => 'dir2_test2',
-                                    'namespace' => __NAMESPACE__,
-                                ),
-                            ),
-                        ),
                         array(
                             'directory' => 'test_subdir/',
                             'setup' => 'test\\runner\\subdir_setup',
@@ -387,43 +354,6 @@ class TestRunDirectories {
                         ),
                     ),
                 ),
-                array(
-                    'directory' => 'test_dir3/',
-                    'setup' => 'test\\runner\\dir3_setup',
-                    'teardown' => 'test\\runner\\dir3_teardown',
-                    'tests' => array(
-                        array(
-                            'file' => 'test.php',
-                            'tests' => array(
-                                array(
-                                    'function' => 'dir3_test1',
-                                    'namespace' => __NAMESPACE__,
-                                ),
-                                array(
-                                    'function' => 'dir3_test2',
-                                    'namespace' => __NAMESPACE__,
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        );
-        $targets = array(
-            new strangetest\_Target(
-                'tests/test_dir1/',
-                array(),
-                array(
-                    new strangetest\_Target('tests/test_dir1/test2.php'),
-                    new strangetest\_Target('tests/test_dir1/test3.php'),
-                )
-            ),
-            new strangetest\_Target(
-                'tests/test_dir2/',
-                array(),
-                array(
-                    new strangetest\_Target('tests/test_dir2/test_subdir/'),
-                )
             ),
         );
         $expected = array(
@@ -445,7 +375,7 @@ class TestRunDirectories {
             array(strangetest\EVENT_OUTPUT, 'test\\runner\\dir_teardown', 'dir_teardown'),
         );
 
-        $this->assert_run($tests, $targets, $expected);
+        $this->assert_run($tests, $expected);
     }
 
     public function test_handles_error_in_setup_directory() {

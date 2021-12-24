@@ -205,14 +205,12 @@ final class _Context implements Context {
 
 
 /**
- * @param ?Target[] $targets
  * @return void
  */
 function run_tests(
-    State $state, BufferingLogger $logger, PathTest $suite,
-    PathTest $tests, array $targets = null)
+    State $state, BufferingLogger $logger, PathTest $suite, PathTest $tests)
 {
-    namespace\_run_path_tests($state, $logger, $tests, array(0), null, $targets);
+    namespace\_run_path_test($state, $logger, $tests, array(0), null);
     while ($state->postponed)
     {
         $dependencies = namespace\resolve_dependencies($state, $logger);
@@ -222,7 +220,7 @@ function run_tests(
         }
         $state->postponed = array();
         $tests = namespace\build_test_from_dependencies($state, $suite, $dependencies);
-        namespace\_run_path_tests($state, $logger, $tests, array(0), null, $targets);
+        namespace\_run_path_test($state, $logger, $tests, array(0), null);
     }
 }
 
@@ -230,12 +228,11 @@ function run_tests(
 /**
  * @param int[] $run
  * @param ?mixed[] $args
- * @param ?Target[] $targets
  * @return void
  */
-function _run_path_tests(
+function _run_path_test(
     State $state, BufferingLogger $logger,
-    PathTest $path, array $run, array $args = null, array $targets = null)
+    PathTest $path, array $run, array $args = null)
 {
     $run_name = namespace\_get_run_name($state, $run);
     list($result, $args) = namespace\_run_path_setup($logger, $path, $args, $run_name);
@@ -253,7 +250,7 @@ function _run_path_tests(
         }
         foreach ($path->runs as $tests)
         {
-            namespace\_run_test_run($state, $logger, $tests, $run, $args, $targets);
+            namespace\_run_subrun($state, $logger, $tests, $run, $args);
         }
     }
     else
@@ -312,12 +309,11 @@ function _run_path_teardown(
 /**
  * @param int[] $run
  * @param ?mixed[] $args
- * @param ?Target[] $targets
  * @return void
  */
-function _run_test_run(
+function _run_subrun(
     State $state, BufferingLogger $logger,
-    TestRun $tests, array $run, array $args = null, array $targets = null)
+    TestRun $tests, array $run, array $args = null)
 {
     if ($tests->run_info)
     {
@@ -337,7 +333,7 @@ function _run_test_run(
                 }
 
                 $run[] = $tests->run_info->id;
-                namespace\_run_path($state, $logger, $tests, $run, $args, $targets);
+                namespace\_run_subrun_tests($state, $logger, $tests, $run, $args);
             }
             else
             {
@@ -357,64 +353,34 @@ function _run_test_run(
     }
     else
     {
-        namespace\_run_path($state, $logger, $tests, $run, $args, $targets);
+        namespace\_run_subrun_tests($state, $logger, $tests, $run, $args);
     }
 }
 
 /**
  * @param int[] $run
  * @param ?mixed[] $args
- * @param ?Target[] $targets
  * @return void
  */
-function _run_path(
+function _run_subrun_tests(
     State $state, BufferingLogger $logger,
-    TestRun $tests, array $run, array $args = null, array $targets = null)
+    TestRun $tests, array $run, array $args = null)
 {
-    $run_name = namespace\_get_run_name($state, $run);
-    if ($targets)
+    foreach ($tests->tests as $test)
     {
-        foreach ($targets as $target)
-        {
-            $test = $tests->tests[$target->name()];
-            namespace\_run_path_test(
-                $state, $logger, $test, $run, $args, $target->subtargets()
-            );
-        }
-    }
-    else
-    {
-        foreach ($tests->tests as $test)
+        if ($test instanceof PathTest)
         {
             namespace\_run_path_test($state, $logger, $test, $run, $args);
         }
-    }
-}
-
-
-/**
- * @param PathTest|ClassTest|FunctionTest $test
- * @param int[] $run
- * @param ?mixed[] $arglist
- * @param ?Target[] $targets
- * @return void
- */
-function _run_path_test(
-    State $state, BufferingLogger $logger,
-    $test, array $run, $arglist = null, array $targets = null)
-{
-    if ($test instanceof PathTest)
-    {
-        namespace\_run_path_tests($state, $logger, $test, $run, $arglist, $targets);
-    }
-    elseif ($test instanceof ClassTest)
-    {
-        namespace\_run_class_tests($state, $logger, $test, $run, $arglist, $targets);
-    }
-    else
-    {
-        \assert($test instanceof FunctionTest);
-        namespace\_run_function_test($state, $logger, $test, $run, $arglist);
+        elseif ($test instanceof ClassTest)
+        {
+            namespace\_run_class_test($state, $logger, $test, $run, $args);
+        }
+        else
+        {
+            \assert($test instanceof FunctionTest);
+            namespace\_run_function_test($state, $logger, $test, $run, $args);
+        }
     }
 }
 
@@ -455,12 +421,11 @@ function _run_class_setup(
 /**
  * @param int[] $run
  * @param ?mixed[] $arglist
- * @param ?Target[] $targets
  * @return void
  */
-function _run_class_tests(
+function _run_class_test(
     State $state, BufferingLogger $logger, ClassTest $class,
-    array $run, array $arglist = null, array $targets = null)
+    array $run, array $arglist = null)
 {
     $run_name = namespace\_get_run_name($state, $run);
     list($result, ) = namespace\_run_class_setup($logger, $class, $arglist, $run_name);
@@ -470,20 +435,9 @@ function _run_class_tests(
     }
     \assert(\is_object($class->object));
 
-    if ($targets)
+    foreach ($class->tests as $test)
     {
-        foreach ($targets as $target)
-        {
-            $test = $class->tests[$target->name()];
-            namespace\_run_class_test($state, $logger, $class->object, $test, $run);
-        }
-    }
-    else
-    {
-        foreach ($class->tests as $test)
-        {
-            namespace\_run_class_test($state, $logger, $class->object, $test, $run);
-        }
+        namespace\_run_method_test($state, $logger, $class->object, $test, $run);
     }
 
     namespace\_run_class_teardown($logger, $class, $run_name);
@@ -495,7 +449,7 @@ function _run_class_tests(
  * @param int[] $run
  * @return void
  */
-function _run_class_test(
+function _run_method_test(
     State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
 {
     $method = array($object, $test->function);
