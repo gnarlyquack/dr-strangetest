@@ -11,7 +11,7 @@ class TestAssertExpression {
 
 
     public function setup_object() {
-        // #BC(5.6): Check if PHP 7 expectations are supported
+        // @bc 5.6 Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             $this->assert_exception = ini_get('assert.exception');
             ini_set('assert.exception', false);
@@ -20,7 +20,7 @@ class TestAssertExpression {
 
 
     public function teardown_object() {
-        // #BC(5.6): Check if PHP 7 expectations are supported
+        // @bc 5.6 Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             ini_set('assert.exception', $this->assert_exception);
         }
@@ -38,7 +38,7 @@ class TestAssertExpression {
             }
         );
 
-        // #BC(5.6): Check format of default assert description
+        // @bc 5.6 Check format of default assert description
         $expected = version_compare(PHP_VERSION, '7.0', '<')
                   ? 'Assertion failed'
                   : 'assert($true == $false)';
@@ -47,7 +47,7 @@ class TestAssertExpression {
 
 
     public function test_uses_provided_description() {
-        // #BC(5.4): Check if assert() takes description parameter
+        // @bc 5.4 Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
             strangetest\skip('PHP 5.4.8 added assert() $description parameter');
         }
@@ -93,7 +93,7 @@ class TestAssertExpression {
 
 
 
-// #BC(7.1): Test assert() with a string expression
+// @bc 7.1 Test assert() with a string expression
 class TestAssertString {
 
     private $assert_exception;
@@ -103,7 +103,7 @@ class TestAssertString {
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
             strangetest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
-        // #BC(5.6): Check if PHP 7 expectations are supported
+        // @bc 5.6 Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             $this->assert_exception = ini_get('assert.exception');
             ini_set('assert.exception', false);
@@ -112,7 +112,7 @@ class TestAssertString {
 
 
     public function teardown_object() {
-        // #BC(5.6): Check if PHP 7 expectations are supported
+        // @bc 5.6 Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '>=')) {
             ini_set('assert.exception', $this->assert_exception);
         }
@@ -136,7 +136,7 @@ class TestAssertString {
 
 
     public function test_uses_provided_description() {
-        // #BC(5.4): Check if assert() takes description parameter
+        // @bc 5.4 Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
             strangetest\skip('PHP 5.4.8 added assert() $description parameter');
         }
@@ -155,7 +155,7 @@ class TestAssertString {
 
 
     public function test_uses_exception_as_description() {
-        // #BC(5.4): Check if assert() takes description parameter
+        // @bc 5.4 Check if assert() takes description parameter
         if (version_compare(PHP_VERSION, '5.4.8', '<')) {
             strangetest\skip('PHP 5.4.8 added assert() $description parameter');
         }
@@ -181,7 +181,7 @@ class TestExpectExpression {
 
 
     public function setup_object() {
-        // #BC(5.6): Check if PHP 7 expectations are supported
+        // @bc 5.6 Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
             strangetest\skip('PHP 7 introduced "expectations"');
         }
@@ -249,7 +249,7 @@ class TestExpectExpression {
 
 
 
-// #BC(7.1): Test assert() with a string expression
+// @bc 7.1 Test assert() with a string expression
 class TestExpectString {
 
     private $assert_exception;
@@ -259,7 +259,7 @@ class TestExpectString {
         if (version_compare(PHP_VERSION, '7.2', '>=')) {
             strangetest\skip('PHP 7.2 deprecated calling assert() with a string');
         }
-        // #BC(5.6): Check if PHP 7 expectations are supported
+        // @bc 5.6 Check if PHP 7 expectations are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
             strangetest\skip('PHP 7 introduced "expectations"');
         }

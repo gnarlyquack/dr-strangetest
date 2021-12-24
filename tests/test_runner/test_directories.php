@@ -39,7 +39,7 @@ class TestRunDirectories {
 
         foreach ($this->logger->get_log()->get_events() as $event) {
             list($type, $source, $reason) = $event;
-            // #BC(5.6): Check if reason is instance of Exception
+            // @bc 5.6 Check if reason is instance of Exception
             if ($reason instanceof \Throwable
                 || $reason instanceof \Exception)
             {
@@ -235,7 +235,7 @@ class TestRunDirectories {
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event) {
             list($type, $source, $reason) = $event;
-            // #BC(5.6): Check if reason is instance of Exception
+            // @bc 5.6 Check if reason is instance of Exception
             if ($reason instanceof \Throwable
                 || $reason instanceof \Exception)
             {
@@ -259,7 +259,7 @@ class TestRunDirectories {
         foreach ($actual as $i => $event)
         {
             list($type, $source, $reason) = $event;
-            // #BC(5.6): Check if reason is instance of Exception
+            // @bc 5.6 Check if reason is instance of Exception
             if ($reason instanceof \Throwable
                 || $reason instanceof \Exception)
             {
@@ -449,7 +449,7 @@ class TestRunDirectories {
                 'events' => array(
                     'TestInsufficientArguments' => array(
                         strangetest\EVENT_ERROR,
-                        // #BC(7.0): Check format of expected error message
+                        // @bc 7.0 Check format of expected error message
                         version_compare(PHP_VERSION, '7.1', '<')
                             ? 'Missing argument 2 for TestInsufficientArguments::__construct()'
                             : 'Too few arguments to function TestInsufficientArguments::__construct()',

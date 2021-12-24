@@ -180,7 +180,7 @@ function assert_discovered($logger, $path, $discovered, $log)
     foreach ($actual as $i => $event)
     {
         list($type, $source, $reason) = $event;
-        // #BC(5.6): Check if reason is instance of Exception
+        // @bc 5.6 Check if reason is instance of Exception
         if ($reason instanceof \Throwable || $reason instanceof \Exception)
         {
             $actual[$i][2] = $reason->getMessage();

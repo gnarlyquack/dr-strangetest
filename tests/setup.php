@@ -34,7 +34,7 @@ function assert_log(array $log, strangetest\BasicLogger $logger) {
     for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
         list($type, $source, $reason) = $actual['events'][$i];
         if ($reason instanceof \Throwable
-            // #BC(5.6): Check if $reason is instance of Exception
+            // @bc 5.6 Check if $reason is instance of Exception
             || $reason instanceof \Exception)
         {
             $actual['events'][$i][2] = $reason->getMessage();
@@ -48,7 +48,7 @@ function assert_events($expected, strangetest\BasicLogger $logger) {
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event) {
         list($type, $source, $reason) = $event;
-        // #BC(5.6): Check if reason is instance of Exception
+        // @bc 5.6 Check if reason is instance of Exception
         if ($reason instanceof \Throwable
             || $reason instanceof \Exception)
         {

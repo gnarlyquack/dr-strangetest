@@ -85,7 +85,7 @@ EXPECTED;
 
     public function test_formats_empty_object() {
         $variable = new stdClass();
-        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
@@ -96,7 +96,7 @@ EXPECTED;
 
     public function test_formats_object() {
         $variable = new InheritFormat();
-        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
@@ -174,7 +174,7 @@ EXPECTED;
         $variable->one->one = $variable;
         $variable->one->six = &$variable->one;
 
-        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        // @bc 7.1 use spl_object_hash instead of spl_object_id
         if (\version_compare(\PHP_VERSION, '7.2', '<')) {
             $id1 = \spl_object_hash($variable);
             $id2 = \spl_object_hash($variable->one);
@@ -203,7 +203,7 @@ EXPECTED;
 
     function test_formats_integer_object_properties() {
         $variable = new IntegerProperties();
-        // #BC(7.1): use spl_object_hash instead of spl_object_id
+        // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);

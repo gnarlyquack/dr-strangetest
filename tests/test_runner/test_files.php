@@ -152,7 +152,7 @@ class TestFiles
 
 
     public function test_does_not_discover_anonymous_classes() {
-        // #BC(5.6): Check if anonymous classes are supported
+        // @bc 5.6 Check if anonymous classes are supported
         if (version_compare(PHP_VERSION, '7.0', '<')) {
             strangetest\skip('PHP 7 introduced anonymous classes');
         }

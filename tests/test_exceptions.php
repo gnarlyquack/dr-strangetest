@@ -83,7 +83,7 @@ MSG;
     }
 
     private function fail($message, &$lines) {
-        // #BC(5.6): Adjust the reported line on which a function is called
+        // @bc 5.6 Adjust the reported line on which a function is called
         $lines[] = version_compare(PHP_VERSION, '7.0', '<')
                  ? __LINE__ + 8
                  : __LINE__ + 6;
