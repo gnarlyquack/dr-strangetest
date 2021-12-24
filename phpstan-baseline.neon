@@ -1,24 +1,29 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Access to protected property strangetest\\\\Failure\\:\\:\\$file\\.$#"
-			count: 1
-			path: src/exceptions.php
+			message: "#^Part \\$max \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 2
+			path: src/assertions.php
 
 		-
-			message: "#^Access to protected property strangetest\\\\Failure\\:\\:\\$line\\.$#"
-			count: 1
-			path: src/exceptions.php
-
-		-
-			message: "#^Access to protected property strangetest\\\\Failure\\:\\:\\$message\\.$#"
-			count: 1
-			path: src/exceptions.php
+			message: "#^Part \\$min \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 2
+			path: src/assertions.php
 
 		-
 			message: "#^Property strangetest\\\\FunctionTest\\:\\:\\$test \\(callable\\(\\.\\.\\.mixed\\)\\: void\\) does not accept null\\.$#"
 			count: 1
 			path: src/run.php
+
+		-
+			message: "#^Function strangetest\\\\unpack_function\\(\\) should return T but returns mixed\\.$#"
+			count: 1
+			path: src/unpack5.5.php
+
+		-
+			message: "#^Parameter \\#1 \\$object of function get_class expects object, mixed given\\.$#"
+			count: 2
+			path: src/util.php
 
 		-
 			message: "#^Parameter \\#3 \\$m of class strangetest\\\\_Edit constructor expects array\\<int, array\\<int\\>\\>, array\\<int, array\\<int, float\\|int\\>\\> given\\.$#"

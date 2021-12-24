@@ -31,7 +31,7 @@ interface Context {
 
     /**
      * @param string... $name
-     * @return ?mixed[]
+     * @return mixed
      * @throws Postpone
      */
     public function requires($name);
@@ -607,12 +607,12 @@ function _run_function_test(
 
 /**
  * @param int[] $run
- * @param ?mixed[] $args
+ * @param mixed $args
  * @return void
  */
 function _run_function_teardown(
     State $state, BufferingLogger $logger,
-    FunctionTest $test, array $run, array $args = null)
+    FunctionTest $test, array $run, $args = null)
 {
     $test_name = \sprintf('%s%s', $test->name, namespace\_get_run_name($state, $run));
 
@@ -664,9 +664,9 @@ function _run_function_teardown(
 
 /**
  * @param string $name
- * @param callable(mixed ...$args): mixed[] $callable
+ * @param callable(mixed ...$args): mixed $callable
  * @param ?mixed[] $args
- * @return array{int, ?mixed[]}
+ * @return array{int, mixed}
  */
 function _run_setup(Logger $logger, $name, $callable, array $args = null)
 {
@@ -763,11 +763,10 @@ function _run_test_function(
 /**
  * @param string $name
  * @param callable(mixed ...$args): void $callable
- * @param ?mixed[] $args
- * @param ?bool $unpack
+ * @param mixed $args
  * @return int
  */
-function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack = true)
+function _run_teardown(Logger $logger, $name, $callable, $args = null)
 {
     try
     {
@@ -776,7 +775,7 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null, $unpack =
             // @bc 5.3 Invoke (possible) object method using call_user_func()
             \call_user_func($callable);
         }
-        elseif($unpack && \is_array($args))
+        elseif(\is_array($args))
         {
             // @bc 5.5 Use proxy function for argument unpacking
             namespace\unpack_function($callable, $args);

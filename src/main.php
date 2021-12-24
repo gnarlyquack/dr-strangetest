@@ -434,11 +434,11 @@ function _microtime()
 /**
  * @param int $argc
  * @param string[] $argv
- * @return array{array<string, mixed>, string[]}
+ * @return array{array<string, int>, string[]}
  */
 function _parse_arguments($argc, $argv)
 {
-    $opts = array('verbose' => false);
+    $opts = array('verbose' => namespace\LOG_QUIET);
     $args = \array_slice($argv, 1);
 
     while ($args)
@@ -475,7 +475,7 @@ function _parse_arguments($argc, $argv)
 /**
  * @param string[] $args
  * @param array<string, int> $opts
- * @return array{array<string, mixed>, string[]}
+ * @return array{array<string, int>, string[]}
  */
 function _parse_long_option($args, $opts)
 {
@@ -490,7 +490,7 @@ function _parse_long_option($args, $opts)
 /**
  * @param string[] $args
  * @param array<string, int> $opts
- * @return array{array<string, mixed>, string[]}
+ * @return array{array<string, int>, string[]}
  */
 function _parse_short_option($args, $opts)
 {
@@ -518,7 +518,7 @@ function _parse_short_option($args, $opts)
  * @param string $opt
  * @param string[] $args
  * @param array<string, int> $opts
- * @return array{array<string, mixed>, string[]}
+ * @return array{array<string, int>, string[]}
  */
 function _parse_option($opt, $args, $opts)
 {

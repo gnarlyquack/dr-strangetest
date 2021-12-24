@@ -97,12 +97,12 @@ final class BasicLogger implements Logger {
     /** @var array{int, string, string|\Throwable|null}[] */
     private $events = array();
 
-    /** @var bool */
+    /** @var int */
     private $verbose;
 
 
     /**
-     * @param bool $verbose
+     * @param int $verbose
      */
     public function __construct($verbose)
     {
