@@ -210,7 +210,8 @@ final class _Context implements Context {
 function run_tests(
     State $state, BufferingLogger $logger, PathTest $suite, PathTest $tests)
 {
-    namespace\_run_path_test($state, $logger, $tests, array(0), null);
+    $args = array();
+    namespace\_run_path_test($state, $logger, $tests, array(0), $args);
     while ($state->postponed)
     {
         $dependencies = namespace\resolve_dependencies($state, $logger);
@@ -220,100 +221,70 @@ function run_tests(
         }
         $state->postponed = array();
         $tests = namespace\build_test_from_dependencies($state, $suite, $dependencies);
-        namespace\_run_path_test($state, $logger, $tests, array(0), null);
+        namespace\_run_path_test($state, $logger, $tests, array(0), $args);
     }
 }
 
 
 /**
  * @param int[] $run
- * @param ?mixed[] $args
+ * @param mixed[] $args
  * @return void
  */
 function _run_path_test(
     State $state, BufferingLogger $logger,
-    PathTest $path, array $run, array $args = null)
+    PathTest $path, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
-    list($result, $args) = namespace\_run_path_setup($logger, $path, $args, $run_name);
-    if (namespace\RESULT_PASS !== $result)
-    {
-        return;
-    }
 
-    // @todo consider normalizing null $args to an empty array
-    if (($args === null) || \is_iterable($args))
-    {
-        if ($args !== null && !\is_array($args))
-        {
-            $args = \iterator_to_array($args);
-        }
-        foreach ($path->runs as $tests)
-        {
-            namespace\_run_subrun($state, $logger, $tests, $run, $args);
-        }
-    }
-    else
-    {
-        $message = "'{$path->setup}{$run_name}' returned a non-iterable argument set";
-        $logger->log_error($path->name, $message);
-    }
-
-    namespace\_run_path_teardown($logger, $path, $args, $run_name);
-}
-
-
-/**
- * @param ?mixed[] $args
- * @param ?string $run
- * @return array{int, mixed}
- */
-function _run_path_setup(
-    BufferingLogger $logger,
-    PathTest $path, array $args = null, $run = null)
-{
+    $setup = namespace\RESULT_PASS;
     if ($path->setup)
     {
-        $name = "{$path->setup}{$run}";
+        $name = $path->setup . $run_name;
         namespace\start_buffering($logger, $name);
-        $result = namespace\_run_setup($logger, $name, $path->setup, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $path->setup, $args);
         namespace\end_buffering($logger);
     }
-    else
-    {
-        $result = array(namespace\RESULT_PASS, $args);
-    }
-    return $result;
-}
 
-
-/**
- * @param ?mixed $args
- * @param ?string $run
- * @return void
- */
-function _run_path_teardown(
-    BufferingLogger $logger,
-    PathTest $path, $args = null, $run = null)
-{
-    if ($path->teardown)
+    if (namespace\RESULT_PASS === $setup)
     {
-        $name = "{$path->teardown}{$run}";
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $path->teardown, $args);
-        namespace\end_buffering($logger);
+        if (\is_iterable($args))
+        {
+            if (!\is_array($args))
+            {
+                $args = \iterator_to_array($args);
+            }
+
+            foreach ($path->runs as $tests)
+            {
+                namespace\_run_subrun($state, $logger, $tests, $run, $args);
+            }
+        }
+        else
+        {
+            $message = "'{$path->setup}{$run_name}' returned a non-iterable argument set";
+            $logger->log_error($path->name, $message);
+        }
+
+        if ($path->teardown)
+        {
+            $name = $path->teardown . $run_name;
+            namespace\start_buffering($logger, $name);
+            namespace\_run_teardown($logger, $name, $path->teardown, $args);
+            namespace\end_buffering($logger);
+        }
     }
 }
 
 
 /**
  * @param int[] $run
- * @param ?mixed[] $args
+ * @param mixed[] $args
  * @return void
  */
 function _run_subrun(
     State $state, BufferingLogger $logger,
-    TestRun $tests, array $run, array $args = null)
+    TestRun $tests, array $run, array $args)
 {
     if ($tests->run_info)
     {
@@ -332,8 +303,16 @@ function _run_subrun(
                     $args = \iterator_to_array($args);
                 }
 
-                $run[] = $tests->run_info->id;
-                namespace\_run_subrun_tests($state, $logger, $tests, $run, $args);
+                if ($args)
+                {
+                    $run[] = $tests->run_info->id;
+                    namespace\_run_subrun_tests($state, $logger, $tests, $run, $args);
+                }
+                else
+                {
+                    $message = "'{$name}' did not return any arguments";
+                    $logger->log_error($tests->name, $message);
+                }
             }
             else
             {
@@ -359,12 +338,12 @@ function _run_subrun(
 
 /**
  * @param int[] $run
- * @param ?mixed[] $args
+ * @param mixed[] $args
  * @return void
  */
 function _run_subrun_tests(
     State $state, BufferingLogger $logger,
-    TestRun $tests, array $run, array $args = null)
+    TestRun $tests, array $run, array $args)
 {
     foreach ($tests->tests as $test)
     {
@@ -386,91 +365,51 @@ function _run_subrun_tests(
 
 
 /**
- * @param ?mixed[] $args
- * @param ?string $run
- * @return array{int, null}
- */
-function _run_class_setup(
-    BufferingLogger $logger,
-    ClassTest $class,
-    array $args = null,
-    $run = null)
-{
-    namespace\start_buffering($logger, $class->name);
-    $class->object = namespace\_instantiate_test($logger, $class->name, $args);
-    namespace\end_buffering($logger);
-    if (!$class->object)
-    {
-        return array(namespace\RESULT_FAIL, null);
-    }
-
-    $result = array(namespace\RESULT_PASS, null);
-    if ($class->setup)
-    {
-        $name = "{$class->name}::{$class->setup}{$run}";
-        $method = array($class->object, $class->setup);
-        \assert(\is_callable($method));
-        namespace\start_buffering($logger, $name);
-        list($result[0],) = namespace\_run_setup($logger, $name, $method);
-        namespace\end_buffering($logger);
-    }
-    return $result;
-}
-
-
-/**
  * @param int[] $run
- * @param ?mixed[] $arglist
+ * @param mixed[] $args
  * @return void
  */
 function _run_class_test(
-    State $state, BufferingLogger $logger, ClassTest $class,
-    array $run, array $arglist = null)
+    State $state, BufferingLogger $logger,
+    ClassTest $class, array $run, array $args)
 {
-    $run_name = namespace\_get_run_name($state, $run);
-    list($result, ) = namespace\_run_class_setup($logger, $class, $arglist, $run_name);
-    if (namespace\RESULT_PASS !== $result)
+    namespace\start_buffering($logger, $class->name);
+    $object = namespace\_instantiate_test($logger, $class->name, $args);
+    namespace\end_buffering($logger);
+
+    if ($object)
     {
-        return;
+        $run_name = namespace\_get_run_name($state, $run);
+
+        $setup = namespace\RESULT_PASS;
+        if ($class->setup)
+        {
+            $name = $class->name . '::' . $class->setup . $run_name;
+            $method = array($object, $class->setup);
+            \assert(\is_callable($method));
+            namespace\start_buffering($logger, $name);
+            list($setup,) = namespace\_run_setup($logger, $name, $method);
+            namespace\end_buffering($logger);
+        }
+
+        if (namespace\RESULT_PASS === $setup)
+        {
+            foreach ($class->tests as $test)
+            {
+                namespace\_run_method_test($state, $logger, $object, $test, $run);
+            }
+
+            if ($class->teardown)
+            {
+                $name = $class->name . '::' . $class->teardown . $run_name;
+                $method = array($object, $class->teardown);
+                \assert(\is_callable($method));
+                namespace\start_buffering($logger, $name);
+                namespace\_run_teardown($logger, $name, $method);
+                namespace\end_buffering($logger);
+            }
+        }
     }
-    \assert(\is_object($class->object));
-
-    foreach ($class->tests as $test)
-    {
-        namespace\_run_method_test($state, $logger, $class->object, $test, $run);
-    }
-
-    namespace\_run_class_teardown($logger, $class, $run_name);
-}
-
-
-/**
- * @param object $object
- * @param int[] $run
- * @return void
- */
-function _run_method_test(
-    State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
-{
-    $method = array($object, $test->function);
-    \assert(\is_callable($method));
-    $test->test = $method;
-    if ($test->setup_name)
-    {
-        $method = array($object, $test->setup_name);
-        \assert(\is_callable($method));
-        $test->setup = $method;
-    }
-    if ($test->teardown_name)
-    {
-        $method = array($object, $test->teardown_name);
-        \assert(\is_callable($method));
-        $test->teardown = $method;
-    }
-    namespace\_run_function_test($state, $logger, $test, $run, null);
-
-    // Release reference to $object
-    $test->test = $test->setup = $test->teardown = null;
 }
 
 
@@ -508,155 +447,130 @@ function _instantiate_test(Logger $logger, $class, $args)
 
 
 /**
- * @param ?string $run
+ * @param object $object
+ * @param int[] $run
  * @return void
  */
-function _run_class_teardown(BufferingLogger $logger, ClassTest $class, $run)
+function _run_method_test(
+    State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
 {
-    if ($class->teardown)
+    $method = array($object, $test->function);
+    \assert(\is_callable($method));
+    $test->test = $method;
+    if ($test->setup_name)
     {
-        $name = "{$class->name}::{$class->teardown}{$run}";
-        $method = array($class->object, $class->teardown);
+        $method = array($object, $test->setup_name);
         \assert(\is_callable($method));
-        namespace\start_buffering($logger, $name);
-        namespace\_run_teardown($logger, $name, $method);
-        namespace\end_buffering($logger);
+        $test->setup = $method;
     }
-    $class->object = null;
-}
-
-
-/**
- * @param ?mixed[] $args
- * @param ?string $run
- * @return array{int, mixed}
- */
-function _run_function_setup(
-    BufferingLogger $logger,
-    FunctionTest $test,
-    array $args = null,
-    $run = null)
-{
-    if ($test->setup)
+    if ($test->teardown_name)
     {
-        $name = "{$test->setup_name} for {$test->name}{$run}";
-        namespace\start_buffering($logger, $name);
-        $result = namespace\_run_setup($logger, $name, $test->setup, $args);
-        if (namespace\RESULT_PASS !== $result[0])
-        {
-            namespace\end_buffering($logger);
-        }
+        $method = array($object, $test->teardown_name);
+        \assert(\is_callable($method));
+        $test->teardown = $method;
     }
-    else
-    {
-        $result = array(namespace\RESULT_PASS, $args);
-    }
-    $test->result = $result[0];
-    return $result;
+    namespace\_run_function_test($state, $logger, $test, $run, array());
+
+    // Release reference to $object
+    $test->test = $test->setup = $test->teardown = null;
 }
 
 
 /**
  * @param int[] $run
- * @param ?mixed[] $arglist
+ * @param mixed[] $args
  * @return void
  */
 function _run_function_test(
     State $state, BufferingLogger $logger,
-    FunctionTest $test, array $run, array $arglist = null)
+    FunctionTest $test, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
+    $test_name = $test->name . $run_name;
 
     // @todo Ensure function setup works properly for methods
     // Setup methods shouldn't return arguments, and it looks like we just
     // assume this is the case here. If they do return something, then we
     // should ignore it (or potentially raise an error). Perhaps we should just
     // handle methods and functions separately?
-    list($result, $argset) = namespace\_run_function_setup($logger, $test, $arglist, $run_name);
-    if (namespace\RESULT_PASS !== $result)
+    $result = namespace\RESULT_PASS;
+    if ($test->setup)
     {
-        return;
-    }
-    if ($argset !== null && !\is_iterable($argset))
-    {
-        $message = "'{$test->setup_name}{$run_name}' returned a non-iterable argument set";
-        $logger->log_error($test->name, $message);
-    }
-    else
-    {
-        if ($argset !== null && !\is_array($argset))
-        {
-            $argset = \iterator_to_array($argset);
-        }
-        $test_name = "{$test->name}{$run_name}";
-        namespace\start_buffering($logger, $test_name);
-        $context = new _Context($state, $logger, $test, $run);
-        $test->result = namespace\_run_test_function(
-            $logger, $test_name, $test->test, $context, $argset
-        );
-
-        foreach($context->teardowns as $teardown)
-        {
-            $test->result |= namespace\_run_teardown($logger, $test_name, $teardown);
-        }
-    }
-
-    namespace\_run_function_teardown($state, $logger, $test, $run, $argset);
-}
-
-
-/**
- * @param int[] $run
- * @param mixed $args
- * @return void
- */
-function _run_function_teardown(
-    State $state, BufferingLogger $logger,
-    FunctionTest $test, array $run, $args = null)
-{
-    $test_name = \sprintf('%s%s', $test->name, namespace\_get_run_name($state, $run));
-
-    if ($test->teardown)
-    {
-        $name = "{$test->teardown_name} for {$test_name}";
+        $name = $test->setup_name . ' for ' . $test_name;
         namespace\start_buffering($logger, $name);
-        $test->result |= namespace\_run_teardown($logger, $name, $test->teardown, $args);
+        list($result, $args) = namespace\_run_setup($logger, $name, $test->setup, $args);
+    }
+
+    if (namespace\RESULT_PASS === $result)
+    {
+        if (\is_iterable($args))
+        {
+            if (!\is_array($args))
+            {
+                $args = \iterator_to_array($args);
+            }
+
+            $context = new _Context($state, $logger, $test, $run);
+            namespace\start_buffering($logger, $test_name);
+            $result = namespace\_run_test_function(
+                $logger, $test_name, $test->test, $context, $args
+            );
+
+            while ($context->teardowns)
+            {
+                $teardown = \array_pop($context->teardowns);
+                $result |= namespace\_run_teardown($logger, $test_name, $teardown);
+            }
+        }
+        else
+        {
+            $message = "'{$test->setup_name}{$run_name}' returned a non-iterable argument set";
+            $logger->log_error($test->name, $message);
+            $result = namespace\RESULT_FAIL;
+        }
+
+        if ($test->teardown)
+        {
+            $name = $test->teardown_name . ' for ' . $test_name;
+            namespace\start_buffering($logger, $name);
+            $result |= namespace\_run_teardown($logger, $name, $test->teardown, $args);
+        }
     }
     namespace\end_buffering($logger);
 
-    if (namespace\RESULT_POSTPONE === $test->result)
+    if (namespace\RESULT_POSTPONE !== $result)
     {
-        return;
-    }
-    if (!isset($state->results[$test->name]))
-    {
-        $state->results[$test->name] = array(
-            'group' => $test->group,
-            'runs' => array(),
-        );
-    }
-    if (namespace\RESULT_PASS === $test->result)
-    {
-        $logger->log_pass($test_name);
-        for ($i = 0, $c = \count($run); $i < $c; ++$i)
+        if (!isset($state->results[$test->name]))
         {
-            $id = \implode(',', \array_slice($run, 0, $i + 1));
-            if (!isset($state->results[$test->name]['runs'][$id]))
+            $state->results[$test->name] = array(
+                'group' => $test->group,
+                'runs' => array(),
+            );
+        }
+
+        if (namespace\RESULT_PASS === $result)
+        {
+            $logger->log_pass($test_name);
+            for ($i = 0, $c = \count($run); $i < $c; ++$i)
             {
-                $state->results[$test->name]['runs'][$id] = true;
+                $id = \implode(',', \array_slice($run, 0, $i + 1));
+                if (!isset($state->results[$test->name]['runs'][$id]))
+                {
+                    $state->results[$test->name]['runs'][$id] = true;
+                }
             }
         }
-    }
-    elseif (namespace\RESULT_FAIL & $test->result)
-    {
-        for ($i = 0, $c = \count($run); $i < $c; ++$i)
+        elseif (namespace\RESULT_FAIL & $result)
         {
-            $id = \implode(',', \array_slice($run, 0, $i + 1));
-            $state->results[$test->name]['runs'][$id] = false;
-        }
-        if (namespace\RESULT_POSTPONE & $test->result)
-        {
-            unset($state->postponed[$test->name]);
+            for ($i = 0, $c = \count($run); $i < $c; ++$i)
+            {
+                $id = \implode(',', \array_slice($run, 0, $i + 1));
+                $state->results[$test->name]['runs'][$id] = false;
+            }
+            if (namespace\RESULT_POSTPONE & $result)
+            {
+                unset($state->postponed[$test->name]);
+            }
         }
     }
 }
@@ -682,6 +596,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
             // @bc 5.3 Invoke (possible) object method using call_user_func()
             $result = \call_user_func($callable);
         }
+        $result = isset($result) ? $result : array();
         return array(namespace\RESULT_PASS, $result);
     }
     catch (Skip $e)

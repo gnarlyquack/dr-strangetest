@@ -72,7 +72,7 @@ class TestFiles
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test_one', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test_one', "teardown 1\nteardown 2"),
+            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test_one', "teardown 2teardown 1"),
             array(strangetest\EVENT_OUTPUT, 'teardown for file_fixtures\\test_one', '2 4'),
             array(strangetest\EVENT_PASS, 'file_fixtures\\test_one', null),
 
@@ -83,7 +83,7 @@ class TestFiles
             array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test::setup_object', '2 4'),
 
             array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test::test_one', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test::test_one', "teardown 1\nteardown 2"),
+            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test::test_one', "teardown 2teardown 1"),
             array(strangetest\EVENT_OUTPUT, 'teardown for file_fixtures\\test::test_one', '2 4'),
             array(strangetest\EVENT_PASS, 'file_fixtures\\test::test_one', null),
 
@@ -815,7 +815,7 @@ function assert_run_file($filepath, $events) {
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     strangetest\assert_true($file instanceof PathTest);
 
-    strangetest\_run_path_test($state, $buffed_logger, $file, array(0));
+    strangetest\_run_path_test($state, $buffed_logger, $file, array(0), array());
     \assert_events($events, $logger);
 }
 

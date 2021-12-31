@@ -94,8 +94,6 @@ final class ClassTest extends struct {
 
     /** @var class-string */
     public $name;
-    /** @var ?object */
-    public $object;
     /** @var ?string */
     public $setup;
     /** @var ?string */
@@ -126,8 +124,6 @@ final class FunctionTest extends struct {
     public $teardown;
     /** @var callable(mixed ...): void */
     public $test;
-    /** @var int */
-    public $result;
 
     /** @var ?string */
     public $setup_name;

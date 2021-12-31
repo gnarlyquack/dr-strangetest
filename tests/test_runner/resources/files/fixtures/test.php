@@ -25,7 +25,7 @@ function teardown($one, $two) {
 
 
 function test_one($one, $two, strangetest\Context $context) {
-    $context->teardown(function () { echo "teardown 1\n"; });
+    $context->teardown(function () { echo "teardown 1"; });
     $context->teardown(function () { echo "teardown 2"; });
     strangetest\assert_identical(2 * $one, $two);
 }
@@ -64,7 +64,7 @@ class test {
 
 
     public function test_one(strangetest\Context $context) {
-        $context->teardown(function () { echo "teardown 1\n"; });
+        $context->teardown(function () { echo "teardown 1"; });
         $context->teardown(function () { echo "teardown 2"; });
         strangetest\assert_identical(2 * $this->one, $this->two);
     }
