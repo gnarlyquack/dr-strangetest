@@ -454,25 +454,44 @@ function _instantiate_test(Logger $logger, $class, $args)
 function _run_method_test(
     State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
 {
-    $method = array($object, $test->function);
-    \assert(\is_callable($method));
-    $test->test = $method;
+    $run_name = namespace\_get_run_name($state, $run);
+    $test_name = $test->name . $run_name;
+
+    $result = namespace\RESULT_PASS;
     if ($test->setup_name)
     {
-        $method = array($object, $test->setup_name);
-        \assert(\is_callable($method));
-        $test->setup = $method;
+        $setup = array($object, $test->setup_name);
+        \assert(\is_callable($setup));
+        $name = $test->setup_name . ' for ' . $test_name;
+        namespace\start_buffering($logger, $name);
+        list($result, ) = namespace\_run_setup($logger, $name, $setup);
     }
-    if ($test->teardown_name)
-    {
-        $method = array($object, $test->teardown_name);
-        \assert(\is_callable($method));
-        $test->teardown = $method;
-    }
-    namespace\_run_function_test($state, $logger, $test, $run, array());
 
-    // Release reference to $object
-    $test->test = $test->setup = $test->teardown = null;
+    if (namespace\RESULT_PASS === $result)
+    {
+        $method = array($object, $test->function);
+        \assert(\is_callable($method));
+        $context = new _Context($state, $logger, $test, $run);
+        namespace\start_buffering($logger, $test_name);
+        $result = namespace\_run_test_function($logger, $test_name, $method, $context);
+
+        while ($context->teardowns)
+        {
+            $teardown = \array_pop($context->teardowns);
+            $result |= namespace\_run_teardown($logger, $test_name, $teardown);
+        }
+
+        if ($test->teardown_name)
+        {
+            $teardown = array($object, $test->teardown_name);
+            \assert(\is_callable($teardown));
+            $name = $test->teardown_name . ' for ' . $test_name;
+            namespace\start_buffering($logger, $name);
+            $result |= namespace\_run_teardown($logger, $name, $teardown);
+        }
+    }
+    namespace\end_buffering($logger);
+    namespace\_record_test_result($state, $logger, $test, $run, $test_name, $result);
 }
 
 
@@ -488,11 +507,6 @@ function _run_function_test(
     $run_name = namespace\_get_run_name($state, $run);
     $test_name = $test->name . $run_name;
 
-    // @todo Ensure function setup works properly for methods
-    // Setup methods shouldn't return arguments, and it looks like we just
-    // assume this is the case here. If they do return something, then we
-    // should ignore it (or potentially raise an error). Perhaps we should just
-    // handle methods and functions separately?
     $result = namespace\RESULT_PASS;
     if ($test->setup)
     {
@@ -537,7 +551,19 @@ function _run_function_test(
         }
     }
     namespace\end_buffering($logger);
+    namespace\_record_test_result($state, $logger, $test, $run, $test_name, $result);
+}
 
+
+/**
+ * @param int[] $run
+ * @param string $name
+ * @param int $result
+ * @return void
+ */
+function _record_test_result(
+    State $state, Logger $logger, FunctionTest $test, array $run, $name, $result)
+{
     if (namespace\RESULT_POSTPONE !== $result)
     {
         if (!isset($state->results[$test->name]))
@@ -550,7 +576,7 @@ function _run_function_test(
 
         if (namespace\RESULT_PASS === $result)
         {
-            $logger->log_pass($test_name);
+            $logger->log_pass($name);
             for ($i = 0, $c = \count($run); $i < $c; ++$i)
             {
                 $id = \implode(',', \array_slice($run, 0, $i + 1));
