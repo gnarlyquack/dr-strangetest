@@ -248,22 +248,12 @@ function _run_path_test(
 
     if (namespace\RESULT_PASS === $setup)
     {
-        if (\is_iterable($args))
+        if (\is_array($args))
         {
-            if (!\is_array($args))
-            {
-                $args = \iterator_to_array($args);
-            }
-
             foreach ($path->runs as $tests)
             {
                 namespace\_run_subrun($state, $logger, $tests, $run, $args);
             }
-        }
-        else
-        {
-            $message = "'{$path->setup}{$run_name}' returned a non-iterable argument set";
-            $logger->log_error($path->name, $message);
         }
 
         if ($path->teardown)
@@ -296,13 +286,8 @@ function _run_subrun(
         namespace\end_buffering($logger);
         if (namespace\RESULT_PASS === $result)
         {
-            if (\is_iterable($args))
+            if (\is_array($args))
             {
-                if (!\is_array($args))
-                {
-                    $args = \iterator_to_array($args);
-                }
-
                 if ($args)
                 {
                     $run[] = $tests->run_info->id;
@@ -313,11 +298,6 @@ function _run_subrun(
                     $message = "'{$name}' did not return any arguments";
                     $logger->log_error($tests->name, $message);
                 }
-            }
-            else
-            {
-                $message = "'{$name}' returned a non-iterable argument set";
-                $logger->log_error($tests->name, $message);
             }
 
             if (isset($tests->run_info->teardown))
@@ -517,13 +497,8 @@ function _run_function_test(
 
     if (namespace\RESULT_PASS === $result)
     {
-        if (\is_iterable($args))
+        if (\is_array($args))
         {
-            if (!\is_array($args))
-            {
-                $args = \iterator_to_array($args);
-            }
-
             $context = new _Context($state, $logger, $test, $run);
             namespace\start_buffering($logger, $test_name);
             $result = namespace\_run_test_function(
@@ -535,12 +510,6 @@ function _run_function_test(
                 $teardown = \array_pop($context->teardowns);
                 $result |= namespace\_run_teardown($logger, $test_name, $teardown);
             }
-        }
-        else
-        {
-            $message = "'{$test->setup_name}{$run_name}' returned a non-iterable argument set";
-            $logger->log_error($test->name, $message);
-            $result = namespace\RESULT_FAIL;
         }
 
         if ($test->teardown)
@@ -610,6 +579,8 @@ function _record_test_result(
  */
 function _run_setup(Logger $logger, $name, $callable, array $args = null)
 {
+    $status = namespace\RESULT_FAIL;
+    $result = null;
     try
     {
         if ($args)
@@ -622,8 +593,30 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
             // @bc 5.3 Invoke (possible) object method using call_user_func()
             $result = \call_user_func($callable);
         }
-        $result = isset($result) ? $result : array();
-        return array(namespace\RESULT_PASS, $result);
+
+        $status = namespace\RESULT_PASS;
+        if (isset($args))
+        {
+            if (isset($result))
+            {
+                if (\is_iterable($result))
+                {
+                    if (!\is_array($result))
+                    {
+                        $result = \iterator_to_array($result);
+                    }
+                }
+                else
+                {
+                    $message = "Invalid return value: setup fixtures should return an iterable (or 'null')";
+                    $logger->log_error($name, $message);
+                }
+            }
+            else
+            {
+                $result = array();
+            }
+        }
     }
     catch (Skip $e)
     {
@@ -638,7 +631,8 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
     {
         $logger->log_error($name, $e);
     }
-    return array(namespace\RESULT_FAIL, null);
+
+    return array($status, $result);
 }
 
 

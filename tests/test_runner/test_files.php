@@ -825,9 +825,10 @@ function assert_run_file($filepath, $events) {
 
 function test_logs_error_if_arglist_isnt_iterable() {
     $file = namespace\filepath('test_noniterable_arglist.php');
-    $error = "'noniterable_arglist\\setup_file' returned a non-iterable argument set";
     $events = array(
-        array(strangetest\EVENT_ERROR, $file, $error),
+        array(
+            strangetest\EVENT_ERROR, 'noniterable_arglist\\setup_file',
+            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
         array(strangetest\EVENT_OUTPUT, 'noniterable_arglist\\teardown_file', '.'),
     );
 
@@ -837,9 +838,10 @@ function test_logs_error_if_arglist_isnt_iterable() {
 
 function test_logs_error_if_arglists_arent_iterable() {
     $file = namespace\filepath('test_noniterable_arglists.php');
-    $error = "'noniterable_arglists\\setup_runs' returned a non-iterable argument set";
     $events = array(
-        array(strangetest\EVENT_ERROR, $file, $error),
+        array(
+            strangetest\EVENT_ERROR, 'noniterable_arglists\\setup_runs',
+            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
         array(strangetest\EVENT_OUTPUT, 'noniterable_arglists\\teardown_runs', '.'),
     );
 
@@ -849,13 +851,16 @@ function test_logs_error_if_arglists_arent_iterable() {
 
 function test_logs_error_if_any_arglist_isnt_iterable() {
     $file = namespace\filepath('test_any_noniterable_arglist.php');
-    $error = "'any_noniterable_arglist\\%s' returned a non-iterable argument set";
     $events = array(
-        array(strangetest\EVENT_ERROR, $file, \sprintf($error, 'setup_run0')),
+        array(
+            strangetest\EVENT_ERROR, 'any_noniterable_arglist\\setup_run0',
+            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
         array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run0', '1'),
         array(strangetest\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
         array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run1', '2 3'),
-        array(strangetest\EVENT_ERROR, $file, \sprintf($error, 'setup_run2')),
+        array(
+            strangetest\EVENT_ERROR, 'any_noniterable_arglist\\setup_run2',
+            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
         array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run2', '4'),
     );
 
