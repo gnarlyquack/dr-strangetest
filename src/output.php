@@ -8,7 +8,7 @@
 namespace strangetest;
 
 
-final class LiveUpdatingLogger implements Logger {
+final class LiveUpdatingLogger extends struct implements Logger {
 
     public function __construct(Logger $logger)
     {

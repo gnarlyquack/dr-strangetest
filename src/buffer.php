@@ -8,7 +8,7 @@
 namespace strangetest;
 
 
-final class BufferingLogger implements Logger {
+final class BufferingLogger extends struct implements Logger {
     /** @var Logger */
     public $logger;
 

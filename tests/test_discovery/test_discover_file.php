@@ -28,7 +28,7 @@ function filepath($name) {
 function assert_file_discovery($filepath, array $events) {
     $state = new State();
     $logger = new BasicLogger(strangetest\LOG_ALL);
-    strangetest\discover_file($state, new BufferingLogger($logger), $filepath, 0);
+    strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
 
     \assert_events($events, $logger);
 }
@@ -122,11 +122,11 @@ function test_handles_non_test_definition() {
     $filepath = namespace\filepath($file);
     $state = new State();
     $logger = new BasicLogger(strangetest\LOG_ALL);
-    $result = strangetest\discover_file($state, new BufferingLogger($logger), $filepath, 0);
+    $result = strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     strangetest\assert_true(
-        $result instanceof strangetest\PathTest,
+        $result instanceof strangetest\FileTest,
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
     );
     strangetest\assert_identical(

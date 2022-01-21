@@ -31,7 +31,9 @@ class TestProcessUserTargets
         \assert(!$logger->get_log()->get_events());
 
         $this->tests = $tests;
-        $this->root = $this->tests->name;
+        $this->root = ($this->tests instanceof strangetest\DirectoryTest)
+            ? $this->tests->name
+            : $this->tests->path;
     }
 
     public function setup()
@@ -273,11 +275,11 @@ class TestProcessUserTargets
         $this->events = array(
             array(
                 strangetest\EVENT_ERROR,
-                "{$this->root}foo.php",
+                'foo.php',
                 'This path does not exist'),
             array(
                 strangetest\EVENT_ERROR,
-                "{$this->root}foo_dir",
+                'foo_dir',
                 'This path does not exist'),
         );
         $this->assert_targets($context);
@@ -289,7 +291,7 @@ class TestProcessUserTargets
         $this->args = array(
             'test1.php',
             '--function=',
-            '--function=one,,two',
+            '--function=test1_1,,test1_2',
             '--function=,,,',
         );
 
@@ -297,15 +299,27 @@ class TestProcessUserTargets
             array(
                 strangetest\EVENT_ERROR,
                 '--function=',
-                'This specifier is missing one or more function names'),
+                'Function specifier 1 is missing a name'),
             array(
                 strangetest\EVENT_ERROR,
-                '--function=one,,two',
-                'This specifier is missing one or more function names'),
+                '--function=test1_1,,test1_2',
+                'Function specifier 2 is missing a name'),
             array(
                 strangetest\EVENT_ERROR,
                 '--function=,,,',
-                'This specifier is missing one or more function names'),
+                'Function specifier 1 is missing a name'),
+            array(
+                strangetest\EVENT_ERROR,
+                '--function=,,,',
+                'Function specifier 2 is missing a name'),
+            array(
+                strangetest\EVENT_ERROR,
+                '--function=,,,',
+                'Function specifier 3 is missing a name'),
+            array(
+                strangetest\EVENT_ERROR,
+                '--function=,,,',
+                'Function specifier 4 is missing a name'),
         );
         $this->assert_targets($context);
     }
@@ -316,8 +330,8 @@ class TestProcessUserTargets
         $this->args = array(
             'test1.php',
             '--class=',
-            '--class=one;;two',
-            '--class=foo;bar;::one,,two,',
+            '--class=test1_1;;test1_3',
+            '--class=test1_1;test1_2;::one,,two,',
             '--class=::one,two',
             '--class=;;;',
         );
@@ -326,23 +340,35 @@ class TestProcessUserTargets
             array(
                 strangetest\EVENT_ERROR,
                 '--class=',
-                'This specifier is missing one or more class names'),
+                'Class specifier 1 is missing a name'),
             array(
                 strangetest\EVENT_ERROR,
-                '--class=one;;two',
-                'This specifier is missing one or more class names'),
+                '--class=test1_1;;test1_3',
+                'Class specifier 2 is missing a name'),
             array(
                 strangetest\EVENT_ERROR,
-                '--class=foo;bar;::one,,two,',
-                'This specifier is missing one or more class names'),
+                '--class=test1_1;test1_2;::one,,two,',
+                'Class specifier 3 is missing a name'),
             array(
                 strangetest\EVENT_ERROR,
                 '--class=::one,two',
-                'This specifier is missing one or more class names'),
+                'Class specifier 1 is missing a name'),
             array(
                 strangetest\EVENT_ERROR,
                 '--class=;;;',
-                'This specifier is missing one or more class names'),
+                'Class specifier 1 is missing a name'),
+            array(
+                strangetest\EVENT_ERROR,
+                '--class=;;;',
+                'Class specifier 2 is missing a name'),
+            array(
+                strangetest\EVENT_ERROR,
+                '--class=;;;',
+                'Class specifier 3 is missing a name'),
+            array(
+                strangetest\EVENT_ERROR,
+                '--class=;;;',
+                'Class specifier 4 is missing a name'),
         );
         $this->assert_targets($context);
     }
@@ -352,24 +378,36 @@ class TestProcessUserTargets
     {
         $this->args = array(
             'test1.php',
-            '--class=one::',
-            '--class=foo::one,,two',
-            '--class=foo::,,,',
+            '--class=test1_1::',
+            '--class=test1_2::testone,,testthree',
+            '--class=test1_3::,,,',
         );
 
         $this->events = array(
             array(
                 strangetest\EVENT_ERROR,
-                '--class=one::',
-                'This specifier is missing one or more method names'),
+                '--class=test1_1::',
+                "Method specifier 1 for class 'test1_1' is missing a name"),
             array(
                 strangetest\EVENT_ERROR,
-                '--class=foo::one,,two',
-                'This specifier is missing one or more method names'),
+                '--class=test1_2::testone,,testthree',
+                "Method specifier 2 for class 'test1_2' is missing a name"),
             array(
                 strangetest\EVENT_ERROR,
-                '--class=foo::,,,',
-                'This specifier is missing one or more method names'),
+                '--class=test1_3::,,,',
+                "Method specifier 1 for class 'test1_3' is missing a name"),
+            array(
+                strangetest\EVENT_ERROR,
+                '--class=test1_3::,,,',
+                "Method specifier 2 for class 'test1_3' is missing a name"),
+            array(
+                strangetest\EVENT_ERROR,
+                '--class=test1_3::,,,',
+                "Method specifier 3 for class 'test1_3' is missing a name"),
+            array(
+                strangetest\EVENT_ERROR,
+                '--class=test1_3::,,,',
+                "Method specifier 4 for class 'test1_3' is missing a name"),
         );
         $this->assert_targets($context);
     }
@@ -439,62 +477,129 @@ class TestProcessUserTargets
         $result = null;
         if ($this->targets)
         {
-            \assert($this->targets['path'] === $this->tests->name);
-            $result = $this->make_test_from_path_target($this->targets, $this->tests);
+            \assert($this->targets['path'] === $this->root);
+            if ($this->tests instanceof strangetest\TestRunGroup)
+            {
+                $result = $this->make_test_from_run_target($this->targets, $this->tests);
+            }
+            else
+            {
+                $result = $this->make_test_from_directory_target($this->targets, $this->tests);
+            }
         }
         return $result;
     }
 
 
-    private function make_test_from_path_target($target, strangetest\PathTest $tests)
+    private function make_test_from_run_target($target, strangetest\TestRunGroup $tests)
     {
-        $result = new strangetest\PathTest;
-        $result->name = $tests->name;
-        $result->group = $tests->group;
-        $result->setup = $tests->setup;
-        $result->teardown = $tests->teardown;
+        $result = new strangetest\TestRunGroup;
+        $result->path = $tests->path;
+
         if (isset($target['runs']))
         {
             foreach ($target['runs'] as $run)
             {
-                $result->runs[] = $this->make_test_from_run_target(
-                    $run, $tests->runs[$run['run']]);
+                $source = $tests->runs[$run['run']];
+                $test_run = new strangetest\TestRun;
+                $test_run->info = $source->info;
+                if ($source->tests instanceof strangetest\DirectoryTest)
+                {
+                    $test_run->tests = $this->make_test_from_directory_target(
+                        $run, $source->tests);
+                }
+                else
+                {
+                    $test_run->tests = $this->make_test_from_file_target(
+                        $run, $source->tests);
+                }
+                $result->runs[$run['run']] = $test_run;
             }
         }
         else
         {
             foreach ($tests->runs as $run)
             {
-                $result->runs[] = $this->make_test_from_run_target($target, $run);
+                $test_run = new strangetest\TestRun;
+                $test_run->info = $run->info;
+                if ($run->tests instanceof strangetest\DirectoryTest)
+                {
+                    $test_run->tests = $this->make_test_from_directory_target(
+                        $target, $run->tests);
+                }
+                else
+                {
+                    $test_run->tests = $this->make_test_from_file_target(
+                        $target, $run->tests);
+                }
+                $result->runs[$run->info->name] = $test_run;
             }
+        }
+
+        return $result;
+    }
+
+    private function make_test_from_directory_target($target, strangetest\DirectoryTest $tests)
+    {
+        $result = new strangetest\DirectoryTest;
+        $result->name = $tests->name;
+        $result->group = $tests->group;
+        $result->setup = $tests->setup;
+        $result->teardown = $tests->teardown;
+
+        if (isset($target['tests']))
+        {
+            foreach ($target['tests'] as $test)
+            {
+                $path = $test['path'];
+                $source = $tests->tests[$path];
+                if ($source instanceof strangetest\TestRunGroup)
+                {
+                    $test = $this->make_test_from_run_target($test, $source);
+                }
+                elseif ($source instanceof strangetest\DirectoryTest)
+                {
+                    $test = $this->make_test_from_directory_target($test, $source);
+                }
+                else
+                {
+                    \assert($source instanceof strangetest\FileTest);
+                    $test = $this->make_test_from_file_target($test, $source);
+                }
+                $result->tests[$path] = $test;
+            }
+        }
+        else
+        {
+            $result->tests = $tests->tests;
         }
         return $result;
     }
 
-    private function make_test_from_run_target($target, strangetest\TestRun $tests)
+    private function make_test_from_file_target($target, strangetest\FileTest $tests)
     {
-        $result = new strangetest\TestRun;
+        $result = new strangetest\FileTest;
         $result->name = $tests->name;
-        $result->run_info = $tests->run_info;
+        $result->group = $tests->group;
+        $result->setup = $tests->setup;
+        $result->teardown = $tests->teardown;
+
         if (isset($target['tests']))
         {
             foreach ($target['tests'] as $test)
             {
                 if (\is_string($test))
                 {
+                    $name = $test;
                     $test = $tests->tests[$test];
-                }
-                elseif (isset($test['path']))
-                {
-                    $test = $this->make_test_from_path_target(
-                        $test, $tests->tests[$test['path']]);
                 }
                 else
                 {
+                    $name = $test['class'];
                     $test = $this->make_test_from_class_target(
                         $test, $tests->tests[$test['class']]);
                 }
-                $result->tests[] = $test;
+                $result->tests[$name] = $test;
             }
         }
         else
@@ -517,7 +622,7 @@ class TestProcessUserTargets
         {
             foreach ($target['tests'] as $test)
             {
-                $result->tests[] = $tests->tests[$test];
+                $result->tests[$test] = $tests->tests[$test];
             }
         }
         else

@@ -24,7 +24,7 @@ class _DirectoryFixture
 /**
  * @param string $path
  * @param int $group
- * @return PathTest|false
+ * @return null|DirectoryTest|TestRunGroup
  */
 function discover_directory(State $state, BufferingLogger $logger, $path, $group)
 {
@@ -74,7 +74,6 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
         $valid = false;
     }
 
-    $directory = false;
     $fixture = null;
     if ($valid)
     {
@@ -89,11 +88,12 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
         }
     }
 
+    $result = null;
     if ($valid)
     {
         \assert($fixture instanceof _DirectoryFixture);
 
-        $directory = new PathTest;
+        $directory = new DirectoryTest;
         $directory->name = $path;
         $directory->group = $group;
         $directory->setup = $fixture->setup;
@@ -112,7 +112,7 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
             else
             {
                 \assert(namespace\TYPE_FILE === $type);
-                $test = namespace\discover_file($state, $logger, $name, $group);
+                $test = namespace\_discover_file($state, $logger, $name, $group);
             }
 
             if ($test)
@@ -125,44 +125,40 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
         {
             if ($fixture->runs)
             {
+                $result = new TestRunGroup;
+                $result->path = $directory->name;
+                $result->tests = $directory;
                 foreach ($fixture->runs as $run_info)
                 {
                     $run = new TestRun;
-                    $run->name = $directory->name;
-                    $run->run_info = $run_info;
-                    $run->tests = $directory->tests;
-                    $directory->runs[$run_info->name] = $run;
+                    $run->info = $run_info;
+                    $run->tests = $directory;
+                    $result->runs[$run_info->name] = $run;
                 }
             }
             else
             {
-                $run = new TestRun;
-                $run->name = $directory->name;
-                $run->tests = $directory->tests;
-                $directory->runs[''] = $run;
+                $result = $directory;
             }
-        }
-        else
-        {
-            $directory = false;
         }
     }
 
-    return $directory;
+    return $result;
 }
 
 
 /**
  * @param string $filepath
  * @param int $group
- * @return PathTest|false
+ * @return null|FileTest|TestRunGroup
  */
-function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
+function _discover_file(State $state, BufferingLogger $logger, $filepath, $group)
 {
+    $result = null;
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)
     {
-        return false;
+        return $result;
     }
 
     $namespace = '';
@@ -385,10 +381,9 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
         $valid = false;
     }
 
-    $file = false;
     if ($valid && false !== $output['runs'])
     {
-        $file = new PathTest;
+        $file = new FileTest;
         $file->name = $filepath;
         $file->group = $group;
         $file->setup = $output['setup_file'];
@@ -438,30 +433,25 @@ function discover_file(State $state, BufferingLogger $logger, $filepath, $group)
         {
             if ($output['runs'])
             {
+                $result = new TestRunGroup;
+                $result->path = $file->name;
+                $result->tests = $file;
                 foreach ($output['runs'] as $run_info)
                 {
                     $run = new TestRun;
-                    $run->name = $file->name;
-                    $run->run_info = $run_info;
-                    $run->tests = $file->tests;
-                    $file->runs[$run_info->name] = $run;
+                    $run->info = $run_info;
+                    $run->tests = $file;
+                    $result->runs[$run_info->name] = $run;
                 }
             }
             else
             {
-                $run = new TestRun;
-                $run->name = $file->name;
-                $run->tests = $file->tests;
-                $file->runs[''] = $run;
+                $result = $file;
             }
-        }
-        else
-        {
-            $file = false;
         }
     }
 
-    return $file;
+    return $result;
 }
 
 

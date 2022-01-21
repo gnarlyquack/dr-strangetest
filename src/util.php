@@ -64,7 +64,7 @@ final class _DiffState extends struct {
 const _FORMAT_INDENT = '    ';
 
 
-final class _DiffCopy {
+final class _DiffCopy extends struct {
     /** @var string */
     public $value;
 
@@ -83,7 +83,7 @@ final class _DiffCopy {
 }
 
 
-final class _DiffInsert {
+final class _DiffInsert extends struct {
     /** @var string */
     public $value;
 
@@ -105,7 +105,7 @@ final class _DiffInsert {
 }
 
 
-final class _DiffDelete {
+final class _DiffDelete extends struct {
     /** @var string */
     public $value;
 
@@ -151,7 +151,7 @@ final class _Edit extends struct {
 }
 
 
-final class _DiffPosition {
+final class _DiffPosition extends struct {
     const NONE = 0;
     const START = 1;
     const MIDDLE = 2;
@@ -280,7 +280,7 @@ final class _PropertyName extends struct implements _Key {
 }
 
 
-final class _ValueType {
+final class _ValueType extends struct {
     // @BC(5.6): Don't use ARRAY as an identifier to prevent parse error
     const ARRAY_ = 1;
     const OBJECT = 2;

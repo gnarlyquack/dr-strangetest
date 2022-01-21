@@ -811,11 +811,16 @@ function assert_run_file($filepath, $events) {
     $logger = new BasicLogger(strangetest\LOG_ALL);
     $buffed_logger = new BufferingLogger($logger);
 
-    $file = strangetest\discover_file($state, $buffed_logger, $filepath, 0);
+    $file = strangetest\_discover_file($state, $buffed_logger, $filepath, 0);
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
-    strangetest\assert_true($file instanceof PathTest);
-
-    strangetest\_run_path_test($state, $buffed_logger, $file, array(0), array());
+    if ($file instanceof strangetest\FileTest)
+    {
+        strangetest\_run_file($state, $buffed_logger, $file, array(0), array());
+    }
+    else
+    {
+        strangetest\_run_test_run_group($state, $buffed_logger, $file, array(0), array());
+    }
     \assert_events($events, $logger);
 }
 

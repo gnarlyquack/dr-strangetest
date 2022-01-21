@@ -15,31 +15,28 @@ const _SPECIFIER_PATTERN = '~^--(class|function|run)=(.*)$~';
 
 
 /**
+ * @param TestRunGroup|DirectoryTest $tests
  * @param string[] $args
- * @return ?PathTest
+ * @return null|TestRunGroup|DirectoryTest
  */
-function process_specifiers(Logger $logger, PathTest $tests, array $args)
+function process_specifiers(Logger $logger, $tests, array $args)
 {
-    \assert(\DIRECTORY_SEPARATOR === \substr($tests->name, -1));
     \assert(\count($args) > 0);
 
-    $specifiers = namespace\_parse_specifiers($logger, $args, $tests->name);
-    $specifiers = namespace\_validate_specifiers($logger, $tests, $specifiers);
-
+    $specifiers = namespace\_parse_specifiers($logger, $tests, $args);
     if ($specifiers->had_errors)
     {
         $result = null;
     }
     else
     {
-        $result = namespace\_normalize_specifiers($tests, $specifiers->specifiers);
-        $result = namespace\_build_test_from_path_target($result, $tests);
+        $result = namespace\_build_tests_from_specifiers($tests, $specifiers->specifiers);
     }
     return $result;
 }
 
 
-final class _SpeciferIterator
+final class _SpecifierIterator extends struct
 {
     /** @var string[] */
     public $args;
@@ -61,9 +58,9 @@ final class _SpeciferIterator
 }
 
 
-final class _ParsedSpecifiers
+final class _ParsedSpecifiers extends struct
 {
-    /** @var _ParsedPathSpecifier[] */
+    /** @var _PathSpecifier[] */
     public $specifiers = array();
 
     /** @var bool */
@@ -71,175 +68,60 @@ final class _ParsedSpecifiers
 }
 
 
-final class _ParsedPathSpecifier
+final class _PathSpecifier extends struct
 {
-    /** @var string */
-    public $arg;
+    /** @var DirectoryTest|FileTest */
+    public $test;
 
-    /** @var int */
-    public $argnum;
-
-    /** @var string */
-    public $path;
-
-    /**
-     * @var array<_ParsedPathSpecifier|_ParsedClassSpecifier|_ParsedFunctionSpecifier>
-     * */
+    /** @var array<_PathSpecifier|_ClassSpecifier|_FunctionSpecifier> */
     public $specifiers = array();
 
-    /** @var _ParsedRunSpecifier[] */
+    /** @var ?TestRunGroup */
+    public $group;
+
+    /** @var ?string[] */
     public $runs = array();
-
-    /**
-     * @param string $arg
-     * @param int $argnum
-     * @param string $path
-     */
-    public function __construct($arg, $argnum, $path)
-    {
-        $this->arg = $arg;
-        $this->argnum = $argnum;
-        $this->path = $path;
-    }
 }
 
 
-final class _ParsedRunSpecifier
+final class _ClassSpecifier extends struct
 {
-    /** @var string */
-    public $arg;
+    /** @var ClassTest */
+    public $test;
 
-    /** @var string[] */
-    public $names;
-
-    /**
-     * @param string $arg
-     * @param string[] $names
-     */
-    public function __construct($arg, array $names)
-    {
-        $this->arg = $arg;
-        $this->names = $names;
-    }
-}
-
-
-final class _ParsedClassSpecifier
-{
-    /** @var string */
-    public $arg;
-
-    /** @var int */
-    public $argnum;
-
-    /** @var string */
-    public $class;
-
-    /** @var int */
-    public $classnum;
-
-    /** @var _ParsedMethodSpecifier[] */
+    /** @var _FunctionSpecifier[] */
     public $specifiers = array();
-
-    /**
-     * @param string $arg
-     * @param int $argnum
-     * @param string $class
-     * @param int $classnum
-     */
-    public function __construct($arg, $argnum, $class, $classnum)
-    {
-        $this->arg = $arg;
-        $this->argnum = $argnum;
-        $this->class = $class;
-        $this->classnum = $classnum;
-    }
 }
 
 
-final class _ParsedMethodSpecifier
+final class _FunctionSpecifier extends struct
 {
-    /** @var string */
-    public $arg;
-
-    /** @var int */
-    public $argnum;
-
-    /** @var string */
-    public $class;
-
-    /** @var int */
-    public $classnum;
-
-    /** @var string */
-    public $method;
-
-    /** @var int */
-    public $methodnum;
+    /** @var FunctionTest */
+    public $test;
 
     /**
-     * @param string $arg
-     * @param int $argnum
-     * @param string $class
-     * @param int $classnum
-     * @param string $method
-     * @param int $methodnum
+     * @param FunctionTest $test
      */
-    public function __construct($arg, $argnum, $class, $classnum, $method, $methodnum)
+    public function __construct($test)
     {
-        $this->arg = $arg;
-        $this->argnum = $argnum;
-        $this->class = $class;
-        $this->classnum = $classnum;
-        $this->method = $method;
-        $this->methodnum = $methodnum;
-    }
-}
-
-
-final class _ParsedFunctionSpecifier
-{
-    /** @var string */
-    public $arg;
-
-    /** @var int */
-    public $argnum;
-
-    /** @var string */
-    public $function;
-
-    /** @var int */
-    public $functionnum;
-
-    /**
-     * @param string $arg
-     * @param int $argnum
-     * @param string $function
-     * @param int $functionnum
-     */
-    public function __construct($arg, $argnum, $function, $functionnum)
-    {
-        $this->arg = $arg;
-        $this->argnum = $argnum;
-        $this->function = $function;
-        $this->functionnum = $functionnum;
+        $this->test = $test;
     }
 }
 
 
 /**
+ * @param TestRunGroup|DirectoryTest $reference
  * @param string[] $args
- * @param string $root
  * @return _ParsedSpecifiers
  */
-function _parse_specifiers(Logger $logger, array $args, $root)
+function _parse_specifiers(Logger $logger, $reference, array $args)
 {
     $parsed = new _ParsedSpecifiers;
-    $iter = new _SpeciferIterator($args);
+    $iter = new _SpecifierIterator($args);
     // @todo Ensure all identifiers are trimmed
     while ($iter->index < $iter->count)
     {
-        $specifier = namespace\_parse_path_specifier($logger, $iter, $root);
+        $specifier = namespace\_parse_path_specifier($logger, $reference, $iter);
         if ($specifier)
         {
             $parsed->specifiers[] = $specifier;
@@ -254,135 +136,294 @@ function _parse_specifiers(Logger $logger, array $args, $root)
 
 
 /**
- * @param string $root
- * @return ?_ParsedPathSpecifier
+ * @param TestRunGroup|DirectoryTest $reference
+ * @return ?_PathSpecifier
  */
-function _parse_path_specifier(Logger $logger, _SpeciferIterator $iter, $root)
+function _parse_path_specifier(
+    Logger $logger,
+    $reference,
+    _SpecifierIterator $iter)
 {
     $valid = false;
     $specifier = $leaf = null;
-    $dir = false;
-    $arg = $iter->args[$iter->index++];
-    $path = (\DIRECTORY_SEPARATOR === \substr($arg, 0, 1)) ? $arg : ($root . $arg);
+    $runs = array();
+    $root = ($reference instanceof TestRunGroup) ? $reference->path : $reference->name;
 
-    $realpath = \realpath($path);
-    if (false === $realpath)
+    $arg = $iter->args[$iter->index++];
+    $target = (\DIRECTORY_SEPARATOR === \substr($arg, 0, 1)) ? $arg : ($root . $arg);
+    $target = \realpath($target);
+    if (false === $target)
     {
-        $logger->log_error($path, 'This path does not exist');
+        $logger->log_error($arg, 'This path does not exist');
     }
     else
     {
-        if (\is_dir($realpath))
+        if (\is_dir($target))
         {
-            $dir = true;
-            \assert(\DIRECTORY_SEPARATOR !== \substr($realpath, -1));
-            $realpath .= \DIRECTORY_SEPARATOR;
+            \assert(\DIRECTORY_SEPARATOR !== \substr($target, -1));
+            $target .= \DIRECTORY_SEPARATOR;
         }
 
-        if (0 === \substr_compare($realpath, $root, 0, \strlen($root)))
+        if (0 === \substr_compare($target, $root, 0, \strlen($root)))
         {
             $valid = true;
-            $specifier = $leaf = new _ParsedPathSpecifier($arg, $iter->index, $root);
-            $pos = \strpos($realpath, \DIRECTORY_SEPARATOR, \strlen($root));
-            while (false !== $pos)
+            $specifier = $leaf = new _PathSpecifier;
+
+            for (;;)
             {
-                ++$pos;
-                $temp = new _ParsedPathSpecifier(
-                    $arg, $iter->index, \substr($realpath, 0, $pos));
-                $leaf->specifiers[] = $temp;
-                $leaf = $temp;
-                $pos = \strpos($realpath, \DIRECTORY_SEPARATOR, $pos);
-            }
-            if (!$dir)
-            {
-                $temp = new _ParsedPathSpecifier($arg, $iter->index, $realpath);
-                $leaf->specifiers[] = $temp;
-                $leaf = $temp;
+                if ($reference instanceof TestRunGroup)
+                {
+                    $leaf->group = $reference;
+                    $runs[] = $leaf;
+                    $reference = $reference->tests;
+                }
+                $leaf->test = $reference;
+
+                $offset = \strlen($reference->name);
+                $pos = \strpos($target, \DIRECTORY_SEPARATOR, $offset);
+                if (false === $pos)
+                {
+                    $path = $target;
+                }
+                else
+                {
+                    $path = \substr($target, 0, $pos + 1);
+                }
+
+                if ($offset < \strlen($path))
+                {
+                    \assert($reference instanceof DirectoryTest);
+                    if (isset($reference->tests[$path]))
+                    {
+                        $reference = $reference->tests[$path];
+                        $temp = new _PathSpecifier;
+                        $leaf->specifiers[] = $temp;
+                        $leaf = $temp;
+                    }
+                    else
+                    {
+                        $logger->log_error(
+                            $arg,
+                            "This path is not a test path"
+                        );
+                        $valid = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
             }
         }
         else
         {
-            $logger->log_error($path, "This path is outside the test root directory $root");
+            $logger->log_error($arg, "This path is outside the test root directory $root");
         }
     }
 
-    while (
-        ($iter->index < $iter->count)
-        && \preg_match(namespace\_SPECIFIER_PATTERN, $iter->args[$iter->index], $matches))
+    if ($valid)
     {
-        if ($leaf)
+        \assert(isset($leaf));
+        \assert($reference === $leaf->test);
+        \assert($reference->name === $target);
+
+        if ($reference instanceof FileTest)
         {
-            if ('class' === $matches[1])
-            {
-                if ($dir)
-                {
-                    $logger->log_error(
-                        $iter->args[$iter->index++],
-                        'Functions can only be specified for a file');
-                    $valid = false;
-                }
-                elseif (!namespace\_parse_class_specifier($logger, $iter, $leaf))
-                {
-                    $valid = false;
-                }
-            }
-            elseif ('function' === $matches[1])
-            {
-                if ($dir)
-                {
-                    $logger->log_error(
-                        $iter->args[$iter->index++],
-                        'Classes can only be specified for a file');
-                    $valid = false;
-                }
-                elseif (!namespace\_parse_function_specifier($logger, $iter, $leaf))
-                {
-                    $valid = false;
-                }
-            }
-            else
-            {
-                \assert('run' === $matches[1]);
-                if (!namespace\_parse_run_specifier($logger, $iter, $leaf))
-                {
-                    $valid = false;
-                }
-            }
+            $valid = namespace\_parse_file_specifiers(
+                $logger, $reference, $runs, $leaf, $iter);
         }
         else
+        {
+            \assert($reference instanceof DirectoryTest);
+            $valid = namespace\_parse_directory_specifiers($logger, $runs,  $iter);
+        }
+    }
+    else
+    {
+        while (
+            ($iter->index < $iter->count)
+            && \preg_match(namespace\_SPECIFIER_PATTERN, $iter->args[$iter->index]))
         {
             // Consume specifiers that apply to an invalid path
             ++$iter->index;
         }
     }
 
-    \assert(!$valid || $specifier);
+    \assert(!$valid || isset($specifier));
     return $valid ? $specifier : null;
 }
 
 
 /**
- *
+ * @param _PathSpecifier[] $runs
  * @return bool
  */
-function _parse_function_specifier(
-    Logger $logger, _SpeciferIterator $iter, _ParsedPathSpecifier $parent)
+function _parse_directory_specifiers(
+    Logger $logger,
+    array $runs,
+    _SpecifierIterator $iter)
 {
     $valid = true;
-    $arg = $iter->args[$iter->index++];
-    $functions = \substr($arg, namespace\_FUNCTION_SPECIFER_LEN);
-    foreach (\explode(',', $functions) as $i => $function)
+    $default_runs = true;
+    while (
+        ($iter->index < $iter->count)
+        && \preg_match(namespace\_SPECIFIER_PATTERN, $iter->args[$iter->index], $matches))
     {
-        if (\strlen($function))
+        if ('class' === $matches[1])
         {
-            $parent->specifiers[] = new _ParsedFunctionSpecifier(
-                $arg, $iter->index, $function, $i + 1);
+            $logger->log_error(
+                $iter->args[$iter->index++],
+                'Classes can only be specified for a file');
+            $valid = false;
+        }
+        elseif ('function' === $matches[1])
+        {
+            $logger->log_error(
+                $iter->args[$iter->index++],
+                'Functions can only be specified for a file');
+            $valid = false;
         }
         else
         {
-            $logger->log_error($arg, 'This specifier is missing one or more function names');
+            \assert('run' === $matches[1]);
+            $default_runs = false;
+            if (!namespace\_parse_run_specifier($logger, $runs, $iter))
+            {
+                $valid = false;
+            }
+        }
+    }
+
+    if ($valid && $default_runs)
+    {
+        foreach ($runs as $run)
+        {
+            $run->runs = null;
+        }
+    }
+
+    return $valid;
+}
+
+
+/**
+ * @param _PathSpecifier[] $runs
+ * @return bool
+ */
+function _parse_file_specifiers(
+    Logger $logger,
+    FileTest $reference,
+    array $runs,
+    _PathSpecifier $specifier,
+    _SpecifierIterator $iter)
+{
+    $valid = true;
+    $default_runs = true;
+    while (
+        ($iter->index < $iter->count)
+        && \preg_match(namespace\_SPECIFIER_PATTERN, $iter->args[$iter->index], $matches))
+    {
+        if ('class' === $matches[1])
+        {
+            if (!namespace\_parse_class_specifier($logger, $reference, $specifier, $iter))
+            {
+                $valid = false;
+            }
+        }
+        elseif ('function' === $matches[1])
+        {
+            if (!namespace\_parse_function_specifier($logger, $reference, $specifier, $iter))
+            {
+                $valid = false;
+            }
+        }
+        else
+        {
+            \assert('run' === $matches[1]);
+            $default_runs = false;
+            if (!namespace\_parse_run_specifier($logger, $runs, $iter))
+            {
+                $valid = false;
+            }
+        }
+    }
+
+    if ($valid && $default_runs)
+    {
+        foreach ($runs as $run)
+        {
+            $run->runs = null;
+        }
+    }
+
+    return $valid;
+}
+
+
+/**
+ * @param _PathSpecifier[] $specifiers
+ * @return bool
+ */
+function _parse_run_specifier(
+    Logger $logger,
+    array $specifiers,
+    _SpecifierIterator $iter)
+{
+    $valid = true;
+    $arg = $iter->args[$iter->index++];
+    $runs = \substr($arg, namespace\_RUN_SPECIFIER_LEN);
+    foreach (\explode(';', $runs) as $run)
+    {
+        $names = \explode(',', $run);
+        $blank = true;
+        $i = \count($specifiers);
+        while ($i--)
+        {
+            $specifier = $specifiers[$i];
+            \assert(isset($specifier->group));
+            $name = (string)\end($names);
+            if (strlen($name))
+            {
+                $blank = false;
+                if (isset($specifier->group->runs[$name]))
+                {
+                    \array_pop($names);
+                }
+                else
+                {
+                    $name = '';
+                }
+            }
+            else
+            {
+                \array_pop($names);
+            }
+
+            if (isset($specifier->runs))
+            {
+                if (\strlen($name))
+                {
+                    $specifier->runs[$name] = $name;
+                }
+                else
+                {
+                    $specifier->runs = null;
+                }
+            }
+        }
+
+        if ($names)
+        {
+            $logger->log_error(
+                $arg,
+                "Run specifier '{$run}' had extra and/or invalid run names: " . \implode(',', $names));
             $valid = false;
-            break;
+        }
+        elseif ($blank)
+        {
+            $logger->log_error($arg, "Run specifier '{$run}' listed no runs");
+            $valid = false;
         }
     }
 
@@ -394,12 +435,15 @@ function _parse_function_specifier(
  * @return bool
  */
 function _parse_class_specifier(
-    Logger $logger, _SpeciferIterator $iter, _ParsedPathSpecifier $parent)
+    Logger $logger,
+    FileTest $reference,
+    _PathSpecifier $parent,
+    _SpecifierIterator $iter)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
     $classes = \substr($arg, namespace\_CLASS_SPECIFIER_LEN);
-    foreach (\explode(';', $classes) as $i => $class)
+    foreach (\explode(';', $classes) as $c => $class)
     {
         $split = \strpos($class, '::');
         if (false === $split)
@@ -414,31 +458,59 @@ function _parse_class_specifier(
 
         if (\strlen($class))
         {
-            $specifier = new _ParsedClassSpecifier($arg, $iter->index, $class, $i + 1);
-            $parent->specifiers[] = $specifier;
-
-            foreach ($methods as $j => $method)
+            $name = 'class ' . $class;
+            if (isset($reference->tests[$name]))
             {
-                if (\strlen($method))
+                $test = $reference->tests[$name];
+                \assert($test instanceof ClassTest);
+                $specifier = new _ClassSpecifier;
+                $specifier->test = $test;
+                $parent->specifiers[] = $specifier;
+
+                foreach ($methods as $m => $method)
                 {
-                    $specifier->specifiers[] = new _ParsedMethodSpecifier(
-                        $arg, $iter->index, $class, $i + 1, $method, $j + 1);
+                    if (\strlen($method))
+                    {
+                        if (isset($test->tests[$method]))
+                        {
+                            $method = $test->tests[$method];
+                            $specifier->specifiers[] = new _FunctionSpecifier($method);
+                        }
+                        else
+                        {
+                            $logger->log_error(
+                                $arg,
+                                "Method '{$method}' is not a test method in {$test->name}"
+                            );
+                            $valid = false;
+                        }
+                    }
+                    else
+                    {
+                        $logger->log_error(
+                            $arg,
+                            \sprintf(
+                                'Method specifier %d for class \'%s\' is missing a name',
+                                $m + 1, $test->name));
+                        $valid = false;
+                    }
                 }
-                else
-                {
-                    $logger->log_error(
-                        $arg,
-                        'This specifier is missing one or more method names');
-                    $valid = false;
-                    break 2;
-                }
+            }
+            else
+            {
+                $logger->log_error(
+                    $arg,
+                    "'{$class}' is not a test class in {$reference->name}"
+                );
+                $valid = false;
             }
         }
         else
         {
-            $logger->log_error($arg, 'This specifier is missing one or more class names');
+            $logger->log_error(
+                $arg,
+                \sprintf('Class specifier %d is missing a name', $c + 1));
             $valid = false;
-            break;
         }
     }
 
@@ -449,31 +521,40 @@ function _parse_class_specifier(
 /**
  * @return bool
  */
-function _parse_run_specifier(
-    Logger $logger, _SpeciferIterator $iter, _ParsedPathSpecifier $parent)
+function _parse_function_specifier(
+    Logger $logger,
+    FileTest $reference,
+    _PathSpecifier $parent,
+    _SpecifierIterator $iter)
 {
     $valid = true;
     $arg = $iter->args[$iter->index++];
-    $runs = \substr($arg, namespace\_RUN_SPECIFIER_LEN);
-    foreach (\explode(';', $runs) as $run)
+    $functions = \substr($arg, namespace\_FUNCTION_SPECIFER_LEN);
+    foreach (\explode(',', $functions) as $f => $function)
     {
-        $names = \explode(',', $run);
-        $parsed = array();
-        foreach ($names as $name)
+        if (\strlen($function))
         {
-            if ($parsed || \strlen($name))
+            $name = 'function ' . $function;
+            if (isset($reference->tests[$name]))
             {
-                $parsed[] = $name;
+                $function = $reference->tests[$name];
+                \assert($function instanceof FunctionTest);
+                $parent->specifiers[] = new _FunctionSpecifier($function);
             }
-        }
-
-        if ($parsed)
-        {
-            $parent->runs[] = new _ParsedRunSpecifier($arg, $parsed);
+            else
+            {
+                $logger->log_error(
+                    $arg,
+                    "Function '{$function}' is not a test function in {$reference->name}"
+                );
+                $valid = false;
+            }
         }
         else
         {
-            $logger->log_error($arg, "Run specifier '{$run}' listed no runs");
+            $logger->log_error(
+                $arg,
+                \sprintf('Function specifier %d is missing a name', $f + 1));
             $valid = false;
         }
     }
@@ -482,487 +563,260 @@ function _parse_run_specifier(
 }
 
 
-final class _ValidSpecifiers
+final class _RunGroupTarget extends struct
 {
-    /** @var _ValidPathSpecifier[] */
-    public $specifiers = array();
+    /** @var TestRunGroup */
+    public $group;
 
-    /** @var bool */
-    public $had_errors;
+    /** @var array<_DirectoryTarget|_FileTarget> */
+    public $targets = array();
 
-    /**
-     * @param bool $had_errors
-     */
-    public function __construct($had_errors)
-    {
-        $this->had_errors = $had_errors;
-    }
+    /** @var int */
+    public $count;
+
+    /** @var int */
+    public $total;
 }
 
 
-final class _ValidPathSpecifier
+final class _DirectoryTarget extends struct
 {
-    /** @var string */
-    public $name;
+    /** @var DirectoryTest */
+    public $test;
 
-    /** @var ?string[] */
-    public $runs = array();
+    /** @var array<_RunGroupTarget|_DirectoryTarget|_FileTarget> */
+    public $targets = array();
 
-    /**
-     * @var array<_ValidPathSpecifier|_ValidClassSpecifier|_ValidFunctionSpecifier>
-     * */
-    public $specifiers = array();
+    /** @var int */
+    public $count;
 
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
+    /** @var int */
+    public $total;
 }
 
 
-final class _ValidClassSpecifier
+final class _FileTarget extends struct
 {
-    /** @var string */
-    public $name;
+    /** @var FileTest */
+    public $test;
 
-    /** @var _ValidFunctionSpecifier[] */
-    public $specifiers = array();
+    /** @var _ClassTarget[] */
+    public $targets = array();
 
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
+    /** @var int */
+    public $count;
+
+    /** @var int */
+    public $total;
 }
 
 
-final class _ValidFunctionSpecifier
+final class _ClassTarget extends struct
 {
-    /** @var string */
-    public $name;
+    /** @var ClassTest */
+    public $test;
 
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
+    /** @var int */
+    public $count;
+
+    /** @var int */
+    public $total;
 }
 
 
 /**
- * @return _ValidSpecifiers
+ * @param TestRunGroup|DirectoryTest $reference
+ * @param _PathSpecifier[] $specifiers
+ * @return TestRunGroup|DirectoryTest
  */
-function _validate_specifiers(Logger $logger, PathTest $tests, _ParsedSpecifiers $parsed)
+function _build_tests_from_specifiers($reference, array $specifiers)
 {
-    $validated = new _ValidSpecifiers($parsed->had_errors);
-    $suite = new PathTest;
-    $suite->tests[$tests->name] = $tests;
-    foreach ($parsed->specifiers as $specifier)
+    if ($reference instanceof TestRunGroup)
     {
-        $specifier = namespace\_validate_path_specifier($logger, $suite, $specifier);
-        if ($specifier)
+        $target = namespace\_create_empty_run_group($reference);
+        foreach ($specifiers as $specifier)
         {
-            $validated->specifiers[] = $specifier;
-        }
-        else
-        {
-            $validated->had_errors = true;
-        }
-    }
-    return $validated;
-}
-
-
-/**
- * @param array<array{_ValidPathSpecifier, PathTest}> $stack
- * @return ?_ValidPathSpecifier
- */
-function _validate_path_specifier(
-    Logger $logger,
-    PathTest $parent, _ParsedPathSpecifier $unvalidated, array $stack = array())
-{
-    $valid = false;
-    $validated = null;
-
-    $name = $unvalidated->path;
-    if (isset($parent->tests[$name]))
-    {
-        $valid = true;
-        $validated = new _ValidPathSpecifier($name);
-        if ($unvalidated->specifiers)
-        {
-            $test = $parent->tests[$name];
-            \assert($test instanceof PathTest);
-            foreach ($unvalidated->specifiers as $specifier)
+            namespace\_add_runs_from_specifier($target, $specifier);
+            if ($target->count === $target->total)
             {
-                if ($specifier instanceof _ParsedPathSpecifier)
-                {
-                    $stack[] = array($validated, $test);
-                    $specifier = namespace\_validate_path_specifier(
-                        $logger, $test, $specifier, $stack);
-                }
-                elseif ($specifier instanceof _ParsedClassSpecifier)
-                {
-                    $specifier = namespace\_validate_class_specifier(
-                        $logger, $test, $specifier);
-                }
-                else
-                {
-                    \assert($specifier instanceof _ParsedFunctionSpecifier);
-                    $specifier = namespace\_validate_function_specifier(
-                        $logger, $test, $specifier);
-                }
-
-                if ($specifier)
-                {
-                    $validated->specifiers[] = $specifier;
-                }
-                else
-                {
-                    $valid = false;
-                }
+                break;
             }
         }
-        if ($unvalidated->runs)
-        {
-            $test = $parent->tests[$name];
-            \assert($test instanceof PathTest);
-            $stack[] = array($validated, $test);
-            foreach ($unvalidated->runs as $run)
-            {
-                if (!namespace\_validate_run_specifier($logger, $stack, $run))
-                {
-                    $valid = false;
-                }
-            }
-        }
+        $result = $target->group;
     }
     else
     {
-        $logger->log_error(
-            $unvalidated->arg,
-            "Path {$unvalidated->path} is not a test path"
-        );
+        $target = namespace\_create_empty_directory_test($reference);
+        foreach ($specifiers as $specifier)
+        {
+            namespace\_add_directory_tests_from_specifier($target, $specifier);
+            if ($target->count === $target->total)
+            {
+                break;
+            }
+        }
+        $result = $target->test;
     }
 
-    \assert(!$valid || $validated);
-    return $valid ? $validated : null;
+    return $result;
 }
 
 
 /**
- * @param array<array{_ValidPathSpecifier, PathTest}> $stack
- * @return bool
+ * @return _RunGroupTarget
  */
-function _validate_run_specifier(
-    Logger $logger, array $stack, _ParsedRunSpecifier $specifier)
+function _create_empty_run_group(TestRunGroup $source)
 {
-    $valid = true;
-    $names = $specifier->names;
-    $i = \count($stack);
-    while ($i)
+    $group = new TestRunGroup;
+    $group->path = $source->path;
+
+    $target = new _RunGroupTarget;
+    $target->group = $group;
+    $target->count = 0;
+    $target->total = \count($source->runs);
+
+    return $target;
+}
+
+
+/**
+ * @return void
+ */
+function _add_run_group_from_specifier(
+    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier)
+{
+    \assert(isset($child_specifier->group));
+
+    $child_name = $child_specifier->test->name;
+    $parent = $parent_target->test;
+    if (isset($parent->tests[$child_name]))
     {
-        list($parent_specifier, $parent_test) = $stack[--$i];
-        if (!isset($parent_test->runs['']))
+        $child_target = $parent_target->targets[$child_name];
+        \assert($child_target instanceof _RunGroupTarget);
+    }
+    else
+    {
+        $child_target = namespace\_create_empty_run_group($child_specifier->group);
+        $parent_target->targets[$child_name] = $child_target;
+        $parent->tests[$child_name] = $child_target->group;
+    }
+
+    if ($child_target->count < $child_target->total)
+    {
+        namespace\_add_runs_from_specifier($child_target, $child_specifier);
+        if ($child_target->count === $child_target->total)
         {
-            $name = (string)\end($names);
-            if (!\strlen($name) || isset($parent_test->runs[$name]))
+            ++$parent_target->count;
+        }
+    }
+}
+
+
+/**
+ * @return void
+ */
+function _add_runs_from_specifier(_RunGroupTarget $target, _PathSpecifier $specifier)
+{
+    \assert($target->count < $target->total);
+
+    $reference = $specifier->group;
+    \assert(isset($reference));
+
+    \assert(!isset($specifier->runs) || (\count($specifier->runs) > 0));
+    $run_names = $specifier->runs ? $specifier->runs : \array_keys($reference->runs);
+
+    $group = $target->group;
+    foreach ($run_names as $run_name)
+    {
+        if (isset($group->runs[$run_name]))
+        {
+            $child_target = $target->targets[$run_name];
+        }
+        else
+        {
+            if ($specifier->test instanceof DirectoryTest)
             {
-                \array_pop($names);
+                $child_target = namespace\_create_empty_directory_test($specifier->test);
             }
             else
             {
-                $name = '';
+                $child_target = namespace\_create_empty_file_test($specifier->test);
             }
+            $target->targets[$run_name] = $child_target;
 
-            if (!\strlen($name))
-            {
-                $parent_specifier->runs = null;
-            }
-            elseif (isset($parent_specifier->runs))
-            {
-                $parent_specifier->runs[] = $name;
-            }
+            $run = new TestRun;
+            $run->info = $reference->runs[$run_name]->info;
+            $run->tests = $child_target->test;
+            $group->runs[$run_name] = $run;
         }
-        else
+
+        if ($child_target->count < $child_target->total)
         {
-            \assert(1 === \count($parent_test->runs));
-        }
-    }
-
-    if ($names)
-    {
-        $logger->log_error($specifier->arg, 'Extra and/or invalid run names: ' . \implode(',', $specifier->names));
-        $valid = false;
-    }
-
-    return $valid;
-}
-
-
-/**
- * @return ?_ValidFunctionSpecifier
- */
-function _validate_function_specifier(
-    Logger $logger,
-    PathTest $parent, _ParsedFunctionSpecifier $unvalidated)
-{
-    $result = null;
-    $name = "function {$unvalidated->function}";
-    if (isset($parent->tests[$name]))
-    {
-        $result = new _ValidFunctionSpecifier($name);
-    }
-    else
-    {
-        $logger->log_error(
-            $unvalidated->arg,
-            "Function {$unvalidated->function} is not a test function"
-        );
-    }
-
-    return $result;
-}
-
-
-/**
- * @return ?_ValidClassSpecifier
- */
-function _validate_class_specifier(
-    Logger $logger,
-    PathTest $parent, _ParsedClassSpecifier $unvalidated)
-{
-    $valid = false;
-    $validated = null;
-    $name = "class {$unvalidated->class}";
-    if (isset($parent->tests[$name]))
-    {
-        $valid = true;
-        $validated = new _ValidClassSpecifier($name);
-        if ($unvalidated->specifiers)
-        {
-            $test = $parent->tests[$name];
-            \assert($test instanceof ClassTest);
-            foreach ($unvalidated->specifiers as $specifier)
+            if ($child_target instanceof _DirectoryTarget)
             {
-                $specifier = namespace\_validate_method_specifier($logger, $test, $specifier);
-                if ($specifier)
-                {
-                    $validated->specifiers[] = $specifier;
-                }
-                else
-                {
-                    $valid = false;
-                }
+                namespace\_add_directory_tests_from_specifier($child_target, $specifier);
+            }
+            else
+            {
+                namespace\_add_file_tests_from_specifier($child_target, $specifier);
+            }
+
+            if ($child_target->count === $child_target->total)
+            {
+                ++$target->count;
             }
         }
     }
-    else
-    {
-        $logger->log_error(
-            $unvalidated->arg,
-            "Class {$unvalidated->class} is not a test class"
-        );
-    }
-    \assert(!$valid || $validated);
-    return $valid ? $validated : null;
 }
 
 
 /**
- * @return ?_ValidFunctionSpecifier
+ * @return _DirectoryTarget
  */
-function _validate_method_specifier(
-    Logger $logger,
-    ClassTest $parent, _ParsedMethodSpecifier $unvalidated)
+function _create_empty_directory_test(DirectoryTest $source)
 {
-    $result = null;
-    $name = $unvalidated->method;
-    if (isset($parent->tests[$name]))
-    {
-        $result = new _ValidFunctionSpecifier($name);
-    }
-    else
-    {
-        $logger->log_error(
-            $unvalidated->arg,
-            "Method {$unvalidated->method} is not a test method"
-        );
-    }
+    $directory = new DirectoryTest;
+    $directory->name = $source->name;
+    $directory->group = $source->group;
+    $directory->setup = $source->setup;
+    $directory->teardown = $source->teardown;
 
-    return $result;
-}
+    $target = new _DirectoryTarget;
+    $target->test = $directory;
+    $target->count = 0;
+    $target->total = \count($source->tests);
 
-
-final class _PathTarget
-{
-    /** @var string */
-    public $name;
-
-    /** @var _RunTarget[] */
-    public $runs = array();
-
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
-}
-
-
-final class _RunTarget
-{
-    /** @var string */
-    public $name;
-
-    /** @var ?array<_PathTarget|_ClassTarget|_FunctionTarget> */
-    public $tests = array();
-
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
-}
-
-
-final class _ClassTarget
-{
-    /** @var string */
-    public $name;
-
-    /** @var ?_FunctionTarget[] */
-    public $tests = array();
-
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
-}
-
-
-final class _FunctionTarget
-{
-    /** @var string */
-    public $name;
-
-    /**
-     * @param string $name
-     */
-    public function __construct($name)
-    {
-        $this->name = $name;
-    }
-}
-
-
-/**
- * @todo Make minimization of test specifiers more robust
- * Minimization is when we determine all tests are specified, which means we
- * can eliminate the specifier and just run all the tests, e.g., if all methods
- * of a test class are specified, we can just test the entire class.
- *
- * Right now, this doesn't do any minimization of runs and only does trivial
- * minimization of other tests. "Trivial" minimization is when a user
- * explicitly specifies all tests, e.g., specifying a file but no tests within
- * the file. "Non-trivial" minimization is if a user ends up individually
- * specifying all tests. This seems unlikely, but handling this would seem to
- * be fairly easy if we just keep track of the number of "fully" specified
- * tests. A "fully" specified test is one that has all its tests specified. For
- * functions, this is just the test itself, but for classes and paths, this
- * would mean every test that comprises the class or path.
- *
- * @param _ValidPathSpecifier[] $specifiers
- * @return _PathTarget
- */
-function _normalize_specifiers(PathTest $test, array $specifiers)
-{
-    \assert(\count($specifiers) > 0);
-    $result = new _RunTarget('');
-    foreach ($specifiers as $specifier)
-    {
-        namespace\_normalize_path_specifier($test, $specifier, $result);
-    }
-
-    \assert(isset($result->tests) && 1 === \count($result->tests));
-    $result = \current($result->tests);
-    \assert($result instanceof _PathTarget);
-    return $result;
+    return $target;
 }
 
 
 /**
  * @return void
  */
-function _normalize_path_specifier(
-    PathTest $test, _ValidPathSpecifier $specifier, _RunTarget $parent)
+function _add_directory_test_from_specifier(
+    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier)
 {
-    \assert(isset($parent->tests));
-
-    $name = $specifier->name;
-    if (isset($parent->tests[$name]))
+    $child_name = $child_specifier->test->name;
+    $parent = $parent_target->test;
+    if (isset($parent->tests[$child_name]))
     {
-        $to = $parent->tests[$name];
-        \assert($to instanceof _PathTarget);
+        $child_target = $parent_target->targets[$child_name];
+        \assert($child_target instanceof _DirectoryTarget);
     }
     else
     {
-        $to = new _PathTarget($name);
-        $parent->tests[$name] = $to;
+        \assert($child_specifier->test instanceof DirectoryTest);
+        $child_target = namespace\_create_empty_directory_test($child_specifier->test);
+        $parent_target->targets[$child_name] = $child_target;
+        $parent->tests[$child_name] = $child_target->test;
     }
 
-    \assert($name === $test->name);
-    $run_names = $specifier->runs ? $specifier->runs : \array_keys($test->runs);
-    foreach ($run_names as $run_name)
+    if ($child_target->count < $child_target->total)
     {
-        if (isset($to->runs[$run_name]))
+        namespace\_add_directory_tests_from_specifier($child_target, $child_specifier);
+        if ($child_target->count === $child_target->total)
         {
-            $run = $to->runs[$run_name];
-        }
-        else
-        {
-            $run = new _RunTarget($run_name);
-            $to->runs[$run_name] = $run;
-        }
-
-        if (!$specifier->specifiers)
-        {
-            $run->tests = null;
-        }
-        elseif (isset($run->tests))
-        {
-            foreach ($specifier->specifiers as $child)
-            {
-                if ($child instanceof _ValidPathSpecifier)
-                {
-                    $child_test = $test->tests[$child->name];
-                    \assert($child_test instanceof PathTest);
-                    namespace\_normalize_path_specifier($child_test, $child, $run);
-                }
-                elseif ($child instanceof _ValidClassSpecifier)
-                {
-                    namespace\_normalize_class_specifier($child, $run);
-                }
-                else
-                {
-                    \assert($child instanceof _ValidFunctionSpecifier);
-                    namespace\_normalize_function_specifier($child, $run);
-                }
-            }
+            ++$parent_target->count;
         }
     }
 }
@@ -971,289 +825,188 @@ function _normalize_path_specifier(
 /**
  * @return void
  */
-function _normalize_class_specifier(_ValidClassSpecifier $specifier, _RunTarget $parent)
+function _add_directory_tests_from_specifier(
+    _DirectoryTarget $target, _PathSpecifier $specifier)
 {
-    \assert(isset($parent->tests));
+    \assert($target->count < $target->total);
+    \assert($target->test->name === $specifier->test->name);
 
-    $name = $specifier->name;
-    if (isset($parent->tests[$name]))
-    {
-        $to = $parent->tests[$name];
-        \assert($to instanceof _ClassTarget);
-    }
-    else
-    {
-        $to = new _ClassTarget($name);
-        $parent->tests[$name] = $to;
-    }
-
-    if (!$specifier->specifiers)
-    {
-        $to->tests = null;
-    }
-    elseif (isset($to->tests))
+    if ($specifier->specifiers)
     {
         foreach ($specifier->specifiers as $child)
         {
-            if (!isset($to->tests[$child->name]))
+            \assert($child instanceof _PathSpecifier);
+            if ($child->group)
             {
-                $to->tests[$child->name] = new _FunctionTarget($child->name);
+                namespace\_add_run_group_from_specifier($target, $child);
             }
-        }
-    }
-}
-
-
-/**
- * @return void
- */
-function _normalize_function_specifier(
-    _ValidFunctionSpecifier $specifier, _RunTarget $parent)
-{
-    \assert(isset($parent->tests));
-
-    $name = $specifier->name;
-    if (!isset($parent->tests[$name]))
-    {
-        $parent->tests[$name] = new _FunctionTarget($name);
-    }
-}
-
-
-/**
- * @return PathTest
- */
-function _build_test_from_path_target(_PathTarget $targets, PathTest $tests)
-{
-    \assert($targets->name === $tests->name);
-    $result = new PathTest;
-    $result->name = $tests->name;
-    $result->group = $tests->group;
-    $result->setup = $tests->setup;
-    $result->teardown = $tests->teardown;
-    if ($targets->runs)
-    {
-        foreach ($targets->runs as $target)
-        {
-            $result->runs[] = namespace\_build_test_from_run_target(
-                $target, $tests->runs[$target->name]);
-        }
-    }
-    else
-    {
-        $result->runs = $tests->runs;
-    }
-    return $result;
-}
-
-
-/**
- * @return TestRun
- */
-function _build_test_from_run_target(_RunTarget $targets, TestRun $tests)
-{
-    $result = new TestRun;
-    $result->name = $tests->name;
-    $result->run_info = $tests->run_info;
-    if ($targets->tests)
-    {
-        foreach ($targets->tests as $target)
-        {
-            $test = $tests->tests[$target->name];
-            if ($target instanceof _PathTarget)
+            elseif ($child->test instanceof DirectoryTest)
             {
-                \assert($test instanceof PathTest);
-                $target = namespace\_build_test_from_path_target($target, $test);
-            }
-            elseif ($target instanceof _ClassTarget)
-            {
-                \assert($test instanceof ClassTest);
-                $target = namespace\_build_test_from_class_target($target, $test);
+                namespace\_add_directory_test_from_specifier($target, $child);
             }
             else
             {
-                \assert($target instanceof _FunctionTarget);
-                \assert($test instanceof FunctionTest);
-                $target = $tests->tests[$target->name];
+                namespace\_add_file_test_from_specifier($target, $child);
             }
-            $result->tests[] = $target;
         }
     }
     else
     {
-        $result->tests = $tests->tests;
+        \assert($specifier->test instanceof DirectoryTest);
+        $target->test->tests = $specifier->test->tests;
+        $target->count = $target->total;
     }
-    return $result;
 }
 
 
+
 /**
- * @return ClassTest
+ * @return _FileTarget
  */
-function _build_test_from_class_target(_ClassTarget $targets, ClassTest $tests)
+function _create_empty_file_test(FileTest $source)
 {
-    $result = new ClassTest;
-    $result->file = $tests->file;
-    $result->group = $tests->group;
-    $result->namespace = $tests->namespace;
-    $result->name = $tests->name;
-    $result->setup = $tests->setup;
-    $result->teardown = $tests->teardown;
-    if ($targets->tests)
-    {
-        foreach ($targets->tests as $target)
-        {
-            $result->tests[] = $tests->tests[$target->name];
-        }
-    }
-    else
-    {
-        $result->tests = $tests->tests;
-    }
-    return $result;
+    $file = new FileTest;
+    $file->name = $source->name;
+    $file->group = $source->group;
+    $file->setup = $source->setup;
+    $file->teardown = $source->teardown;
+
+    $target = new _FileTarget;
+    $target->test = $file;
+    $target->count = 0;
+    $target->total = \count($source->tests);
+
+    return $target;
 }
 
 
 /**
- * @param FunctionDependency[] $dependencies
- * @return PathTest
- */
-function build_test_from_dependencies(State $state, PathTest $tests, array $dependencies)
-{
-    $result = new PathTest;
-    $result->name = $tests->name;
-    $result->group = $tests->group;
-    $result->setup = $tests->setup;
-    $result->teardown = $tests->teardown;
-
-    foreach ($dependencies as $dependency)
-    {
-        foreach ($dependency->runs as $run)
-        {
-            namespace\_build_run_test_from_dependency(
-                $state, $tests, $result, $dependency->test, $run->run, 1);
-        }
-    }
-
-    return $result;
-}
-
-
-/**
- * @param int[] $run
- * @param int $run_index
  * @return void
  */
-function _build_run_test_from_dependency(
-    State $state, PathTest $tests,
-    PathTest $test, FunctionTest $dependency, array $run, $run_index)
+function _add_file_test_from_specifier(
+    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier)
 {
-    if (isset($tests->runs['']))
+    $child_name = $child_specifier->test->name;
+    $parent = $parent_target->test;
+    if (isset($parent->tests[$child_name]))
     {
-        if (!isset($test->runs['']))
-        {
-            $test_run = new TestRun;
-            $test_run->name = $test->name;
-            \assert(!isset($tests->runs['']->run_info));
-            $test->runs[''] = $test_run;
-        }
-        namespace\_build_path_test_from_dependency(
-            $state, $tests->runs[''], $test->runs[''], $dependency, $run, $run_index);
+        $child_target = $parent_target->targets[$child_name];
+        \assert($child_target instanceof _FileTarget);
     }
     else
     {
-        \assert(\count($run) > 0);
-        $run_id = $run[$run_index++] - 1;
-        $run_info = $state->runs[$run_id];
-        $run_name = $run_info->name;
-        if (!isset($test->runs[$run_name]))
+        \assert($child_specifier->test instanceof FileTest);
+        $child_target = namespace\_create_empty_file_test($child_specifier->test);
+        $parent_target->targets[$child_name] = $child_target;
+        $parent->tests[$child_name] = $child_target->test;
+    }
+
+    if ($child_target->count < $child_target->total)
+    {
+        namespace\_add_file_tests_from_specifier($child_target, $child_specifier);
+        if ($child_target->count === $child_target->total)
         {
-            $test_run = new TestRun;
-            $test_run->name = $test->name;
-            \assert($run_info === $tests->runs[$run_name]->run_info);
-            $test_run->run_info = $run_info;
-            $test->runs[$run_name] = $test_run;
+            ++$parent_target->count;
         }
-        namespace\_build_path_test_from_dependency(
-            $state, $tests->runs[$run_name],
-            $test->runs[$run_name], $dependency, $run, $run_index);
     }
 }
 
 
 /**
- * @param int[] $run
- * @param int $run_index
  * @return void
  */
-function _build_path_test_from_dependency(
-    State $state, TestRun $tests,
-    TestRun $test, FunctionTest $dependency, array $run, $run_index)
+function _add_file_tests_from_specifier(
+    _FileTarget $target, _PathSpecifier $specifier)
 {
-    if ($dependency->file === $test->name)
+    \assert($target->count< $target->total);
+    \assert($target->test->name === $specifier->test->name);
+
+    if ($specifier->specifiers)
     {
-        if ($dependency->class)
+        foreach ($specifier->specifiers as $child)
         {
-            $name = 'class ' . $dependency->class;
-            $class = $tests->tests[$name];
-            \assert($class instanceof ClassTest);
-            $last = \end($test->tests);
-            if ($last
-                && ($last instanceof ClassTest)
-                && ($last->name === $dependency->class))
+            if ($child instanceof _ClassSpecifier)
             {
-                $child = $last;
+                namespace\_add_class_test_from_specifier($target, $child);
             }
             else
             {
-                $child = new ClassTest;
-                $child->file = $class->file;
-                $child->group = $class->group;
-                $child->namespace = $class->namespace;
-                $child->name = $class->name;
-                $child->setup = $class->setup;
-                $child->teardown = $class->teardown;
-                $test->tests[] = $child;
+                \assert($child instanceof _FunctionSpecifier);
+                $file = $target->test;
+                $test = $child->test;
+                $name = 'function ' . $test->name;
+                if (!isset($file->tests[$name]))
+                {
+                    $file->tests[$name] = $test;
+                    ++$target->count;
+                }
             }
-            $child->tests[] = $class->tests[$dependency->function];
-        }
-        else
-        {
-            $name = 'function ' . $dependency->name;
-            $test->tests[] = $tests->tests[$name];
         }
     }
     else
     {
-        $pos = \strpos($dependency->file, \DIRECTORY_SEPARATOR, \strlen($test->name));
-        if (false === $pos)
+        \assert($specifier->test instanceof FileTest);
+        $target->test->tests = $specifier->test->tests;
+        $target->count = $target->total;
+    }
+}
+
+
+/**
+ * @return void
+ */
+function _add_class_test_from_specifier(
+    _FileTarget $parent_target, _ClassSpecifier $child_specifier)
+{
+    $child_name = 'class ' . $child_specifier->test->name;
+    $parent = $parent_target->test;
+    if (isset($parent->tests[$child_name]))
+    {
+        $child_target = $parent_target->targets[$child_name];
+    }
+    else
+    {
+        $child = new ClassTest;
+        $child->file = $child_specifier->test->file;
+        $child->group = $child_specifier->test->group;
+        $child->namespace = $child_specifier->test->namespace;
+        $child->name = $child_specifier->test->name;
+        $child->setup = $child_specifier->test->setup;
+        $child->teardown = $child_specifier->test->teardown;
+
+        $child_target = new _ClassTarget;
+        $child_target->test = $child;
+        $child_target->count = 0;
+        $child_target->total = \count($child_specifier->test->tests);
+
+        $parent_target->targets[$child_name] = $child_target;
+        $parent->tests[$child_name] = $child;
+    }
+
+    if ($child_target->count < $child_target->total)
+    {
+        if ($child_specifier->specifiers)
         {
-            $path = $dependency->file;
+            $child = $child_target->test;
+            foreach ($child_specifier->specifiers as $method)
+            {
+                $name = $method->test->function;
+                if (!isset($child->tests[$name]))
+                {
+                    $child->tests[$name] = $method->test;
+                    ++$child_target->count;
+                }
+            }
         }
         else
         {
-            $path = \substr($dependency->file, 0, $pos + 1);
+            $child_target->test->tests = $child_specifier->test->tests;
+            $child_target->count = $child_target->total;
         }
 
-        $path = $tests->tests[$path];
-        \assert($path instanceof PathTest);
-        $last = $test->tests ? \end($test->tests) : null;
-        if ($last
-            && ($last instanceof PathTest)
-            && ($last->name === $path->name))
+        if ($child_target->count === $child_target->total)
         {
-            $child = $last;
+            ++$parent_target->count;
         }
-        else
-        {
-            $child = new PathTest;
-            $child->name = $path->name;
-            $child->group = $path->group;
-            $child->setup = $path->setup;
-            $child->teardown = $path->teardown;
-            $test->tests[] = $child;
-        }
-        namespace\_build_run_test_from_dependency(
-            $state, $path, $child, $dependency, $run, $run_index);
     }
 }

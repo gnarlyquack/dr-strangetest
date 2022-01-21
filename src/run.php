@@ -45,7 +45,7 @@ interface Context {
 }
 
 
-final class _Context implements Context {
+final class _Context extends struct implements Context {
     /** @var State */
     private $state;
     /** @var Logger */
@@ -205,23 +205,38 @@ final class _Context implements Context {
 
 
 /**
+ * @param TestRunGroup|DirectoryTest $suite
+ * @param TestRunGroup|DirectoryTest $tests
  * @return void
  */
-function run_tests(
-    State $state, BufferingLogger $logger, PathTest $suite, PathTest $tests)
+function run_tests(State $state, BufferingLogger $logger, $suite, $tests)
 {
     $args = array();
-    namespace\_run_path_test($state, $logger, $tests, array(0), $args);
-    while ($state->postponed)
+    $run = array(0);
+    for (;;)
     {
+        if ($tests instanceof TestRunGroup)
+        {
+            namespace\_run_test_run_group($state, $logger, $tests, $run, $args);
+        }
+        else
+        {
+            namespace\_run_directory($state, $logger, $tests, $run, $args);
+        }
+
+        if (!$state->postponed)
+        {
+            break;
+        }
+
         $dependencies = namespace\resolve_dependencies($state, $logger);
         if (!$dependencies)
         {
             break;
         }
+
         $state->postponed = array();
-        $tests = namespace\build_test_from_dependencies($state, $suite, $dependencies);
-        namespace\_run_path_test($state, $logger, $tests, array(0), $args);
+        $tests = namespace\build_tests_from_dependencies($state, $suite, $dependencies);
     }
 }
 
@@ -231,18 +246,74 @@ function run_tests(
  * @param mixed[] $args
  * @return void
  */
-function _run_path_test(
+function _run_test_run_group(
     State $state, BufferingLogger $logger,
-    PathTest $path, array $run, array $args)
+    TestRunGroup $group, array $run, array $args)
+{
+    foreach ($group->runs as $test)
+    {
+        $run_name = namespace\_get_run_name($state, $run);
+        $setup = $test->info->setup;
+        $name = $setup . $run_name;
+        namespace\start_buffering($logger, $name);
+        list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
+        namespace\end_buffering($logger);
+
+        if (namespace\RESULT_PASS === $result)
+        {
+            if (\is_array($run_args))
+            {
+                if ($run_args)
+                {
+                    $new_run = $run;
+                    $new_run[] = $test->info->id;
+                    $tests = $test->tests;
+                    if ($tests instanceof DirectoryTest)
+                    {
+                        namespace\_run_directory($state, $logger, $tests, $new_run, $run_args);
+                    }
+                    else
+                    {
+                        namespace\_run_file($state, $logger, $tests, $new_run, $run_args);
+                    }
+                }
+                else
+                {
+                    $message = "'{$name}' did not return any arguments";
+                    $logger->log_error($test->tests->name, $message);
+                }
+            }
+
+            if (isset($test->info->teardown))
+            {
+                $teardown = $test->info->teardown;
+                $name = $teardown . $run_name;
+                namespace\start_buffering($logger, $name);
+                namespace\_run_teardown($logger, $name, $teardown, $run_args);
+                namespace\end_buffering($logger);
+            }
+        }
+    }
+}
+
+
+/**
+ * @param int[] $run
+ * @param mixed[] $args
+ * @return void
+ */
+function _run_directory(
+    State $state, BufferingLogger $logger,
+    DirectoryTest $directory, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
 
     $setup = namespace\RESULT_PASS;
-    if ($path->setup)
+    if ($directory->setup)
     {
-        $name = $path->setup . $run_name;
+        $name = $directory->setup . $run_name;
         namespace\start_buffering($logger, $name);
-        list($setup, $args) = namespace\_run_setup($logger, $name, $path->setup, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $directory->setup, $args);
         namespace\end_buffering($logger);
     }
 
@@ -250,17 +321,28 @@ function _run_path_test(
     {
         if (\is_array($args))
         {
-            foreach ($path->runs as $tests)
+            foreach ($directory->tests as $test)
             {
-                namespace\_run_subrun($state, $logger, $tests, $run, $args);
+                if ($test instanceof TestRunGroup)
+                {
+                    namespace\_run_test_run_group($state, $logger, $test, $run, $args);
+                }
+                elseif ($test instanceof DirectoryTest)
+                {
+                    namespace\_run_directory($state, $logger, $test, $run, $args);
+                }
+                else
+                {
+                    namespace\_run_file($state, $logger, $test, $run, $args);
+                }
             }
         }
 
-        if ($path->teardown)
+        if ($directory->teardown)
         {
-            $name = $path->teardown . $run_name;
+            $name = $directory->teardown . $run_name;
             namespace\start_buffering($logger, $name);
-            namespace\_run_teardown($logger, $name, $path->teardown, $args);
+            namespace\_run_teardown($logger, $name, $directory->teardown, $args);
             namespace\end_buffering($logger);
         }
     }
@@ -272,73 +354,45 @@ function _run_path_test(
  * @param mixed[] $args
  * @return void
  */
-function _run_subrun(
+function _run_file(
     State $state, BufferingLogger $logger,
-    TestRun $tests, array $run, array $args)
+    FileTest $file, array $run, array $args)
 {
-    if ($tests->run_info)
+    $run_name = namespace\_get_run_name($state, $run);
+
+    $setup = namespace\RESULT_PASS;
+    if ($file->setup)
     {
-        $run_name = namespace\_get_run_name($state, $run);
-        $setup = $tests->run_info->setup;
-        $name = $setup . $run_name;
+        $name = $file->setup . $run_name;
         namespace\start_buffering($logger, $name);
-        list($result, $args) = namespace\_run_setup($logger, $name, $setup, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $file->setup, $args);
         namespace\end_buffering($logger);
-        if (namespace\RESULT_PASS === $result)
+    }
+
+    if (namespace\RESULT_PASS === $setup)
+    {
+        if (\is_array($args))
         {
-            if (\is_array($args))
+            foreach ($file->tests as $test)
             {
-                if ($args)
+                if ($test instanceof ClassTest)
                 {
-                    $run[] = $tests->run_info->id;
-                    namespace\_run_subrun_tests($state, $logger, $tests, $run, $args);
+                    namespace\_run_class($state, $logger, $test, $run, $args);
                 }
                 else
                 {
-                    $message = "'{$name}' did not return any arguments";
-                    $logger->log_error($tests->name, $message);
+                    \assert($test instanceof FunctionTest);
+                    namespace\_run_function($state, $logger, $test, $run, $args);
                 }
             }
+        }
 
-            if (isset($tests->run_info->teardown))
-            {
-                $teardown = $tests->run_info->teardown;
-                $name = $teardown . $run_name;
-                namespace\start_buffering($logger, $name);
-                namespace\_run_teardown($logger, $name, $teardown, $args);
-                namespace\end_buffering($logger);
-            }
-        }
-    }
-    else
-    {
-        namespace\_run_subrun_tests($state, $logger, $tests, $run, $args);
-    }
-}
-
-/**
- * @param int[] $run
- * @param mixed[] $args
- * @return void
- */
-function _run_subrun_tests(
-    State $state, BufferingLogger $logger,
-    TestRun $tests, array $run, array $args)
-{
-    foreach ($tests->tests as $test)
-    {
-        if ($test instanceof PathTest)
+        if ($file->teardown)
         {
-            namespace\_run_path_test($state, $logger, $test, $run, $args);
-        }
-        elseif ($test instanceof ClassTest)
-        {
-            namespace\_run_class_test($state, $logger, $test, $run, $args);
-        }
-        else
-        {
-            \assert($test instanceof FunctionTest);
-            namespace\_run_function_test($state, $logger, $test, $run, $args);
+            $name = $file->teardown . $run_name;
+            namespace\start_buffering($logger, $name);
+            namespace\_run_teardown($logger, $name, $file->teardown, $args);
+            namespace\end_buffering($logger);
         }
     }
 }
@@ -349,7 +403,7 @@ function _run_subrun_tests(
  * @param mixed[] $args
  * @return void
  */
-function _run_class_test(
+function _run_class(
     State $state, BufferingLogger $logger,
     ClassTest $class, array $run, array $args)
 {
@@ -376,7 +430,7 @@ function _run_class_test(
         {
             foreach ($class->tests as $test)
             {
-                namespace\_run_method_test($state, $logger, $object, $test, $run);
+                namespace\_run_method($state, $logger, $object, $test, $run);
             }
 
             if ($class->teardown)
@@ -431,7 +485,7 @@ function _instantiate_test(Logger $logger, $class, $args)
  * @param int[] $run
  * @return void
  */
-function _run_method_test(
+function _run_method(
     State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
 {
     $run_name = namespace\_get_run_name($state, $run);
@@ -453,7 +507,7 @@ function _run_method_test(
         \assert(\is_callable($method));
         $context = new _Context($state, $logger, $test, $run);
         namespace\start_buffering($logger, $test_name);
-        $result = namespace\_run_test_function($logger, $test_name, $method, $context);
+        $result = namespace\_run_test($logger, $test_name, $method, $context);
 
         while ($context->teardowns)
         {
@@ -480,7 +534,7 @@ function _run_method_test(
  * @param mixed[] $args
  * @return void
  */
-function _run_function_test(
+function _run_function(
     State $state, BufferingLogger $logger,
     FunctionTest $test, array $run, array $args)
 {
@@ -501,9 +555,7 @@ function _run_function_test(
         {
             $context = new _Context($state, $logger, $test, $run);
             namespace\start_buffering($logger, $test_name);
-            $result = namespace\_run_test_function(
-                $logger, $test_name, $test->test, $context, $args
-            );
+            $result = namespace\_run_test($logger, $test_name, $test->test, $context, $args);
 
             while ($context->teardowns)
             {
@@ -642,7 +694,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
  * @param ?mixed[] $args
  * @return int
  */
-function _run_test_function(
+function _run_test(
     Logger $logger, $name, $callable, _Context $context, array $args = null)
 {
     try

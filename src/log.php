@@ -8,7 +8,7 @@
 namespace strangetest;
 
 
-final class BasicLog implements Log {
+final class BasicLog extends struct implements Log {
     /** @var float */
     public $megabytes_used;
 
@@ -84,7 +84,7 @@ final class BasicLog implements Log {
 
 
 
-final class BasicLogger implements Logger {
+final class BasicLogger extends struct implements Logger {
     /** @var int[] */
     private $count = array(
         namespace\EVENT_PASS   => 0,
