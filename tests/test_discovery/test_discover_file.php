@@ -134,3 +134,29 @@ function test_handles_non_test_definition() {
         \array_keys($result->tests)
     );
 }
+
+
+function test_does_not_discover_enumerations()
+{
+    // @bc 8.0 Check if enumerations are supported
+    if (\version_compare(\PHP_VERSION, '8.1', '<'))
+    {
+        strangetest\skip('Enumerations were added in PHP 8.1');
+    }
+
+    $file = 'test_enumeration.php';
+    $filepath = namespace\filepath($file);
+    $state = new State();
+    $logger = new BasicLogger(strangetest\LOG_ALL);
+    $result = strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
+
+    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_true(
+        $result instanceof strangetest\FileTest,
+        'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
+    );
+    strangetest\assert_identical(
+        array('class TestClass'),
+        \array_keys($result->tests)
+    );
+}

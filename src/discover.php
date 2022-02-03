@@ -879,8 +879,11 @@ function _new_token_iterator(BufferingLogger $logger, $filepath)
     if ($source)
     {
         $iterator = new _TokenIterator;
+        // @bc 5.6 Check if token_get_all accepts optional $flags parameter
         // @bc 7.4 Use token_get_all instead of PhpToken object interface(?)
-        $iterator->tokens = \token_get_all($source);
+        $iterator->tokens = \version_compare(\PHP_VERSION, '7.0', '<')
+                          ? \token_get_all($source)
+                          : \token_get_all($source, \TOKEN_PARSE);
         // Start with $i = 2 since all PHP code starts with '<?php' followed by
         // whitespace
         $iterator->pos = 2;
@@ -938,7 +941,9 @@ function _next_token(_TokenIterator $iterator)
         elseif (
             (\T_INTERFACE === $token[0]) || (\T_ABSTRACT === $token[0])
             // @bc 5.3 Check if T_TRAIT is defined
-            || (\defined('T_TRAIT') && (\T_TRAIT === $token[0])))
+            || (\defined('T_TRAIT') && (\T_TRAIT === $token[0]))
+            // @bc 8.0 Check if T_ENUM is defined
+            || (\defined('T_ENUM') && (\T_ENUM === $token[0])))
         {
             // don't discover non-instantiable classes or the functions of
             // non-class definitions
