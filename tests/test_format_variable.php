@@ -100,7 +100,13 @@ EXPECTED;
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
-        $expected = <<<EXPECTED
+
+        // @bc 8.0 Check ordering of serialized class properties
+        // PHP 8.1 changed the order of serialized class properties to match
+        // the order of inheritance and declaration
+        if (\version_compare(\PHP_VERSION, '8.1', '<'))
+        {
+            $expected = <<<EXPECTED
 InheritFormat #$id {
     \$one = 'child public';
     \$two = 'child protected';
@@ -108,6 +114,18 @@ InheritFormat #$id {
     ObjectFormat::\$three = 'parent private';
 }
 EXPECTED;
+        }
+        else
+        {
+            $expected = <<<EXPECTED
+InheritFormat #$id {
+    \$one = 'child public';
+    \$two = 'child protected';
+    ObjectFormat::\$three = 'parent private';
+    \$three = 'child private';
+}
+EXPECTED;
+        }
         $actual = strangetest\format_variable($variable);
         strangetest\assert_identical($expected, $actual);
     }

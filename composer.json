@@ -9,7 +9,7 @@
         "source": "https://github.com/gnarlyquack/strangetest"
     },
     "require": {
-        "php": "5.3 - 8.0"
+        "php": "5.3 - 8.1"
     },
     "bin": ["bin/strangetest"],
     "extra": {

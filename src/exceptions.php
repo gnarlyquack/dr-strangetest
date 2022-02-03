@@ -68,8 +68,7 @@ if (\version_compare(\PHP_VERSION, '7.0', '<'))
             {
                 $this->string = namespace\_format_exception_string(
                     "%s\n\nin %s on line %s",
-                    $this->message, $this->file, $this->line, $this->trace
-                );
+                    $this->message, $this->file, $this->line, $this->trace);
             }
             return $this->string;
         }
@@ -78,13 +77,13 @@ if (\version_compare(\PHP_VERSION, '7.0', '<'))
         private $string;
 
         /**
-         * @var array{'function': string,
-         *            'line': int,
-         *            'file'?: string,
-         *            'class'?: string,
-         *            'object': object,
-         *            'type': string,
-         *            'args': mixed[]}[]
+         * @var array{function: string,
+         *            line?: int,
+         *            file?:string,
+         *            class?: class-string,
+         *            object?: object,
+         *            type?: string,
+         *            args?: mixed[]}[]
          */
         private $trace;
     }
@@ -119,8 +118,7 @@ else
             {
                 $this->string = namespace\_format_exception_string(
                     "%s\n\nin %s on line %s",
-                    $this->message, $this->file, $this->line, $this->trace
-                );
+                    $this->message, $this->file, $this->line, $this->trace);
             }
             return $this->string;
         }
@@ -129,13 +127,13 @@ else
         private $string;
 
         /**
-         * @var array{'function': string,
-         *            'line': int,
-         *            'file'?: string,
-         *            'class'?: string,
-         *            'object': object,
-         *            'type': string,
-         *            'args': mixed[]}[]
+         * @var array{function: string,
+         *            line?: int,
+         *            file?:string,
+         *            class?: class-string,
+         *            object?: object,
+         *            type?: string,
+         *            args?: mixed[]}[]
          */
         private $trace;
     }
@@ -175,15 +173,6 @@ final class Skip extends \Exception {
                 $message = $prev->getMessage() . "\n{$this->message}";
                 $file = $prev->getFile();
                 $line = $prev->getLine();
-                /**
-                 * @var array{'function': string,
-                 *            'line': int,
-                 *            'file'?: string,
-                 *            'class'?: string,
-                 *            'object': object,
-                 *            'type': string,
-                 *            'args': mixed[]}[]
-                 */
                 $trace = $prev->getTrace();
             }
             else
@@ -205,13 +194,13 @@ final class Skip extends \Exception {
     private $string;
 
     /**
-     * @var array{'function': string,
-     *            'line': int,
-     *            'file'?: string,
-     *            'class'?: string,
-     *            'object': object,
-     *            'type': string,
-     *            'args': mixed[]}[]
+     * @var array{function: string,
+     *            line?: int,
+     *            file?:string,
+     *            class?: class-string,
+     *            object?: object,
+     *            type?: string,
+     *            args?: mixed[]}[]
      */
     private $trace;
 }
@@ -222,7 +211,13 @@ final class InvalidCodePath extends \Exception {}
 
 
 /**
- * @return ?mixed[]
+ * @return ?array{string, int, array{function: string,
+ *                                   line?: int,
+ *                                   file?:string,
+ *                                   class?: class-string,
+ *                                   object?: object,
+ *                                   type?: string,
+ *                                   args?: mixed[]}[]}
  */
 function _find_client_call_site()
 {
@@ -261,13 +256,13 @@ function _find_client_call_site()
  * @param string $message
  * @param string $file
  * @param int $line
- * @param array{'function': string,
- *              'line': int,
- *              'file'?: string,
- *              'class'?: string,
- *              'object': object,
- *              'type': string,
- *              'args': mixed[]}[] $trace
+ * @param array{function: string,
+ *              line?: int,
+ *              file?:string,
+ *              class?: class-string,
+ *              object?: object,
+ *              type?: string,
+ *              args?: mixed[]}[] $trace
  * @return string
  */
 function _format_exception_string($format, $message, $file, $line, $trace)
@@ -297,9 +292,11 @@ function _format_exception_string($format, $message, $file, $line, $trace)
         $callee = $frame['function'];
         if (isset($frame['class']))
         {
+            \assert(isset($frame['type']));
             $callee = "{$frame['class']}{$frame['type']}{$callee}";
         }
 
+        \assert(isset($frame['line']));
         $buffer[] = "{$frame['file']}({$frame['line']}): {$callee}()";
     }
     if ($buffer)
