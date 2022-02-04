@@ -1,12 +1,12 @@
 {
-    "name": "gnarlyquack/strangetest",
-    "description": "Quick and painless testing for PHP",
+    "name": "gnarlyquack/dr-strangetest",
+    "description": "A testing framework for PHP",
     "keywords": ["testing"],
-    "homepage": "https://github.com/gnarlyquack/strangetest",
+    "homepage": "https://github.com/gnarlyquack/dr-strangetest",
     "license": "ISC",
     "support": {
-        "issues": "https://github.com/gnarlyquack/strangetest/issues",
-        "source": "https://github.com/gnarlyquack/strangetest"
+        "issues": "https://github.com/gnarlyquack/dr-strangetest/issues",
+        "source": "https://github.com/gnarlyquack/dr-strangetest"
     },
     "require": {
         "php": "5.3 - 8.1"
