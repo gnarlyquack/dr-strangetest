@@ -79,7 +79,7 @@ final class _PathSpecifier extends struct
     /** @var ?TestRunGroup */
     public $group;
 
-    /** @var ?string[] */
+    /** @var array<string[]> */
     public $runs = array();
 }
 
@@ -224,6 +224,7 @@ function _parse_path_specifier(
 
     if ($valid)
     {
+        \assert(isset($specifier));
         \assert(isset($leaf));
         \assert($reference === $leaf->test);
         \assert($reference->name === $target);
@@ -231,12 +232,12 @@ function _parse_path_specifier(
         if ($reference instanceof FileTest)
         {
             $valid = namespace\_parse_file_specifiers(
-                $logger, $reference, $runs, $leaf, $iter);
+                $logger, $reference, $runs, $specifier, $leaf, $iter);
         }
         else
         {
             \assert($reference instanceof DirectoryTest);
-            $valid = namespace\_parse_directory_specifiers($logger, $runs,  $iter);
+            $valid = namespace\_parse_directory_specifiers($logger, $runs, $specifier, $iter);
         }
     }
     else
@@ -262,10 +263,10 @@ function _parse_path_specifier(
 function _parse_directory_specifiers(
     Logger $logger,
     array $runs,
+    _PathSpecifier $directory,
     _SpecifierIterator $iter)
 {
     $valid = true;
-    $default_runs = true;
     while (
         ($iter->index < $iter->count)
         && \preg_match(namespace\_SPECIFIER_PATTERN, $iter->args[$iter->index], $matches))
@@ -287,19 +288,10 @@ function _parse_directory_specifiers(
         else
         {
             \assert('run' === $matches[1]);
-            $default_runs = false;
-            if (!namespace\_parse_run_specifier($logger, $runs, $iter))
+            if (!namespace\_parse_run_specifier($logger, $runs, $directory, $iter))
             {
                 $valid = false;
             }
-        }
-    }
-
-    if ($valid && $default_runs)
-    {
-        foreach ($runs as $run)
-        {
-            $run->runs = null;
         }
     }
 
@@ -316,24 +308,24 @@ function _parse_file_specifiers(
     FileTest $reference,
     array $runs,
     _PathSpecifier $specifier,
+    _PathSpecifier $file,
     _SpecifierIterator $iter)
 {
     $valid = true;
-    $default_runs = true;
     while (
         ($iter->index < $iter->count)
         && \preg_match(namespace\_SPECIFIER_PATTERN, $iter->args[$iter->index], $matches))
     {
         if ('class' === $matches[1])
         {
-            if (!namespace\_parse_class_specifier($logger, $reference, $specifier, $iter))
+            if (!namespace\_parse_class_specifier($logger, $reference, $file, $iter))
             {
                 $valid = false;
             }
         }
         elseif ('function' === $matches[1])
         {
-            if (!namespace\_parse_function_specifier($logger, $reference, $specifier, $iter))
+            if (!namespace\_parse_function_specifier($logger, $reference, $file, $iter))
             {
                 $valid = false;
             }
@@ -341,19 +333,10 @@ function _parse_file_specifiers(
         else
         {
             \assert('run' === $matches[1]);
-            $default_runs = false;
-            if (!namespace\_parse_run_specifier($logger, $runs, $iter))
+            if (!namespace\_parse_run_specifier($logger, $runs, $specifier, $iter))
             {
                 $valid = false;
             }
-        }
-    }
-
-    if ($valid && $default_runs)
-    {
-        foreach ($runs as $run)
-        {
-            $run->runs = null;
         }
     }
 
@@ -362,33 +345,41 @@ function _parse_file_specifiers(
 
 
 /**
- * @param _PathSpecifier[] $specifiers
+ * @param _PathSpecifier[] $references
  * @return bool
  */
 function _parse_run_specifier(
     Logger $logger,
-    array $specifiers,
+    array $references,
+    _PathSpecifier $specifier,
     _SpecifierIterator $iter)
 {
     $valid = true;
+    $run_count = \count($references);
     $arg = $iter->args[$iter->index++];
     $runs = \substr($arg, namespace\_RUN_SPECIFIER_LEN);
     foreach (\explode(';', $runs) as $run)
     {
+        $specified = array();
+
         $names = \explode(',', $run);
+        $name_count = \count($names);
+
+        $name_index = 0;
+        $run_index = 0;
         $blank = true;
-        $i = \count($specifiers);
-        while ($i--)
+        while (($name_index < $name_count) && ($run_index < $run_count))
         {
-            $specifier = $specifiers[$i];
-            \assert(isset($specifier->group));
-            $name = (string)\end($names);
+            $reference = $references[$run_index++]->group;
+            \assert(isset($reference));
+
+            $name = $names[$name_index];
             if (strlen($name))
             {
                 $blank = false;
-                if (isset($specifier->group->runs[$name]))
+                if (isset($reference->runs[$name]))
                 {
-                    \array_pop($names);
+                    ++$name_index;
                 }
                 else
                 {
@@ -397,33 +388,28 @@ function _parse_run_specifier(
             }
             else
             {
-                \array_pop($names);
+                ++$name_index;
             }
 
-            if (isset($specifier->runs))
-            {
-                if (\strlen($name))
-                {
-                    $specifier->runs[$name] = $name;
-                }
-                else
-                {
-                    $specifier->runs = null;
-                }
-            }
+            $specified[] = $name;
         }
 
-        if ($names)
+        if ($name_index < $name_count)
         {
+            $extra = \implode(',', \array_slice($names, $name_index));
             $logger->log_error(
                 $arg,
-                "Run specifier '{$run}' had extra and/or invalid run names: " . \implode(',', $names));
+                "Run specifier '{$run}' had extra and/or invalid run names: {$extra}");
             $valid = false;
         }
         elseif ($blank)
         {
             $logger->log_error($arg, "Run specifier '{$run}' listed no runs");
             $valid = false;
+        }
+        else
+        {
+            $specifier->runs[] = $specified;
         }
     }
 
@@ -563,6 +549,76 @@ function _parse_function_specifier(
 }
 
 
+final class _RunSpecifierIterator extends struct
+{
+    /** @var array<string[]> */
+    private $specifiers;
+
+    /** @var int */
+    private $specifier_index;
+
+    /** @var string[] */
+    private $names;
+
+    /** @var int */
+    public $name_index;
+
+    /**
+     * @param array<string[]> $specifiers
+     */
+    public function __construct(array $specifiers)
+    {
+        $this->specifiers = $specifiers;
+        $this->specifier_index = 0;
+
+        $this->names = $specifiers ? $specifiers[0] : array();
+        $this->name_index = 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function advance_specifier()
+    {
+        ++$this->specifier_index;
+        $this->name_index = 0;
+
+        $result = $this->specifier_index < \count($this->specifiers);
+
+        if ($result)
+        {
+            $this->names = $this->specifiers[$this->specifier_index];
+        }
+        else
+        {
+            $this->names = array();
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * @return string[]
+     */
+    public function next_run()
+    {
+        $result = array();
+
+        if ($this->name_index < \count($this->names))
+        {
+            $name = $this->names[$this->name_index];
+            if (\strlen($name))
+            {
+                $result[] = $name;
+            }
+        }
+        $this->name_index++;
+
+        return $result;
+    }
+}
+
 final class _RunGroupTarget extends struct
 {
     /** @var TestRunGroup */
@@ -636,7 +692,12 @@ function _build_tests_from_specifiers($reference, array $specifiers)
         $target = namespace\_create_empty_run_group($reference);
         foreach ($specifiers as $specifier)
         {
-            namespace\_add_runs_from_specifier($target, $specifier);
+            $iter = new _RunSpecifierIterator($specifier->runs);
+            do
+            {
+                namespace\_add_runs_from_specifier($target, $specifier, $iter);
+            } while ($iter->advance_specifier() && ($target->count < $target->total));
+
             if ($target->count === $target->total)
             {
                 break;
@@ -649,7 +710,12 @@ function _build_tests_from_specifiers($reference, array $specifiers)
         $target = namespace\_create_empty_directory_test($reference);
         foreach ($specifiers as $specifier)
         {
-            namespace\_add_directory_tests_from_specifier($target, $specifier);
+            $iter = new _RunSpecifierIterator($specifier->runs);
+            do
+            {
+                namespace\_add_directory_tests_from_specifier($target, $specifier, $iter);
+            } while ($iter->advance_specifier() && ($target->count < $target->total));
+
             if ($target->count === $target->total)
             {
                 break;
@@ -683,7 +749,7 @@ function _create_empty_run_group(TestRunGroup $source)
  * @return void
  */
 function _add_run_group_from_specifier(
-    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier)
+    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier, _RunSpecifierIterator $iter)
 {
     \assert(isset($child_specifier->group));
 
@@ -703,7 +769,7 @@ function _add_run_group_from_specifier(
 
     if ($child_target->count < $child_target->total)
     {
-        namespace\_add_runs_from_specifier($child_target, $child_specifier);
+        namespace\_add_runs_from_specifier($child_target, $child_specifier, $iter);
         if ($child_target->count === $child_target->total)
         {
             ++$parent_target->count;
@@ -715,16 +781,21 @@ function _add_run_group_from_specifier(
 /**
  * @return void
  */
-function _add_runs_from_specifier(_RunGroupTarget $target, _PathSpecifier $specifier)
+function _add_runs_from_specifier(
+    _RunGroupTarget $target, _PathSpecifier $specifier, _RunSpecifierIterator $iter)
 {
     \assert($target->count < $target->total);
 
     $reference = $specifier->group;
     \assert(isset($reference));
 
-    \assert(!isset($specifier->runs) || (\count($specifier->runs) > 0));
-    $run_names = $specifier->runs ? $specifier->runs : \array_keys($reference->runs);
+    $run_names = $iter->next_run();
+    if (!$run_names)
+    {
+        $run_names = \array_keys($reference->runs);
+    }
 
+    $run_index = $iter->name_index;
     $group = $target->group;
     foreach ($run_names as $run_name)
     {
@@ -754,7 +825,7 @@ function _add_runs_from_specifier(_RunGroupTarget $target, _PathSpecifier $speci
         {
             if ($child_target instanceof _DirectoryTarget)
             {
-                namespace\_add_directory_tests_from_specifier($child_target, $specifier);
+                namespace\_add_directory_tests_from_specifier($child_target, $specifier, $iter);
             }
             else
             {
@@ -766,6 +837,8 @@ function _add_runs_from_specifier(_RunGroupTarget $target, _PathSpecifier $speci
                 ++$target->count;
             }
         }
+
+        $iter->name_index = $run_index;
     }
 }
 
@@ -794,7 +867,7 @@ function _create_empty_directory_test(DirectoryTest $source)
  * @return void
  */
 function _add_directory_test_from_specifier(
-    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier)
+    _DirectoryTarget $parent_target, _PathSpecifier $child_specifier, _RunSpecifierIterator $iter)
 {
     $child_name = $child_specifier->test->name;
     $parent = $parent_target->test;
@@ -813,7 +886,7 @@ function _add_directory_test_from_specifier(
 
     if ($child_target->count < $child_target->total)
     {
-        namespace\_add_directory_tests_from_specifier($child_target, $child_specifier);
+        namespace\_add_directory_tests_from_specifier($child_target, $child_specifier, $iter);
         if ($child_target->count === $child_target->total)
         {
             ++$parent_target->count;
@@ -826,7 +899,7 @@ function _add_directory_test_from_specifier(
  * @return void
  */
 function _add_directory_tests_from_specifier(
-    _DirectoryTarget $target, _PathSpecifier $specifier)
+    _DirectoryTarget $target, _PathSpecifier $specifier, _RunSpecifierIterator $iter)
 {
     \assert($target->count < $target->total);
     \assert($target->test->name === $specifier->test->name);
@@ -838,11 +911,11 @@ function _add_directory_tests_from_specifier(
             \assert($child instanceof _PathSpecifier);
             if ($child->group)
             {
-                namespace\_add_run_group_from_specifier($target, $child);
+                namespace\_add_run_group_from_specifier($target, $child, $iter);
             }
             elseif ($child->test instanceof DirectoryTest)
             {
-                namespace\_add_directory_test_from_specifier($target, $child);
+                namespace\_add_directory_test_from_specifier($target, $child, $iter);
             }
             else
             {
