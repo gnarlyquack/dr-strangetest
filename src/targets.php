@@ -376,9 +376,13 @@ function _parse_run_specifier(
             $name = $names[$name_index];
             if (strlen($name))
             {
-                $blank = false;
                 if (isset($reference->runs[$name]))
                 {
+                    ++$name_index;
+                }
+                elseif ('*' === $name)
+                {
+                    $name = '';
                     ++$name_index;
                 }
                 else
@@ -388,28 +392,28 @@ function _parse_run_specifier(
             }
             else
             {
-                ++$name_index;
+                $logger->log_error($arg, "Run specifier '{$run}' is missing a run name");
+                $valid = false;
+                break;
             }
 
             $specified[] = $name;
         }
 
-        if ($name_index < $name_count)
+        if ($valid)
         {
-            $extra = \implode(',', \array_slice($names, $name_index));
-            $logger->log_error(
-                $arg,
-                "Run specifier '{$run}' had extra and/or invalid run names: {$extra}");
-            $valid = false;
-        }
-        elseif ($blank)
-        {
-            $logger->log_error($arg, "Run specifier '{$run}' listed no runs");
-            $valid = false;
-        }
-        else
-        {
-            $specifier->runs[] = $specified;
+            if ($name_index < $name_count)
+            {
+                $extra = \implode(',', \array_slice($names, $name_index));
+                $logger->log_error(
+                    $arg,
+                    "Run specifier '{$run}' had extra and/or invalid run names: {$extra}");
+                $valid = false;
+            }
+            else
+            {
+                $specifier->runs[] = $specified;
+            }
         }
     }
 
