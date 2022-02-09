@@ -126,8 +126,6 @@ Release
     whitespace is optional, so an off-by-one error when iterating through the
     tokens means we could potentially miss a definition.
 
--   Support PHP 8.1 (when it's released)
-
 -   Only show file name and line number in stack traces
 
 -   How do we (and should we) handle calling user functions with bad

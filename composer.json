@@ -1,5 +1,5 @@
 {
-    "name": "gnarlyquack/dr-strangetest",
+    "name": "dr-strangetest/dr-strangetest",
     "description": "A testing framework for PHP",
     "keywords": ["testing"],
     "homepage": "https://github.com/gnarlyquack/dr-strangetest",

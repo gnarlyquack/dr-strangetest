@@ -8,7 +8,7 @@
 namespace strangetest;
 
 const PROGRAM_NAME    = 'Dr. Strangetest';
-const PROGRAM_VERSION = '0.6.0';
+const PROGRAM_VERSION = '0.1.0';
 
 const EXIT_SUCCESS = 0;
 const EXIT_FAILURE = 1;
