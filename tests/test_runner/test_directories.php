@@ -7,6 +7,7 @@
 
 namespace test\runner;
 use strangetest;
+use strangetest\State;
 
 
 class TestRunDirectories {
@@ -26,9 +27,9 @@ class TestRunDirectories {
         $root = $this->path . \DIRECTORY_SEPARATOR;
 
         $logger = new strangetest\BufferingLogger($this->logger);
-        $state = new strangetest\State;
+        $state = new State;
 
-        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        $tests = strangetest\discover_tests($state, $logger, $root);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
         strangetest\run_tests($state, $logger, $tests, $tests);
@@ -225,9 +226,9 @@ class TestRunDirectories {
         $root = $this->path . \DIRECTORY_SEPARATOR;
 
         $logger = new strangetest\BufferingLogger($this->logger);
-        $state = new strangetest\State;
+        $state = new State;
 
-        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        $tests = strangetest\discover_tests($state, $logger, $root);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
         strangetest\run_tests($state, $logger, $tests, $tests);
@@ -252,7 +253,7 @@ class TestRunDirectories {
     {
         $tests = make_test($tests);
         $logger = new strangetest\BufferingLogger($this->logger);
-        $state = new strangetest\State;
+        $state = new State;
         strangetest\run_tests($state, $logger, $tests, $tests);
 
         $actual = $this->logger->get_log()->get_events();

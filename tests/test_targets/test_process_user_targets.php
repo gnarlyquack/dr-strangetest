@@ -8,6 +8,7 @@
 use strangetest\BasicLogger;
 use strangetest\BufferingLogger;
 use strangetest\Context;
+use strangetest\State;
 
 
 // tests
@@ -24,10 +25,10 @@ class TestProcessUserTargets
 
     public function setup_object()
     {
-        $state = new strangetest\State;
+        $state = new State;
         $logger = new BasicLogger(strangetest\LOG_ALL);
         $path = __DIR__ . '/resources/';
-        $tests = strangetest\discover_directory($state, new BufferingLogger($logger), $path, 0);
+        $tests = strangetest\discover_tests($state, new BufferingLogger($logger), $path, 0);
         \assert(!$logger->get_log()->get_events());
 
         $this->tests = $tests;

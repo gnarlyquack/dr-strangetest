@@ -8,7 +8,33 @@
 namespace strangetest;
 
 
-class _DirectoryFixture
+final class _DiscoveryState extends struct
+{
+    /** @var array<string, true> */
+    public $seen = array();
+
+    /** @var State */
+    public $global;
+
+
+    public function __construct(State $state)
+    {
+        $this->global = $state;
+    }
+}
+
+
+/**
+ * @param string $path
+ * @return null|DirectoryTest|TestRunGroup
+ */
+function discover_tests(State $state, BufferingLogger $logger, $path)
+{
+    return namespace\_discover_directory(new _DiscoveryState($state), $logger, $path, 0);
+}
+
+
+final class _DirectoryFixture extends struct
 {
     /** @var ?callable-string */
     public $setup = null;
@@ -26,7 +52,7 @@ class _DirectoryFixture
  * @param int $group
  * @return null|DirectoryTest|TestRunGroup
  */
-function discover_directory(State $state, BufferingLogger $logger, $path, $group)
+function _discover_directory(_DiscoveryState $state, BufferingLogger $logger, $path, $group)
 {
     \assert(\DIRECTORY_SEPARATOR === \substr($path, -1));
 
@@ -101,13 +127,13 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
 
         if ($fixture->runs)
         {
-            $group = namespace\_new_run_group($state, $group);
+            $group = namespace\_new_run_group($state->global, $group);
         }
         foreach ($tests as $name => $type)
         {
             if (namespace\TYPE_DIRECTORY === $type)
             {
-                $test = namespace\discover_directory($state, $logger, $name, $group);
+                $test = namespace\_discover_directory($state, $logger, $name, $group);
             }
             else
             {
@@ -152,7 +178,7 @@ function discover_directory(State $state, BufferingLogger $logger, $path, $group
  * @param int $group
  * @return null|FileTest|TestRunGroup
  */
-function _discover_file(State $state, BufferingLogger $logger, $filepath, $group)
+function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepath, $group)
 {
     $result = null;
     $iterator = namespace\_new_token_iterator($logger, $filepath);
@@ -175,123 +201,107 @@ function _discover_file(State $state, BufferingLogger $logger, $filepath, $group
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
-        // @todo Use reflection to ensure we discovered an identifier
-        // We know we've discovered an identifier if it exists and it was
-        // defined in the current file and we haven't already discovered it.
-        // We'll need to use reflection anyway to support attributes.
-        //
-        // It's worth keeping in mind that identifiers may be conditionally
-        // defined at runtime, so just because we got a token back doesn't mean
-        // we've found an actual definition. Similarly, we may also come upon
-        // the same identifier multiple times, either in the same file or
-        // across multiple files, and everything will parse as long as at most
-        // one of them is executed and defined. To handle these situations, we
-        // need to check that any identifer we find actually exists and that we
-        // haven't already discovered it. The only case we don't handle is if
-        // client code has included a file that we haven't parsed and it
-        // defines an identifier that we then subsequently discover in a
-        // different file and end up caring about. It seems the only way for us
-        // to handle this would be if we could somehow hook into the include
-        // process (autoloaders don't count, since they don't allow us to
-        // detect explicit includes), however, this seems like enough of an
-        // edge case that it's probably not worth worrying about.
-        //
-        // It's also worth noting that class names and function names are
-        // separately namespaced, i.e., a function and class may have identical
-        // names, so we need to keep the two types of identifiers distinct.
         if ($token instanceof _ClassToken)
         {
             $class_name = "{$namespace}{$token->name}";
+            // classes and functions can have the same name!
             $test_name = "class {$class_name}";
-            if (!isset($state->seen[$test_name])
-                && \class_exists($class_name)
-                && (0 === \substr_compare($token->name, 'test', 0, 4, true)))
-            {
-                $state->seen[$test_name] = true;
 
-                $info = new TestInfo();
-                $info->type = namespace\TYPE_CLASS;
-                $info->filename = $filepath;
-                $info->namespace = $namespace;
-                $info->name = $class_name;
-                $input['tests'][$test_name] = $info;
+            if (!isset($state->seen[$test_name]) && \class_exists($class_name))
+            {
+                $class = new \ReflectionClass($class_name);
+                if ($token->line === $class->getStartLine() && $filepath === $class->getFileName())
+                {
+                    $state->seen[$test_name] = true;
+                    if (0 === \substr_compare($token->name, 'test', 0, 4, true))
+                    {
+                        $info = new TestInfo();
+                        $info->type = namespace\TYPE_CLASS;
+                        $info->filename = $filepath;
+                        $info->namespace = $namespace;
+                        $info->name = $class_name;
+                        $input['tests'][$test_name] = $info;
+                    }
+                }
             }
         }
         elseif ($token instanceof _FunctionToken)
         {
             $function_name = "{$namespace}{$token->name}";
+            // classes and functions can have the same name!
             $test_name = "function {$function_name}";
-            if (!isset($state->seen[$test_name])
-                // To make PHPStan happy, use is_callable instead of function_exists
-                && \is_callable($function_name))
+
+            if (!isset($state->seen[$test_name]) && \function_exists($function_name))
             {
-                if (0 === \substr_compare($token->name, 'test', 0, 4, true))
+                $function = new \ReflectionFunction($function_name);
+                if ($token->line === $function->getStartLine() && $filepath === $function->getFileName())
                 {
                     $state->seen[$test_name] = true;
-
-                    $info = new TestInfo();
-                    $info->type = namespace\TYPE_FUNCTION;
-                    $info->filename = $filepath;
-                    $info->namespace = $namespace;
-                    $info->name = $function_name;
-                    $input['tests'][$test_name] = $info;
-                }
-                elseif (\preg_match('~^(setup|teardown)_?(file|run)?_?(.*)$~i', $token->name, $matches))
-                {
-                    $state->seen[$test_name] = true;
-
-                    if (0 === \strcasecmp('setup', $matches[1]))
+                    if (0 === \substr_compare($token->name, 'test', 0, 4, true))
                     {
-                        if (0 === \strlen($matches[2]))
-                        {
-                            $input['setup_function'][] = $function_name;
-                            $input['setup_function_name'][] = $token->name;
-                        }
-                        elseif (0 === \strcasecmp('file', $matches[2]))
-                        {
-                            $input['setup_file'][] = $function_name;
-                        }
-                        else
-                        {
-                            $name = $matches[3];
-                            if (0 === \strlen($name))
-                            {
-                                $message = "Unable to determine run name from setup run function '$function_name'";
-                                $logger->log_error($filepath, $message);
-                                $valid = false;
-                            }
-                            else
-                            {
-                                $run = \strtolower($name);
-                                $input['runs'][$run]['name'] = $name;
-                                $input['runs'][$run]['setup'][] = $function_name;
-                            }
-                        }
+
+                        $info = new TestInfo();
+                        $info->type = namespace\TYPE_FUNCTION;
+                        $info->filename = $filepath;
+                        $info->namespace = $namespace;
+                        $info->name = $function_name;
+                        $input['tests'][$test_name] = $info;
                     }
-                    else
+                    elseif (\preg_match('~^(setup|teardown)_?(file|run)?_?(.*)$~i', $token->name, $matches))
                     {
-                        if (0 == strlen($matches[2]))
+                        if (0 === \strcasecmp('setup', $matches[1]))
                         {
-                            $input['teardown_function'][] = $function_name;
-                            $input['teardown_function_name'][] = $token->name;
-                        }
-                        elseif (0 === \strcasecmp('file', $matches[2]))
-                        {
-                            $input['teardown_file'][] = $function_name;
-                        }
-                        else
-                        {
-                            $name = $matches[3];
-                            if (0 === \strlen($name))
+                            if (0 === \strlen($matches[2]))
                             {
-                                $message = "Unable to determine run name from teardown run function '$function_name'";
-                                $logger->log_error($filepath, $message);
-                                $valid = false;
+                                $input['setup_function'][] = $function_name;
+                                $input['setup_function_name'][] = $token->name;
+                            }
+                            elseif (0 === \strcasecmp('file', $matches[2]))
+                            {
+                                $input['setup_file'][] = $function_name;
                             }
                             else
                             {
-                                $run = \strtolower($name);
-                                $input['runs'][$run]['teardown'][] = $function_name;
+                                $name = $matches[3];
+                                if (0 === \strlen($name))
+                                {
+                                    $message = "Unable to determine run name from setup run function '$function_name'";
+                                    $logger->log_error($filepath, $message);
+                                    $valid = false;
+                                }
+                                else
+                                {
+                                    $run = \strtolower($name);
+                                    $input['runs'][$run]['name'] = $name;
+                                    $input['runs'][$run]['setup'][] = $function_name;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (0 == strlen($matches[2]))
+                            {
+                                $input['teardown_function'][] = $function_name;
+                                $input['teardown_function_name'][] = $token->name;
+                            }
+                            elseif (0 === \strcasecmp('file', $matches[2]))
+                            {
+                                $input['teardown_file'][] = $function_name;
+                            }
+                            else
+                            {
+                                $name = $matches[3];
+                                if (0 === \strlen($name))
+                                {
+                                    $message = "Unable to determine run name from teardown run function '$function_name'";
+                                    $logger->log_error($filepath, $message);
+                                    $valid = false;
+                                }
+                                else
+                                {
+                                    $run = \strtolower($name);
+                                    $input['runs'][$run]['teardown'][] = $function_name;
+                                }
                             }
                         }
                     }
@@ -369,7 +379,7 @@ function _discover_file(State $state, BufferingLogger $logger, $filepath, $group
         }
     }
 
-    $output['runs'] = namespace\_validate_runs($state, $logger, $filepath, $input['runs']);
+    $output['runs'] = namespace\_validate_runs($state->global, $logger, $filepath, $input['runs']);
 
     if ($input['tests'])
     {
@@ -391,14 +401,14 @@ function _discover_file(State $state, BufferingLogger $logger, $filepath, $group
 
         if ($output['runs'])
         {
-            $group = namespace\_new_run_group($state, $group);
+            $group = namespace\_new_run_group($state->global, $group);
         }
 
         foreach ($output['tests'] as $name => $info)
         {
             if (namespace\TYPE_CLASS === $info->type)
             {
-                $test = namespace\discover_class($state, $logger, $info, $group);
+                $test = namespace\_discover_class($logger, $info, $group);
             }
             else
             {
@@ -459,7 +469,7 @@ function _discover_file(State $state, BufferingLogger $logger, $filepath, $group
  * @param int $group
  * @return ClassTest|false
  */
-function discover_class(State $state, Logger $logger, TestInfo $info, $group)
+function _discover_class(Logger $logger, TestInfo $info, $group)
 {
     $classname = $info->name;
     \assert(\class_exists($classname));
@@ -558,12 +568,11 @@ function discover_class(State $state, Logger $logger, TestInfo $info, $group)
 
 
 /**
- * @param State $state
  * @param BufferingLogger $logger
  * @param string $filepath
  * @return ?_DirectoryFixture
  */
-function _discover_directory_setup(State $state, BufferingLogger $logger, $filepath)
+function _discover_directory_setup(_DiscoveryState $state, BufferingLogger $logger, $filepath)
 {
     $iterator = namespace\_new_token_iterator($logger, $filepath);
     if (!$iterator)
@@ -580,83 +589,63 @@ function _discover_directory_setup(State $state, BufferingLogger $logger, $filep
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
-        // @todo Use reflection to ensure we discovered an identifier
-        // We know we've discovered an identifier if it exists and it was
-        // defined in the current file and we haven't already discovered it.
-        // We'll need to use reflection anyway to support attributes.
-        //
-        // It's worth keeping in mind that identifiers may be conditionally
-        // defined at runtime, so just because we got a token back doesn't mean
-        // we've found an actual definition. Similarly, we may also come upon
-        // the same identifier multiple times, either in the same file or
-        // across multiple files, and everything will parse as long as at most
-        // one of them is executed and defined. To handle these situations, we
-        // need to check that any identifer we find actually exists and that we
-        // haven't already discovered it. The only case we don't handle is if
-        // client code has included a file that we haven't parsed and it
-        // defines an identifier that we then subsequently discover in a
-        // different file and end up caring about. It seems the only way for us
-        // to handle this would be if we could somehow hook into the include
-        // process (autoloaders don't count, since they don't allow us to
-        // detect explicit includes), however, this seems like enough of an
-        // edge case that it's probably not worth worrying about.
-        //
-        // It's also worth noting that class names and function names are
-        // separately namespaced, i.e., a function and class may have identical
-        // names, so we need to keep the two types of identifiers distinct.
         if ($token instanceof _FunctionToken)
         {
             $function_name = "{$namespace}{$token->name}";
             $id = "function {$function_name}";
-            if (!isset($state->seen[$id])
-                // To make PHPStan happy, use is_callable instead of function_exists
-                && \is_callable($function_name)
-                && \preg_match('~^(setup|teardown)_?(run)?_?(.*)$~i', $token->name, $matches))
-            {
-                $state->seen[$id] = true;
 
-                if (0 === \strcasecmp('setup', $matches[1]))
+            if (!isset($state->seen[$id]) && \function_exists($function_name))
+            {
+                $function = new \ReflectionFunction($function_name);
+                if ($token->line === $function->getStartLine() && $filepath === $function->getFileName())
                 {
-                    if (0 === \strlen($matches[2]))
+                    $state->seen[$id] = true;
+                    if (\preg_match('~^(setup|teardown)_?(run)?_?(.*)$~i', $token->name, $matches))
                     {
-                        $input['setup_directory'][] = $function_name;
-                    }
-                    else
-                    {
-                        $name = $matches[3];
-                        if (0 === \strlen($name))
+                        if (0 === \strcasecmp('setup', $matches[1]))
                         {
-                            $message = "Unable to determine run name from setup run function '$function_name'";
-                            $logger->log_error($filepath, $message);
-                            $valid = false;
+                            if (0 === \strlen($matches[2]))
+                            {
+                                $input['setup_directory'][] = $function_name;
+                            }
+                            else
+                            {
+                                $name = $matches[3];
+                                if (0 === \strlen($name))
+                                {
+                                    $message = "Unable to determine run name from setup run function '$function_name'";
+                                    $logger->log_error($filepath, $message);
+                                    $valid = false;
+                                }
+                                else
+                                {
+                                    $run = \strtolower($name);
+                                    $input['runs'][$run]['name'] = $name;
+                                    $input['runs'][$run]['setup'][] = $function_name;
+                                }
+                            }
                         }
                         else
                         {
-                            $run = \strtolower($name);
-                            $input['runs'][$run]['name'] = $name;
-                            $input['runs'][$run]['setup'][] = $function_name;
-                        }
-                    }
-                }
-                else
-                {
-                    if (0 === \strlen($matches[2]))
-                    {
-                        $input['teardown_directory'][] = $function_name;
-                    }
-                    else
-                    {
-                        $name = $matches[3];
-                        if (0 === \strlen($name))
-                        {
-                            $message = "Unable to determine run name from teardown run function '$function_name'";
-                            $logger->log_error($filepath, $message);
-                            $valid = false;
-                        }
-                        else
-                        {
-                            $run = \strtolower($name);
-                            $input['runs'][$run]['teardown'][] = $function_name;
+                            if (0 === \strlen($matches[2]))
+                            {
+                                $input['teardown_directory'][] = $function_name;
+                            }
+                            else
+                            {
+                                $name = $matches[3];
+                                if (0 === \strlen($name))
+                                {
+                                    $message = "Unable to determine run name from teardown run function '$function_name'";
+                                    $logger->log_error($filepath, $message);
+                                    $valid = false;
+                                }
+                                else
+                                {
+                                    $run = \strtolower($name);
+                                    $input['runs'][$run]['teardown'][] = $function_name;
+                                }
+                            }
                         }
                     }
                 }
@@ -670,7 +659,7 @@ function _discover_directory_setup(State $state, BufferingLogger $logger, $filep
 
     // @fixme $valid is set above but never checked. Presumably this should happen here?
     $output = array(
-        'runs'=> namespace\_validate_runs($state, $logger, $filepath, $input['runs']),
+        'runs'=> namespace\_validate_runs($state->global, $logger, $filepath, $input['runs']),
         'setup_directory' => namespace\_validate_fixture($logger, $filepath, $input['setup_directory']),
         'teardown_directory' => namespace\_validate_fixture($logger, $filepath, $input['teardown_directory']),
     );
@@ -715,7 +704,6 @@ function _validate_fixture(BufferingLogger $logger, $filepath, $fixtures)
 
 
 /**
- * @param State $state
  * @param BufferingLogger $logger
  * @param string $filepath
  * @param array{'name'?: string,
@@ -765,9 +753,7 @@ function _validate_runs(State $state, BufferingLogger $logger, $filepath, $runs)
                 }
                 else
                 {
-                    $result[] = namespace\_new_run(
-                        $state,
-                        $run_info['name'], $run_info['setup'][0], $teardown);
+                    $result[] = namespace\_new_run($state, $run_info['name'], $run_info['setup'][0], $teardown);
                 }
             }
         }
@@ -778,7 +764,6 @@ function _validate_runs(State $state, BufferingLogger $logger, $filepath, $runs)
 
 
 /**
- * @param State $state
  * @param int $parent_group_id
  * @return int
  */
@@ -829,12 +814,17 @@ final class _ClassToken extends struct implements _Token {
     /** @var string */
     public $name;
 
+    /** @var int */
+    public $line;
+
     /**
      * @param string $name
+     * @param int $line
      */
-    public function __construct($name)
+    public function __construct($name, $line)
     {
         $this->name = $name;
+        $this->line = $line;
     }
 }
 
@@ -843,12 +833,18 @@ final class _FunctionToken extends struct implements _Token {
     /** @var string */
     public $name;
 
+    /** @var int */
+    public $line;
+
+
     /**
      * @param string $name
+     * @param int $line
      */
-    public function __construct($name)
+    public function __construct($name, $line)
     {
         $this->name = $name;
+        $this->line = $line;
     }
 }
 
@@ -914,15 +910,20 @@ function _next_token(_TokenIterator $iterator)
             $name = namespace\_parse_identifier($iterator);
             if ($name)
             {
-                $result = new _ClassToken($name);
+                $result = new _ClassToken($name, $token[2]);
             }
         }
         elseif (\T_FUNCTION === $token[0])
         {
-            $name = namespace\_parse_identifier($iterator);
+            // @bc 5.6 A function begins on the line of its identifier
+            $name = namespace\_parse_identifier($iterator, $line);
             if ($name)
             {
-                $result = new _FunctionToken($name);
+                if (\version_compare(\PHP_VERSION, '7.0.0', '>='))
+                {
+                   $line = $token[2];
+                }
+                $result = new _FunctionToken($name, $line);
             }
         }
         elseif (\T_NAMESPACE === $token[0])
@@ -1035,9 +1036,10 @@ function _guard_include($file)
 
 /**
  * @param _TokenIterator $iterator
+ * @param int $line
  * @return ?string
  */
-function _parse_identifier(_TokenIterator $iterator)
+function _parse_identifier(_TokenIterator $iterator, &$line = null)
 {
     $identifier = null;
     // $iterator->pos = whitespace after the keyword identifying the type of
@@ -1052,6 +1054,8 @@ function _parse_identifier(_TokenIterator $iterator)
         if (\is_array($token) && \T_STRING === $token[0])
         {
             $identifier = $token[1];
+            // @bc 5.6 A function begins on the line of its identifier
+            $line = $token[2];
             break;
         }
     }

@@ -10,6 +10,10 @@ if (true)
         {
         }
     }
+
+    function test_one()
+    {
+    }
 }
 elseif (false)
 {
@@ -32,5 +36,18 @@ elseif (false)
         public function test()
         {
         }
+    }
+
+
+    function test_one()
+    {
+    }
+
+    function test_two()
+    {
+    }
+
+    function test_three()
+    {
     }
 }

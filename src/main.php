@@ -182,9 +182,6 @@ final class Error extends \ErrorException {
 
 
 final class State extends struct {
-    /** @var array<string, true> */
-    public $seen = array();
-
     /** @var array<string, array{'group': int, 'runs': bool[]}> */
     public $results = array();
 
@@ -233,7 +230,7 @@ function main($argc, $argv)
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-    $tests = namespace\discover_directory($state, $buffering, $cwd, 0);
+    $tests = namespace\discover_tests($state, $buffering, $cwd);
     if ($tests)
     {
         if ($args)

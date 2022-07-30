@@ -7,6 +7,8 @@
 
 namespace test\discover\directory;
 use strangetest;
+use strangetest\State;
+use strangetest\_DiscoveryState;
 
 
 function setup()
@@ -100,6 +102,10 @@ function test_does_not_find_conditionally_nondeclared_tests(
                             array('function' => 'test'),
                         ),
                     ),
+                    array(
+                        'namespace' => 'condition',
+                        'function' => 'test_one',
+                    ),
                 ),
             ),
             array(
@@ -111,6 +117,10 @@ function test_does_not_find_conditionally_nondeclared_tests(
                         'tests' => array(
                             array('function' => 'test'),
                         ),
+                    ),
+                    array(
+                        'namespace' => 'condition',
+                        'function' => 'test_two',
                     ),
                 ),
             ),
@@ -165,8 +175,8 @@ function assert_discovered($logger, $path, $discovered, $log)
 {
     $discovered = make_test($discovered);
 
-    $state = new strangetest\State;
-    $actual = strangetest\discover_directory(
+    $state = new _DiscoveryState(new State);
+    $actual = strangetest\_discover_directory(
         $state,
         new strangetest\BufferingLogger($logger),
         $path,

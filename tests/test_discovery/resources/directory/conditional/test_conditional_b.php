@@ -2,12 +2,19 @@
 
 namespace condition;
 
+require_once 'conditional_c.php';
+
+
 if (true) {
     class TestB
     {
         public function test()
         {
         }
+    }
+
+    function test_two()
+    {
     }
 }
 elseif (false)
@@ -31,5 +38,18 @@ elseif (false)
         public function test()
         {
         }
+    }
+
+
+    function test_one()
+    {
+    }
+
+    function test_two()
+    {
+    }
+
+    function test_three()
+    {
     }
 }

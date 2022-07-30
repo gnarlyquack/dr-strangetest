@@ -13,6 +13,7 @@ use strangetest\BufferingLogger;
 use strangetest\PathTest;
 use strangetest\Logger;
 use strangetest\State;
+use strangetest\_DiscoveryState;
 
 
 class TestFiles
@@ -35,7 +36,7 @@ class TestFiles
     {
         $state = new State;
         $logger = new BufferingLogger($this->logger);
-        $tests = strangetest\discover_directory($state, $logger, $this->root, 0);
+        $tests = strangetest\discover_tests($state, $logger, $this->root);
 
         if ($tests)
         {
@@ -808,10 +809,11 @@ function filepath($name) {
 
 function assert_run_file($filepath, $events) {
     $state = new State();
+    $discovery_state = new _DiscoveryState($state);
     $logger = new BasicLogger(strangetest\LOG_ALL);
     $buffed_logger = new BufferingLogger($logger);
 
-    $file = strangetest\_discover_file($state, $buffed_logger, $filepath, 0);
+    $file = strangetest\_discover_file($discovery_state, $buffed_logger, $filepath, 0);
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     if ($file instanceof strangetest\FileTest)
     {

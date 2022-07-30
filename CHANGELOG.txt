@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Use reflection to validate discovery of test classes, methods, and functions
+
+
 0.1.0 (2022-02-09)
 ==================
 

@@ -11,7 +11,7 @@ use strangetest;
 use strangetest\BasicLogger;
 use strangetest\BufferingLogger;
 use strangetest\State;
-
+use strangetest\_DiscoveryState;
 
 
 // helper functions
@@ -26,7 +26,7 @@ function filepath($name) {
 // helper assertions
 
 function assert_file_discovery($filepath, array $events) {
-    $state = new State();
+    $state = new _DiscoveryState(new State());
     $logger = new BasicLogger(strangetest\LOG_ALL);
     strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
 
@@ -120,7 +120,7 @@ function test_handles_non_test_definition() {
     }
 
     $filepath = namespace\filepath($file);
-    $state = new State();
+    $state = new _DiscoveryState(new State());
     $logger = new BasicLogger(strangetest\LOG_ALL);
     $result = strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
 
@@ -146,7 +146,7 @@ function test_does_not_discover_enumerations()
 
     $file = 'test_enumeration.php';
     $filepath = namespace\filepath($file);
-    $state = new State();
+    $state = new _DiscoveryState(new State());
     $logger = new BasicLogger(strangetest\LOG_ALL);
     $result = strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
 

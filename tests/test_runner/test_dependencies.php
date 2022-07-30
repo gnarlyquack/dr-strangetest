@@ -5,6 +5,8 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+use strangetest\State;
+
 
 class TestDependencies {
     private $logger;
@@ -22,9 +24,9 @@ class TestDependencies {
     // helper assertions
 
     private function assert_events($expected) {
-        $state = new strangetest\State;
+        $state = new State;
         $logger = new strangetest\BufferingLogger($this->logger);
-        $tests = strangetest\discover_directory($state, $logger, $this->root, 0);
+        $tests = strangetest\discover_tests($state, $logger, $this->root);
         strangetest\assert_truthy($tests);
         strangetest\run_tests($state, $logger, $tests, $tests);
 
@@ -246,9 +248,9 @@ class TestDependencies {
             array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (1)', "This test depends on 'param_xdepend\\param\\test_five (1)', which did not pass"),
         );
 
-        $state = new strangetest\State;
+        $state = new State;
         $logger = new strangetest\BufferingLogger($this->logger);
-        $tests = strangetest\discover_directory($state, $logger, $root, 0);
+        $tests = strangetest\discover_tests($state, $logger, $root);
         strangetest\assert_truthy($tests);
 
         $targets = strangetest\process_specifiers($logger, $tests, $args);
