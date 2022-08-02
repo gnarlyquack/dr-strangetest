@@ -791,6 +791,28 @@ class TestFiles
         ));
 
     }
+
+    public function test_parses_and_runs_tests_marked_with_attribute()
+    {
+        // @bc 7.4 Check if attributes are supported
+        if (\version_compare(\PHP_VERSION, '8.0.0', '<'))
+        {
+            strangetest\skip('Attributes were added in PHP 8.0');
+        }
+
+        $this->root .= 'run_attributes/';
+        $this->path .= 'test.php';
+
+        $this->assert_events(array(
+            array(strangetest\EVENT_PASS, 'function_one', null),
+            array(strangetest\EVENT_PASS, 'Class1::MethodToTest', null),
+            array(strangetest\EVENT_PASS, 'NumberTwo', null),
+            array(strangetest\EVENT_PASS, 'NumberTwo::number1', null),
+            array(strangetest\EVENT_PASS, 'NumberTwo::number2', null),
+            array(strangetest\EVENT_PASS, 'NumberTwo::number3', null),
+        ));
+    }
+
 }
 
 

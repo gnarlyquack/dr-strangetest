@@ -8,6 +8,9 @@
 namespace strangetest;
 
 
+const TEST_ATTRIBUTE = 'strangetest\\attribute\\Test';
+
+
 final class _DiscoveryState extends struct
 {
     /** @var array<string, true> */
@@ -210,10 +213,14 @@ function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepa
             if (!isset($state->seen[$test_name]) && \class_exists($class_name))
             {
                 $class = new \ReflectionClass($class_name);
-                if ($token->line === $class->getStartLine() && $filepath === $class->getFileName())
+                if ($token->line === $class->getStartLine()
+                    && $filepath === $class->getFileName())
                 {
                     $state->seen[$test_name] = true;
-                    if (0 === \substr_compare($token->name, 'test', 0, 4, true))
+                    if (0 === \substr_compare($token->name, 'test', 0, 4, true)
+                        // @bc 7.4 Check that attributes exist
+                        || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
+                            && $class->getAttributes(namespace\TEST_ATTRIBUTE)))
                     {
                         $info = new TestInfo();
                         $info->type = namespace\TYPE_CLASS;
@@ -237,7 +244,11 @@ function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepa
                 if ($token->line === $function->getStartLine() && $filepath === $function->getFileName())
                 {
                     $state->seen[$test_name] = true;
-                    if (0 === \substr_compare($token->name, 'test', 0, 4, true))
+
+                    if (0 === \substr_compare($token->name, 'test', 0, 4, true)
+                        // @bc 7.4 Check that attributes exist
+                        || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
+                            && $function->getAttributes(namespace\TEST_ATTRIBUTE)))
                     {
 
                         $info = new TestInfo();
@@ -480,9 +491,14 @@ function _discover_class(Logger $logger, TestInfo $info, $group)
     $setup_function = null;
     $teardown_function = null;
 
-    foreach (\get_class_methods($classname) as $method)
+    // @fixme Don't discover static methods!
+    $class = new \ReflectionClass($classname);
+    foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $rm)
     {
-        if (0 === \substr_compare($method, 'test', 0, 4, true))
+        $method = $rm->getName();
+        if (0 === \substr_compare($method, 'test', 0, 4, true)
+            || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
+                && $rm->getAttributes(namespace\TEST_ATTRIBUTE)))
         {
             $tests[] = $method;
         }

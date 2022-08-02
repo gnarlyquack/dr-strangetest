@@ -160,3 +160,32 @@ function test_does_not_discover_enumerations()
         \array_keys($result->tests)
     );
 }
+
+
+function test_discovers_tests_marked_with_attributes()
+{
+    // @bc 7.4 Check if attributes are supported
+    if (\version_compare(\PHP_VERSION, '8.0.0', '<'))
+    {
+        strangetest\skip('Attributes were added in PHP 8.0');
+    }
+
+    $file = 'test_attributes.php';
+    $filepath = namespace\filepath($file);
+    $state = new _DiscoveryState(new State());
+    $logger = new BasicLogger(strangetest\LOG_ALL);
+    $result = strangetest\_discover_file($state, new BufferingLogger($logger), $filepath, 0);
+
+    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_true(
+        $result instanceof strangetest\FileTest,
+        'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
+    );
+    strangetest\assert_identical(
+        array(
+            'function test_attribute\\function_is_found',
+            'class test_attribute\\ClassIsFound',
+        ),
+        \array_keys($result->tests)
+    );
+}

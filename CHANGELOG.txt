@@ -2,6 +2,8 @@ Unreleased
 ==========
 
 - Use reflection to validate discovery of test classes, methods, and functions
+- Support discovering test classes, methods, and functions with the
+  strangetest\attribute\Test attribute
 
 
 0.1.0 (2022-02-09)
