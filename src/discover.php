@@ -491,10 +491,14 @@ function _discover_class(Logger $logger, TestInfo $info, $group)
     $setup_function = null;
     $teardown_function = null;
 
-    // @fixme Don't discover static methods!
     $class = new \ReflectionClass($classname);
     foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $rm)
     {
+        if ($rm->isStatic())
+        {
+            continue;
+        }
+
         $method = $rm->getName();
         if (0 === \substr_compare($method, 'test', 0, 4, true)
             || (\version_compare(\PHP_VERSION, '8.0.0', '>=')

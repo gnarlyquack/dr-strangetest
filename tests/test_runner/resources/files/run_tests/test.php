@@ -34,6 +34,8 @@ class TestTwo
     public function test2() {}
 
     public function test3() {}
+
+    static public function test4() {}
 }
 
 
