@@ -28,21 +28,3 @@ function unpack_function($callable, $args)
     }
     return \call_user_func_array($callable, $args);
 }
-
-
-/**
- * @template T of object
- * @param class-string<T> $class
- * @param iterable<mixed> $args
- * @return T
- */
-function unpack_construct($class, $args)
-{
-    if (!is_array($args))
-    {
-        $args = \iterator_to_array($args);
-    }
-    // @bc 5.3 Save object to variable before accessing member
-    $object = new \ReflectionClass($class);
-    return $object->newInstanceArgs($args);
-}

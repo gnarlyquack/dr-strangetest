@@ -173,8 +173,6 @@ function test_reports_error_for_multiple_directory_fixtures(
 
 function assert_discovered($logger, $path, $discovered, $log)
 {
-    $discovered = make_test($discovered);
-
     $state = new _DiscoveryState(new State);
     $actual = strangetest\_discover_directory(
         $state,
@@ -183,6 +181,7 @@ function assert_discovered($logger, $path, $discovered, $log)
         0
     );
 
+    $discovered = make_test($discovered);
     strangetest\assert_equal($discovered, $actual);
 
 

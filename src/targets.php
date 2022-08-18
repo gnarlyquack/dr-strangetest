@@ -84,16 +84,6 @@ final class _PathSpecifier extends struct
 }
 
 
-final class _ClassSpecifier extends struct
-{
-    /** @var ClassTest */
-    public $test;
-
-    /** @var _FunctionSpecifier[] */
-    public $specifiers = array();
-}
-
-
 final class _FunctionSpecifier extends struct
 {
     /** @var FunctionTest */
@@ -101,6 +91,31 @@ final class _FunctionSpecifier extends struct
 
     /**
      * @param FunctionTest $test
+     */
+    public function __construct($test)
+    {
+        $this->test = $test;
+    }
+}
+
+
+final class _ClassSpecifier extends struct
+{
+    /** @var ClassTest */
+    public $test;
+
+    /** @var _MethodSpecifier[] */
+    public $specifiers = array();
+}
+
+
+final class _MethodSpecifier extends struct
+{
+    /** @var MethodTest */
+    public $test;
+
+    /**
+     * @param MethodTest $test
      */
     public function __construct($test)
     {
@@ -464,13 +479,13 @@ function _parse_class_specifier(
                         if (isset($test->tests[$method]))
                         {
                             $method = $test->tests[$method];
-                            $specifier->specifiers[] = new _FunctionSpecifier($method);
+                            $specifier->specifiers[] = new _MethodSpecifier($method);
                         }
                         else
                         {
                             $logger->log_error(
                                 $arg,
-                                "Method '{$method}' is not a test method in {$test->name}"
+                                "Method '{$method}' is not a test method in {$test->test->name}"
                             );
                             $valid = false;
                         }
@@ -481,7 +496,7 @@ function _parse_class_specifier(
                             $arg,
                             \sprintf(
                                 'Method specifier %d for class \'%s\' is missing a name',
-                                $m + 1, $test->name));
+                                $m + 1, $test->test->name));
                         $valid = false;
                     }
                 }
@@ -1035,7 +1050,7 @@ function _add_file_tests_from_specifier(
 function _add_class_test_from_specifier(
     _FileTarget $parent_target, _ClassSpecifier $child_specifier)
 {
-    $child_name = 'class ' . $child_specifier->test->name;
+    $child_name = 'class ' . $child_specifier->test->test->name;
     $parent = $parent_target->test;
     if (isset($parent->tests[$child_name]))
     {
@@ -1044,10 +1059,8 @@ function _add_class_test_from_specifier(
     else
     {
         $child = new ClassTest;
-        $child->file = $child_specifier->test->file;
         $child->group = $child_specifier->test->group;
-        $child->namespace = $child_specifier->test->namespace;
-        $child->name = $child_specifier->test->name;
+        $child->test = $child_specifier->test->test;
         $child->setup = $child_specifier->test->setup;
         $child->teardown = $child_specifier->test->teardown;
 
@@ -1067,7 +1080,7 @@ function _add_class_test_from_specifier(
             $child = $child_target->test;
             foreach ($child_specifier->specifiers as $method)
             {
-                $name = $method->test->function;
+                $name = $method->test->test->name;
                 if (!isset($child->tests[$name]))
                 {
                     $child->tests[$name] = $method->test;

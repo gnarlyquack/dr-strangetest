@@ -48,12 +48,14 @@ function assert_events($expected, strangetest\BasicLogger $logger) {
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event) {
         list($type, $source, $reason) = $event;
+
         // @bc 5.6 Check if reason is instance of Exception
         if ($reason instanceof \Throwable
             || $reason instanceof \Exception)
         {
             $reason = $reason->getMessage();
         }
+
 
         $actual[$i] = array($type, $source, $reason);
     }
@@ -99,8 +101,8 @@ function make_directory_test($spec, $parent = null)
     $dir = new strangetest\DirectoryTest;
     $dir->name = $parent ? "{$parent->name}{$spec['directory']}" : $spec['directory'];
     $dir->group = $spec['group'];
-    $dir->setup = $spec['setup'];
-    $dir->teardown = $spec['teardown'];
+    $dir->setup = new \ReflectionFunction($spec['setup']);
+    $dir->teardown = new \ReflectionFunction($spec['teardown']);
 
     foreach ($spec['tests'] as $test)
     {
@@ -185,15 +187,21 @@ function make_class_test($spec, $file)
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['class']));
 
-    $class = new strangetest\ClassTest;
-    $class->file = $file->name;
-    $class->group = $spec['group'];
-    $class->namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
-    $class->name = "{$class->namespace}{$spec['class']}";
-    $class->setup = $spec['setup'];
-    $class->teardown = $spec['teardown'];
+    $namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
 
-    $file->tests["class {$class->name}"] = $class;
+    $class = new strangetest\ClassTest;
+    $class->group = $spec['group'];
+    $class->test = new \ReflectionClass("{$namespace}{$spec['class']}");
+    if ($spec['setup'])
+    {
+        $class->setup = new \ReflectionMethod($spec['class'], $spec['setup']);
+    }
+    if ($spec['teardown'])
+    {
+        $class->teardown = new \ReflectionMethod($spec['class'], $spec['teardown']);
+    }
+
+    $file->tests["class {$class->test->name}"] = $class;
     foreach ($spec['tests'] as $test)
     {
         make_method_test($test, $class);
@@ -211,17 +219,21 @@ function make_method_test($spec, $class)
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['function']));
 
-    $test = new strangetest\FunctionTest;
-    $test->file = $class->file;
+    $test = new strangetest\MethodTest;
+    $test->name = "{$class->test->name}::{$spec['function']}";
     $test->group = $spec['group'];
-    $test->namespace = $class->namespace;
-    $test->class = $class->name;
-    $test->function = $spec['function'];
-    $test->name = "{$class->name}::{$spec['function']}";
-    $test->setup_name = $spec['setup'];
-    $test->teardown_name = $spec['teardown'];
+    $test->test = new \ReflectionMethod($class->test->name, $spec['function']);
 
-    $class->tests[$test->function] = $test;
+    if (isset($spec['setup']))
+    {
+        $test->setup = new \ReflectionMethod($class->test->name, $spec['setup']);
+    }
+    if (isset($spec['teardown']))
+    {
+        $test->teardown = new \ReflectionMethod($class->name, $spec['teardown']);
+    }
+
+    $class->tests[$spec['function']] = $test;
 }
 
 
@@ -237,26 +249,19 @@ function make_function_test($spec, $file)
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['function']));
 
+    $namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
+
     $test = new strangetest\FunctionTest;
-    $test->file = $file->name;
+    $test->name = "{$namespace}{$spec['function']}";
     $test->group = $spec['group'];
-    $test->namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
-    $test->name = $test->function = $test->test = "{$test->namespace}{$spec['function']}";
+    $test->test = new \ReflectionFunction($test->name);
     if ($spec['setup'])
     {
-        $test->setup_name = $spec['setup'];
-        $test->setup
-            = $spec['namespace']
-            ? "{$spec['namespace']}//{$spec['setup']}"
-            : $spec['setup'];
+        $test->setup = new \ReflectionFunction("{$namespace}{$spec['setup']}");
     }
     if ($spec['teardown'])
     {
-        $test->teardown_name = $spec['teardown'];
-        $test->teardown
-            = $spec['namespace']
-            ? "{$spec['namespace']}//{$spec['teardown']}"
-            : $spec['teardown'];
+        $test->teardown = new \ReflectionFunction("{$namespace}{$spec['teardown']}");
     }
 
     $file->tests["function $test->name"] = $test;

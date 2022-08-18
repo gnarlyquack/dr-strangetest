@@ -45,12 +45,13 @@ interface Context {
 }
 
 
-final class _Context extends struct implements Context {
+final class _Context extends struct implements Context
+{
     /** @var State */
     private $state;
     /** @var Logger */
     private $logger;
-    /** @var FunctionTest */
+    /** @var FunctionTest|MethodTest */
     private $test;
     /** @var int[] */
     private $run;
@@ -61,9 +62,10 @@ final class _Context extends struct implements Context {
 
 
     /**
+     * @param FunctionTest|MethodTest $test
      * @param int[] $run
      */
-    public function __construct(State $state, Logger $logger, FunctionTest $test, array $run)
+    public function __construct(State $state, Logger $logger, $test, array $run)
     {
         $this->state = $state;
         $this->logger = $logger;
@@ -107,8 +109,18 @@ final class _Context extends struct implements Context {
         // @bc 5.5 Use func_get_args instead of argument unpacking
         foreach (\func_get_args() as $nnames => $name)
         {
-            $resolved = namespace\resolve_test_name(
-                $name, $this->test->namespace, (string)$this->test->class);
+            if ($this->test instanceof MethodTest)
+            {
+                $namespace = $this->test->test->getDeclaringClass()->getNamespaceName() . '\\';
+                $class = $this->test->test->class;
+            }
+            else
+            {
+                $namespace = $this->test->test->getNamespaceName() . '\\';
+                $class = '';
+            }
+
+            $resolved = namespace\resolve_test_name($name, $namespace, $class);
             if (!isset($resolved))
             {
                 \trigger_error("Invalid test name: $name");
@@ -254,9 +266,10 @@ function _run_test_run_group(
     {
         $run_name = namespace\_get_run_name($state, $run);
         $setup = $test->info->setup;
-        $name = $setup . $run_name;
+        $name = $setup->name . $run_name;
+        $callable = namespace\_get_callable_function($setup);
         namespace\start_buffering($logger, $name);
-        list($result, $run_args) = namespace\_run_setup($logger, $name, $setup, $args);
+        list($result, $run_args) = namespace\_run_setup($logger, $name, $callable, $args);
         namespace\end_buffering($logger);
 
         if (namespace\RESULT_PASS === $result)
@@ -287,9 +300,10 @@ function _run_test_run_group(
             if (isset($test->info->teardown))
             {
                 $teardown = $test->info->teardown;
-                $name = $teardown . $run_name;
+                $name = $teardown->name . $run_name;
+                $callable = namespace\_get_callable_function($teardown);
                 namespace\start_buffering($logger, $name);
-                namespace\_run_teardown($logger, $name, $teardown, $run_args);
+                namespace\_run_teardown($logger, $name, $callable, $run_args);
                 namespace\end_buffering($logger);
             }
         }
@@ -311,9 +325,10 @@ function _run_directory(
     $setup = namespace\RESULT_PASS;
     if ($directory->setup)
     {
-        $name = $directory->setup . $run_name;
+        $name = $directory->setup->name . $run_name;
+        $callable = namespace\_get_callable_function($directory->setup);
         namespace\start_buffering($logger, $name);
-        list($setup, $args) = namespace\_run_setup($logger, $name, $directory->setup, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $callable, $args);
         namespace\end_buffering($logger);
     }
 
@@ -340,9 +355,10 @@ function _run_directory(
 
         if ($directory->teardown)
         {
-            $name = $directory->teardown . $run_name;
+            $name = $directory->teardown->name . $run_name;
+            $callable = namespace\_get_callable_function($directory->teardown);
             namespace\start_buffering($logger, $name);
-            namespace\_run_teardown($logger, $name, $directory->teardown, $args);
+            namespace\_run_teardown($logger, $name, $callable, $args);
             namespace\end_buffering($logger);
         }
     }
@@ -363,9 +379,10 @@ function _run_file(
     $setup = namespace\RESULT_PASS;
     if ($file->setup)
     {
-        $name = $file->setup . $run_name;
+        $name = $file->setup->name . $run_name;
+        $callable = namespace\_get_callable_function($file->setup);
         namespace\start_buffering($logger, $name);
-        list($setup, $args) = namespace\_run_setup($logger, $name, $file->setup, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $callable, $args);
         namespace\end_buffering($logger);
     }
 
@@ -389,9 +406,10 @@ function _run_file(
 
         if ($file->teardown)
         {
-            $name = $file->teardown . $run_name;
+            $name = $file->teardown->name . $run_name;
+            $callable = namespace\_get_callable_function($file->teardown);
             namespace\start_buffering($logger, $name);
-            namespace\_run_teardown($logger, $name, $file->teardown, $args);
+            namespace\_run_teardown($logger, $name, $callable, $args);
             namespace\end_buffering($logger);
         }
     }
@@ -407,8 +425,8 @@ function _run_class(
     State $state, BufferingLogger $logger,
     ClassTest $class, array $run, array $args)
 {
-    namespace\start_buffering($logger, $class->name);
-    $object = namespace\_instantiate_test($logger, $class->name, $args);
+    namespace\start_buffering($logger, $class->test->name);
+    $object = namespace\_instantiate_test($logger, $class->test, $args);
     namespace\end_buffering($logger);
 
     if ($object)
@@ -418,9 +436,8 @@ function _run_class(
         $setup = namespace\RESULT_PASS;
         if ($class->setup)
         {
-            $name = $class->name . '::' . $class->setup . $run_name;
-            $method = array($object, $class->setup);
-            \assert(\is_callable($method));
+            $name = $class->test->name . '::' . $class->setup->name . $run_name;
+            $method = namespace\_get_callable_method($class->setup, $object);
             namespace\start_buffering($logger, $name);
             list($setup,) = namespace\_run_setup($logger, $name, $method);
             namespace\end_buffering($logger);
@@ -435,9 +452,8 @@ function _run_class(
 
             if ($class->teardown)
             {
-                $name = $class->name . '::' . $class->teardown . $run_name;
-                $method = array($object, $class->teardown);
-                \assert(\is_callable($method));
+                $name = $class->test->name . '::' . $class->teardown->name . $run_name;
+                $method = namespace\_get_callable_method($class->teardown, $object);
                 namespace\start_buffering($logger, $name);
                 namespace\_run_teardown($logger, $name, $method);
                 namespace\end_buffering($logger);
@@ -449,32 +465,24 @@ function _run_class(
 
 /**
  * @template T of object
- * @param class-string<T> $class
- * @param ?mixed[] $args
+ * @param \ReflectionClass<T> $class
+ * @param mixed[] $args
  * @return ?T
  */
-function _instantiate_test(Logger $logger, $class, $args)
+function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
 {
     try
     {
-        if ($args)
-        {
-            // @bc 5.5 Use proxy function for argument unpacking
-            return namespace\unpack_construct($class, $args);
-        }
-        else
-        {
-            return new $class();
-        }
+        return $class->newInstanceArgs($args);
     }
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($class, $e);
+        $logger->log_error($class->name, $e);
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($class, $e);
+        $logger->log_error($class->name, $e);
     }
     return null;
 }
@@ -486,25 +494,23 @@ function _instantiate_test(Logger $logger, $class, $args)
  * @return void
  */
 function _run_method(
-    State $state, BufferingLogger $logger, $object, FunctionTest $test, array $run)
+    State $state, BufferingLogger $logger, $object, MethodTest $test, array $run)
 {
     $run_name = namespace\_get_run_name($state, $run);
     $test_name = $test->name . $run_name;
 
     $result = namespace\RESULT_PASS;
-    if ($test->setup_name)
+    if ($test->setup)
     {
-        $setup = array($object, $test->setup_name);
-        \assert(\is_callable($setup));
-        $name = $test->setup_name . ' for ' . $test_name;
+        $setup = namespace\_get_callable_method($test->setup, $object);
+        $name = $test->setup->name . ' for ' . $test_name;
         namespace\start_buffering($logger, $name);
         list($result, ) = namespace\_run_setup($logger, $name, $setup);
     }
 
     if (namespace\RESULT_PASS === $result)
     {
-        $method = array($object, $test->function);
-        \assert(\is_callable($method));
+        $method = namespace\_get_callable_method($test->test, $object);
         $context = new _Context($state, $logger, $test, $run);
         namespace\start_buffering($logger, $test_name);
         $result = namespace\_run_test($logger, $test_name, $method, $context);
@@ -515,11 +521,10 @@ function _run_method(
             $result |= namespace\_run_teardown($logger, $test_name, $teardown);
         }
 
-        if ($test->teardown_name)
+        if ($test->teardown)
         {
-            $teardown = array($object, $test->teardown_name);
-            \assert(\is_callable($teardown));
-            $name = $test->teardown_name . ' for ' . $test_name;
+            $teardown = namespace\_get_callable_method($test->teardown, $object);
+            $name = $test->teardown->name . ' for ' . $test_name;
             namespace\start_buffering($logger, $name);
             $result |= namespace\_run_teardown($logger, $name, $teardown);
         }
@@ -544,9 +549,10 @@ function _run_function(
     $result = namespace\RESULT_PASS;
     if ($test->setup)
     {
-        $name = $test->setup_name . ' for ' . $test_name;
+        $name = $test->setup->getShortName() . ' for ' . $test_name;
+        $callable = namespace\_get_callable_function($test->setup);
         namespace\start_buffering($logger, $name);
-        list($result, $args) = namespace\_run_setup($logger, $name, $test->setup, $args);
+        list($result, $args) = namespace\_run_setup($logger, $name, $callable, $args);
     }
 
     if (namespace\RESULT_PASS === $result)
@@ -554,8 +560,9 @@ function _run_function(
         if (\is_array($args))
         {
             $context = new _Context($state, $logger, $test, $run);
+            $callable = namespace\_get_callable_function($test->test);
             namespace\start_buffering($logger, $test_name);
-            $result = namespace\_run_test($logger, $test_name, $test->test, $context, $args);
+            $result = namespace\_run_test($logger, $test_name, $callable, $context, $args);
 
             while ($context->teardowns)
             {
@@ -566,9 +573,10 @@ function _run_function(
 
         if ($test->teardown)
         {
-            $name = $test->teardown_name . ' for ' . $test_name;
+            $name = $test->teardown->getShortName() . ' for ' . $test_name;
+            $callable = namespace\_get_callable_function($test->teardown);
             namespace\start_buffering($logger, $name);
-            $result |= namespace\_run_teardown($logger, $name, $test->teardown, $args);
+            $result |= namespace\_run_teardown($logger, $name, $callable, $args);
         }
     }
     namespace\end_buffering($logger);
@@ -577,13 +585,14 @@ function _run_function(
 
 
 /**
+ * @param FunctionTest|MethodTest $test
  * @param int[] $run
  * @param string $name
  * @param int $result
  * @return void
  */
 function _record_test_result(
-    State $state, Logger $logger, FunctionTest $test, array $run, $name, $result)
+    State $state, Logger $logger, $test, array $run, $name, $result)
 {
     if (namespace\RESULT_POSTPONE !== $result)
     {
@@ -807,5 +816,55 @@ function _get_run_name(State $state, array $run)
     {
         $result = '';
     }
+    return $result;
+}
+
+
+/**
+ * @return callable
+ */
+function _get_callable_function(\ReflectionFunction $function)
+{
+    // @bc 5.3 Ensure ReflectionFunction has getClosure method
+    if (\method_exists($function, 'getClosure'))
+    {
+        // @todo Handle failure of ReflectionFunction::getClosure()?
+        // We only reflect functions that we have already discovered and know
+        // exist, so it doesn't seem like this should ever fail. However this
+        // method is also undocumented, so it's unclear what could cause a
+        // failure here
+        $result = $function->getClosure();
+    }
+    else
+    {
+        $result = $function->getName();
+    }
+    \assert(\is_callable($result));
+    return $result;
+}
+
+
+/**
+ * @param object $object
+ * @return callable
+ */
+function _get_callable_method(\ReflectionMethod $method, $object)
+{
+    // @bc 5.3 Ensure ReflectionMethod has getClosure method
+    if (\method_exists($method, 'getClosure'))
+    {
+        // @todo Handle failure of ReflectionMethod::getClosure()?
+        // We only reflect methods that we have already discovered and know
+        // exist, so it doesn't seem like this should ever fail. However this
+        // method is also undocumented, so it's unclear what could cause a
+        // failure here
+        $result = $method->getClosure($object);
+    }
+    else
+    {
+        $result = array($object, $method->getName());
+    }
+
+    \assert(\is_callable($result));
     return $result;
 }

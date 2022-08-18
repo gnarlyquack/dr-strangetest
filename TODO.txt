@@ -22,8 +22,6 @@ Release
         directory "tests/test_foo" (which may or may not also include a file
         "test_target.php")
 
-    -   Do we not discover/traverse symbolic links?
-
     -   Do we handle traversing multiple times to a directory, file, etc. that
         had a setup error?
 

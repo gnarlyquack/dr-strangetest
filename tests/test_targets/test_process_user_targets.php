@@ -613,10 +613,8 @@ class TestProcessUserTargets
     private function make_test_from_class_target($target, strangetest\ClassTest $tests)
     {
         $result = new strangetest\ClassTest;
-        $result->file = $tests->file;
         $result->group = $tests->group;
-        $result->namespace = $tests->namespace;
-        $result->name = $tests->name;
+        $result->test = $tests->test;
         $result->setup = $tests->setup;
         $result->teardown = $tests->teardown;
         if (isset($target['tests']))

@@ -15,14 +15,14 @@ final class Postpone extends \Exception
 
 final class FunctionDependency extends struct
 {
-    /** @var FunctionTest */
+    /** @var FunctionTest|MethodTest */
     public $test;
 
     /** @var array<string, RunDependency> */
     public $runs = array();
 
     /**
-     * @param FunctionTest $test
+     * @param FunctionTest|MethodTest $test
      */
     public function __construct($test)
     {
@@ -220,13 +220,14 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
 
 
 /**
+ * @param FunctionTest|MethodTest $dependency
  * @param int[] $run
  * @param int $run_index
  * @return void
  */
 function _add_run_from_dependency(
     State $state, TestRunGroup $reference,
-    TestRunGroup $test, FunctionTest $dependency, array $run, $run_index)
+    TestRunGroup $test, $dependency, array $run, $run_index)
 {
     $run_id = $run[$run_index++] - 1;
     $run_info = $state->runs[$run_id];
@@ -279,25 +280,32 @@ function _add_run_from_dependency(
 
 
 /**
+ * @param FunctionTest|MethodTest $dependency
  * @param int[] $run
  * @param int $run_index
  * @return void
  */
 function _add_directory_test_from_dependency(
     State $state, DirectoryTest $reference,
-    DirectoryTest $test, FunctionTest $dependency, array $run, $run_index)
+    DirectoryTest $test, $dependency, array $run, $run_index)
 {
     \assert($reference->name === $test->name);
-    \assert(0 === \substr_compare($dependency->file, $test->name, 0, \strlen($test->name)));
 
-    $pos = \strpos($dependency->file, \DIRECTORY_SEPARATOR, \strlen($test->name));
+    // ReflectionFunctionAbstract should always return an actual filename here
+    // (instead of false) because we only ever reflect functions and methods
+    // that have been discovered in a test file
+    $file = $dependency->test->getFileName();
+    \assert($file !== false);
+    \assert(0 === \substr_compare($file, $test->name, 0, \strlen($test->name)));
+
+    $pos = \strpos($file, \DIRECTORY_SEPARATOR, \strlen($test->name));
     if (false === $pos)
     {
-        $path = $dependency->file;
+        $path = $file;
     }
     else
     {
-        $path = \substr($dependency->file, 0, $pos + 1);
+        $path = \substr($file, 0, $pos + 1);
     }
 
     $source = $reference->tests[$path];
@@ -357,39 +365,38 @@ function _add_directory_test_from_dependency(
 
 
 /**
+ * @param FunctionTest|MethodTest $dependency
  * @return void
  */
 function _add_file_test_from_dependency(
     State $state, FileTest $reference,
-    FileTest $test, FunctionTest $dependency)
+    FileTest $test, $dependency)
 {
     \assert($reference->name === $test->name);
-    \assert($test->name === $dependency->file);
+    \assert($test->name === $dependency->test->getFileName());
 
-    if ($dependency->class)
+    if ($dependency instanceof MethodTest)
     {
-        $name = 'class ' . $dependency->class;
+        $name = 'class ' . $dependency->test->class;
         $class = $reference->tests[$name];
         \assert($class instanceof ClassTest);
         $last = \end($test->tests);
         if ($last
             && ($last instanceof ClassTest)
-            && ($last->name === $dependency->class))
+            && ($last->test->name === $dependency->test->class))
         {
             $child = $last;
         }
         else
         {
             $child = new ClassTest;
-            $child->file = $class->file;
             $child->group = $class->group;
-            $child->namespace = $class->namespace;
-            $child->name = $class->name;
+            $child->test = $class->test;
             $child->setup = $class->setup;
             $child->teardown = $class->teardown;
             $test->tests[] = $child;
         }
-        $child->tests[] = $class->tests[$dependency->function];
+        $child->tests[] = $class->tests[$dependency->test->name];
     }
     else
     {

@@ -24,15 +24,3 @@ function unpack_function($callable, $args)
 {
     return $callable(...$args);
 }
-
-
-/**
- * @template T of object
- * @param class-string<T> $class
- * @param iterable<mixed> $args
- * @return T
- */
-function unpack_construct($class, $args)
-{
-    return new $class(...$args);
-}

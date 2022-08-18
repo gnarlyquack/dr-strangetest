@@ -57,10 +57,10 @@ final class RunInfo extends struct
     /** @var string */
     public $name;
 
-    /** @var callable-string */
+    /** @var \ReflectionFunction */
     public $setup;
 
-    /** @var ?callable-string */
+    /** @var ?\ReflectionFunction */
     public $teardown = null;
 }
 
@@ -73,10 +73,10 @@ final class DirectoryTest extends struct
     /** @var int */
     public $group;
 
-    /** @var ?callable-string */
+    /** @var ?\ReflectionFunction */
     public $setup;
 
-    /** @var ?callable-string */
+    /** @var ?\ReflectionFunction */
     public $teardown;
 
     /** @var array<TestRunGroup|DirectoryTest|FileTest> */
@@ -92,10 +92,10 @@ final class FileTest extends struct
     /** @var int */
     public $group;
 
-    /** @var ?callable-string */
+    /** @var ?\ReflectionFunction */
     public $setup;
 
-    /** @var ?callable-string */
+    /** @var ?\ReflectionFunction */
     public $teardown;
 
     /** @var array<ClassTest|FunctionTest> */
@@ -103,51 +103,61 @@ final class FileTest extends struct
 }
 
 
-final class ClassTest extends struct {
+final class FunctionTest extends struct
+{
     /** @var string */
-    public $file;
+    public $name;
+
     /** @var int */
     public $group;
-    /** @var string */
-    public $namespace;
 
-    /** @var class-string */
-    public $name;
-    /** @var ?string */
+    /** @var \ReflectionFunction */
+    public $test;
+
+    /** @var ?\ReflectionFunction */
     public $setup;
-    /** @var ?string */
+
+    /** @var ?\ReflectionFunction */
+    public $teardown;
+}
+
+
+final class ClassTest extends struct
+{
+    /** @var class-string */
+    //public $name;
+
+    /** @var int */
+    public $group;
+
+    /** @var \ReflectionClass<object> */
+    public $test;
+
+    /** @var ?\ReflectionMethod */
+    public $setup;
+    /** @var ?\ReflectionMethod */
     public $teardown;
 
-    /** @var FunctionTest[] */
+    /** @var MethodTest[] */
     public $tests = array();
 }
 
 
-final class FunctionTest extends struct {
-    /** @var string */
-    public $file;
-    /** @var string */
-    public $namespace;
-    /** @var ?class-string */
-    public $class;
-    /** @var string */
-    public $function;
-
+final class MethodTest extends struct
+{
     /** @var string */
     public $name;
+
     /** @var int */
     public $group;
-    /** @var ?callable(mixed ...): mixed */
-    public $setup;
-    /** @var ?callable(mixed ...): void */
-    public $teardown;
-    /** @var callable(mixed ...): void */
+
+    /** @var \ReflectionMethod */
     public $test;
 
-    /** @var ?string */
-    public $setup_name;
-    /** @var ?string */
-    public $teardown_name;
+    /** @var ?\ReflectionMethod */
+    public $setup;
+    /** @var ?\ReflectionMethod */
+    public $teardown;
 }
 
 
@@ -167,7 +177,8 @@ function resolve_test_name($name, $default_namespace = '', $default_class = '')
     // probably want want to change this)
     \assert(
         (0 === \strlen($default_class))
-        || (0 === \strpos($default_class, $default_namespace)));
+        || ((0 === \strlen($default_namespace)) && (false === \strpos($default_class, '\\')))
+        || ((\strlen($default_namespace) > 0) && (0 === \strpos($default_class, $default_namespace))));
 
     $result = null;
     if (\preg_match(
