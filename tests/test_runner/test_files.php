@@ -444,8 +444,8 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) setup_object\n    2) SetUpObject"),
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple conflicting fixtures found:\n    1) teardown_object\n    2) TearDownObject"),
+            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple fixtures found: setup_object and SetUpObject"),
+            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple fixtures found: teardown_object and TearDownObject"),
 
             array(strangetest\EVENT_OUTPUT, 'multiple_object_fixtures\\setup_file', '.'),
 
@@ -554,6 +554,8 @@ class TestFiles
 
         $this->assert_events(array(
             array(strangetest\EVENT_OUTPUT, $this->root . $this->path, '.'),
+            array(strangetest\EVENT_ERROR, $this->root . $this->path, 'No tests were found in this file'),
+            array(strangetest\EVENT_ERROR, $this->root, 'No tests were found in this directory'),
         ));
     }
 
@@ -831,11 +833,11 @@ function filepath($name) {
 
 function assert_run_file($filepath, $events) {
     $state = new State();
-    $discovery_state = new _DiscoveryState($state);
     $logger = new BasicLogger(strangetest\LOG_ALL);
     $buffed_logger = new BufferingLogger($logger);
+    $discovery_state = new _DiscoveryState($state, $buffed_logger);
 
-    $file = strangetest\_discover_file($discovery_state, $buffed_logger, $filepath, 0);
+    $file = strangetest\_discover_file($discovery_state, $filepath, 0);
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     if ($file instanceof strangetest\FileTest)
     {

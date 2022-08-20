@@ -100,7 +100,7 @@ function make_directory_test($spec, $parent = null)
 
     $dir = new strangetest\DirectoryTest;
     $dir->name = $parent ? "{$parent->name}{$spec['directory']}" : $spec['directory'];
-    $dir->group = $spec['group'];
+    $dir->run_group_id = $spec['group'];
     $dir->setup = new \ReflectionFunction($spec['setup']);
     $dir->teardown = new \ReflectionFunction($spec['teardown']);
 
@@ -138,18 +138,22 @@ function make_directory_test($spec, $parent = null)
 function make_file_test($spec, $dir)
 {
     $default = array(
-        'setup' => null,
-        'teardown' => null,
         'group' => 0,
+        'setup_file' => null,
+        'teardown_file' => null,
+        'setup_function' => null,
+        'teardown_function' => null,
     );
     $spec = \array_merge($default, $spec);
     \assert(isset($spec['file']));
 
     $file = new strangetest\FileTest;
     $file->name = "{$dir->name}{$spec['file']}";
-    $file->group = $spec['group'];
-    $file->setup = $spec['setup'];
-    $file->teardown = $spec['teardown'];
+    $file->run_group_id = $spec['group'];
+    $file->setup_file = $spec['setup_file'];
+    $file->teardown_file = $spec['teardown_file'];
+    $file->setup_function = $spec['setup_function'];
+    $file->teardown_function = $spec['teardown_function'];
 
     $dir->tests[$file->name] = $file;
     foreach ($spec['tests'] as $test)
@@ -181,8 +185,10 @@ function make_class_test($spec, $file)
     $defaults = array(
         'group' => 0,
         'namespace' => '',
-        'setup' => null,
-        'teardown' => null,
+        'setup_object' => null,
+        'teardown_object' => null,
+        'setup_method' => null,
+        'teardown_method' => null,
     );
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['class']));
@@ -190,15 +196,25 @@ function make_class_test($spec, $file)
     $namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
 
     $class = new strangetest\ClassTest;
-    $class->group = $spec['group'];
+    $class->run_group_id = $spec['group'];
     $class->test = new \ReflectionClass("{$namespace}{$spec['class']}");
-    if ($spec['setup'])
+
+    if ($spec['setup_object'])
     {
-        $class->setup = new \ReflectionMethod($spec['class'], $spec['setup']);
+        $class->setup_object = new \ReflectionMethod($spec['class'], $spec['setup_object']);
     }
-    if ($spec['teardown'])
+    if ($spec['teardown_object'])
     {
-        $class->teardown = new \ReflectionMethod($spec['class'], $spec['teardown']);
+        $class->teardown_object = new \ReflectionMethod($spec['class'], $spec['teardown_object']);
+    }
+
+    if ($spec['setup_method'])
+    {
+        $class->setup_method = new \ReflectionMethod($spec['class'], $spec['setup_method']);
+    }
+    if ($spec['teardown_method'])
+    {
+        $class->teardown_method = new \ReflectionMethod($spec['class'], $spec['teardown_method']);
     }
 
     $file->tests["class {$class->test->name}"] = $class;
@@ -213,26 +229,14 @@ function make_method_test($spec, $class)
 {
     $defaults = array(
         'group' => 0,
-        'setup' => null,
-        'teardown' => null,
     );
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['function']));
 
     $test = new strangetest\MethodTest;
     $test->name = "{$class->test->name}::{$spec['function']}";
-    $test->group = $spec['group'];
+    $test->run_group_id = $spec['group'];
     $test->test = new \ReflectionMethod($class->test->name, $spec['function']);
-
-    if (isset($spec['setup']))
-    {
-        $test->setup = new \ReflectionMethod($class->test->name, $spec['setup']);
-    }
-    if (isset($spec['teardown']))
-    {
-        $test->teardown = new \ReflectionMethod($class->name, $spec['teardown']);
-    }
-
     $class->tests[$spec['function']] = $test;
 }
 
@@ -242,9 +246,6 @@ function make_function_test($spec, $file)
     $defaults = array(
         'group' => 0,
         'namespace' => '',
-        'class' => null,
-        'setup' => null,
-        'teardown' => null,
     );
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['function']));
@@ -253,16 +254,7 @@ function make_function_test($spec, $file)
 
     $test = new strangetest\FunctionTest;
     $test->name = "{$namespace}{$spec['function']}";
-    $test->group = $spec['group'];
+    $test->run_group_id = $spec['group'];
     $test->test = new \ReflectionFunction($test->name);
-    if ($spec['setup'])
-    {
-        $test->setup = new \ReflectionFunction("{$namespace}{$spec['setup']}");
-    }
-    if ($spec['teardown'])
-    {
-        $test->teardown = new \ReflectionFunction("{$namespace}{$spec['teardown']}");
-    }
-
     $file->tests["function $test->name"] = $test;
 }

@@ -136,9 +136,9 @@ final class _Context extends struct implements Context
             {
                 $runs = $this->run;
                 $results = $this->state->results[$resolved];
-                if ($this->test->group !== $results['group'])
+                if ($this->test->run_group_id !== $results['group'])
                 {
-                    $us = $this->state->groups[$this->test->group];
+                    $us = $this->state->groups[$this->test->run_group_id];
                     $them = $this->state->groups[$results['group']];
                     for ($i = 0, $c = \min(\count($us), \count($them)); $i < $c; ++$i)
                     {
@@ -264,8 +264,10 @@ function _run_test_run_group(
 {
     foreach ($group->runs as $test)
     {
+        \assert(isset($test->setup));
+
         $run_name = namespace\_get_run_name($state, $run);
-        $setup = $test->info->setup;
+        $setup = $test->setup;
         $name = $setup->name . $run_name;
         $callable = namespace\_get_callable_function($setup);
         namespace\start_buffering($logger, $name);
@@ -279,7 +281,7 @@ function _run_test_run_group(
                 if ($run_args)
                 {
                     $new_run = $run;
-                    $new_run[] = $test->info->id;
+                    $new_run[] = $test->id;
                     $tests = $test->tests;
                     if ($tests instanceof DirectoryTest)
                     {
@@ -297,9 +299,9 @@ function _run_test_run_group(
                 }
             }
 
-            if (isset($test->info->teardown))
+            if (isset($test->teardown))
             {
-                $teardown = $test->info->teardown;
+                $teardown = $test->teardown;
                 $name = $teardown->name . $run_name;
                 $callable = namespace\_get_callable_function($teardown);
                 namespace\start_buffering($logger, $name);
@@ -377,10 +379,10 @@ function _run_file(
     $run_name = namespace\_get_run_name($state, $run);
 
     $setup = namespace\RESULT_PASS;
-    if ($file->setup)
+    if ($file->setup_file)
     {
-        $name = $file->setup->name . $run_name;
-        $callable = namespace\_get_callable_function($file->setup);
+        $name = $file->setup_file->name . $run_name;
+        $callable = namespace\_get_callable_function($file->setup_file);
         namespace\start_buffering($logger, $name);
         list($setup, $args) = namespace\_run_setup($logger, $name, $callable, $args);
         namespace\end_buffering($logger);
@@ -399,15 +401,15 @@ function _run_file(
                 else
                 {
                     \assert($test instanceof FunctionTest);
-                    namespace\_run_function($state, $logger, $test, $run, $args);
+                    namespace\_run_function($state, $logger, $test, $file->setup_function, $file->teardown_function, $run, $args);
                 }
             }
         }
 
-        if ($file->teardown)
+        if ($file->teardown_file)
         {
-            $name = $file->teardown->name . $run_name;
-            $callable = namespace\_get_callable_function($file->teardown);
+            $name = $file->teardown_file->name . $run_name;
+            $callable = namespace\_get_callable_function($file->teardown_file);
             namespace\start_buffering($logger, $name);
             namespace\_run_teardown($logger, $name, $callable, $args);
             namespace\end_buffering($logger);
@@ -434,10 +436,10 @@ function _run_class(
         $run_name = namespace\_get_run_name($state, $run);
 
         $setup = namespace\RESULT_PASS;
-        if ($class->setup)
+        if ($class->setup_object)
         {
-            $name = $class->test->name . '::' . $class->setup->name . $run_name;
-            $method = namespace\_get_callable_method($class->setup, $object);
+            $name = $class->test->name . '::' . $class->setup_object->name . $run_name;
+            $method = namespace\_get_callable_method($class->setup_object, $object);
             namespace\start_buffering($logger, $name);
             list($setup,) = namespace\_run_setup($logger, $name, $method);
             namespace\end_buffering($logger);
@@ -447,13 +449,13 @@ function _run_class(
         {
             foreach ($class->tests as $test)
             {
-                namespace\_run_method($state, $logger, $object, $test, $run);
+                namespace\_run_method($state, $logger, $object, $test, $class->setup_method, $class->teardown_method, $run);
             }
 
-            if ($class->teardown)
+            if ($class->teardown_object)
             {
-                $name = $class->test->name . '::' . $class->teardown->name . $run_name;
-                $method = namespace\_get_callable_method($class->teardown, $object);
+                $name = $class->test->name . '::' . $class->teardown_object->name . $run_name;
+                $method = namespace\_get_callable_method($class->teardown_object, $object);
                 namespace\start_buffering($logger, $name);
                 namespace\_run_teardown($logger, $name, $method);
                 namespace\end_buffering($logger);
@@ -490,20 +492,22 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
 
 /**
  * @param object $object
+ * @param ?\ReflectionMethod $setup_method
+ * @param ?\ReflectionMethod $teardown_method
  * @param int[] $run
  * @return void
  */
 function _run_method(
-    State $state, BufferingLogger $logger, $object, MethodTest $test, array $run)
+    State $state, BufferingLogger $logger, $object, MethodTest $test, $setup_method, $teardown_method, array $run)
 {
     $run_name = namespace\_get_run_name($state, $run);
     $test_name = $test->name . $run_name;
 
     $result = namespace\RESULT_PASS;
-    if ($test->setup)
+    if ($setup_method)
     {
-        $setup = namespace\_get_callable_method($test->setup, $object);
-        $name = $test->setup->name . ' for ' . $test_name;
+        $name = $setup_method->name . ' for ' . $test_name;
+        $setup = namespace\_get_callable_method($setup_method, $object);
         namespace\start_buffering($logger, $name);
         list($result, ) = namespace\_run_setup($logger, $name, $setup);
     }
@@ -521,10 +525,10 @@ function _run_method(
             $result |= namespace\_run_teardown($logger, $test_name, $teardown);
         }
 
-        if ($test->teardown)
+        if ($teardown_method)
         {
-            $teardown = namespace\_get_callable_method($test->teardown, $object);
-            $name = $test->teardown->name . ' for ' . $test_name;
+            $name = $teardown_method->name . ' for ' . $test_name;
+            $teardown = namespace\_get_callable_method($teardown_method, $object);
             namespace\start_buffering($logger, $name);
             $result |= namespace\_run_teardown($logger, $name, $teardown);
         }
@@ -535,22 +539,24 @@ function _run_method(
 
 
 /**
+ * @param ?\ReflectionFunction $setup_function
+ * @param ?\ReflectionFunction $teardown_function
  * @param int[] $run
  * @param mixed[] $args
  * @return void
  */
 function _run_function(
     State $state, BufferingLogger $logger,
-    FunctionTest $test, array $run, array $args)
+    FunctionTest $test, $setup_function, $teardown_function, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
     $test_name = $test->name . $run_name;
 
     $result = namespace\RESULT_PASS;
-    if ($test->setup)
+    if ($setup_function)
     {
-        $name = $test->setup->getShortName() . ' for ' . $test_name;
-        $callable = namespace\_get_callable_function($test->setup);
+        $name = $setup_function->getShortName() . ' for ' . $test_name;
+        $callable = namespace\_get_callable_function($setup_function);
         namespace\start_buffering($logger, $name);
         list($result, $args) = namespace\_run_setup($logger, $name, $callable, $args);
     }
@@ -571,10 +577,10 @@ function _run_function(
             }
         }
 
-        if ($test->teardown)
+        if ($teardown_function)
         {
-            $name = $test->teardown->getShortName() . ' for ' . $test_name;
-            $callable = namespace\_get_callable_function($test->teardown);
+            $name = $teardown_function->getShortName() . ' for ' . $test_name;
+            $callable = namespace\_get_callable_function($teardown_function);
             namespace\start_buffering($logger, $name);
             $result |= namespace\_run_teardown($logger, $name, $callable, $args);
         }
@@ -599,7 +605,7 @@ function _record_test_result(
         if (!isset($state->results[$test->name]))
         {
             $state->results[$test->name] = array(
-                'group' => $test->group,
+                'group' => $test->run_group_id,
                 'runs' => array(),
             );
         }

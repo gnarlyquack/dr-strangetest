@@ -503,7 +503,10 @@ class TestProcessUserTargets
             {
                 $source = $tests->runs[$run['run']];
                 $test_run = new strangetest\TestRun;
-                $test_run->info = $source->info;
+                $test_run->id = $source->id;
+                $test_run->name = $source->name;
+                $test_run->setup = $source->setup;
+                $test_run->teardown = $source->teardown;
                 if ($source->tests instanceof strangetest\DirectoryTest)
                 {
                     $test_run->tests = $this->make_test_from_directory_target(
@@ -522,7 +525,10 @@ class TestProcessUserTargets
             foreach ($tests->runs as $run)
             {
                 $test_run = new strangetest\TestRun;
-                $test_run->info = $run->info;
+                $test_run->id = $run->id;
+                $test_run->name = $run->name;
+                $test_run->setup = $run->setup;
+                $test_run->teardown = $run->teardown;
                 if ($run->tests instanceof strangetest\DirectoryTest)
                 {
                     $test_run->tests = $this->make_test_from_directory_target(
@@ -533,7 +539,7 @@ class TestProcessUserTargets
                     $test_run->tests = $this->make_test_from_file_target(
                         $target, $run->tests);
                 }
-                $result->runs[$run->info->name] = $test_run;
+                $result->runs[$run->name] = $test_run;
             }
         }
 
@@ -544,7 +550,7 @@ class TestProcessUserTargets
     {
         $result = new strangetest\DirectoryTest;
         $result->name = $tests->name;
-        $result->group = $tests->group;
+        $result->run_group_id = $tests->run_group_id;
         $result->setup = $tests->setup;
         $result->teardown = $tests->teardown;
 
@@ -581,9 +587,11 @@ class TestProcessUserTargets
     {
         $result = new strangetest\FileTest;
         $result->name = $tests->name;
-        $result->group = $tests->group;
-        $result->setup = $tests->setup;
-        $result->teardown = $tests->teardown;
+        $result->run_group_id = $tests->run_group_id;
+        $result->setup_file = $tests->setup_file;
+        $result->teardown_file = $tests->teardown_file;
+        $result->setup_function = $tests->setup_function;
+        $result->teardown_function = $tests->teardown_function;
 
         if (isset($target['tests']))
         {
@@ -613,10 +621,12 @@ class TestProcessUserTargets
     private function make_test_from_class_target($target, strangetest\ClassTest $tests)
     {
         $result = new strangetest\ClassTest;
-        $result->group = $tests->group;
+        $result->run_group_id = $tests->run_group_id;
         $result->test = $tests->test;
-        $result->setup = $tests->setup;
-        $result->teardown = $tests->teardown;
+        $result->setup_object = $tests->setup_object;
+        $result->teardown_object = $tests->teardown_object;
+        $result->setup_method = $tests->setup_method;
+        $result->teardown_method = $tests->teardown_method;
         if (isset($target['tests']))
         {
             foreach ($target['tests'] as $test)

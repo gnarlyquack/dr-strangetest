@@ -8,7 +8,22 @@
 namespace strangetest;
 
 
-const TEST_ATTRIBUTE = 'strangetest\\attribute\\Test';
+/**
+ * @param string $path
+ * @return null|false|DirectoryTest|TestRunGroup    Returns a test if tests
+ *                                                  were found. Returns null if
+ *                                                  no tests were found.
+ *                                                  Returns false is no tests
+ *                                                  were found and an error
+ *                                                  occurred during discovery.
+ */
+function discover_tests(State $state, BufferingLogger $logger, $path)
+{
+    return namespace\_discover_directory(new _DiscoveryState($state, $logger), $path, 0);
+}
+
+
+const _TEST_ATTRIBUTE = 'strangetest\\attribute\\Test';
 
 
 final class _DiscoveryState extends struct
@@ -19,165 +34,134 @@ final class _DiscoveryState extends struct
     /** @var State */
     public $global;
 
+    /** @var BufferingLogger */
+    public $logger;
 
-    public function __construct(State $state)
+
+    public function __construct(State $state, BufferingLogger $logger)
     {
         $this->global = $state;
+        $this->logger = $logger;
     }
 }
 
 
 /**
- * @param string $path
- * @return null|DirectoryTest|TestRunGroup
+ * @param string $dirpath
+ * @param int $run_group_id
+ * @return null|false|DirectoryTest|TestRunGroup    Returns a test if tests
+ *                                                  were found. Returns null if
+ *                                                  no tests were found.
+ *                                                  Returns false is no tests
+ *                                                  were found and an error
+ *                                                  happened during discovery.
  */
-function discover_tests(State $state, BufferingLogger $logger, $path)
+function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
 {
-    return namespace\_discover_directory(new _DiscoveryState($state), $logger, $path, 0);
-}
+    \assert(\DIRECTORY_SEPARATOR === \substr($dirpath, -1));
 
+    $directory = new DirectoryTest;
+    $directory->name = $dirpath;
+    $directory->run_group_id = $run_group_id;
+    unset($run_group_id);
 
-final class _DirectoryFixture extends struct
-{
-    /** @var ?\ReflectionFunction */
-    public $setup = null;
+    $run_group = new TestRunGroup;
+    $run_group->path = $directory->name;
+    $run_group->tests = $directory;
 
-    /** @var ?\ReflectionFunction */
-    public $teardown = null;
-
-    /** @var ?RunInfo[] */
-    public $runs = null;
-}
-
-
-/**
- * @param string $path
- * @param int $group
- * @return null|DirectoryTest|TestRunGroup
- */
-function _discover_directory(_DiscoveryState $state, BufferingLogger $logger, $path, $group)
-{
-    \assert(\DIRECTORY_SEPARATOR === \substr($path, -1));
-
+    $setup_filename = null;
     $tests = array();
-    $setup = array();
-    foreach (new \DirectoryIterator($path) as $file)
+    $valid = true;
+    foreach (new \DirectoryIterator($dirpath) as $file)
     {
-        $basename = $file->getBasename();
-        $pathname = $file->getPathname();
+        $filename = $file->getBasename();
+        $filepath = $file->getPathname();
 
-        // @todo Ensure that symbolic links aren't discovered
+        // @todo Is explicitly checking for a symbolic link necessary?
         // DirectoryIterator isFile() is only supposed to return true if it's a
         // regular file (i.e., neither a directory nor a link), but it's not
         // clear if isDir() behaves similarly
-        if ($file->isFile())
+        if ($file->isLink())
         {
-            if (0 === \strcasecmp($basename, 'setup.php'))
+            continue;
+        }
+        elseif ($file->isFile())
+        {
+            if (0 === \strcasecmp($filename, 'setup.php'))
             {
-                $setup[] = $pathname;
+                if ($setup_filename === null)
+                {
+                    $setup_filename = $filename;
+                    if (!namespace\_discover_directory_setup($state, $directory, $run_group, $filepath))
+                    {
+                        $valid = false;
+                    }
+                }
+                else
+                {
+                    $valid = false;
+                    $message = \sprintf(
+                        'Found multiple directory setup files: %s and %s',
+                        $setup_filename, $filename);
+                    $state->logger->log_error($dirpath, $message);
+                }
             }
-            elseif ((0 === \substr_compare($basename, 'test', 0, 4, true))
+            elseif ((0 === \substr_compare($filename, 'test', 0, 4, true))
                 && (0 === \strcasecmp($file->getExtension(), 'php')))
             {
-                $tests[$pathname] = namespace\TYPE_FILE;
+                $tests[$filepath] = true;
             }
         }
         elseif ($file->isDir())
         {
-            if (0 === \substr_compare($basename, 'test', 0, 4, true))
+            if (0 === \substr_compare($filename, 'test', 0, 4, true))
             {
                 // Ensure directory names end with a directory separator to
                 // ensure we can only match against full directory names
-                $pathname .= \DIRECTORY_SEPARATOR;
-                $tests[$pathname] = namespace\TYPE_DIRECTORY;
+                \assert(\DIRECTORY_SEPARATOR !== \substr($filepath, -1));
+                $filepath .= \DIRECTORY_SEPARATOR;
+                $tests[$filepath] = false;
             }
         }
     }
-
-    $valid = true;
-    if (\count($setup) > 1)
-    {
-        $message = 'Multiple conflicting fixtures found:';
-        foreach ($setup as $i => $s)
-        {
-            $message .= \sprintf("\n    %d) %s", $i + 1, $s);
-        }
-        $logger->log_error($path, $message);
-        $valid = false;
-    }
-    if (!$tests)
-    {
-        // @todo How should we handle a test directory with no tests?
-        $valid = false;
-    }
-
-    $fixture = null;
-    if ($valid)
-    {
-        if ($setup)
-        {
-            $fixture = namespace\_discover_directory_setup($state, $logger, $setup[0]);
-            $valid = (bool)$fixture;
-        }
-        else
-        {
-            $fixture = new _DirectoryFixture;
-        }
-    }
+    unset($setup_filename, $filename, $filepath);
 
     $result = null;
     if ($valid)
     {
-        \assert($fixture instanceof _DirectoryFixture);
-
-        $directory = new DirectoryTest;
-        $directory->name = $path;
-        $directory->group = $group;
-        $directory->setup = $fixture->setup;
-        $directory->teardown = $fixture->teardown;
-
-        if ($fixture->runs)
+        foreach ($tests as $name => $is_file)
         {
-            $group = namespace\_new_run_group($state->global, $group);
-        }
-        foreach ($tests as $name => $type)
-        {
-            if (namespace\TYPE_DIRECTORY === $type)
+            if ($is_file)
             {
-                $test = namespace\_discover_directory($state, $logger, $name, $group);
+                $test = namespace\_discover_file($state, $name, $directory->run_group_id);
             }
             else
             {
-                \assert(namespace\TYPE_FILE === $type);
-                $test = namespace\_discover_file($state, $logger, $name, $group);
+                $test = namespace\_discover_directory($state, $name, $directory->run_group_id);
             }
 
             if ($test)
             {
                 $directory->tests[$name] = $test;
             }
+            elseif ($test === false)
+            {
+                $valid = false;
+            }
         }
 
         if ($directory->tests)
         {
-            if ($fixture->runs)
-            {
-                $result = new TestRunGroup;
-                $result->path = $directory->name;
-                $result->tests = $directory;
-                foreach ($fixture->runs as $run_info)
-                {
-                    $run = new TestRun;
-                    $run->info = $run_info;
-                    $run->tests = $directory;
-                    $result->runs[$run_info->name] = $run;
-                }
-            }
-            else
-            {
-                $result = $directory;
-            }
+            $result = $run_group->runs ? $run_group : $directory;
         }
+        elseif ($valid)
+        {
+            $state->logger->log_error($dirpath, 'No tests were found in this directory');
+        }
+    }
+    else
+    {
+        $result = false;
     }
 
     return $result;
@@ -186,81 +170,69 @@ function _discover_directory(_DiscoveryState $state, BufferingLogger $logger, $p
 
 /**
  * @param string $filepath
- * @return ?_DirectoryFixture
+ * @return bool
  */
-function _discover_directory_setup(_DiscoveryState $state, BufferingLogger $logger, $filepath)
+function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $directory, TestRunGroup $run_group, $filepath)
 {
-    $iterator = namespace\_new_token_iterator($logger, $filepath);
+    $iterator = namespace\_new_token_iterator($state->logger, $filepath);
     if (!$iterator)
     {
-        return null;
+        return false;
     }
 
     $namespace = '';
-    $input = array(
-        'runs'=> array(),
-        'setup_directory' => array(),
-        'teardown_directory' => array(),
-    );
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
         if ($token instanceof _FunctionToken)
         {
             $function_name = "{$namespace}{$token->name}";
-            $id = "function {$function_name}";
+            // classes and functions can have identical names
+            $function_index = "function {$function_name}";
 
-            if (!isset($state->seen[$id]) && \function_exists($function_name))
+            if (!isset($state->seen[$function_index]) && \is_callable($function_name))
             {
                 $function = new \ReflectionFunction($function_name);
                 if ($token->line === $function->getStartLine() && $filepath === $function->getFileName())
                 {
-                    $state->seen[$id] = true;
-                    if (\preg_match('~^(setup|teardown)_?(run)?_?(.*)$~i', $token->name, $matches))
+                    $state->seen[$function_index] = true;
+
+                    $lexer = new StringLexer($token->name);
+                    if ($lexer->eat_string('setup'))
                     {
-                        if (0 === \strcasecmp('setup', $matches[1]))
+                        $lexer->eat_underscore();
+                        if ($lexer->eat_string('run'))
                         {
-                            if (0 === \strlen($matches[2]))
+                            $lexer->eat_underscore();
+                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
                             {
-                                $input['setup_directory'][] = $function;
-                            }
-                            else
-                            {
-                                $name = $matches[3];
-                                if (0 === \strlen($name))
-                                {
-                                    $message = "Unable to determine run name from setup run function '$function_name'";
-                                    $logger->log_error($filepath, $message);
-                                    $valid = false;
-                                }
-                                else
-                                {
-                                    $run = \strtolower($name);
-                                    $input['runs'][$run]['name'] = $name;
-                                    $input['runs'][$run]['setup'][] = $function;
-                                }
+                                $valid = false;
                             }
                         }
                         else
                         {
-                            if (0 === \strlen($matches[2]))
+                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $directory->setup))
                             {
-                                $input['teardown_directory'][] = $function;
+                                $valid = false;
                             }
-                            else
+                        }
+                    }
+                    elseif ($lexer->eat_string('teardown'))
+                    {
+                        $lexer->eat_underscore();
+                        if ($lexer->eat_string('run'))
+                        {
+                            $lexer->eat_underscore();
+                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
                             {
-                                $name = $matches[3];
-                                if (0 === \strlen($name))
-                                {
-                                    $message = "Unable to determine run name from teardown run function '$function_name'";
-                                    $logger->log_error($filepath, $message);
-                                    $valid = false;
-                                }
-                                else
-                                {
-                                    $run = \strtolower($name);
-                                    $input['runs'][$run]['teardown'][] = $function;
-                                }
+                               $valid = false;
+                            }
+                        }
+                        else
+                        {
+                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $directory->teardown))
+                            {
+                                $valid = false;
                             }
                         }
                     }
@@ -273,52 +245,46 @@ function _discover_directory_setup(_DiscoveryState $state, BufferingLogger $logg
         }
     }
 
-    // @fixme $valid is set above but never checked. Presumably this should happen here?
-    $output = array(
-        'runs'=> namespace\_validate_runs($state->global, $logger, $filepath, $input['runs']),
-        'setup_directory' => namespace\_validate_fixture($logger, $filepath, $input['setup_directory']),
-        'teardown_directory' => namespace\_validate_fixture($logger, $filepath, $input['teardown_directory']),
-    );
-
-    $fixture = null;
-    if ((false !== $output['runs'])
-        && (false !== $output['setup_directory'])
-        && (false !== $output['teardown_directory']))
+    if (!namespace\_validate_runs($state, $run_group, $filepath))
     {
-        $fixture = new _DirectoryFixture;
-        $fixture->setup = $output['setup_directory'];
-        $fixture->teardown = $output['teardown_directory'];
-        $fixture->runs = $output['runs'];
+        $valid = false;
     }
-    return $fixture;
+    return $valid;
 }
 
 
 /**
  * @param string $filepath
- * @param int $group
- * @return null|FileTest|TestRunGroup
+ * @param int $run_group_id
+ * @return null|false|FileTest|TestRunGroup Returns a test class if tests were
+ *                                          found. Returns null if no tests
+ *                                          were found. Returns false if no
+ *                                          tests were found and an error
+ *                                          occurred during discovery.
  */
-function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepath, $group)
+function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
 {
-    $result = null;
-    $iterator = namespace\_new_token_iterator($logger, $filepath);
+    $iterator = namespace\_new_token_iterator($state->logger, $filepath);
     if (!$iterator)
     {
-        return $result;
+        return false;
     }
 
+    $file = new FileTest;
+    $file->name = $filepath;
+    $file->run_group_id = $run_group_id;
+    unset($run_group_id);
+
+    $run_group = new TestRunGroup;
+    $run_group->path = $file->name;
+    $run_group->tests = $file;
+
     $namespace = '';
-    $input = array(
-        'runs' => array(),
-        'setup_file' => array(),
-        'teardown_file' => array(),
-        'setup_function' => array(),
-        'setup_function_name' => array(),
-        'teardown_function' => array(),
-        'teardown_function_name' => array(),
-        'tests' => array(),
-    );
+    // @todo Keep function fixtures in FileTest instead of FunctionTest
+    // These functions are the same for every test function, so there's no need
+    // to store these for each function test. However, they will need to be
+    // provided when executing each test
+    $tests = array();
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
@@ -326,25 +292,21 @@ function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepa
         {
             $class_name = "{$namespace}{$token->name}";
             // classes and functions can have the same name!
-            $test_name = "class {$class_name}";
+            $test_index = "class {$class_name}";
 
-            if (!isset($state->seen[$test_name]) && \class_exists($class_name))
+            if (!isset($state->seen[$test_index]) && \class_exists($class_name))
             {
                 $class = new \ReflectionClass($class_name);
                 if ($token->line === $class->getStartLine() && $filepath === $class->getFileName())
                 {
-                    $state->seen[$test_name] = true;
+                    $state->seen[$test_index] = true;
+
                     if (0 === \substr_compare($token->name, 'test', 0, 4, true)
                         // @bc 7.4 Check that attributes exist
                         || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
-                            && $class->getAttributes(namespace\TEST_ATTRIBUTE)))
+                            && $class->getAttributes(namespace\_TEST_ATTRIBUTE)))
                     {
-                        $info = new TestInfo();
-                        $info->type = namespace\TYPE_CLASS;
-                        $info->filename = $filepath;
-                        $info->namespace = $namespace;
-                        $info->name = $class_name;
-                        $input['tests'][$test_name] = $info;
+                        $tests[$test_index] = $class;
                     }
                 }
             }
@@ -353,83 +315,72 @@ function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepa
         {
             $function_name = "{$namespace}{$token->name}";
             // classes and functions can have the same name!
-            $test_name = "function {$function_name}";
+            $test_index = "function {$function_name}";
 
-            if (!isset($state->seen[$test_name]) && \function_exists($function_name))
+            if (!isset($state->seen[$test_index]) && \is_callable($function_name))
             {
                 $function = new \ReflectionFunction($function_name);
                 if ($token->line === $function->getStartLine() && $filepath === $function->getFileName())
                 {
-                    $state->seen[$test_name] = true;
+                    $state->seen[$test_index] = true;
 
-                    if (0 === \substr_compare($token->name, 'test', 0, 4, true)
+                    $lexer = new StringLexer($token->name);
+                    if ($lexer->eat_string('test')
                         // @bc 7.4 Check that attributes exist
                         || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
-                            && $function->getAttributes(namespace\TEST_ATTRIBUTE)))
+                            && $function->getAttributes(namespace\_TEST_ATTRIBUTE)))
                     {
-
-                        $info = new TestInfo();
-                        $info->type = namespace\TYPE_FUNCTION;
-                        $info->filename = $filepath;
-                        $info->namespace = $namespace;
-                        $info->name = $function_name;
-                        $input['tests'][$test_name] = $info;
+                        $tests[$test_index] = $function;
                     }
-                    elseif (\preg_match('~^(setup|teardown)_?(file|run)?_?(.*)$~i', $token->name, $matches))
+                    elseif ($lexer->eat_string('setup'))
                     {
-                        if (0 === \strcasecmp('setup', $matches[1]))
+                        $lexer->eat_underscore();
+                        if ($lexer->eat_string('file'))
                         {
-                            if (0 === \strlen($matches[2]))
+                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->setup_file))
                             {
-                                $input['setup_function'][] = $function;
-                                $input['setup_function_name'][] = $token->name;
+                                $valid = false;
                             }
-                            elseif (0 === \strcasecmp('file', $matches[2]))
+                        }
+                        elseif($lexer->eat_string('run'))
+                        {
+                            $lexer->eat_underscore();
+                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
                             {
-                                $input['setup_file'][] = $function;
-                            }
-                            else
-                            {
-                                $name = $matches[3];
-                                if (0 === \strlen($name))
-                                {
-                                    $message = "Unable to determine run name from setup run function '$function_name'";
-                                    $logger->log_error($filepath, $message);
-                                    $valid = false;
-                                }
-                                else
-                                {
-                                    $run = \strtolower($name);
-                                    $input['runs'][$run]['name'] = $name;
-                                    $input['runs'][$run]['setup'][] = $function;
-                                }
+                                $valid = false;
                             }
                         }
                         else
                         {
-                            if (0 == strlen($matches[2]))
+                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->setup_function))
                             {
-                                $input['teardown_function'][] = $function;
-                                $input['teardown_function_name'][] = $token->name;
+                                $valid = false;
                             }
-                            elseif (0 === \strcasecmp('file', $matches[2]))
+                        }
+                    }
+                    elseif ($lexer->eat_string('teardown'))
+                    {
+                        $lexer->eat_underscore();
+                        if ($lexer->eat_string('file'))
+                        {
+                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->teardown_file))
                             {
-                                $input['teardown_file'][] = $function;
+                                $valid = false;
                             }
-                            else
+                        }
+                        elseif ($lexer->eat_string('run'))
+                        {
+                            $lexer->eat_underscore();
+                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
                             {
-                                $name = $matches[3];
-                                if (0 === \strlen($name))
-                                {
-                                    $message = "Unable to determine run name from teardown run function '$function_name'";
-                                    $logger->log_error($filepath, $message);
-                                    $valid = false;
-                                }
-                                else
-                                {
-                                    $run = \strtolower($name);
-                                    $input['runs'][$run]['teardown'][] = $function;
-                                }
+                                $valid = false;
+                            }
+                        }
+                        else
+                        {
+                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->teardown_function))
+                            {
+                                $valid = false;
                             }
                         }
                     }
@@ -441,144 +392,52 @@ function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepa
             $namespace = $token->name;
         }
     }
+    unset($namespace, $class_name, $function_name, $test_index, $class, $function, $lexer);
 
-    $output = array(
-        'runs' => array(),
-        'setup_file' => null,
-        'teardown_file' => null,
-        'setup_function' => null,
-        'setup_function_name' => null,
-        'teardown_function' => null,
-        'teardown_function_name' => null,
-        'tests' => array(),
-    );
-
-    if ($input['setup_file'])
+    if (!namespace\_validate_runs($state, $run_group, $filepath))
     {
-        if (\count($input['setup_file']) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $input['setup_file']);
-            $valid = false;
-        }
-        else
-        {
-            $output['setup_file'] = $input['setup_file'][0];
-        }
-    }
-
-    if ($input['setup_function'])
-    {
-        if (\count($input['setup_function']) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $input['setup_function']);
-            $valid = false;
-        }
-        else
-        {
-            $output['setup_function'] = $input['setup_function'][0];
-            $output['setup_function_name'] = $input['setup_function_name'][0];
-        }
-    }
-
-    if ($input['teardown_file'])
-    {
-        if (\count($input['teardown_file']) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $input['teardown_file']);
-            $valid = false;
-        }
-        else
-        {
-            $output['teardown_file'] = $input['teardown_file'][0];
-        }
-    }
-
-    if ($input['teardown_function'])
-    {
-        if (\count($input['teardown_function']) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $input['teardown_function']);
-            $valid = false;
-        }
-        else
-        {
-            $output['teardown_function'] = $input['teardown_function'][0];
-            $output['teardown_function_name'] = $input['teardown_function_name'][0];
-        }
-    }
-
-    $output['runs'] = namespace\_validate_runs($state->global, $logger, $filepath, $input['runs']);
-
-    if ($input['tests'])
-    {
-        $output['tests'] = $input['tests'];
-    }
-    else
-    {
-        // @todo How should we handle a test file with no tests?
         $valid = false;
     }
 
-    if ($valid && false !== $output['runs'])
+    $result = null;
+    if ($valid)
     {
-        $file = new FileTest;
-        $file->name = $filepath;
-        $file->group = $group;
-        $file->setup = $output['setup_file'];
-        $file->teardown = $output['teardown_file'];
-
-        if ($output['runs'])
+        foreach ($tests as $test_index => $reflected_test)
         {
-            $group = namespace\_new_run_group($state->global, $group);
-        }
-
-        foreach ($output['tests'] as $name => $info)
-        {
-            if (namespace\TYPE_CLASS === $info->type)
+            if ($reflected_test instanceof \ReflectionClass)
             {
-                // @fixme Remove creating another ReflectionFunction
-                \assert(\class_exists($info->name));
-                $class = new \ReflectionClass($info->name);
-                $test = namespace\_discover_class($logger, $class, $group);
+                $test = namespace\_discover_class($state->logger, $reflected_test, $file->run_group_id);
+                if ($test)
+                {
+                    $file->tests[$test_index] = $test;
+                }
+                elseif ($test === false)
+                {
+                    $valid = false;
+                }
             }
             else
             {
-                \assert(namespace\TYPE_FUNCTION === $info->type);
-                $test = new FunctionTest();
-                $test->name = $info->name;
-                $test->group = $group;
-                // @fixme Remove creating another ReflectionFunction
-                $test->test = new \ReflectionFunction($info->name);
-                $test->setup = $output['setup_function'];
-                $test->teardown = $output['teardown_function'];
-            }
-
-            if ($test)
-            {
-                $file->tests[$name] = $test;
+                $test = new FunctionTest;
+                $test->name = $reflected_test->getName();
+                $test->run_group_id = $file->run_group_id;
+                $test->test = $reflected_test;
+                $file->tests[$test_index] = $test;
             }
         }
 
         if ($file->tests)
         {
-            if ($output['runs'])
-            {
-                $result = new TestRunGroup;
-                $result->path = $file->name;
-                $result->tests = $file;
-                foreach ($output['runs'] as $run_info)
-                {
-                    $run = new TestRun;
-                    $run->info = $run_info;
-                    $run->tests = $file;
-                    $result->runs[$run_info->name] = $run;
-                }
-            }
-            else
-            {
-                $result = $file;
-            }
+            $result = $run_group->runs ? $run_group : $file;
         }
+        elseif ($valid)
+        {
+            $state->logger->log_error($filepath, 'No tests were found in this file');
+        }
+    }
+    else
+    {
+        $result = false;
     }
 
     return $result;
@@ -586,217 +445,221 @@ function _discover_file(_DiscoveryState $state, BufferingLogger $logger, $filepa
 
 
 /**
- * @param \ReflectionClass<object> $class
- * @param int $group
- * @return ClassTest|false
+ * @param \ReflectionClass<object> $reflected_class
+ * @param int $run_group_id
+ * @return null|false|ClassTest Returns a ClassTest if tests were found.
+ *                              Returns null if no tests were found. Returns
+ *                              false if no tests were found but an error
+ *                              occurred during discovery.
  */
-function _discover_class(Logger $logger, \ReflectionClass $class, $group)
+function _discover_class(BufferingLogger $logger, \ReflectionClass $reflected_class, $run_group_id)
 {
-    $tests = array();
-    $setup_object = array();
-    $teardown_object = array();
-    $setup_function = null;
-    $teardown_function = null;
+    $class = new ClassTest;
+    $class->test = $reflected_class;
+    $class->run_group_id = $run_group_id;
+    unset($run_group_id, $reflected_class);
 
-    foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $rm)
+    // @todo Keep method fixtures in ClassTest instead of MethodTest
+    // These methods are the same for every test method, so there's no need to
+    // store these for each method test. However, they will need to be provided
+    // when executing each test
+    $valid = true;
+    foreach ($class->test->getMethods(\ReflectionMethod::IS_PUBLIC) as $method)
     {
-        if ($rm->isStatic())
+        if ($method->isStatic())
         {
             continue;
         }
 
-        $method = $rm->name;
-        if (0 === \substr_compare($method, 'test', 0, 4, true)
+        $lexer = new StringLexer($method->getName());
+
+        if ($lexer->eat_string('test')
             || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
-                && $rm->getAttributes(namespace\TEST_ATTRIBUTE)))
+                && $method->getAttributes(namespace\_TEST_ATTRIBUTE)))
         {
-            $tests[] = $rm;
+            $test = new MethodTest;
+            $test->name = "{$class->test->name}::{$method->name}";
+            $test->run_group_id = $class->run_group_id;
+            $test->test = $method;
+            $class->tests[$method->name] = $test;
         }
-        elseif (\preg_match('~^(setup|teardown)_?(object)?$~i', $method, $matches))
+        elseif ($lexer->eat_string('setup'))
         {
-            if (0 === \strcasecmp('setup', $matches[1]))
+            if ($lexer->eat_remainder(''))
             {
-                if (isset($matches[2]))
+                if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->setup_method))
                 {
-                    $setup_object[] = $rm;
-                }
-                else
-                {
-                    $setup_function = $rm;
+                    $valid = false;
                 }
             }
             else
             {
-                if (isset($matches[2]))
+                $lexer->eat_underscore();
+                if ($lexer->eat_remainder('object'))
                 {
-                    $teardown_object[] = $rm;
+                    if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->setup_object))
+                    {
+                        $valid = false;
+                    }
                 }
-                else
+            }
+        }
+        elseif ($lexer->eat_string('teardown'))
+        {
+            if ($lexer->eat_remainder(''))
+            {
+                if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->teardown_method))
                 {
-                    $teardown_function = $rm;
+                    $valid = false;
+                }
+            }
+            else
+            {
+                $lexer->eat_underscore();
+                if ($lexer->eat_remainder('object'))
+                {
+                    if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->teardown_object))
+                    {
+                        $valid = false;
+                    }
                 }
             }
         }
     }
 
-    $valid = true;
-    if (\count($setup_object) > 1)
-    {
-        namespace\_log_fixture_error($logger, $class->name, $setup_object);
-        $valid = false;
-    }
-    if (\count($teardown_object) > 1)
-    {
-        namespace\_log_fixture_error($logger, $class->name, $teardown_object);
-        $valid = false;
-    }
-    if (!$tests)
-    {
-        // @todo How should we handle a test class with no tests?
-        $valid = false;
-    }
-
-    $classtest = false;
+    $result = null;
     if ($valid)
     {
-        $classtest = new ClassTest();
-        //$classtest->name = $classname;
-        $classtest->group = $group;
-        $classtest->test = $class;
-        $classtest->setup = $setup_object ? $setup_object[0] : null;
-        $classtest->teardown = $teardown_object ? $teardown_object[0] : null;
-
-        foreach ($tests as $method)
+        if ($class->tests)
         {
-            $test = new MethodTest();
-            $test->name = "{$classtest->test->name}::{$method->name}";
-            $test->group = $group;
-            $test->test = $method;
-            $test->setup = $setup_function;
-            $test->teardown = $teardown_function;
-
-            $classtest->tests[$method->name] = $test;
-        }
-    }
-
-    return $classtest;
-}
-
-
-/**
- * @param BufferingLogger $logger
- * @param string $filepath
- * @param ?\ReflectionFunction[] $fixtures
- * @return false|null|\ReflectionFunction
- */
-function _validate_fixture(BufferingLogger $logger, $filepath, $fixtures)
-{
-    $result = null;
-    if ($fixtures)
-    {
-        if (\count($fixtures) > 1)
-        {
-            namespace\_log_fixture_error($logger, $filepath, $fixtures);
-            $result = false;
+            $result = $class;
         }
         else
         {
-            $result = $fixtures[0];
+            $logger->log_error($class->test->name, 'No tests were found in this class');
         }
     }
+    else
+    {
+        $result = false;
+    }
+
     return $result;
 }
 
 
 /**
- * @param BufferingLogger $logger
- * @param string $filepath
- * @param array{'name'?: string,
- *              'setup'?: \ReflectionFunction[],
- *              'teardown'?: \ReflectionFunction[]}[] $runs
- * @return false|RunInfo[]
+ * @template T of \ReflectionFunctionAbstract
+ * @param string $source
+ * @param T $new
+ * @param ?T $old
+ * @return bool
  */
-function _validate_runs(State $state, BufferingLogger $logger, $filepath, $runs)
+function _validate_fixture(BufferingLogger $logger, $source, $new, &$old)
 {
     $valid = true;
-    $result = array();
-    if ($runs)
+
+    if ($old)
     {
-        foreach ($runs as $run_info)
+        $valid = false;
+        // @todo Show lines numbers on which duplicate functions were defined
+        $message = \sprintf(
+            'Multiple fixtures found: %s and %s',
+            $old->getName(), $new->getName());
+        $logger->log_error($source, $message);
+    }
+    else
+    {
+        $old = $new;
+    }
+
+    return $valid;
+}
+
+
+/**
+ * @param string $filepath
+ * @param string $run_name
+ * @param bool $setup
+ * @return bool
+ */
+function _validate_run_fixture(BufferingLogger $logger, $filepath, TestRunGroup $run_group, \ReflectionFunction $function, $run_name, $setup)
+{
+    $valid = true;
+
+    if (0 === \strlen($run_name))
+    {
+        $valid = false;
+        $message = \sprintf(
+            'Unable to determine run name from run fixture function %s',
+            $function->getName());
+        $logger->log_error($filepath, $message);
+    }
+    else
+    {
+        // @todo only ascii characters should be lowercased for function names
+        $run_index = \strtolower($run_name);
+
+        if (!isset($run_group->runs[$run_index]))
         {
-            $teardown = null;
-            if (isset($run_info['teardown']))
-            {
-                $teardowns = $run_info['teardown'];
-                if (\count($teardowns) > 1)
-                {
-                    namespace\_log_fixture_error($logger, $filepath, $teardowns);
-                    $valid = false;
-                }
-                elseif (!isset($run_info['setup']))
-                {
-                    $message = \sprintf(
-                        "Teardown run function '%s' has no matching setup run function",
-                        $teardowns[0]
-                    );
-                    $logger->log_error($filepath, $message);
-                    $valid = false;
-                }
-                else
-                {
-                    $teardown = $teardowns[0];
-                }
+            $run = new TestRun;
+            $run->name = $run_name;
+            $run_group->runs[$run_index] = $run;
+        }
+        $run = $run_group->runs[$run_index];
+
+        if ($setup)
+        {
+            $valid = namespace\_validate_fixture($logger, $filepath, $function, $run->setup);
             }
-            if (isset($run_info['setup']))
+        else
+        {
+            $valid = namespace\_validate_fixture($logger, $filepath, $function, $run->teardown);
+        }
+    }
+
+    return $valid;
+}
+
+
+/**
+ * @param string $filepath
+ * @return bool
+ */
+function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepath)
+{
+    $valid = true;
+    if ($run_group->runs)
+    {
+        $run_group_id = \count($state->global->groups);
+        $groups = $state->global->groups[$run_group->tests->run_group_id];
+        $groups[] = $run_group_id;
+        $state->global->groups[$run_group_id] = $groups;
+        $run_group->tests->run_group_id = $run_group_id;
+
+        foreach ($run_group->runs as $run)
+        {
+            if (!$run->setup)
             {
-                \assert(isset($run_info['name']));
-                $setups = $run_info['setup'];
-                if (\count($setups) > 1)
-                {
-                    namespace\_log_fixture_error($logger, $filepath, $setups);
-                    $valid = false;
-                }
-                else
-                {
-                    $result[] = namespace\_new_run($state, $run_info['name'], $run_info['setup'][0], $teardown);
-                }
+                \assert(isset($run->teardown));
+                $valid = false;
+                $message = \sprintf(
+                    "Teardown run function '%s' has no matching setup run function",
+                    $run->teardown->getName()
+                );
+                $state->logger->log_error($filepath, $message);
+            }
+            else
+            {
+                $run->id = \count($state->global->runs) + 1;
+                $run->tests = $run_group->tests;
+
+                $state->global->runs[] = $run;
             }
         }
     }
 
-    return $valid ? $result : false;
-}
-
-
-/**
- * @param int $parent_group_id
- * @return int
- */
-function _new_run_group(State $state, $parent_group_id)
-{
-    $id = \count($state->groups);
-    $groups = $state->groups[$parent_group_id];
-    $groups[] = $id;
-    $state->groups[$id] = $groups;
-    return $id;
-}
-
-
-/**
- * @param string $name
- * @param \ReflectionFunction $setup
- * @param ?\ReflectionFunction $teardown
- * @return RunInfo
- */
-function _new_run(State $state, $name, $setup, $teardown)
-{
-    $run = new RunInfo;
-    $run->id = \count($state->runs) + 1;
-    $run->name = $name;
-    $run->setup = $setup;
-    $run->teardown = $teardown;
-    $state->runs[] = $run;
-    return $run;
+    return $valid;
 }
 
 
@@ -1188,17 +1051,102 @@ function _consume_statement(_TokenIterator $iterator)
 }
 
 
-/**
- * @param string $source
- * @param \ReflectionFunctionAbstract[] $fixtures
- * @return void
- */
-function _log_fixture_error(Logger $logger, $source, $fixtures)
+final class StringLexer extends struct
 {
-    $message = 'Multiple conflicting fixtures found:';
-    foreach ($fixtures as $i => $fixture)
+    /** @var string */
+    private $string;
+
+    /** @var int */
+    private $len;
+
+    /** @var int */
+    private $offset = 0;
+
+
+    /**
+     * @param string $string
+     */
+    public function __construct($string)
     {
-        $message .= \sprintf("\n    %d) %s", $i + 1, $fixture->name);
+        $this->string = $string;
+        $this->len = \strlen($string);
     }
-    $logger->log_error($source, $message);
+
+    /**
+     * @param string $string
+     * @return bool
+     */
+    public function eat_string($string)
+    {
+        $result = false;
+
+        // @bc 7.3 Explicitly handle offset >= string length for substr_compare
+        if ($this->offset >= $this->len)
+        {
+            $result = '' === $string;
+        }
+        else
+        {
+            $len = \strlen($string);
+            if (0 === \substr_compare($this->string, $string, $this->offset, $len, true))
+            {
+                $result = true;
+                $this->offset += $len;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return void
+     */
+    public function eat_underscore()
+    {
+        if (($this->offset < $this->len) && ('_' === $this->string[$this->offset]))
+        {
+            ++$this->offset;
+        }
+    }
+
+    /**
+     * @param string $string
+     * @return bool
+     */
+    public function eat_remainder($string)
+    {
+        // @bc 7.3 Explicitly handle offset >= string length for substr_compare
+        if ($this->offset >= $this->len)
+        {
+            $result = '' === $string;
+        }
+        else
+        {
+            // @bc 7.0 Calculate explicit length for substr_compare
+            // PHP up through 5.5 throws an error if null is passed for
+            // $length. PHP up through 7.0 doesn't throw an error, but silently
+            // converts $length to 0, giving an incorrect result.
+            $len = \max(\strlen($string), $this->len - $this->offset);
+            if (0 === \substr_compare($this->string, $string, $this->offset, $len, true))
+            {
+                $this->offset = $this->len;
+                $result = true;
+            }
+            else
+            {
+                $result = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_remainder()
+    {
+        // @bc 5.6 Ensure we always return a string from substr()
+        return (string)\substr($this->string, $this->offset);
+    }
 }

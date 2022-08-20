@@ -63,6 +63,23 @@ class test {
     }
 
 
+    public function setup_() {
+        echo __METHOD__;
+    }
+
+    public function teardown_() {
+        echo __METHOD__;
+    }
+
+    public function setup_object_() {
+        echo __METHOD__;
+    }
+
+    public function teardown_object_() {
+        echo __METHOD__;
+    }
+
+
     public function test_one(strangetest\Context $context) {
         $context->teardown(function () { echo "teardown 1"; });
         $context->teardown(function () { echo "teardown 2"; });

@@ -8,31 +8,13 @@
 namespace strangetest;
 
 
-const TYPE_DIRECTORY = 1;
-const TYPE_FILE      = 2;
-const TYPE_CLASS     = 3;
-const TYPE_FUNCTION  = 4;
-
-
-final class TestInfo extends struct {
-    /** @var int */
-    public $type;
-    /** @var string */
-    public $filename;
-    /** @var string */
-    public $namespace;
-    /** @var class-string|callable-string */
-    public $name;
-}
-
-
 final class TestRunGroup extends struct
 {
     /** @var string */
     public $path;
 
     /** @var TestRun[] */
-    public $runs;
+    public $runs = array();
 
     /** @var DirectoryTest|FileTest */
     public $tests;
@@ -41,27 +23,20 @@ final class TestRunGroup extends struct
 
 final class TestRun extends struct
 {
-    /** @var RunInfo */
-    public $info;
-
-    /** @var DirectoryTest|FileTest */
-    public $tests;
-}
-
-
-final class RunInfo extends struct
-{
     /** @var int */
     public $id;
 
     /** @var string */
     public $name;
 
-    /** @var \ReflectionFunction */
+    /** @var DirectoryTest|FileTest */
+    public $tests;
+
+    /** @var ?\ReflectionFunction */
     public $setup;
 
     /** @var ?\ReflectionFunction */
-    public $teardown = null;
+    public $teardown;
 }
 
 
@@ -71,7 +46,7 @@ final class DirectoryTest extends struct
     public $name;
 
     /** @var int */
-    public $group;
+    public $run_group_id;
 
     /** @var ?\ReflectionFunction */
     public $setup;
@@ -80,7 +55,7 @@ final class DirectoryTest extends struct
     public $teardown;
 
     /** @var array<TestRunGroup|DirectoryTest|FileTest> */
-    public $tests;
+    public $tests = array();
 }
 
 
@@ -90,16 +65,22 @@ final class FileTest extends struct
     public $name;
 
     /** @var int */
-    public $group;
+    public $run_group_id;
 
     /** @var ?\ReflectionFunction */
-    public $setup;
+    public $setup_file;
 
     /** @var ?\ReflectionFunction */
-    public $teardown;
+    public $teardown_file;
+
+    /** @var ?\ReflectionFunction */
+    public $setup_function;
+
+    /** @var ?\ReflectionFunction */
+    public $teardown_function;
 
     /** @var array<ClassTest|FunctionTest> */
-    public $tests;
+    public $tests = array();
 }
 
 
@@ -109,34 +90,32 @@ final class FunctionTest extends struct
     public $name;
 
     /** @var int */
-    public $group;
+    public $run_group_id;
 
     /** @var \ReflectionFunction */
     public $test;
-
-    /** @var ?\ReflectionFunction */
-    public $setup;
-
-    /** @var ?\ReflectionFunction */
-    public $teardown;
 }
 
 
 final class ClassTest extends struct
 {
-    /** @var class-string */
-    //public $name;
-
     /** @var int */
-    public $group;
+    public $run_group_id;
 
     /** @var \ReflectionClass<object> */
     public $test;
 
     /** @var ?\ReflectionMethod */
-    public $setup;
+    public $setup_object;
+
     /** @var ?\ReflectionMethod */
-    public $teardown;
+    public $teardown_object;
+
+    /** @var ?\ReflectionMethod */
+    public $setup_method;
+
+    /** @var ?\ReflectionMethod */
+    public $teardown_method;
 
     /** @var MethodTest[] */
     public $tests = array();
@@ -149,15 +128,10 @@ final class MethodTest extends struct
     public $name;
 
     /** @var int */
-    public $group;
+    public $run_group_id;
 
     /** @var \ReflectionMethod */
     public $test;
-
-    /** @var ?\ReflectionMethod */
-    public $setup;
-    /** @var ?\ReflectionMethod */
-    public $teardown;
 }
 
 

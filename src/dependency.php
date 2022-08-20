@@ -34,17 +34,17 @@ final class FunctionDependency extends struct
 final class RunDependency extends struct
 {
     /** @var int[] */
-    public $run;
+    public $run_ids;
 
     /** @var array<string, ?int[]> */
     public $prerequisites = array();
 
     /**
-     * @param int[] $run
+     * @param int[] $run_ids
      */
-    public function __construct(array $run)
+    public function __construct(array $run_ids)
     {
-        $this->run = $run;
+        $this->run_ids = $run_ids;
     }
 }
 
@@ -192,7 +192,7 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
             foreach ($dependency->runs as $run)
             {
                 namespace\_add_run_from_dependency(
-                    $state, $tests, $result, $dependency->test, $run->run, 1);
+                    $state, $tests, $result, $dependency->test, $run->run_ids, 1);
             }
         }
     }
@@ -200,7 +200,7 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
     {
         $result = new DirectoryTest;
         $result->name = $tests->name;
-        $result->group = $tests->group;
+        $result->run_group_id = $tests->run_group_id;
         $result->setup = $tests->setup;
         $result->teardown = $tests->teardown;
         $result->tests = array();
@@ -210,7 +210,7 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
             foreach ($dependency->runs as $run)
             {
                 namespace\_add_directory_test_from_dependency(
-                    $state, $tests, $result, $dependency->test, $run->run, 1);
+                    $state, $tests, $result, $dependency->test, $run->run_ids, 1);
             }
         }
     }
@@ -221,17 +221,17 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
 
 /**
  * @param FunctionTest|MethodTest $dependency
- * @param int[] $run
+ * @param int[] $run_ids
  * @param int $run_index
  * @return void
  */
 function _add_run_from_dependency(
     State $state, TestRunGroup $reference,
-    TestRunGroup $test, $dependency, array $run, $run_index)
+    TestRunGroup $test, $dependency, array $run_ids, $run_index)
 {
-    $run_id = $run[$run_index++] - 1;
-    $run_info = $state->runs[$run_id];
-    $run_name = $run_info->name;
+    $run_id = $run_ids[$run_index++] - 1;
+    $run = $state->runs[$run_id];
+    $run_name = $run->name;
     $source = $reference->runs[$run_name]->tests;
 
     if (isset($test->runs[$run_name]))
@@ -244,7 +244,7 @@ function _add_run_from_dependency(
         {
             $child = new DirectoryTest;
             $child->name = $source->name;
-            $child->group = $source->group;
+            $child->run_group_id = $source->run_group_id;
             $child->setup = $source->setup;
             $child->teardown = $source->teardown;
             $child->tests = array();
@@ -253,13 +253,18 @@ function _add_run_from_dependency(
         {
             $child = new FileTest;
             $child->name = $source->name;
-            $child->group = $source->group;
-            $child->setup = $source->setup;
-            $child->teardown = $source->teardown;
+            $child->run_group_id = $source->run_group_id;
+            $child->setup_file = $source->setup_file;
+            $child->teardown_file = $source->teardown_file;
+            $child->setup_function = $source->setup_function;
+            $child->teardown_function = $source->teardown_function;
         }
 
         $test_run = new TestRun;
-        $test_run->info = $run_info;
+        $test_run->id = $run->id;
+        $test_run->name = $run->name;
+        $test_run->setup = $run->setup;
+        $test_run->teardown = $run->teardown;
         $test_run->tests = $child;
 
         $test->runs[$run_name] = $test_run;
@@ -269,7 +274,7 @@ function _add_run_from_dependency(
     {
         \assert($source instanceof DirectoryTest);
         namespace\_add_directory_test_from_dependency(
-            $state, $source, $child, $dependency, $run, $run_index);
+            $state, $source, $child, $dependency, $run_ids, $run_index);
     }
     else
     {
@@ -281,13 +286,13 @@ function _add_run_from_dependency(
 
 /**
  * @param FunctionTest|MethodTest $dependency
- * @param int[] $run
+ * @param int[] $run_ids
  * @param int $run_index
  * @return void
  */
 function _add_directory_test_from_dependency(
     State $state, DirectoryTest $reference,
-    DirectoryTest $test, $dependency, array $run, $run_index)
+    DirectoryTest $test, $dependency, array $run_ids, $run_index)
 {
     \assert($reference->name === $test->name);
 
@@ -323,7 +328,7 @@ function _add_directory_test_from_dependency(
             $test->tests[] = $child;
         }
         namespace\_add_run_from_dependency(
-            $state, $source, $child, $dependency, $run, $run_index);
+            $state, $source, $child, $dependency, $run_ids, $run_index);
     }
     elseif ($source instanceof DirectoryTest)
     {
@@ -335,14 +340,14 @@ function _add_directory_test_from_dependency(
         {
             $child = new DirectoryTest;
             $child->name = $source->name;
-            $child->group = $source->group;
+            $child->run_group_id = $source->run_group_id;
             $child->setup = $source->setup;
             $child->teardown = $source->teardown;
             $child->tests = array();
             $test->tests[] = $child;
         }
         namespace\_add_directory_test_from_dependency(
-            $state, $source, $child, $dependency, $run, $run_index);
+            $state, $source, $child, $dependency, $run_ids, $run_index);
     }
     else
     {
@@ -354,9 +359,11 @@ function _add_directory_test_from_dependency(
         {
             $child = new FileTest;
             $child->name = $source->name;
-            $child->group = $source->group;
-            $child->setup = $source->setup;
-            $child->teardown = $source->teardown;
+            $child->run_group_id = $source->run_group_id;
+            $child->setup_file = $source->setup_file;
+            $child->teardown_file = $source->teardown_file;
+            $child->setup_function = $source->setup_function;
+            $child->teardown_function = $source->teardown_function;
             $test->tests[] = $child;
         }
         namespace\_add_file_test_from_dependency($state, $source, $child, $dependency);
@@ -390,10 +397,12 @@ function _add_file_test_from_dependency(
         else
         {
             $child = new ClassTest;
-            $child->group = $class->group;
+            $child->run_group_id = $class->run_group_id;
             $child->test = $class->test;
-            $child->setup = $class->setup;
-            $child->teardown = $class->teardown;
+            $child->setup_object = $class->setup_object;
+            $child->teardown_object = $class->teardown_object;
+            $child->setup_method = $class->setup_method;
+            $child->teardown_method = $class->teardown_method;
             $test->tests[] = $child;
         }
         $child->tests[] = $class->tests[$dependency->test->name];

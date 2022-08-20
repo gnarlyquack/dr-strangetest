@@ -157,12 +157,12 @@ function test_reports_error_for_multiple_directory_fixtures(
         array(
             strangetest\EVENT_ERROR,
             "{$path}setup.php",
-            "Multiple conflicting fixtures found:\n    1) setup_directory_multiple_fixtures\n    2) SetupDirectoryMultipleFixtures",
+            'Multiple fixtures found: setup_directory_multiple_fixtures and SetupDirectoryMultipleFixtures',
         ),
         array(
             strangetest\EVENT_ERROR,
             "{$path}setup.php",
-            "Multiple conflicting fixtures found:\n    1) teardown_directory_multiple_fixtures\n    2) TeardownDirectoryMultipleFixtures",
+            'Multiple fixtures found: teardown_directory_multiple_fixtures and TeardownDirectoryMultipleFixtures',
         ),
     );
     assert_discovered($logger, $path, $discovered, $log);
@@ -173,13 +173,8 @@ function test_reports_error_for_multiple_directory_fixtures(
 
 function assert_discovered($logger, $path, $discovered, $log)
 {
-    $state = new _DiscoveryState(new State);
-    $actual = strangetest\_discover_directory(
-        $state,
-        new strangetest\BufferingLogger($logger),
-        $path,
-        0
-    );
+    $state = new _DiscoveryState(new State, new strangetest\BufferingLogger($logger));
+    $actual = strangetest\_discover_directory($state, $path, 0);
 
     $discovered = make_test($discovered);
     strangetest\assert_equal($discovered, $actual);
