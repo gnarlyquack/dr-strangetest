@@ -158,6 +158,10 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
         {
             $state->logger->log_error($dirpath, 'No tests were found in this directory');
         }
+        else
+        {
+            $result = false;
+        }
     }
     else
     {
@@ -433,6 +437,10 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
         elseif ($valid)
         {
             $state->logger->log_error($filepath, 'No tests were found in this file');
+        }
+        else
+        {
+            $result = false;
         }
     }
     else

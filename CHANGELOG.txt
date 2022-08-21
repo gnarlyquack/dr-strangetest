@@ -1,10 +1,14 @@
 Unreleased
 ==========
-
 - Use reflection to validate discovery of test classes, methods, and functions
+
 - Support discovering test classes, methods, and functions with the
   strangetest\attribute\Test attribute
+
 - Static methods are no longer (erroneously) discovered as tests
+
+- Errors are now reported if test structures (directories, files, classes) have
+  no tests in them
 
 
 0.1.0 (2022-02-09)
