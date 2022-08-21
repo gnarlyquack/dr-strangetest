@@ -1,16 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Part \\$max \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
-			count: 2
-			path: src/assertions.php
-
-		-
-			message: "#^Part \\$min \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
-			count: 2
-			path: src/assertions.php
-
-		-
 			message: "#^Parameter \\#1 \\$object of function get_class expects object, mixed given\\.$#"
 			count: 2
 			path: src/diff.php

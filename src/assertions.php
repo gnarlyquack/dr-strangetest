@@ -52,7 +52,7 @@ function assert_equal($expected, $actual, $description = null)
     $message = namespace\format_failure_message(
         'Assertion "$expected == $actual" failed',
         $description,
-        namespace\diff($expected, $actual, '$expected', '$actual', true)
+        namespace\diff($expected, $actual, '$expected', '$actual', namespace\DIFF_EQUAL)
     );
     throw new Failure($message);
 }
@@ -120,9 +120,9 @@ function assert_greater($actual, $min, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        "Assertion \"\$actual > $min\" failed",
+        'Assertion "$actual > $min" failed',
         $description,
-        \sprintf('$actual = %s', namespace\format_variable($actual))
+        namespace\diff($actual, $min, '$actual', '$min', namespace\DIFF_GREATER)
     );
     throw new Failure($message);
 }
@@ -144,9 +144,9 @@ function assert_greater_or_equal($actual, $min, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        "Assertion \"\$actual >= $min\" failed",
+        'Assertion "$actual >= $min" failed',
         $description,
-        \sprintf('$actual = %s', namespace\format_variable($actual))
+        namespace\diff($actual, $min, '$actual', '$min', namespace\DIFF_GREATER_EQUAL)
     );
     throw new Failure($message);
 }
@@ -192,9 +192,9 @@ function assert_less($actual, $max, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        "Assertion \"\$actual < $max\" failed",
+        'Assertion "$actual < $max" failed',
         $description,
-        \sprintf('$actual = %s', namespace\format_variable($actual))
+        namespace\diff($actual, $max, '$actual', '$max', namespace\DIFF_LESS)
     );
     throw new Failure($message);
 }
@@ -216,9 +216,9 @@ function assert_less_or_equal($actual, $max, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        "Assertion \"\$actual <= $max\" failed",
+        'Assertion "$actual <= $max" failed',
         $description,
-        \sprintf('$actual = %s', namespace\format_variable($actual))
+        namespace\diff($actual, $max, '$actual', '$max', namespace\DIFF_LESS_EQUAL)
     );
     throw new Failure($message);
 }

@@ -6,6 +6,8 @@ Unreleased
   strangetest\attribute\Test attribute
 
 - Static methods are no longer (erroneously) discovered as tests
+- Support generating diffs for less-than and greater-than comparison operations
+  between arbitrary types
 
 - Errors are now reported if test structures (directories, files, classes) have
   no tests in them

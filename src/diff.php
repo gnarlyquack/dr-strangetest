@@ -5,7 +5,22 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+
 namespace strangetest;
+
+// @todo Are their implications for handling spaceship comparison?
+// The spaceship comparison operator was added in PHP 7.0
+//
+// For reference, PHP's handling of how different types of values are compared
+// is described at:
+// https://www.php.net/manual/en/language.operators.comparison.php
+const DIFF_IDENTICAL = 0;
+const DIFF_EQUAL = 1;
+const DIFF_GREATER = 4;
+const DIFF_GREATER_EQUAL = 5;
+const DIFF_LESS = 2;
+const DIFF_LESS_EQUAL = 3;
+
 
 /**
  * @api
@@ -13,17 +28,17 @@ namespace strangetest;
  * @param mixed $to
  * @param string $from_name
  * @param string $to_name
- * @param bool $loose
+ * @param int $cmp
  * @return string
  */
-function diff(&$from, &$to, $from_name, $to_name, $loose = false)
+function diff(&$from, &$to, $from_name, $to_name, $cmp = namespace\DIFF_IDENTICAL)
 {
     if ($from_name === $to_name)
     {
         throw new \Exception('Parameters $from_name and $to_name must be different');
     }
 
-    $state = new _DiffState($loose);
+    $state = new _DiffState($cmp);
 
     namespace\_diff_values(
         namespace\_process_value($state, $from_name, new _NullKey(), $from),
@@ -37,8 +52,8 @@ function diff(&$from, &$to, $from_name, $to_name, $loose = false)
 
 
 final class _DiffState extends struct {
-    /** @var bool */
-    public $loose;
+    /** @var int */
+    public $cmp;
 
     /** @var string[] */
     public $diff = array();
@@ -50,11 +65,11 @@ final class _DiffState extends struct {
     public $sentinels;
 
     /**
-     * @param bool $loose
+     * @param int $cmp
      */
-    public function __construct($loose)
+    public function __construct($cmp)
     {
-        $this->loose = $loose;
+        $this->cmp = $cmp;
         $this->sentinels = array('byref' => null, 'byval' => new \stdClass());
     }
 }
@@ -360,17 +375,17 @@ final class _Array extends struct implements _Value {
      * @param string $name
      * @param _Key $key
      * @param mixed[] $value
-     * @param bool $loose
+     * @param int $cmp
      * @param int $indent_level
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $loose, $indent_level, $cost, array $subvalues)
+    public function __construct($name, _Key $key, &$value, $cmp, $indent_level, $cost, array $subvalues)
     {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
-        $this->loose = $loose;
+        $this->loose = $cmp !== namespace\DIFF_IDENTICAL;
         $this->indent_level = $indent_level;
         $this->cost = $cost;
         $this->subvalues = $subvalues;
@@ -480,17 +495,17 @@ final class _Object extends struct implements _Value {
      * @param string $name
      * @param _Key $key
      * @param object $value
-     * @param bool $loose
+     * @param int $cmp
      * @param int $indent_level
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $loose, $indent_level, $cost, array $subvalues)
+    public function __construct($name, _Key $key, &$value, $cmp, $indent_level, $cost, array $subvalues)
     {
         $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
-        $this->loose = $loose;
+        $this->loose = $cmp !== namespace\DIFF_IDENTICAL;
         $this->indent_level = $indent_level;
         $this->cost = $cost;
         $this->subvalues = $subvalues;
@@ -1112,7 +1127,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
 
     if (\is_array($value))
     {
-        if ($state->loose)
+        if ($state->cmp !== namespace\DIFF_IDENTICAL)
         {
             \ksort($value);
         }
@@ -1126,7 +1141,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Array($name, $key, $value, $state->loose, $indent_level, $cost, $subvalues);
+        return new _Array($name, $key, $value, $state->cmp, $indent_level, $cost, $subvalues);
     }
 
     if (\is_object($value))
@@ -1143,7 +1158,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Object($name, $key, $value, $state->loose, $indent_level, $cost, $subvalues);
+        return new _Object($name, $key, $value, $state->cmp, $indent_level, $cost, $subvalues);
     }
 
     return new _Scalar($key, $value, $indent_level);
@@ -1155,7 +1170,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
  */
 function _diff_values(_Value $from, _Value $to, _DiffState $state)
 {
-    if (namespace\_lcs_values($from, $to, $state->loose, $lcs))
+    if (namespace\_lcs_values($from, $to, $state->cmp, $lcs))
     {
         namespace\_copy_value($state->diff, $from);
     }
@@ -1166,18 +1181,19 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
     }
     elseif (_ValueType::STRING === $from->type())
     {
-        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->loose);
+        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->cmp);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
     }
     else
     {
         namespace\_copy_string($state->diff, $from->end_value());
 
-        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->loose);
+        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->cmp);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
         if (($from->key() === $to->key())
-            && ($state->loose || (_ValueType::ARRAY_ === $from->type())))
+            && (($state->cmp !== namespace\DIFF_IDENTICAL)
+                || (_ValueType::ARRAY_ === $from->type())))
         {
             namespace\_copy_string($state->diff, $from->start_value());
         }
@@ -1191,13 +1207,13 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
 
 
 /**
- * @param bool $loose
+ * @param int $cmp
  * @param int $lcs
  * @return bool
  */
-function _lcs_values(_Value $from, _Value $to, $loose, &$lcs)
+function _lcs_values(_Value $from, _Value $to, $cmp, &$lcs)
 {
-    if (namespace\_compare_values($from, $to, $loose))
+    if (namespace\_compare_values($from, $to, $cmp))
     {
         $lcs = \max($from->cost(), $to->cost());
         return true;
@@ -1210,7 +1226,7 @@ function _lcs_values(_Value $from, _Value $to, $loose, &$lcs)
         {
             if (($from->cost() > 1) || ($to->cost() > 1))
             {
-                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $loose);
+                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $cmp);
                 $lcs = $edit->m[$edit->flen][$edit->tlen];
             }
         }
@@ -1222,7 +1238,7 @@ function _lcs_values(_Value $from, _Value $to, $loose, &$lcs)
             $lcs = 1;
             if (($from->cost() > 1) && ($to->cost() > 1))
             {
-                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $loose);
+                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $cmp);
                 $lcs += $edit->m[$edit->flen][$edit->tlen];
             }
         }
@@ -1234,10 +1250,10 @@ function _lcs_values(_Value $from, _Value $to, $loose, &$lcs)
 /**
  * @param _Value[] $from
  * @param _Value[] $to
- * @param bool $loose
+ * @param int $cmp
  * @return _Edit
  */
-function _lcs_array(array $from, array $to, $loose)
+function _lcs_array(array $from, array $to, $cmp)
 {
     $m = array();
     $flen = \count($from);
@@ -1255,7 +1271,7 @@ function _lcs_array(array $from, array $to, $loose)
 
             $fvalue = $from[$f-1];
             $tvalue = $to[$t-1];
-            if (namespace\_lcs_values($fvalue, $tvalue, $loose, $lcs))
+            if (namespace\_lcs_values($fvalue, $tvalue, $cmp, $lcs))
             {
                 $lcs += $m[$f-1][$t-1];
             }
@@ -1276,21 +1292,41 @@ function _lcs_array(array $from, array $to, $loose)
 
 
 /**
- * @param bool $loose
+ * @param int $cmp
  * @return bool
  */
-function _compare_values(_Value $from, _Value $to, $loose)
+function _compare_values(_Value $from, _Value $to, $cmp)
 {
     $result = $from->key() === $to->key();
     if ($result)
     {
-        if ($loose)
+        if ($cmp === namespace\DIFF_IDENTICAL)
+        {
+            $result = $from->value() === $to->value();
+        }
+        elseif ($cmp === namespace\DIFF_EQUAL)
         {
             $result = $from->value() == $to->value();
         }
+        elseif ($cmp === namespace\DIFF_GREATER)
+        {
+            $result = $from->value() > $to->value();
+        }
+        elseif ($cmp === namespace\DIFF_GREATER_EQUAL)
+        {
+            $result = $from->value() >= $to->value();
+        }
+        elseif ($cmp === namespace\DIFF_LESS)
+        {
+            $result = $from->value() < $to->value();
+        }
+        elseif ($cmp === namespace\DIFF_LESS_EQUAL)
+        {
+            $result = $from->value() <= $to->value();
+        }
         else
         {
-            $result = $from->value() === $to->value();
+            throw new InvalidCodePath(\sprintf("Unknown diff comparison: %s\n", namespace\format_variable($cmp)));
         }
     }
     return $result;
@@ -1312,7 +1348,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
     {
         if ($f > 0 && $t > 0)
         {
-            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->loose))
+            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->cmp))
             {
                 if ($f === 1 && $t === 1)
                 {
