@@ -55,6 +55,9 @@ final class _DiffState extends struct {
     /** @var int */
     public $cmp;
 
+    /** @var array<string, array<string, _Edit>> */
+    public $matrix_cache = array();
+
     /** @var string[] */
     public $diff = array();
 
@@ -351,7 +354,7 @@ interface _Value {
 
 final class _Array extends struct implements _Value {
     /** @var string */
-    private $name;
+    public $name;
 
     /** @var _Key */
     private $key;
@@ -471,7 +474,7 @@ final class _Array extends struct implements _Value {
 
 final class _Object extends struct implements _Value {
     /** @var string */
-    private $name;
+    public $name;
 
     /** @var _Key */
     private $key;
@@ -878,6 +881,9 @@ final class _Scalar extends struct implements _Value {
 
 
 final class _String extends struct implements _Value {
+    /** @var string */
+    public $name;
+
     /** @var _Key */
     private $key;
 
@@ -894,20 +900,23 @@ final class _String extends struct implements _Value {
     private $subvalues;
 
     /**
+     * @param string $name
      * @param _Key $key
      * @param string $value
      * @param int $indent_level
      * @param int $cost
      * @param _StringPart[] $subvalues
      */
-    public function __construct(_Key $key, &$value, $indent_level, $cost, array $subvalues)
+    public function __construct($name, _Key $key, &$value, $indent_level, $cost, array $subvalues)
     {
+        $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
         $this->cost = $cost;
         $this->subvalues = $subvalues;
     }
+
 
     /**
      * @return _ValueType::STRING
@@ -1122,7 +1131,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             ++$cost;
             $subvalues[] = new _StringPart($key, $line, $indent_level, $i);
         }
-        return new _String($key, $value, $indent_level, $cost, $subvalues);
+        return new _String($name, $key, $value, $indent_level, $cost, $subvalues);
     }
 
     if (\is_array($value))
@@ -1170,25 +1179,31 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
  */
 function _diff_values(_Value $from, _Value $to, _DiffState $state)
 {
-    if (namespace\_lcs_values($from, $to, $state->cmp, $lcs))
+    $cmp = namespace\_lcs_values($state, $from, $to, $state->cmp);
+    if ($cmp->matches)
     {
         namespace\_copy_value($state->diff, $from);
     }
-    elseif (0 === $lcs)
+    elseif (0 === $cmp->lcs)
     {
         namespace\_insert_value($state->diff, $to);
         namespace\_delete_value($state->diff, $from);
     }
-    elseif (_ValueType::STRING === $from->type())
+    elseif ($from instanceof _String)
     {
-        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->cmp);
+        \assert($to instanceof _String);
+        $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
     }
     else
     {
+        \assert(
+            (($from instanceof _Array) && ($to instanceof _Array))
+            || (($from instanceof _Object) && ($to instanceof _Object)));
+
         namespace\_copy_string($state->diff, $from->end_value());
 
-        $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $state->cmp);
+        $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
         namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
 
         if (($from->key() === $to->key())
@@ -1206,58 +1221,81 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
 }
 
 
+class _ComparisonResult
+{
+    /** @var bool */
+    public $matches;
+
+    /** @var int */
+    public $lcs;
+}
+
+
 /**
  * @param int $cmp
- * @param int $lcs
- * @return bool
+ * @return _ComparisonResult
  */
-function _lcs_values(_Value $from, _Value $to, $cmp, &$lcs)
+function _lcs_values(_DiffState $state, _Value $from, _Value $to, $cmp)
 {
+    $result = new _ComparisonResult;
     if (namespace\_compare_values($from, $to, $cmp))
     {
-        $lcs = \max($from->cost(), $to->cost());
-        return true;
+        $result->matches = true;
+        $result->lcs = \max($from->cost(), $to->cost());
+        return $result;
     }
 
     $lcs = 0;
     if ($from->type() === $to->type())
     {
-        if (_ValueType::STRING === $from->type())
+        if ($from instanceof _String)
         {
+            \assert($to instanceof _String);
             if (($from->cost() > 1) || ($to->cost() > 1))
             {
-                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $cmp);
+                $edit = namespace\_lcs_array($state, $from, $to, $cmp);
                 $lcs = $edit->m[$edit->flen][$edit->tlen];
             }
         }
         elseif (
-            (_ValueType::ARRAY_ === $from->type())
-            || ((_ValueType::OBJECT === $from->type())
+            (($from instanceof _Array) && ($to instanceof _Array)) ||
+            (($from instanceof _Object) && ($to instanceof _Object)
                 && (\get_class($from->value()) === \get_class($to->value()))))
         {
             $lcs = 1;
             if (($from->cost() > 1) && ($to->cost() > 1))
             {
-                $edit = namespace\_lcs_array($from->subvalues(), $to->subvalues(), $cmp);
+                $edit = namespace\_lcs_array($state, $from, $to, $cmp);
                 $lcs += $edit->m[$edit->flen][$edit->tlen];
             }
         }
     }
-    return false;
+
+    $result->matches = false;
+    $result->lcs = $lcs;
+    return $result;
 }
 
 
 /**
- * @param _Value[] $from
- * @param _Value[] $to
+ * @param _Array|_Object|_String $from
+ * @param _Array|_Object|_String $to
  * @param int $cmp
  * @return _Edit
  */
-function _lcs_array(array $from, array $to, $cmp)
+function _lcs_array(_DiffState $state, _Value $from, _Value $to, $cmp)
 {
+    if (isset($state->matrix_cache[$from->name][$to->name]))
+    {
+        $edit = $state->matrix_cache[$from->name][$to->name];
+        return $edit;
+    }
+
     $m = array();
-    $flen = \count($from);
-    $tlen = \count($to);
+    $fvalues = $from->subvalues();
+    $tvalues = $to->subvalues();
+    $flen = \count($fvalues);
+    $tlen = \count($tvalues);
 
     for ($f = 0; $f <= $flen; ++$f)
     {
@@ -1269,25 +1307,30 @@ function _lcs_array(array $from, array $to, $cmp)
                 continue;
             }
 
-            $fvalue = $from[$f-1];
-            $tvalue = $to[$t-1];
-            if (namespace\_lcs_values($fvalue, $tvalue, $cmp, $lcs))
+            $fvalue = $fvalues[$f-1];
+            $tvalue = $tvalues[$t-1];
+            $result = namespace\_lcs_values($state, $fvalue, $tvalue, $cmp);
+            if ($result->matches)
             {
-                $lcs += $m[$f-1][$t-1];
+                $result->lcs += $m[$f-1][$t-1];
             }
             else
             {
                 $max = \max($m[$f-1][$t], $m[$f][$t-1]);
-                if ($lcs)
+                if ($result->lcs)
                 {
-                    $max = \max($max, $m[$f-1][$t-1] + $lcs);
+                    $max = \max($max, $m[$f-1][$t-1] + $result->lcs);
                 }
-                $lcs = $max;
+                $result->lcs = $max;
             }
-            $m[$f][$t] = $lcs;
+            $m[$f][$t] = $result->lcs;
         }
     }
-    return new _Edit($flen, $tlen, $m);
+
+
+    $result = new _Edit($flen, $tlen, $m);
+    $state->matrix_cache[$from->name][$to->name] = $result;
+    return $result;
 }
 
 

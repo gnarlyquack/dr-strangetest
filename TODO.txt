@@ -54,12 +54,6 @@ Release
 
 -   Diffs and formatting
 
-    -   Cache LCS matrices so they don't need to be recalculated when
-        generating the diff
-
-    -   Split up formatting and diff (and perhaps additional "utility"
-        functions) into separate files
-
     -   Ensure that values formatted in whole by format_variable() match
         how values are formatted when individual elements are diffed
 
