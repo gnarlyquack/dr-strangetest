@@ -284,10 +284,6 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
     $run_group->tests = $file;
 
     $namespace = '';
-    // @todo Keep function fixtures in FileTest instead of FunctionTest
-    // These functions are the same for every test function, so there's no need
-    // to store these for each function test. However, they will need to be
-    // provided when executing each test
     $tests = array();
     $valid = true;
     while ($token = namespace\_next_token($iterator))
@@ -467,10 +463,6 @@ function _discover_class(BufferingLogger $logger, \ReflectionClass $reflected_cl
     $class->run_group_id = $run_group_id;
     unset($run_group_id, $reflected_class);
 
-    // @todo Keep method fixtures in ClassTest instead of MethodTest
-    // These methods are the same for every test method, so there's no need to
-    // store these for each method test. However, they will need to be provided
-    // when executing each test
     $valid = true;
     foreach ($class->test->getMethods(\ReflectionMethod::IS_PUBLIC) as $method)
     {
@@ -482,6 +474,7 @@ function _discover_class(BufferingLogger $logger, \ReflectionClass $reflected_cl
         $lexer = new StringLexer($method->getName());
 
         if ($lexer->eat_string('test')
+            // @bc 7.4 Check that attributes exist
             || (\version_compare(\PHP_VERSION, '8.0.0', '>=')
                 && $method->getAttributes(namespace\_TEST_ATTRIBUTE)))
         {
