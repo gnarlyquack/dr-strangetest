@@ -83,7 +83,7 @@ class TestDependencies {
 
             array(
                 strangetest\EVENT_FAIL, 'depends_params\\test_two (0)',
-                "Assertion \"\$expected === \$actual\" failed\n\n- \$expected\n+ \$actual\n\n- 2\n+ 1"
+                "Assertion \"\$actual === \$expected\" failed\n\n- \$actual\n+ \$expected\n\n- 2\n+ 1"
             ),
             array(
                 strangetest\EVENT_SKIP, 'depends_params\\test_three (0)',
@@ -91,7 +91,7 @@ class TestDependencies {
             ),
             array(
                 strangetest\EVENT_FAIL, 'depends_params\\test::test_two (0)',
-                "Assertion \"\$expected === \$actual\" failed\n\n- \$expected\n+ \$actual\n\n- 2\n+ 1"
+                "Assertion \"\$actual === \$expected\" failed\n\n- \$actual\n+ \$expected\n\n- 2\n+ 1"
             ),
             array(
                 strangetest\EVENT_SKIP, 'depends_params\\test::test_three (0)',
@@ -234,7 +234,7 @@ class TestDependencies {
             array(
                 strangetest\EVENT_FAIL,
                 'param_xdepend\\param\\test_three (0)',
-                "Assertion \"\$expected === \$actual\" failed\n\n- \$expected\n+ \$actual\n\n- 14\n+ 10",
+                "Assertion \"\$actual === \$expected\" failed\n\n- \$actual\n+ \$expected\n\n- 14\n+ 10",
             ),
             array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_four (0)', "This test depends on 'param_xdepend\\param\\test_three (0)', which did not pass"),
             array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_three (1)', null),

@@ -12,13 +12,13 @@ namespace strangetest;
 
 /**
  * @api
- * @param mixed $expected
  * @param mixed $actual
+ * @param mixed $expected
  * @param ?string $description
  * @return void
  * @throws Failure
  */
-function assert_different($expected, $actual, $description = null)
+function assert_different($actual, $expected, $description = null)
 {
     if ($expected !== $actual)
     {
@@ -26,9 +26,9 @@ function assert_different($expected, $actual, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        'Assertion "$expected !== $actual" failed',
+        'Assertion "$actual !== $expected" failed',
         $description,
-        \sprintf('$expected = $actual = %s', namespace\format_variable($actual))
+        \sprintf('$actual = $expected = %s', namespace\format_variable($actual))
     );
     throw new Failure($message);
 }
@@ -36,13 +36,13 @@ function assert_different($expected, $actual, $description = null)
 
 /**
  * @api
- * @param mixed $expected
  * @param mixed $actual
+ * @param mixed $expected
  * @param ?string $description
  * @return void
  * @throws Failure
  */
-function assert_equal($expected, $actual, $description = null)
+function assert_equal($actual, $expected, $description = null)
 {
     if ($expected == $actual)
     {
@@ -50,9 +50,9 @@ function assert_equal($expected, $actual, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        'Assertion "$expected == $actual" failed',
+        'Assertion "$actual == $expected" failed',
         $description,
-        namespace\diff($expected, $actual, '$expected', '$actual', namespace\DIFF_EQUAL)
+        namespace\diff($actual, $expected, '$actual', '$expected', namespace\DIFF_EQUAL)
     );
     throw new Failure($message);
 }
@@ -154,13 +154,13 @@ function assert_greater_or_equal($actual, $min, $description = null)
 
 /**
  * @api
- * @param mixed $expected
  * @param mixed $actual
+ * @param mixed $expected
  * @param ?string $description
  * @return void
  * @throws Failure
  */
-function assert_identical($expected, $actual, $description = null)
+function assert_identical($actual, $expected, $description = null)
 {
     if ($expected === $actual)
     {
@@ -168,9 +168,9 @@ function assert_identical($expected, $actual, $description = null)
     }
 
     $message = namespace\format_failure_message(
-        'Assertion "$expected === $actual" failed',
+        'Assertion "$actual === $expected" failed',
         $description,
-        namespace\diff($expected, $actual, '$expected', '$actual')
+        namespace\diff($actual, $expected, '$actual', '$expected')
     );
     throw new Failure($message);
 }
@@ -313,30 +313,30 @@ function assert_truthy($actual, $description = null)
 
 /**
  * @api
- * @param mixed $expected
  * @param mixed $actual
+ * @param mixed $expected
  * @param ?string $description
  * @return void
  * @throws Failure
  */
-function assert_unequal($expected, $actual, $description = null)
+function assert_unequal($actual, $expected, $description = null)
 {
     if ($expected != $actual)
     {
         return;
     }
 
-    // Since $expected and $actual may have differing (though equal) values,
+    // Since $actual and $expected may have differing (though equal) values,
     // let's display a strict diff so as not to omit any information
-    if (\is_array($expected) && \is_array($actual))
+    if (\is_array($actual) && \is_array($expected))
     {
-        namespace\ksort_recursive($expected);
         namespace\ksort_recursive($actual);
+        namespace\ksort_recursive($expected);
     }
     $message = namespace\format_failure_message(
-        'Assertion "$expected != $actual" failed',
+        'Assertion "$actual != $expected" failed',
         $description,
-        namespace\diff($expected, $actual, '$expected', '$actual')
+        namespace\diff($actual, $expected, '$actual', '$expected')
     );
     throw new Failure($message);
 }

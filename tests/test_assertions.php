@@ -59,10 +59,10 @@ MSG;
         }
 
         $expected = <<<'EXPECTED'
-Assertion "$expected === $actual" failed
+Assertion "$actual === $expected" failed
 
-- $expected
-+ $actual
+- $actual
++ $expected
 
   array(
 -     0 => 1,
@@ -94,11 +94,11 @@ EXPECTED;
         }
 
         $expected = <<<EXPECTED
-Assertion "\$expected === \$actual" failed
+Assertion "\$actual === \$expected" failed
 $message
 
-- \$expected
-+ \$actual
+- \$actual
++ \$expected
 
 - 1
 + '1'
@@ -230,10 +230,10 @@ class TestAssertEqual {
         );
 
         $expected = <<<'EXPECTED'
-Assertion "$expected == $actual" failed
+Assertion "$actual == $expected" failed
 
-- $expected
-+ $actual
+- $actual
++ $expected
 
   array(
       0 => 1,
@@ -252,9 +252,9 @@ Assertion "$expected == $actual" failed
           ),
           2 => array(),
 -         3 => 4,
--         4 => &$expected[4],
+-         4 => &$actual[4],
 +         3 => 5,
-+         4 => &$actual[4],
++         4 => &$expected[4],
       ),
   )
 EXPECTED;
@@ -273,11 +273,11 @@ EXPECTED;
         );
 
         $expected = <<<EXPECTED
-Assertion "\$expected == \$actual" failed
+Assertion "\$actual == \$expected" failed
 $message
 
-- \$expected
-+ \$actual
+- \$actual
++ \$expected
 
 - true
 + false
@@ -304,9 +304,9 @@ class TestAssertDifferent {
         );
 
         $expected = <<<'EXPECTED'
-Assertion "$expected !== $actual" failed
+Assertion "$actual !== $expected" failed
 
-$expected = $actual = 1
+$actual = $expected = 1
 EXPECTED;
 
         strangetest\assert_identical($expected, $actual->getMessage());
@@ -322,10 +322,10 @@ EXPECTED;
         );
 
         $expected = <<<'EXPECTED'
-Assertion "$expected !== $actual" failed
+Assertion "$actual !== $expected" failed
 I failed.
 
-$expected = $actual = true
+$actual = $expected = true
 EXPECTED;
 
         strangetest\assert_identical($expected, $actual->getMessage());
@@ -1090,10 +1090,10 @@ class TestAssertUnequal {
         );
 
         $expected = <<<'EXPECTED'
-Assertion "$expected != $actual" failed
+Assertion "$actual != $expected" failed
 
-- $expected
-+ $actual
+- $actual
++ $expected
 
   array(
       0 => 1,
@@ -1119,11 +1119,11 @@ EXPECTED;
         );
 
         $expected = <<<'EXPECTED'
-Assertion "$expected != $actual" failed
+Assertion "$actual != $expected" failed
 I failed.
 
-- $expected
-+ $actual
+- $actual
++ $expected
 
 - NULL
 + false

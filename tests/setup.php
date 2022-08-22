@@ -59,7 +59,7 @@ function assert_events($expected, strangetest\BasicLogger $logger) {
 
         $actual[$i] = array($type, $source, $reason);
     }
-    strangetest\assert_identical($expected, $actual);
+    strangetest\assert_identical($actual, $expected);
 }
 
 
