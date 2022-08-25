@@ -404,6 +404,11 @@ function _load_strangetest()
     {
         $files[] = 'is_iterable';
     }
+    // @bc 8.0 Include implementation for array_is_list()
+    if (!\function_exists('array_is_list'))
+    {
+        $files[] = 'array_is_list';
+    }
     foreach ($files as $file)
     {
         require \sprintf('%s%s%s.php', __DIR__, \DIRECTORY_SEPARATOR, $file);

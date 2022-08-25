@@ -15,7 +15,7 @@ use strangetest;
 function assert_diff(&$from, &$to, $expected) {
     $expected = "- from\n+ to\n\n" . $expected;
     $actual = strangetest\diff($from, $to, 'from', 'to', strangetest\DIFF_EQUAL);
-    strangetest\assert_identical($expected, $actual);
+    strangetest\assert_identical($actual, $expected);
 }
 
 
@@ -66,18 +66,18 @@ function test_diffs_unequal_arrays() {
 
     $expected = <<<'EXPECTED'
   array(
-      0 => '1 mouse',
-      1 => '2.0',
-      2 => array(
-          0 => '0',
-          1 => '3',
-          2 => '4',
+      '1 mouse',
+      '2.0',
+      array(
+          '0',
+          '3',
+          '4',
       ),
-      3 => false,
--     4 => '5',
--     5 => &from,
-+     4 => 4,
-+     5 => &to,
+      false,
+-     '5',
+-     &from,
++     4,
++     &to,
   )
 EXPECTED;
     namespace\assert_diff($from, $to, $expected);

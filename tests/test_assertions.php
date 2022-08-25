@@ -78,7 +78,7 @@ Assertion "$actual === $expected" failed
 +     0 => 1,
   )
 EXPECTED;
-        $this->assert_identical($expected, $actual->getMessage());
+        $this->assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -103,7 +103,7 @@ $message
 - 1
 + '1'
 EXPECTED;
-        $this->assert_identical($expected, $actual->getMessage());
+        $this->assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -236,30 +236,30 @@ Assertion "$actual == $expected" failed
 + $expected
 
   array(
-      0 => 1,
-      1 => array(
-          0 => 2,
-          1 => 3,
+      1,
+      array(
+          2,
+          3,
       ),
-      2 => array(),
--     3 => 4,
-+     3 => 5,
-      4 => array(
-          0 => 1,
-          1 => array(
-              0 => 2,
-              1 => 3,
+      array(),
+-     4,
++     5,
+      array(
+          1,
+          array(
+              2,
+              3,
           ),
-          2 => array(),
--         3 => 4,
--         4 => &$actual[4],
-+         3 => 5,
-+         4 => &$expected[4],
+          array(),
+-         4,
+-         &$actual[4],
++         5,
++         &$expected[4],
       ),
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -283,7 +283,7 @@ $message
 + false
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -309,7 +309,7 @@ Assertion "$actual !== $expected" failed
 $actual = $expected = 1
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -328,7 +328,7 @@ I failed.
 $actual = $expected = true
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -354,7 +354,7 @@ Assertion "$actual === false" failed
 $actual = NULL
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -373,7 +373,7 @@ I failed.
 $actual = '0'
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -399,7 +399,7 @@ Assertion "$actual == false" failed
 $actual = true
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -418,7 +418,7 @@ I failed.
 $actual = '0 cabbage'
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -448,7 +448,7 @@ Assertion "$actual > $min" failed
 + 0
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -471,7 +471,7 @@ I failed.
 + -5
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_equal_arrays()
@@ -490,18 +490,18 @@ Assertion "$actual > $min" failed
 + $min
 
   array(
--     0 => 1,
--     1 => '2',
--     2 => 3,
--     3 => 4,
-+     0 => 1,
-+     1 => 2,
-+     2 => 3,
-+     3 => '4',
+-     1,
+-     '2',
+-     3,
+-     4,
++     1,
++     2,
++     3,
++     '4',
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_less_than_array()
@@ -522,19 +522,19 @@ Assertion "$actual > $min" failed
 + $min
 
   array(
--     0 => 1,
--     1 => 3,
--     2 => 5,
--     3 => 2,
-+     0 => 1,
-+     1 => 500,
-+     2 => 5,
-+     3 => 10,
-      4 => 5,
+-     1,
+-     3,
+-     5,
+-     2,
++     1,
++     500,
++     5,
++     10,
+      5,
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_greater_than_array()
@@ -568,7 +568,7 @@ Assertion "$actual > $min" failed
 + stdClass {}
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -598,7 +598,7 @@ Assertion "$actual >= $min" failed
 + 0
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -621,7 +621,7 @@ I failed.
 + -5
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_equal_arrays()
@@ -647,17 +647,17 @@ Assertion "$actual >= $min" failed
 + $min
 
   array(
-      0 => 1,
--     1 => 3,
-+     1 => 500,
-      2 => 5,
--     3 => 2,
-+     3 => 10,
-      4 => 5,
+      1,
+-     3,
++     500,
+      5,
+-     2,
++     10,
+      5,
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_greater_than_array()
@@ -691,7 +691,7 @@ Assertion "$actual >= $min" failed
 + stdClass {}
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -721,7 +721,7 @@ Assertion "$actual < $max" failed
 + 0
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -744,7 +744,7 @@ I failed.
 + -6
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_equal_arrays()
@@ -763,14 +763,14 @@ Assertion "$actual < $max" failed
 + $max
 
   array(
--     0 => 1,
--     1 => '2',
--     2 => 3,
--     3 => 4,
-+     0 => 1,
-+     1 => 2,
-+     2 => 3,
-+     3 => '4',
+-     1,
+-     '2',
+-     3,
+-     4,
++     1,
++     2,
++     3,
++     '4',
   )
 EXPECTED;
 
@@ -795,19 +795,19 @@ Assertion "$actual < $max" failed
 + $max
 
   array(
--     0 => 1,
--     1 => 500,
--     2 => 5,
-+     0 => 1,
-+     1 => 3,
-+     2 => 5,
-      3 => 2,
--     4 => 5,
-+     4 => 2,
+-     1,
+-     500,
+-     5,
++     1,
++     3,
++     5,
+      2,
+-     5,
++     2,
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_less_than_array()
@@ -836,7 +836,7 @@ Assertion "$actual < $max" failed
 + array()
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_vs_object()
@@ -871,7 +871,7 @@ Assertion "$actual <= $max" failed
 + 0
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -894,7 +894,7 @@ I failed.
 + -6
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -921,17 +921,17 @@ Assertion "$actual <= $max" failed
 + $max
 
   array(
-      0 => 1,
--     1 => 500,
-+     1 => 3,
-      2 => 5,
-      3 => 2,
--     4 => 5,
-+     4 => 2,
+      1,
+-     500,
++     3,
+      5,
+      2,
+-     5,
++     2,
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_less_than_array()
@@ -960,7 +960,7 @@ Assertion "$actual <= $max" failed
 + array()
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_vs_object()
@@ -991,7 +991,7 @@ Assertion "$actual === true" failed
 $actual = 1
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -1010,7 +1010,7 @@ I failed.
 $actual = 'true'
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -1036,7 +1036,7 @@ Assertion "$actual == true" failed
 $actual = '0'
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -1055,7 +1055,7 @@ I failed.
 $actual = array()
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }
 
@@ -1096,17 +1096,17 @@ Assertion "$actual != $expected" failed
 + $expected
 
   array(
-      0 => 1,
-      1 => array(
-          0 => 2,
-          1 => 3,
+      1,
+      array(
+          2,
+          3,
       ),
-      2 => array(),
-      3 => 4,
+      array(),
+      4,
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
 
@@ -1129,6 +1129,6 @@ I failed.
 + false
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 }

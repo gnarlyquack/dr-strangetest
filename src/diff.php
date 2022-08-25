@@ -195,6 +195,11 @@ interface _Key {
      * @return string
      */
     public function line_end();
+
+    /**
+     * @return bool
+     */
+    public function in_list();
 }
 
 
@@ -207,9 +212,6 @@ final class _NullKey extends struct implements _Key {
         return null;
     }
 
-    /**
-     * @return ''
-     */
     public function format_key()
     {
         return '';
@@ -222,6 +224,11 @@ final class _NullKey extends struct implements _Key {
     {
         return '';
     }
+
+    public function in_list()
+    {
+        return false;
+    }
 }
 
 
@@ -229,12 +236,17 @@ final class _ArrayIndex extends struct implements _Key {
     /** @var int|string */
     private $index;
 
+    /** @var bool */
+    public $in_list;
+
     /**
      * @param int|string $index
+     * @param bool $in_list
      */
-    public function __construct($index)
+    public function __construct($index, &$in_list)
     {
         $this->index = $index;
+        $this->in_list =& $in_list;
     }
 
     /**
@@ -245,9 +257,6 @@ final class _ArrayIndex extends struct implements _Key {
         return $this->index;
     }
 
-    /**
-     * @return string
-     */
     public function format_key()
     {
         return \sprintf('%s => ', \var_export($this->index, true));
@@ -259,6 +268,11 @@ final class _ArrayIndex extends struct implements _Key {
     public function line_end()
     {
         return ',';
+    }
+
+    public function in_list()
+    {
+        return $this->in_list;
     }
 }
 
@@ -283,9 +297,6 @@ final class _PropertyName extends struct implements _Key {
         return $this->name;
     }
 
-    /**
-     * @return string
-     */
     public function format_key()
     {
         return "\${$this->name} = ";
@@ -297,6 +308,11 @@ final class _PropertyName extends struct implements _Key {
     public function line_end()
     {
         return ';';
+    }
+
+    public function in_list()
+    {
+        return false;
     }
 }
 
@@ -342,14 +358,16 @@ interface _Value {
 
     /**
      * @param _DiffPosition::* $pos
+     * @param bool $show_key
      * @return string
      */
-    public function format_value($pos);
+    public function format_value($pos, $show_key);
 
     /**
+     * @param bool $show_key
      * @return string
      */
-    public function start_value();
+    public function start_value($show_key);
 
     /**
      * @return string
@@ -380,8 +398,12 @@ final class _Array extends struct implements _Value {
     /** @var _Value[] */
     private $subvalues;
 
+    /** @var bool */
+    public $is_list;
+
     /**
      * @param string $name
+     * @param bool $is_list
      * @param _Key $key
      * @param mixed[] $value
      * @param int $cmp
@@ -389,9 +411,10 @@ final class _Array extends struct implements _Value {
      * @param int $cost
      * @param _Value[] $subvalues
      */
-    public function __construct($name, _Key $key, &$value, $cmp, $indent_level, $cost, array $subvalues)
+    public function __construct($name, $is_list, _Key $key, &$value, $cmp, $indent_level, $cost, array $subvalues)
     {
         $this->name = $name;
+        $this->is_list = $is_list;
         $this->key = $key;
         $this->value = &$value;
         $this->loose = $cmp !== namespace\DIFF_IDENTICAL;
@@ -440,14 +463,10 @@ final class _Array extends struct implements _Value {
         return $this->subvalues;
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $seen = array('byval' => array(), 'byref' => array());
@@ -456,13 +475,10 @@ final class _Array extends struct implements _Value {
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         return "{$indent}{$key}array(";
     }
 
@@ -560,14 +576,10 @@ final class _Object extends struct implements _Value {
         return $this->subvalues;
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $seen = array('byval' => array(), 'byref' => array());
@@ -576,13 +588,10 @@ final class _Object extends struct implements _Value {
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $class = namespace\format_object_start($this->value, $this->loose);
         return "{$indent}{$key}{$class}";
     }
@@ -666,24 +675,17 @@ final class _Reference extends struct implements _Value {
         throw new InvalidCodePath('References have no subvalues');
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $result = $this->name;
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
@@ -765,24 +767,17 @@ final class _Resource extends struct implements _Value {
         throw new InvalidCodePath('Resources have no subvalues');
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $result = namespace\format_resource($this->value);
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
@@ -864,24 +859,17 @@ final class _Scalar extends struct implements _Value {
         throw new InvalidCodePath('Scalars have no subvalues');
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $result = namespace\format_scalar($this->value);
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
@@ -974,24 +962,17 @@ final class _String extends struct implements _Value {
         return $this->subvalues;
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $result = namespace\format_scalar($this->value);
         return "{$indent}{$key}{$result}{$line_end}";
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
@@ -1073,14 +1054,10 @@ final class _StringPart extends struct implements _Value {
         throw new InvalidCodePath('String parts have no subvalues');
     }
 
-    /**
-     * @param _DiffPosition::* $pos
-     * @return string
-     */
-    public function format_value($pos)
+    public function format_value($pos, $show_key)
     {
         $indent = namespace\format_indent($this->indent_level);
-        $key = $this->key->format_key();
+        $key = $show_key ? $this->key->format_key() : '';
         $line_end = $this->key->line_end();
 
         $result = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $this->value);
@@ -1098,10 +1075,7 @@ final class _StringPart extends struct implements _Value {
         }
     }
 
-    /**
-     * @return string
-     */
-    public function start_value()
+    public function start_value($show_key)
     {
         throw new InvalidCodePath('Cannot start a non-container value');
     }
@@ -1156,17 +1130,28 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         {
             \ksort($value);
         }
+        $is_list = true;
+        $prev_index = -1;
         $cost = 1;
         $subvalues = array();
         foreach ($value as $k => &$v)
         {
+            if ($is_list && ($k !== ($prev_index + 1)))
+            {
+                $is_list = false;
+            }
+            else
+            {
+                $prev_index = $k;
+            }
+
             $subname = \sprintf('%s[%s]', $name, \var_export($k, true));
-            $subkey = new _ArrayIndex($k);
+            $subkey = new _ArrayIndex($k, $is_list);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
             $cost += $subvalue->cost();
             $subvalues[] = $subvalue;
         }
-        return new _Array($name, $key, $value, $state->cmp, $indent_level, $cost, $subvalues);
+        return new _Array($name, $is_list, $key, $value, $state->cmp, $indent_level, $cost, $subvalues);
     }
 
     if (\is_object($value))
@@ -1197,14 +1182,18 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
 {
     $cmp = namespace\_lcs_values($state, $from, $to, $state->cmp);
 
+    \assert(isset($from->key));
+    \assert(isset($to->key));
+    $show_key = !$from->key->in_list() || !$to->key->in_list();
+
     if ($cmp->matches === namespace\_DIFF_MATCH_FULL)
     {
-        namespace\_copy_value($state->diff, $from);
+        namespace\_copy_value($state->diff, $from, $show_key);
     }
     elseif (0 === $cmp->lcs)
     {
-        namespace\_insert_value($state->diff, $to);
-        namespace\_delete_value($state->diff, $from);
+        namespace\_insert_value($state->diff, $to, $show_key);
+        namespace\_delete_value($state->diff, $from, $show_key);
     }
     else
     {
@@ -1217,10 +1206,8 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
             // If values match, then only the key is different, so we don't
             // need to generate a difference between the two values.
             \assert(isset($from->indent_level));
-            \assert(isset($from->key));
             \assert(isset($from->loose));
             \assert(isset($from->name));
-            \assert(isset($to->key));
 
             $indent = namespace\format_indent($from->indent_level);
             $key = $from->key->format_key();
@@ -1257,25 +1244,25 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
         elseif ($from instanceof _String)
         {
             $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
-            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
+            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state, $show_key);
         }
         else
         {
             namespace\_copy_string($state->diff, $from->end_value());
 
             $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
-            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
+            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state, ($from instanceof _Object) || !$from->is_list || !$to->is_list);
 
             if (($from->key() === $to->key())
                 && (($state->cmp !== namespace\DIFF_IDENTICAL)
                     || (_ValueType::ARRAY_ === $from->type())))
             {
-                namespace\_copy_string($state->diff, $from->start_value());
+                namespace\_copy_string($state->diff, $from->start_value($show_key));
             }
             else
             {
-                namespace\_insert_string($state->diff, $to->start_value());
-                namespace\_delete_string($state->diff, $from->start_value());
+                namespace\_insert_string($state->diff, $to->start_value($show_key));
+                namespace\_delete_string($state->diff, $from->start_value($show_key));
             }
         }
     }
@@ -1407,6 +1394,7 @@ function _lcs_array(_DiffState $state, _Value $from, _Value $to, $cmp)
 function _compare_values(_Value $from, _Value $to, $cmp)
 {
     $result = namespace\_DIFF_MATCH_NONE;
+    $compare_keys = false;
 
     if ($cmp === namespace\DIFF_IDENTICAL)
     {
@@ -1427,6 +1415,7 @@ function _compare_values(_Value $from, _Value $to, $cmp)
         if ($from->value() > $to->value())
         {
             $result = namespace\_DIFF_MATCH_PARTIAL;
+            $compare_keys = true;
         }
     }
     elseif ($cmp === namespace\DIFF_GREATER_EQUAL)
@@ -1434,6 +1423,7 @@ function _compare_values(_Value $from, _Value $to, $cmp)
         if ($from->value() >= $to->value())
         {
             $result = namespace\_DIFF_MATCH_PARTIAL;
+            $compare_keys = true;
         }
     }
     elseif ($cmp === namespace\DIFF_LESS)
@@ -1441,6 +1431,7 @@ function _compare_values(_Value $from, _Value $to, $cmp)
         if ($from->value() < $to->value())
         {
             $result = namespace\_DIFF_MATCH_PARTIAL;
+            $compare_keys = true;
         }
     }
     elseif ($cmp === namespace\DIFF_LESS_EQUAL)
@@ -1448,6 +1439,7 @@ function _compare_values(_Value $from, _Value $to, $cmp)
         if ($from->value() <= $to->value())
         {
             $result = namespace\_DIFF_MATCH_PARTIAL;
+            $compare_keys = true;
         }
     }
     else
@@ -1457,7 +1449,14 @@ function _compare_values(_Value $from, _Value $to, $cmp)
 
     if ($result)
     {
-        if ($from->key() === $to->key())
+        if (!$compare_keys)
+        {
+            \assert(isset($from->key));
+            \assert(isset($to->key));
+            $compare_keys = !$from->key->in_list() || !$to->key->in_list;
+        }
+
+        if (!$compare_keys || ($from->key() === $to->key()))
         {
             $result = namespace\_DIFF_MATCH_FULL;
         }
@@ -1470,9 +1469,10 @@ function _compare_values(_Value $from, _Value $to, $cmp)
 /**
  * @param _Value[] $from
  * @param _Value[] $to
+ * @param bool $show_key
  * @return void
  */
-function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $state)
+function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $state, $show_key)
 {
     $m = $edit->m;
     $f = $edit->flen;
@@ -1499,7 +1499,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
 
                 --$f;
                 --$t;
-                namespace\_copy_value($state->diff, $from[$f], $pos);
+                namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
             }
             elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t])
             {
@@ -1523,7 +1523,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
                 }
 
                 --$t;
-                namespace\_insert_value($state->diff, $to[$t], $pos);
+                namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
             }
             else
             {
@@ -1541,7 +1541,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
                 }
 
                 --$f;
-                namespace\_delete_value($state->diff, $from[$f], $pos);
+                namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
             }
         }
         elseif ($f)
@@ -1560,7 +1560,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
             }
 
             --$f;
-            namespace\_delete_value($state->diff, $from[$f], $pos);
+            namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
         }
         else
         {
@@ -1578,7 +1578,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
             }
 
             --$t;
-            namespace\_insert_value($state->diff, $to[$t], $pos);
+            namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
         }
     }
 }
@@ -1587,34 +1587,37 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
 
 /**
  * @param string[] $diff
+ * @param bool $show_key
  * @param _DiffPosition::* $pos
  * @return void
  */
-function _copy_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE)
+function _copy_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
 {
-    namespace\_copy_string($diff, $value->format_value($pos));
+    namespace\_copy_string($diff, $value->format_value($pos, $show_key));
 }
 
 
 /**
  * @param string[] $diff
+ * @param bool $show_key
  * @param _DiffPosition::* $pos
  * @return void
  */
-function _insert_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE)
+function _insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
 {
-    namespace\_insert_string($diff, $value->format_value($pos));
+    namespace\_insert_string($diff, $value->format_value($pos, $show_key));
 }
 
 
 /**
  * @param string[] $diff
+ * @param bool $show_key
  * @param _DiffPosition::* $pos
  * @return void
  */
-function _delete_value(array &$diff, _Value $value, $pos = _DiffPosition::NONE)
+function _delete_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
 {
-    namespace\_delete_string($diff, $value->format_value($pos));
+    namespace\_delete_string($diff, $value->format_value($pos, $show_key));
 }
 
 

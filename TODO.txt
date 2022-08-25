@@ -57,12 +57,6 @@ Release
     -   Ensure that values formatted in whole by format_variable() match
         how values are formatted when individual elements are diffed
 
-    -   By default, don't treat keys in arrays that are lists as significant
-        when diffing arrays. This can give us cleaner diffs, since an insert or
-        deletion won't cause all the subsequent, reindexed elements to show as
-        having been changed. The user should be able to override this so that
-        keys are always considered significant.
-
     -   When formatting array and class "headers", it seems we could have a
         non-compact diff if both the keys of the header and initial values are
         different:
@@ -71,6 +65,12 @@ Release
             -   1 => 'foo',
             +   1 => 'bar',
         Is this something we want to try to "fix"?
+        NOTE: In run.php, set $namespace = '' for MethodTest, and in test.php,
+        comment out the second assertion for resolve_test_name, and then run
+        tests. The output for test
+        'TestDependencies::test_multiple_dependencies_can_be_declared_separately'
+        seems to provide another example of this happening
+
 
 -   Any event that is logged using a string as the reason (as opposed to using
     an exception as the reason) will not have a backtrace identifying the

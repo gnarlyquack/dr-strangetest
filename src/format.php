@@ -162,13 +162,15 @@ function format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding)
 
     if ($var)
     {
+        $show_key = !\array_is_list($var);
         foreach ($var as $key => &$value)
         {
             $key = \var_export($key, true);
+            $key_format = $show_key ? "$key => " : '';
             $out .= \sprintf(
-                "\n%s%s => %s,",
+                "\n%s%s%s,",
                 $indent,
-                $key,
+                $key_format,
                 namespace\_format_recursive_variable(
                     $value,
                     \sprintf('%s[%s]', $name, $key),

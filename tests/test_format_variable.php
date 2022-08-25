@@ -66,20 +66,20 @@ array(
     'one' => 'one',
     'two' => 2,
     0 => array(
-        0 => 'one',
-        1 => 2,
-        2 => 'three',
-        3 => NULL,
+        'one',
+        2,
+        'three',
+        NULL,
     ),
     'three' => array(
-        0 => 1,
-        1 => 2,
-        2 => 3,
+        1,
+        2,
+        3,
     ),
 )
 EXPECTED;
         $actual = strangetest\format_variable($variable);
-        strangetest\assert_identical($expected, $actual);
+        strangetest\assert_identical($actual, $expected);
     }
 
 
@@ -162,17 +162,17 @@ EXPECTED;
 array(
     'one' => 'one',
     'two' => array(
-        0 => 'one',
-        1 => 2,
-        2 => 'three',
-        3 => NULL,
+        'one',
+        2,
+        'three',
+        NULL,
     ),
     'three' => 'one',
     'four' => array(
-        0 => 'one',
-        1 => 2,
-        2 => 'three',
-        3 => NULL,
+        'one',
+        2,
+        'three',
+        NULL,
     ),
     'five' => &array['one'],
     'six' => &array['two'],
