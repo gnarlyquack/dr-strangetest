@@ -43,6 +43,12 @@ function format_failure_message($assertion, $description = null, $detail = null)
 
 
 
+// @todo Add "loose" as a parameter to format_variable?
+// format_variable assumed $loose is false, meaning there is no way to format
+// an object using this function that contains an object id
+// @todo Add an option to return formatted variable as an array instead of string?
+// This would allow further manipulation of the format output (e.g., see
+// split_line_first) without having to manually pull the string apart again
 /**
  * Format a string representation of a variable.
  *

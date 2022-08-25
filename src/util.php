@@ -97,3 +97,23 @@ function ksort_recursive(&$array, &$seen = array())
         namespace\ksort_recursive($value, $seen);
     }
 }
+
+
+/**
+ * @param string $string
+ * @return string[]
+ */
+function split_line_first($string)
+{
+    $result = false;
+    $pos = \strpos($string, "\n");
+    \assert($pos > 0);
+
+    $first = \substr($string, 0, $pos);
+    // @bc 5.6 substr with $pos >= string length returns false
+    $rest = (string)\substr($string, $pos + 1);
+    \assert(\strlen($rest) > 0);
+
+    $result = array($first, $rest);
+    return $result;
+}

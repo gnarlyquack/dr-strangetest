@@ -22,7 +22,13 @@ const DIFF_LESS = 2;
 const DIFF_LESS_EQUAL = 3;
 
 
+const _DIFF_MATCH_NONE    = 0; // Elements have neither matching values nor matching keys
+const _DIFF_MATCH_PARTIAL = 1; // Elements have matching values but nonmatching keys
+const _DIFF_MATCH_FULL    = 2; // Elements have both matching values and keys
+
+
 /**
+ * @todo Consider changing diff parameters from $from, $to to $actual, $expected
  * @api
  * @param mixed $from
  * @param mixed $to
@@ -259,7 +265,7 @@ final class _ArrayIndex extends struct implements _Key {
 
 final class _PropertyName extends struct implements _Key {
     /** @var int|string */
-    private $name;
+    public $name;
 
     /**
      * @param int|string $name
@@ -357,16 +363,16 @@ final class _Array extends struct implements _Value {
     public $name;
 
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var mixed[] */
     private $value;
 
     /** @var bool */
-    private $loose;
+    public $loose;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /** @var int */
     private $cost;
@@ -477,16 +483,16 @@ final class _Object extends struct implements _Value {
     public $name;
 
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var object */
     private $value;
 
     /** @var bool */
-    private $loose;
+    public $loose;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /** @var int */
     private $cost;
@@ -595,16 +601,16 @@ final class _Object extends struct implements _Value {
 
 final class _Reference extends struct implements _Value {
     /** @var string */
-    private $name;
+    public $name;
 
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var mixed */
     private $value;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /**
      * @param string $name
@@ -693,22 +699,27 @@ final class _Reference extends struct implements _Value {
 
 
 final class _Resource extends struct implements _Value {
+    /** @var string */
+    public $name;
+
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var resource */
     private $value;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /**
+     * @param string $name
      * @param _Key $key
      * @param resource $value
      * @param int $indent_level
      */
-    public function __construct(_Key $key, &$value, $indent_level)
+    public function __construct($name, _Key $key, &$value, $indent_level)
     {
+        $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
@@ -787,22 +798,27 @@ final class _Resource extends struct implements _Value {
 
 
 final class _Scalar extends struct implements _Value {
+    /** @var string */
+    public $name;
+
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var bool|float|int|null */
     private $value;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /**
+     * @param string $name
      * @param _Key $key
      * @param bool|float|int|null $value
      * @param int $indent_level
      */
-    public function __construct(_Key $key, &$value, $indent_level)
+    public function __construct($name, _Key $key, &$value, $indent_level)
     {
+        $this->name = $name;
         $this->key = $key;
         $this->value = &$value;
         $this->indent_level = $indent_level;
@@ -885,13 +901,13 @@ final class _String extends struct implements _Value {
     public $name;
 
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var string */
     private $value;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /** @var int */
     private $cost;
@@ -992,13 +1008,13 @@ final class _String extends struct implements _Value {
 
 final class _StringPart extends struct implements _Value {
     /** @var _Key */
-    private $key;
+    public $key;
 
     /** @var string */
     private $value;
 
     /** @var int */
-    private $indent_level;
+    public $indent_level;
 
     /** @var int */
     private $index;
@@ -1118,7 +1134,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
 
     if (\is_resource($value))
     {
-        return new _Resource($key, $value, $indent_level);
+        return new _Resource($name, $key, $value, $indent_level);
     }
 
     if (\is_string($value))
@@ -1170,7 +1186,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         return new _Object($name, $key, $value, $state->cmp, $indent_level, $cost, $subvalues);
     }
 
-    return new _Scalar($key, $value, $indent_level);
+    return new _Scalar($name, $key, $value, $indent_level);
 }
 
 
@@ -1180,7 +1196,8 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
 function _diff_values(_Value $from, _Value $to, _DiffState $state)
 {
     $cmp = namespace\_lcs_values($state, $from, $to, $state->cmp);
-    if ($cmp->matches)
+
+    if ($cmp->matches === namespace\_DIFF_MATCH_FULL)
     {
         namespace\_copy_value($state->diff, $from);
     }
@@ -1189,33 +1206,77 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
         namespace\_insert_value($state->diff, $to);
         namespace\_delete_value($state->diff, $from);
     }
-    elseif ($from instanceof _String)
-    {
-        \assert($to instanceof _String);
-        $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
-        namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
-    }
     else
     {
         \assert(
-            (($from instanceof _Array) && ($to instanceof _Array))
-            || (($from instanceof _Object) && ($to instanceof _Object)));
+            (($from instanceof _String) || ($from instanceof _Array) || ($from instanceof _Object))
+            && \is_a($to, \get_class($from)));
 
-        namespace\_copy_string($state->diff, $from->end_value());
-
-        $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
-        namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
-
-        if (($from->key() === $to->key())
-            && (($state->cmp !== namespace\DIFF_IDENTICAL)
-                || (_ValueType::ARRAY_ === $from->type())))
+        if ($cmp->matches === namespace\_DIFF_MATCH_PARTIAL)
         {
-            namespace\_copy_string($state->diff, $from->start_value());
+            // If values match, then only the key is different, so we don't
+            // need to generate a difference between the two values.
+            \assert(isset($from->indent_level));
+            \assert(isset($from->key));
+            \assert(isset($from->loose));
+            \assert(isset($from->name));
+            \assert(isset($to->key));
+
+            $indent = namespace\format_indent($from->indent_level);
+            $key = $from->key->format_key();
+            $line_end = $from->key->line_end();
+
+            $value = $from->value();
+            $to_value = $to->value();
+
+            $seen = array('byval' => array(), 'byref' => array());
+            $sentinels = array('byref' => null, 'byval' => new \stdClass());
+            if ($from->type() === _ValueType::ARRAY_)
+            {
+                $string = namespace\format_array($value, $from->name, $from->loose, $seen, $sentinels, $indent);
+            }
+            elseif ($from->type() === _ValueType::OBJECT)
+            {
+                $string = namespace\format_object($value, $from->name, $from->loose, $seen, $sentinels, $indent);
+            }
+            else
+            {
+                \assert($from->type() !== _ValueType::STRING_PART);
+                $string = namespace\format_scalar($value);
+            }
+
+            list($start, $rest) = namespace\split_line_first($string);
+            $from_start = $indent . $from->key->format_key() . $start;
+            $to_start = $indent . $to->key->format_key() . $start;
+            $rest .= $from->key->line_end();
+
+            namespace\_copy_string($state->diff, $rest);
+            namespace\_insert_string($state->diff, $to_start);
+            namespace\_delete_string($state->diff, $from_start);
+        }
+        elseif ($from instanceof _String)
+        {
+            $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
+            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
         }
         else
         {
-            namespace\_insert_string($state->diff, $to->start_value());
-            namespace\_delete_string($state->diff, $from->start_value());
+            namespace\_copy_string($state->diff, $from->end_value());
+
+            $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
+            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state);
+
+            if (($from->key() === $to->key())
+                && (($state->cmp !== namespace\DIFF_IDENTICAL)
+                    || (_ValueType::ARRAY_ === $from->type())))
+            {
+                namespace\_copy_string($state->diff, $from->start_value());
+            }
+            else
+            {
+                namespace\_insert_string($state->diff, $to->start_value());
+                namespace\_delete_string($state->diff, $from->start_value());
+            }
         }
     }
 }
@@ -1223,7 +1284,7 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
 
 class _ComparisonResult
 {
-    /** @var bool */
+    /** @var int */
     public $matches;
 
     /** @var int */
@@ -1237,10 +1298,12 @@ class _ComparisonResult
  */
 function _lcs_values(_DiffState $state, _Value $from, _Value $to, $cmp)
 {
-    $result = new _ComparisonResult;
-    if (namespace\_compare_values($from, $to, $cmp))
+    $match = namespace\_compare_values($from, $to, $cmp);
+
+    if ($match === namespace\_DIFF_MATCH_FULL)
     {
-        $result->matches = true;
+        $result = new _ComparisonResult;
+        $result->matches = $match;
         $result->lcs = \max($from->cost(), $to->cost());
         return $result;
     }
@@ -1248,6 +1311,8 @@ function _lcs_values(_DiffState $state, _Value $from, _Value $to, $cmp)
     $lcs = 0;
     if ($from->type() === $to->type())
     {
+        // if $from and $to are the same type and are composite types, then
+        // generate a diff for their subtypes
         if ($from instanceof _String)
         {
             \assert($to instanceof _String);
@@ -1271,7 +1336,8 @@ function _lcs_values(_DiffState $state, _Value $from, _Value $to, $cmp)
         }
     }
 
-    $result->matches = false;
+    $result = new _ComparisonResult;
+    $result->matches = $match;
     $result->lcs = $lcs;
     return $result;
 }
@@ -1310,7 +1376,7 @@ function _lcs_array(_DiffState $state, _Value $from, _Value $to, $cmp)
             $fvalue = $fvalues[$f-1];
             $tvalue = $tvalues[$t-1];
             $result = namespace\_lcs_values($state, $fvalue, $tvalue, $cmp);
-            if ($result->matches)
+            if ($result->matches === namespace\_DIFF_MATCH_FULL)
             {
                 $result->lcs += $m[$f-1][$t-1];
             }
@@ -1336,42 +1402,67 @@ function _lcs_array(_DiffState $state, _Value $from, _Value $to, $cmp)
 
 /**
  * @param int $cmp
- * @return bool
+ * @return int
  */
 function _compare_values(_Value $from, _Value $to, $cmp)
 {
-    $result = $from->key() === $to->key();
-    if ($result)
+    $result = namespace\_DIFF_MATCH_NONE;
+
+    if ($cmp === namespace\DIFF_IDENTICAL)
     {
-        if ($cmp === namespace\DIFF_IDENTICAL)
+        if ($from->value() === $to->value())
         {
-            $result = $from->value() === $to->value();
-        }
-        elseif ($cmp === namespace\DIFF_EQUAL)
-        {
-            $result = $from->value() == $to->value();
-        }
-        elseif ($cmp === namespace\DIFF_GREATER)
-        {
-            $result = $from->value() > $to->value();
-        }
-        elseif ($cmp === namespace\DIFF_GREATER_EQUAL)
-        {
-            $result = $from->value() >= $to->value();
-        }
-        elseif ($cmp === namespace\DIFF_LESS)
-        {
-            $result = $from->value() < $to->value();
-        }
-        elseif ($cmp === namespace\DIFF_LESS_EQUAL)
-        {
-            $result = $from->value() <= $to->value();
-        }
-        else
-        {
-            throw new InvalidCodePath(\sprintf("Unknown diff comparison: %s\n", namespace\format_variable($cmp)));
+            $result = namespace\_DIFF_MATCH_PARTIAL;
         }
     }
+    elseif ($cmp === namespace\DIFF_EQUAL)
+    {
+        if ($from->value() == $to->value())
+        {
+            $result = namespace\_DIFF_MATCH_PARTIAL;
+        }
+    }
+    elseif ($cmp === namespace\DIFF_GREATER)
+    {
+        if ($from->value() > $to->value())
+        {
+            $result = namespace\_DIFF_MATCH_PARTIAL;
+        }
+    }
+    elseif ($cmp === namespace\DIFF_GREATER_EQUAL)
+    {
+        if ($from->value() >= $to->value())
+        {
+            $result = namespace\_DIFF_MATCH_PARTIAL;
+        }
+    }
+    elseif ($cmp === namespace\DIFF_LESS)
+    {
+        if ($from->value() < $to->value())
+        {
+            $result = namespace\_DIFF_MATCH_PARTIAL;
+        }
+    }
+    elseif ($cmp === namespace\DIFF_LESS_EQUAL)
+    {
+        if ($from->value() <= $to->value())
+        {
+            $result = namespace\_DIFF_MATCH_PARTIAL;
+        }
+    }
+    else
+    {
+        throw new InvalidCodePath(\sprintf("Unknown diff comparison: %s\n", namespace\format_variable($cmp)));
+    }
+
+    if ($result)
+    {
+        if ($from->key() === $to->key())
+        {
+            $result = namespace\_DIFF_MATCH_FULL;
+        }
+    }
+
     return $result;
 }
 
@@ -1391,7 +1482,7 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
     {
         if ($f > 0 && $t > 0)
         {
-            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->cmp))
+            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->cmp) === namespace\_DIFF_MATCH_FULL)
             {
                 if ($f === 1 && $t === 1)
                 {

@@ -774,7 +774,7 @@ Assertion "$actual < $max" failed
   )
 EXPECTED;
 
-        strangetest\assert_identical($expected, $actual->getMessage());
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_array_greater_than_array()

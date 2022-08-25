@@ -72,9 +72,6 @@ Release
             +   1 => 'bar',
         Is this something we want to try to "fix"?
 
-    -   If the only difference between two composite values is their key, then
-        we only need to diff the first line of each and can then copy the rest
-
 -   Any event that is logged using a string as the reason (as opposed to using
     an exception as the reason) will not have a backtrace identifying the
     source file name and line number. To the extent that it's possible, we
