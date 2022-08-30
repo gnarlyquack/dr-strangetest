@@ -199,10 +199,10 @@ function test_diffs_different_arrays() {
 +     ),
       'An old pond
   A frog jumps in
-+ The water\'s sound',
 -     stdClass #{$oid1} {
-+     stdClass #{$oid2} {
 -         \$one = 1;
++ The water\'s sound',
++     stdClass #{$oid2} {
           \$two = 2;
 -         \$three = 3;
 +         \$three = 4;
@@ -262,12 +262,13 @@ function test_diffs_different_objects() {
       \$one = 1;
 -     \$two = 'foo';
 -     \$three = array();
-+     \$two = 'bar';
 -     \$four = array(
++     \$two = 'bar';
 +     \$three = array(
           2,
           3,
       );
+-     \$five = 'An old pond
 +     \$four = 2;
 +     \$five = array(
 +         1 => 3,
@@ -277,13 +278,12 @@ function test_diffs_different_objects() {
 +             6,
 +         ),
 +     );
--     \$five = 'An old pond
 +     \$six = 'An old pond
   A frog jumps in
-+ The water\'s sound';
 -     \$six = stdClass #{$oid3} {
-+     \$seven = stdClass #{$oid4} {
 -         \$one = 1;
++ The water\'s sound';
++     \$seven = stdClass #{$oid4} {
           \$two = 2;
 -         \$three = 3;
 +         \$three = 4;

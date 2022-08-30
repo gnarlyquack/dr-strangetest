@@ -441,11 +441,11 @@ class TestAssertGreater {
         $expected = <<<'EXPECTED'
 Assertion "$actual > $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
-- 0
-+ 0
+> 0
+< 0
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -464,11 +464,11 @@ EXPECTED;
 Assertion "$actual > $min" failed
 I failed.
 
-- $actual
-+ $min
+ > $actual
++< $min
 
-- -6
-+ -5
+> -6
+< -5
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -486,18 +486,18 @@ EXPECTED;
         $expected = <<<'EXPECTED'
 Assertion "$actual > $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
   array(
--     1,
--     '2',
--     3,
--     4,
-+     1,
-+     2,
-+     3,
-+     '4',
+>     1,
+>     '2',
+>     3,
+>     4,
+<     1,
+<     2,
+<     3,
+<     '4',
   )
 EXPECTED;
 
@@ -509,27 +509,49 @@ EXPECTED;
         $actual = strangetest\assert_throws(
             'strangetest\\Failure',
             function() {
-                strangetest\assert_greater(
-                    array(1,   3, 5,  2, 5),
-                    array(1, 500, 5, 10, 2));
+                /*
+                $array1 = array(1,   3,  2, 5, 5);
+                $array2 = array(1, 500, 10, 5, 2);
+                 */
+                $array1 = array(1, array(  3,  2), 5, 5);
+                $array2 = array(1, array(500, 10), 5, 2);
+                strangetest\assert_greater($array1, $array2);
             }
         );
 
+        /*
         $expected = <<<'EXPECTED'
 Assertion "$actual > $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
   array(
--     1,
--     3,
--     5,
--     2,
-+     1,
-+     500,
-+     5,
-+     10,
+>     1,
+>     3,
+<     1,
+<     500,
+      2,
+      5,
+      5,
+  )
+EXPECTED;
+         */
+        $expected = <<<'EXPECTED'
+Assertion "$actual > $min" failed
+
+ > $actual
++< $min
+
+  array(
+>     1,
+<     1,
+      array(
+>         3,
+<         500,
+          2,
+      ),
+      5,
       5,
   )
 EXPECTED;
@@ -542,6 +564,44 @@ EXPECTED;
         strangetest\assert_greater(
             array(1, 500, 5,  2, 5),
             array(1,   3, 5, 10, 2));
+    }
+
+    public function test_longer_array_greater_than_shorter_array()
+    {
+        $array1 = array(1, 2, 3, 4);
+        $array2 = array(      3, 4);
+        strangetest\assert_greater($array1, $array2);
+    }
+
+    public function test_shorter_array_less_than_longer_array()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                strangetest\assert_greater(
+                    array(      3, 4),
+                    array(1, 2, 3, 4)
+                );
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual > $min" failed
+
+ > $actual
++< $min
+
+  array(
++     1,
++     2,
+>     3,
+>     4,
+<     3,
+<     4,
+  )
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
     }
 
     public function test_object_vs_array()
@@ -561,11 +621,46 @@ EXPECTED;
         $expected = <<<'EXPECTED'
 Assertion "$actual > $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
-- array()
-+ stdClass {}
+> array()
+< stdClass {}
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
+
+    function test_string_greater_than_string()
+    {
+        $string1 = "One\nTwo\nThree";
+        $string2 = "How\nAre\nYou?";
+        strangetest\assert_greater($string1, $string2);
+    }
+
+
+    function test_string_less_than_string()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                $string1 = "One\nTwo\nThree";
+                $string2 = "Two";
+                strangetest\assert_greater($string1, $string2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual > $min" failed
+
+ > $actual
++< $min
+
+> 'One
+< 'Two
+  Two
+  Three'
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -591,11 +686,11 @@ class TestAssertGreaterOrEqual {
         $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
-- -1
-+ 0
+> -1
+< 0
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -614,11 +709,11 @@ EXPECTED;
 Assertion "$actual >= $min" failed
 I failed.
 
-- $actual
-+ $min
+ > $actual
++< $min
 
-- -6
-+ -5
+> -6
+< -5
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -635,24 +730,23 @@ EXPECTED;
             'strangetest\\Failure',
             function() {
                 strangetest\assert_greater_or_equal(
-                    array(1,   3, 5,  2, 5),
-                    array(1, 500, 5, 10, 2));
+                    array(1,   3,  2, 5, 5),
+                    array(1, 500, 10, 5, 2));
                     }
         );
 
         $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
   array(
       1,
--     3,
-+     500,
+>     3,
+<     500,
+      2,
       5,
--     2,
-+     10,
       5,
   )
 EXPECTED;
@@ -666,6 +760,43 @@ EXPECTED;
             array(1, 500, 5,  2, 5),
             array(1,   3, 5, 10, 2));
     }
+
+    public function test_longer_array_greater_than_shorter_array()
+    {
+        $array1 = array(1, 2, 3, 4);
+        $array2 = array(      3, 4);
+        strangetest\assert_greater_or_equal($array1, $array2);
+    }
+
+    public function test_shorter_array_less_than_longer_array()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                strangetest\assert_greater_or_equal(
+                    array(      3, 4),
+                    array(1, 2, 3, 4)
+                );
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual >= $min" failed
+
+ > $actual
++< $min
+
+  array(
++     1,
++     2,
+      3,
+      4,
+  )
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
 
     public function test_object_vs_array()
     {
@@ -684,11 +815,46 @@ EXPECTED;
         $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
-- $actual
-+ $min
+ > $actual
++< $min
 
-- array()
-+ stdClass {}
+> array()
+< stdClass {}
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
+
+    function test_string_greater_than_string()
+    {
+        $string1 = "One\nTwo\nThree";
+        $string2 = "How\nAre\nYou?";
+        strangetest\assert_greater_or_equal($string1, $string2);
+    }
+
+
+    function test_string_less_than_string()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                $string1 = "One\nTwo\nThree";
+                $string2 = "Two";
+                strangetest\assert_greater_or_equal($string1, $string2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual >= $min" failed
+
+ > $actual
++< $min
+
+> 'One
+< 'Two
+  Two
+  Three'
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -714,11 +880,11 @@ class TestAssertLess {
         $expected = <<<'EXPECTED'
 Assertion "$actual < $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
-- 0
-+ 0
+< 0
+> 0
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -737,11 +903,11 @@ EXPECTED;
 Assertion "$actual < $max" failed
 I failed.
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
-- -5
-+ -6
+< -5
+> -6
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -759,18 +925,18 @@ EXPECTED;
         $expected = <<<'EXPECTED'
 Assertion "$actual < $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
   array(
--     1,
--     '2',
--     3,
--     4,
-+     1,
-+     2,
-+     3,
-+     '4',
+<     1,
+<     '2',
+<     3,
+<     4,
+>     1,
+>     2,
+>     3,
+>     '4',
   )
 EXPECTED;
 
@@ -783,27 +949,25 @@ EXPECTED;
             'strangetest\\Failure',
             function() {
                 strangetest\assert_less(
-                    array(1, 500, 5,  2, 5),
-                    array(1,   3, 5, 10, 2));
+                    array(1, 500, 5, 5,  2),
+                    array(1,   3, 2, 5, 10));
             }
         );
 
         $expected = <<<'EXPECTED'
 Assertion "$actual < $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
   array(
--     1,
--     500,
--     5,
-+     1,
-+     3,
-+     5,
+<     1,
+<     500,
+>     1,
+>     3,
+      5,
+      5,
       2,
--     5,
-+     2,
   )
 EXPECTED;
 
@@ -815,6 +979,44 @@ EXPECTED;
         strangetest\assert_less(
             array(1,   3, 5,  2, 5),
             array(1, 500, 5, 10, 2));
+    }
+
+    public function test_longer_array_greater_than_shorter_array()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                $array1 = array(1, 2, 3, 4);
+                $array2 = array(      3, 4);
+                strangetest\assert_less($array1, $array2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual < $max" failed
+
+-< $actual
+ > $max
+
+  array(
+-     1,
+-     2,
+<     3,
+<     4,
+>     3,
+>     4,
+  )
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
+    public function test_shorter_array_less_than_longer_array()
+    {
+        strangetest\assert_less(
+            array(      3, 4),
+            array(1, 2, 3, 4)
+        );
     }
 
     public function test_object_vs_array()
@@ -829,11 +1031,11 @@ EXPECTED;
         $expected = <<<'EXPECTED'
 Assertion "$actual < $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
-- stdClass {}
-+ array()
+< stdClass {}
+> array()
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -842,6 +1044,41 @@ EXPECTED;
     public function test_array_vs_object()
     {
         strangetest\assert_less(array(), new \stdClass);
+    }
+
+
+    function test_string_greater_than_string()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                $string1 = "One\nTwo\nThree";
+                $string2 = "How\nAre\nYou?";
+                strangetest\assert_less($string1, $string2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual < $max" failed
+
+-< $actual
+ > $max
+
+< 'One
+> 'How
+  Two
+  Three'
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
+
+    function test_string_less_than_string()
+    {
+        $string1 = "One\nTwo\nThree";
+        $string2 = "Two";
+        strangetest\assert_less($string1, $string2);
     }
 }
 
@@ -864,11 +1101,11 @@ class TestAssertLessOrEqual {
         $expected = <<<'EXPECTED'
 Assertion "$actual <= $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
-- 1
-+ 0
+< 1
+> 0
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -887,11 +1124,11 @@ EXPECTED;
 Assertion "$actual <= $max" failed
 I failed.
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
-- -5
-+ -6
+< -5
+> -6
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -903,6 +1140,7 @@ EXPECTED;
         strangetest\assert_less_or_equal(array(1, '2', 3, 4), array(1, 2, 3, '4'));
     }
 
+
     public function test_array_greater_than_array()
     {
         $actual = strangetest\assert_throws(
@@ -910,24 +1148,23 @@ EXPECTED;
             function() {
                 strangetest\assert_less_or_equal(
                     array(1, 500, 5,  2, 5),
-                    array(1,   3, 5, 10, 2));
+                    array(1,   3, 2, 10, 5));
             }
         );
 
         $expected = <<<'EXPECTED'
 Assertion "$actual <= $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
   array(
       1,
--     500,
-+     3,
+<     500,
+>     3,
       5,
       2,
--     5,
-+     2,
+      5,
   )
 EXPECTED;
 
@@ -939,6 +1176,43 @@ EXPECTED;
         strangetest\assert_less_or_equal(
             array(1,   3, 5,  2, 5),
             array(1, 500, 5, 10, 2));
+    }
+
+
+    public function test_longer_array_greater_than_shorter_array()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                $array1 = array(1, 2, 3, 4);
+                $array2 = array(      3, 4);
+                strangetest\assert_less_or_equal($array1, $array2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual <= $max" failed
+
+-< $actual
+ > $max
+
+  array(
+-     1,
+-     2,
+      3,
+      4,
+  )
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
+    public function test_shorter_array_less_than_longer_array()
+    {
+        strangetest\assert_less_or_equal(
+            array(      3, 4),
+            array(1, 2, 3, 4)
+        );
     }
 
     public function test_object_vs_array()
@@ -953,11 +1227,11 @@ EXPECTED;
         $expected = <<<'EXPECTED'
 Assertion "$actual <= $max" failed
 
-- $actual
-+ $max
+-< $actual
+ > $max
 
-- stdClass {}
-+ array()
+< stdClass {}
+> array()
 EXPECTED;
 
         strangetest\assert_identical($actual->getMessage(), $expected);
@@ -966,6 +1240,41 @@ EXPECTED;
     public function test_array_vs_object()
     {
         strangetest\assert_less_or_equal(array(), new \stdClass);
+    }
+
+
+    function test_string_greater_than_string()
+    {
+        $actual = strangetest\assert_throws(
+            'strangetest\\Failure',
+            function() {
+                $string1 = "One\nTwo\nThree";
+                $string2 = "How\nAre\nYou?";
+                strangetest\assert_less_or_equal($string1, $string2);
+            }
+        );
+
+        $expected = <<<'EXPECTED'
+Assertion "$actual <= $max" failed
+
+-< $actual
+ > $max
+
+< 'One
+> 'How
+  Two
+  Three'
+EXPECTED;
+
+        strangetest\assert_identical($actual->getMessage(), $expected);
+    }
+
+
+    function test_string_less_than_string()
+    {
+        $string1 = "One\nTwo\nThree";
+        $string2 = "Two";
+        strangetest\assert_less_or_equal($string1, $string2);
     }
 }
 

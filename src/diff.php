@@ -16,10 +16,10 @@ namespace strangetest;
 // https://www.php.net/manual/en/language.operators.comparison.php
 const DIFF_IDENTICAL = 0;
 const DIFF_EQUAL = 1;
-const DIFF_GREATER = 4;
-const DIFF_GREATER_EQUAL = 5;
-const DIFF_LESS = 2;
-const DIFF_LESS_EQUAL = 3;
+const DIFF_GREATER = 2;
+const DIFF_GREATER_EQUAL = 3;
+const DIFF_LESS = 4;
+const DIFF_LESS_EQUAL = 5;
 
 
 const _DIFF_MATCH_NONE    = 0; // Elements have neither matching values nor matching keys
@@ -52,8 +52,8 @@ function diff(&$from, &$to, $from_name, $to_name, $cmp = namespace\DIFF_IDENTICA
         $state
     );
 
-    $diff = \implode("\n", \array_reverse($state->diff));
-    return "- $from_name\n+ $to_name\n\n$diff";
+    $result = namespace\_format_diff($state->diff, $from_name, $to_name, $cmp);
+    return $result;
 }
 
 
@@ -64,7 +64,7 @@ final class _DiffState extends struct {
     /** @var array<string, array<string, _Edit>> */
     public $matrix_cache = array();
 
-    /** @var string[] */
+    /** @var _DiffOperation[] */
     public $diff = array();
 
     /** @var array{'byval': mixed[], 'byref': mixed[]} */
@@ -84,8 +84,23 @@ final class _DiffState extends struct {
 }
 
 
+interface _DiffOperation
+{
+    const COPY = 1;
+    const INSERT = 2;
+    const DELETE = 3;
 
-final class _DiffCopy extends struct {
+    /**
+     * @return _DiffOperation::*
+     */
+    public function operation();
+
+    public function __toString();
+}
+
+
+final class _DiffCopy extends struct implements _DiffOperation
+{
     /** @var string */
     public $value;
 
@@ -95,6 +110,11 @@ final class _DiffCopy extends struct {
     public function __construct($value)
     {
         $this->value = $value;
+    }
+
+    public function operation()
+    {
+        return self::COPY;
     }
 
     public function __toString()
@@ -104,7 +124,8 @@ final class _DiffCopy extends struct {
 }
 
 
-final class _DiffInsert extends struct {
+final class _DiffInsert extends struct implements _DiffOperation
+{
     /** @var string */
     public $value;
 
@@ -114,6 +135,11 @@ final class _DiffInsert extends struct {
     public function __construct($value)
     {
         $this->value = $value;
+    }
+
+    public function operation()
+    {
+        return self::INSERT;
     }
 
     /**
@@ -126,7 +152,8 @@ final class _DiffInsert extends struct {
 }
 
 
-final class _DiffDelete extends struct {
+final class _DiffInsertGreater extends struct implements _DiffOperation
+{
     /** @var string */
     public $value;
 
@@ -138,6 +165,67 @@ final class _DiffDelete extends struct {
         $this->value = $value;
     }
 
+    public function operation()
+    {
+        return self::INSERT;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return "> {$this->value}";
+    }
+}
+
+
+final class _DiffInsertLess extends struct implements _DiffOperation
+{
+    /** @var string */
+    public $value;
+
+    /**
+     * @param string $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function operation()
+    {
+        return self::INSERT;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return "< {$this->value}";
+    }
+}
+
+
+final class _DiffDelete extends struct implements _DiffOperation
+{
+    /** @var string */
+    public $value;
+
+    /**
+     * @param string $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function operation()
+    {
+        return self::DELETE;
+    }
+
     /**
      * @return string
      */
@@ -146,6 +234,63 @@ final class _DiffDelete extends struct {
         return "- {$this->value}";
     }
 }
+
+
+final class _DiffDeleteGreater extends struct implements _DiffOperation
+{
+    /** @var string */
+    public $value;
+
+    /**
+     * @param string $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function operation()
+    {
+        return self::DELETE;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return "> {$this->value}";
+    }
+}
+
+
+final class _DiffDeleteLess extends struct implements _DiffOperation
+{
+    /** @var string */
+    public $value;
+
+    /**
+     * @param string $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function operation()
+    {
+        return self::DELETE;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return "< {$this->value}";
+    }
+}
+
 
 
 final class _Edit extends struct {
@@ -1130,20 +1275,14 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         {
             \ksort($value);
         }
+
         $is_list = true;
         $prev_index = -1;
         $cost = 1;
         $subvalues = array();
         foreach ($value as $k => &$v)
         {
-            if ($is_list && ($k !== ($prev_index + 1)))
-            {
-                $is_list = false;
-            }
-            else
-            {
-                $prev_index = $k;
-            }
+            $is_list = $is_list && ($k === ++$prev_index);
 
             $subname = \sprintf('%s[%s]', $name, \var_export($k, true));
             $subkey = new _ArrayIndex($k, $is_list);
@@ -1192,21 +1331,39 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
     }
     elseif (0 === $cmp->lcs)
     {
-        namespace\_insert_value($state->diff, $to, $show_key);
-        namespace\_delete_value($state->diff, $from, $show_key);
+        if (($state->cmp === namespace\DIFF_IDENTICAL) || ($state->cmp === namespace\DIFF_EQUAL))
+        {
+            namespace\_insert_value($state->diff, $to, $show_key);
+            namespace\_delete_value($state->diff, $from, $show_key);
+        }
+        elseif (($from instanceof _String) && ($to instanceof _String) && (($from->cost() > 1) || ($to->cost() > 1)))
+        {
+            $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
+            namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state, $show_key);
+        }
+        elseif(($state->cmp === namespace\DIFF_GREATER) || ($state->cmp === namespace\DIFF_GREATER_EQUAL))
+        {
+            namespace\_delete_greater_value($state->diff, $from, $show_key);
+            namespace\_insert_lesser_value($state->diff, $to, $show_key);
+        }
+        else
+        {
+            \assert(($state->cmp === namespace\DIFF_LESS) || ($state->cmp === namespace\DIFF_LESS_EQUAL));
+            namespace\_delete_lesser_value($state->diff, $from, $show_key);
+            namespace\_insert_greater_value($state->diff, $to, $show_key);
+        }
     }
     else
     {
         \assert(
             (($from instanceof _String) || ($from instanceof _Array) || ($from instanceof _Object))
-            && \is_a($to, \get_class($from)));
+            && ($to instanceof $from));
 
         if ($cmp->matches === namespace\_DIFF_MATCH_PARTIAL)
         {
             // If values match, then only the key is different, so we don't
             // need to generate a difference between the two values.
             \assert(isset($from->indent_level));
-            \assert(isset($from->loose));
             \assert(isset($from->name));
 
             $indent = namespace\format_indent($from->indent_level);
@@ -1218,11 +1375,11 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
 
             $seen = array('byval' => array(), 'byref' => array());
             $sentinels = array('byref' => null, 'byval' => new \stdClass());
-            if ($from->type() === _ValueType::ARRAY_)
+            if ($from instanceof _Array)
             {
                 $string = namespace\format_array($value, $from->name, $from->loose, $seen, $sentinels, $indent);
             }
-            elseif ($from->type() === _ValueType::OBJECT)
+            elseif ($from instanceof _Object)
             {
                 $string = namespace\format_object($value, $from->name, $from->loose, $seen, $sentinels, $indent);
             }
@@ -1248,21 +1405,45 @@ function _diff_values(_Value $from, _Value $to, _DiffState $state)
         }
         else
         {
-            namespace\_copy_string($state->diff, $from->end_value());
+            if (($state->cmp === namespace\DIFF_IDENTICAL) || ($state->cmp === namespace\DIFF_EQUAL))
+            {
+                namespace\_copy_string($state->diff, $from->end_value());
+            }
+            else
+            {
+                if (($from->key() === $to->key())
+                    && (($state->cmp !== namespace\DIFF_IDENTICAL)
+                        || (_ValueType::ARRAY_ === $from->type())))
+                {
+                    namespace\_copy_string($state->diff, $from->start_value($show_key));
+                }
+                else
+                {
+                    namespace\_insert_string($state->diff, $to->start_value($show_key));
+                    namespace\_delete_string($state->diff, $from->start_value($show_key));
+                }
+            }
 
             $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
             namespace\_build_diff_from_edit($from->subvalues(), $to->subvalues(), $edit, $state, ($from instanceof _Object) || !$from->is_list || !$to->is_list);
 
-            if (($from->key() === $to->key())
-                && (($state->cmp !== namespace\DIFF_IDENTICAL)
-                    || (_ValueType::ARRAY_ === $from->type())))
+            if (($state->cmp === namespace\DIFF_IDENTICAL) || ($state->cmp === namespace\DIFF_EQUAL))
             {
-                namespace\_copy_string($state->diff, $from->start_value($show_key));
+                if (($from->key() === $to->key())
+                    && (($state->cmp !== namespace\DIFF_IDENTICAL)
+                        || (_ValueType::ARRAY_ === $from->type())))
+                {
+                    namespace\_copy_string($state->diff, $from->start_value($show_key));
+                }
+                else
+                {
+                    namespace\_insert_string($state->diff, $to->start_value($show_key));
+                    namespace\_delete_string($state->diff, $from->start_value($show_key));
+                }
             }
             else
             {
-                namespace\_insert_string($state->diff, $to->start_value($show_key));
-                namespace\_delete_string($state->diff, $from->start_value($show_key));
+                namespace\_copy_string($state->diff, $from->end_value());
             }
         }
     }
@@ -1474,58 +1655,79 @@ function _compare_values(_Value $from, _Value $to, $cmp)
  */
 function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $state, $show_key)
 {
-    $m = $edit->m;
-    $f = $edit->flen;
-    $t = $edit->tlen;
-
-    while ($f || $t)
+    if (($state->cmp === namespace\DIFF_IDENTICAL) || ($state->cmp === namespace\DIFF_EQUAL))
     {
-        if ($f > 0 && $t > 0)
+        $m = $edit->m;
+        $f = $edit->flen;
+        $t = $edit->tlen;
+
+        while ($f || $t)
         {
-            if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->cmp) === namespace\_DIFF_MATCH_FULL)
+            if ($f > 0 && $t > 0)
             {
-                if ($f === 1 && $t === 1)
+                if (namespace\_compare_values($from[$f-1], $to[$t-1], $state->cmp) === namespace\_DIFF_MATCH_FULL)
                 {
-                    $pos = _DiffPosition::START;
+                    if ($f === 1 && $t === 1)
+                    {
+                        $pos = _DiffPosition::START;
+                    }
+                    elseif ($f === $edit->flen && $t === $edit->tlen)
+                    {
+                        $pos = _DiffPosition::END;
+                    }
+                    else
+                    {
+                        $pos = _DiffPosition::MIDDLE;
+                    }
+
+                    --$f;
+                    --$t;
+                    namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
                 }
-                elseif ($f === $edit->flen && $t === $edit->tlen)
+                elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t])
                 {
-                    $pos = _DiffPosition::END;
+                    --$f;
+                    --$t;
+                    namespace\_diff_values($from[$f], $to[$t], $state);
+                }
+                elseif ($m[$f][$t-1] >= $m[$f-1][$t])
+                {
+                    if ($t === 1)
+                    {
+                        $pos = _DiffPosition::START;
+                    }
+                    elseif ($t === $edit->tlen)
+                    {
+                        $pos = _DiffPosition::END;
+                    }
+                    else
+                    {
+                        $pos = _DiffPosition::MIDDLE;
+                    }
+
+                    --$t;
+                    namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
                 }
                 else
                 {
-                    $pos = _DiffPosition::MIDDLE;
-                }
+                    if ($f === 1)
+                    {
+                        $pos = _DiffPosition::START;
+                    }
+                    elseif ($f === $edit->flen)
+                    {
+                        $pos = _DiffPosition::END;
+                    }
+                    else
+                    {
+                        $pos = _DiffPosition::MIDDLE;
+                    }
 
-                --$f;
-                --$t;
-                namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
-            }
-            elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t])
-            {
-                --$f;
-                --$t;
-                namespace\_diff_values($from[$f], $to[$t], $state);
-            }
-            elseif ($m[$f][$t-1] >= $m[$f-1][$t])
-            {
-                if ($t === 1)
-                {
-                    $pos = _DiffPosition::START;
+                    --$f;
+                    namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
                 }
-                elseif ($t === $edit->tlen)
-                {
-                    $pos = _DiffPosition::END;
-                }
-                else
-                {
-                    $pos = _DiffPosition::MIDDLE;
-                }
-
-                --$t;
-                namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
             }
-            else
+            elseif ($f)
             {
                 if ($f === 1)
                 {
@@ -1543,42 +1745,191 @@ function _build_diff_from_edit(array $from, array $to, _Edit $edit, _DiffState $
                 --$f;
                 namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
             }
-        }
-        elseif ($f)
-        {
-            if ($f === 1)
-            {
-                $pos = _DiffPosition::START;
-            }
-            elseif ($f === $edit->flen)
-            {
-                $pos = _DiffPosition::END;
-            }
             else
             {
-                $pos = _DiffPosition::MIDDLE;
-            }
+                if ($t === 1)
+                {
+                    $pos = _DiffPosition::START;
+                }
+                elseif ($t === $edit->tlen)
+                {
+                    $pos = _DiffPosition::END;
+                }
+                else
+                {
+                    $pos = _DiffPosition::MIDDLE;
+                }
 
-            --$f;
-            namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
+                --$t;
+                namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
+            }
         }
-        else
-        {
-            if ($t === 1)
-            {
-                $pos = _DiffPosition::START;
-            }
-            elseif ($t === $edit->tlen)
-            {
-                $pos = _DiffPosition::END;
-            }
-            else
-            {
-                $pos = _DiffPosition::MIDDLE;
-            }
+    }
+    elseif (($state->cmp === namespace\DIFF_GREATER) || ($state->cmp === namespace\DIFF_GREATER_EQUAL))
+    {
+        $flen = \count($from);
+        $tlen = \count($to);
 
-            --$t;
+        $i = 0;
+        $max = \max($flen, $tlen) - 1;
+        $pos = _DiffPosition::START;
+
+        for ($t = 0; ($tlen - $t) > $flen; ++$t)
+        {
             namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
+            if (++$i == $max)
+            {
+                $pos = _DiffPosition::END;
+            }
+            else
+            {
+                $pos = _DiffPosition::MIDDLE;
+            }
+        }
+
+        for ($f = 0; $f < $flen; ++$f, ++$t)
+        {
+            if ($from[$f]->value() < $to[$t]->value())
+            {
+                if ((($from[$f] instanceof _String) || ($from[$f] instanceof _Array) || ($from[$f] instanceof _Object)) && ($to[$t] instanceof $from[$f]))
+                {
+                    namespace\_diff_values($from[$f], $to[$t], $state);
+                }
+                else
+                {
+                    namespace\_delete_greater_value($state->diff, $from[$f], $show_key, $pos);
+                    namespace\_insert_lesser_value($state->diff, $to[$t], $show_key, $pos);
+                }
+
+                if (++$i == $max)
+                {
+                    $pos = _DiffPosition::END;
+                }
+                else
+                {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+                break;
+            }
+            else
+            {
+                \assert($from[$f]->value() == $to[$t]->value());
+                if ($state->cmp === namespace\DIFF_GREATER)
+                {
+                    namespace\_diff_values($from[$f], $to[$t], $state);
+                }
+                else
+                {
+                    namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
+                }
+
+                if (++$i == $max)
+                {
+                    $pos = _DiffPosition::END;
+                }
+                else
+                {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+            }
+        }
+
+        for (++$f ; $f < $flen; ++$f)
+        {
+            namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
+            if (++$i == $max)
+            {
+                $pos = _DiffPosition::END;
+            }
+            else
+            {
+                $pos = _DiffPosition::MIDDLE;
+            }
+        }
+    }
+    else
+    {
+        \assert(($state->cmp === namespace\DIFF_LESS) || ($state->cmp === namespace\DIFF_LESS_EQUAL));
+
+        $flen = \count($from);
+        $tlen = \count($to);
+
+        $i = 0;
+        $max = \max($flen, $tlen) - 1;
+        $pos = _DiffPosition::START;
+
+        for ($f = 0; ($flen - $f) > $tlen; ++$f)
+        {
+            namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
+            if (++$i == $max)
+            {
+                $pos = _DiffPosition::END;
+            }
+            else
+            {
+                $pos = _DiffPosition::MIDDLE;
+            }
+        }
+
+        for ($t = 0; $t < $tlen; ++$t, ++$f)
+        {
+            if ($from[$f]->value() > $to[$t]->value())
+            {
+                if ((($from[$f] instanceof _String) || ($from[$f] instanceof _Array) || ($from[$f] instanceof _Object)) && ($to[$t] instanceof $from[$f]))
+                {
+                    namespace\_diff_values($from[$f], $to[$t], $state);
+                }
+                else
+                {
+                    namespace\_delete_lesser_value($state->diff, $from[$f], $show_key, $pos);
+                    namespace\_insert_greater_value($state->diff, $to[$t], $show_key, $pos);
+                }
+
+                if (++$i == $max)
+                {
+                    $pos = _DiffPosition::END;
+                }
+                else
+                {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+
+                break;
+            }
+            else
+            {
+                \assert($from[$f]->value() == $to[$t]->value());
+                if ($state->cmp === namespace\DIFF_LESS)
+                {
+                    namespace\_diff_values($from[$f], $to[$t], $state);
+                }
+                else
+                {
+                    namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
+                }
+
+                if (++$i == $max)
+                {
+                    $pos = _DiffPosition::END;
+                }
+                else
+                {
+                    $pos = _DiffPosition::MIDDLE;
+                }
+            }
+        }
+
+        for (++$f ; $f < $flen; ++$f)
+        {
+            namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
+            if (++$i == $max)
+            {
+                $pos = _DiffPosition::END;
+            }
+            else
+            {
+                $pos = _DiffPosition::MIDDLE;
+            }
         }
     }
 }
@@ -1615,9 +1966,57 @@ function _insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosit
  * @param _DiffPosition::* $pos
  * @return void
  */
+function _insert_greater_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+{
+    namespace\_insert_greater_string($diff, $value->format_value($pos, $show_key));
+}
+
+
+/**
+ * @param string[] $diff
+ * @param bool $show_key
+ * @param _DiffPosition::* $pos
+ * @return void
+ */
+function _insert_lesser_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+{
+    namespace\_insert_lesser_string($diff, $value->format_value($pos, $show_key));
+}
+
+
+/**
+ * @param string[] $diff
+ * @param bool $show_key
+ * @param _DiffPosition::* $pos
+ * @return void
+ */
 function _delete_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
 {
     namespace\_delete_string($diff, $value->format_value($pos, $show_key));
+}
+
+
+/**
+ * @param string[] $diff
+ * @param bool $show_key
+ * @param _DiffPosition::* $pos
+ * @return void
+ */
+function _delete_greater_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+{
+    namespace\_delete_greater_string($diff, $value->format_value($pos, $show_key));
+}
+
+
+/**
+ * @param string[] $diff
+ * @param bool $show_key
+ * @param _DiffPosition::* $pos
+ * @return void
+ */
+function _delete_lesser_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+{
+    namespace\_delete_lesser_string($diff, $value->format_value($pos, $show_key));
 }
 
 
@@ -1654,10 +2053,170 @@ function _insert_string(array &$diff, $string)
  * @param string $string
  * @return void
  */
+function _insert_greater_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
+        $diff[] = new _DiffInsertGreater($v);
+    }
+}
+
+
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
+function _insert_lesser_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
+        $diff[] = new _DiffInsertLess($v);
+    }
+}
+
+
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
 function _delete_string(array &$diff, $string)
 {
     foreach (\array_reverse(\explode("\n", $string)) as $v)
     {
         $diff[] = new _DiffDelete($v);
     }
+}
+
+
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
+function _delete_greater_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
+        $diff[] = new _DiffDeleteGreater($v);
+    }
+}
+
+
+/**
+ * @param string[] $diff
+ * @param string $string
+ * @return void
+ */
+function _delete_lesser_string(array &$diff, $string)
+{
+    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    {
+        $diff[] = new _DiffDeleteLess($v);
+    }
+}
+
+
+/**
+ * @param _DiffOperation[] $diff
+ * @param string $from_name
+ * @param string $to_name
+ * @param int $cmp
+ * @return string
+ */
+function _format_diff(array $diff, $from_name, $to_name, $cmp)
+{
+    if (($cmp === namespace\DIFF_IDENTICAL) || ($cmp === namespace\DIFF_EQUAL))
+    {
+        $result = "- $from_name\n+ $to_name\n";
+    }
+    elseif (($cmp === namespace\DIFF_GREATER) || ($cmp === namespace\DIFF_GREATER_EQUAL))
+    {
+        $result = " > $from_name\n+< $to_name\n";
+    }
+    else
+    {
+        \assert(($cmp === namespace\DIFF_LESS) || ($cmp === namespace\DIFF_LESS_EQUAL));
+        $result = "-< $from_name\n > $to_name\n";
+    }
+
+    $prev_operation = null;
+    $prev_operations = array();
+    if (($cmp === namespace\DIFF_IDENTICAL) || ($cmp === namespace\DIFF_EQUAL))
+    {
+        for ($i = \count($diff) - 1; $i >= 0; --$i)
+        {
+            $operation = $diff[$i];
+
+            if ($operation instanceof _DiffCopy)
+            {
+                if ($prev_operations)
+                {
+                    foreach ($prev_operations as $prev)
+                    {
+                        $result .= "\n$prev";
+                    }
+                    $prev_operations = array();
+                }
+                $result .= "\n$operation";
+            }
+            elseif($operation instanceof _DiffDelete)
+            {
+                $result .= "\n$operation";
+            }
+            else
+            {
+                \assert($operation instanceof _DiffInsert);
+                $prev_operations[] = $operation;
+                $prev_operation = $operation;
+            }
+        }
+    }
+    else
+    {
+        foreach($diff as $operation)
+        {
+            if ($operation->operation() === _DiffOperation::COPY)
+            {
+                if ($prev_operations)
+                {
+                    foreach ($prev_operations as $prev)
+                    {
+                        $result .= "\n$prev";
+                    }
+                    $prev_operations = array();
+                }
+                $result .= "\n$operation";
+            }
+            elseif($operation->operation() === _DiffOperation::DELETE)
+            {
+                if ($prev_operations
+                    && ((($operation instanceof _DiffDeleteGreater) && !($prev_operation instanceof _DiffInsertLess))
+                        || (($operation instanceof _DiffDeleteLess) && !($prev_operation instanceof _DiffInsertGreater))))
+                {
+                    foreach ($prev_operations as $prev)
+                    {
+                        $result .= "\n$prev";
+                    }
+                    $prev_operations = array();
+                    $prev_operation = null;
+                }
+                $result .= "\n$operation";
+            }
+            else
+            {
+                \assert($operation->operation() === _DiffOperation::INSERT);
+                $prev_operations[] = $operation;
+                $prev_operation = $operation;
+            }
+        }
+    }
+
+    foreach ($prev_operations as $prev)
+    {
+        $result .= "\n$prev";
+    }
+
+    return $result;
 }

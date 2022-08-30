@@ -4,3 +4,8 @@ parameters:
 			message: "#^Access to an undefined property strangetest\\\\_Array\\|strangetest\\\\_Object\\|strangetest\\\\_String\\:\\:\\$is_list\\.$#"
 			count: 1
 			path: src/diff.php
+
+		-
+			message: "#^Result of \\|\\| is always true\\.$#"
+			count: 1
+			path: src/diff.php
