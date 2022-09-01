@@ -1710,25 +1710,27 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
 
         $flen = \count($fvalues);
         $tlen = \count($tvalues);
+        $min = \min($flen, $tlen);
         $count = \max($flen, $tlen);
 
         if ($from instanceof _String)
         {
             $equal = true;
-            for ($f = 0, $t = 0, $i = 0; ($f < $flen) && $equal; ++$f, ++$t, ++$i)
+            for ($f = 0, $t = 0, $i = 0; ($f < $min) && $equal; ++$f, ++$t, ++$i)
             {
                 $pos = namespace\_get_line_pos($i, $count);
 
-                if ($cmp->compare_values($fvalues[$f], $tvalues[$t]) === 0)
+                $result = $cmp->compare_values($fvalues[$f], $tvalues[$t]);
+
+                if (($result === 0) && $cmp->equals_ok())
                 {
                     namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
                 }
                 else
                 {
-                    \assert($cmp->compare_values($fvalues[$f], $tvalues[$t]) < 0);
+                    $equal = $result === 0;
                     $cmp->delete_value($state->diff, $fvalues[$f], $show_key, $pos);
                     $cmp->insert_value($state->diff, $tvalues[$t], $show_key, $pos);
-                    $equal = false;
                 }
             }
 
@@ -1737,7 +1739,14 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 for ( ; $f < $flen; ++$f, ++$i)
                 {
                     $pos = namespace\_get_line_pos($i, $count);
-                    namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
+                    if ($equal && $cmp->equals_ok())
+                    {
+                        namespace\_delete_value($state->diff, $fvalues[$f], $show_key, $pos);
+                    }
+                    else
+                    {
+                        namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
+                    }
                 }
             }
             else
@@ -1745,7 +1754,14 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 for ( ; $t < $tlen; ++$t, ++$i)
                 {
                     $pos = namespace\_get_line_pos($i, $count);
-                    namespace\_insert_value($state->diff, $tvalues[$t], $show_key, $pos);
+                    if ($equal && $cmp->equals_ok())
+                    {
+                        namespace\_insert_value($state->diff, $tvalues[$t], $show_key, $pos);
+                    }
+                    else
+                    {
+                        namespace\_copy_value($state->diff, $tvalues[$t], $show_key, $pos);
+                    }
                 }
             }
         }
