@@ -24,6 +24,16 @@ const _DIFF_MATCH_PARTIAL = 1; // Elements have matching values but nonmatching 
 const _DIFF_MATCH_FULL    = 2; // Elements have both matching values and keys
 
 
+const _DIFF_LINE_MIDDLE = 0;
+const _DIFF_LINE_FIRST  = 0x1;
+const _DIFF_LINE_LAST   = 0x2;
+
+const _DIFF_LINE_FROM = 0x1;
+const _DIFF_LINE_TO   = 0x2;
+// @bc 5.5 define run-time constant instead of using a constant expression
+define('strangetest\\_DIFF_LINE_BOTH', namespace\_DIFF_LINE_FROM | namespace\_DIFF_LINE_TO);
+
+
 /**
  * @todo Consider changing diff parameters from $from, $to to $actual, $expected
  * @api
@@ -48,11 +58,11 @@ function diff(&$from, &$to, $from_name, $to_name, $cmp = namespace\DIFF_IDENTICA
 
     if (($cmp === namespace\DIFF_GREATER) || ($cmp === namespace\DIFF_GREATER_EQUAL))
     {
-        namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _GreaterThanComparator($cmp === namespace\DIFF_GREATER_EQUAL));
+        namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _GreaterThanComparator($state, $cmp === namespace\DIFF_GREATER_EQUAL));
     }
     elseif (($cmp === namespace\DIFF_LESS) || ($cmp === namespace\DIFF_LESS_EQUAL))
     {
-        namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _LessThanComparator($cmp === namespace\DIFF_LESS_EQUAL));
+        namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _LessThanComparator($state, $cmp === namespace\DIFF_LESS_EQUAL));
     }
     else
     {
@@ -324,13 +334,6 @@ final class _Edit extends struct {
 }
 
 
-final class _DiffPosition extends struct {
-    const NONE = 0;
-    const START = 1;
-    const MIDDLE = 2;
-    const END = 3;
-}
-
 
 interface _Key {
     /**
@@ -509,7 +512,7 @@ interface _Value {
 
 
     /**
-     * @param _DiffPosition::* $pos
+     * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
      * @param bool $show_key
      * @return string
      */
@@ -1213,11 +1216,11 @@ final class _StringPart extends struct implements _Value {
         $line_end = $this->key->line_end();
 
         $result = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $this->value);
-        if (_DiffPosition::START === $pos)
+        if (namespace\_DIFF_LINE_FIRST === $pos)
         {
             return "{$indent}{$key}'{$result}";
         }
-        elseif (_DiffPosition::END === $pos)
+        elseif (namespace\_DIFF_LINE_LAST === $pos)
         {
             return "{$result}'{$line_end}";
         }
@@ -1587,21 +1590,9 @@ function _build_diff(_DiffState $state, array $from, array $to, _Edit $edit, $sh
         {
             if (namespace\_compare_equal_values($from[$f-1], $to[$t-1], $state->cmp === namespace\DIFF_IDENTICAL) === namespace\_DIFF_MATCH_FULL)
             {
-                if ($f === 1 && $t === 1)
-                {
-                    $pos = _DiffPosition::START;
-                }
-                elseif ($f === $edit->flen && $t === $edit->tlen)
-                {
-                    $pos = _DiffPosition::END;
-                }
-                else
-                {
-                    $pos = _DiffPosition::MIDDLE;
-                }
-
                 --$f;
                 --$t;
+                $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_BOTH);
                 namespace\_copy_value($state->diff, $from[$f], $show_key, $pos);
             }
             elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t])
@@ -1612,75 +1603,27 @@ function _build_diff(_DiffState $state, array $from, array $to, _Edit $edit, $sh
             }
             elseif ($m[$f][$t-1] >= $m[$f-1][$t])
             {
-                if ($t === 1)
-                {
-                    $pos = _DiffPosition::START;
-                }
-                elseif ($t === $edit->tlen)
-                {
-                    $pos = _DiffPosition::END;
-                }
-                else
-                {
-                    $pos = _DiffPosition::MIDDLE;
-                }
-
                 --$t;
+                $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_TO);
                 namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
             }
             else
             {
-                if ($f === 1)
-                {
-                    $pos = _DiffPosition::START;
-                }
-                elseif ($f === $edit->flen)
-                {
-                    $pos = _DiffPosition::END;
-                }
-                else
-                {
-                    $pos = _DiffPosition::MIDDLE;
-                }
-
                 --$f;
+                $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_FROM);
                 namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
             }
         }
         elseif ($f)
         {
-            if ($f === 1)
-            {
-                $pos = _DiffPosition::START;
-            }
-            elseif ($f === $edit->flen)
-            {
-                $pos = _DiffPosition::END;
-            }
-            else
-            {
-                $pos = _DiffPosition::MIDDLE;
-            }
-
             --$f;
+            $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_FROM);
             namespace\_delete_value($state->diff, $from[$f], $show_key, $pos);
         }
         else
         {
-            if ($t === 1)
-            {
-                $pos = _DiffPosition::START;
-            }
-            elseif ($t === $edit->tlen)
-            {
-                $pos = _DiffPosition::END;
-            }
-            else
-            {
-                $pos = _DiffPosition::MIDDLE;
-            }
-
             --$t;
+            $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_TO);
             namespace\_insert_value($state->diff, $to[$t], $show_key, $pos);
         }
     }
@@ -1711,14 +1654,13 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
         $flen = \count($fvalues);
         $tlen = \count($tvalues);
         $min = \min($flen, $tlen);
-        $count = \max($flen, $tlen);
 
         if ($from instanceof _String)
         {
             $equal = true;
-            for ($f = 0, $t = 0, $i = 0; ($f < $min) && $equal; ++$f, ++$t, ++$i)
+            for ($f = 0, $t = 0; ($f < $min) && $equal; ++$f, ++$t)
             {
-                $pos = namespace\_get_line_pos($i, $count);
+                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
 
                 $result = $cmp->compare_values($fvalues[$f], $tvalues[$t]);
 
@@ -1729,16 +1671,16 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 else
                 {
                     $equal = $result === 0;
-                    $cmp->delete_value($state->diff, $fvalues[$f], $show_key, $pos);
-                    $cmp->insert_value($state->diff, $tvalues[$t], $show_key, $pos);
+                    $cmp->delete_value($fvalues[$f], $show_key, $pos);
+                    $cmp->insert_value($tvalues[$t], $show_key, $pos);
                 }
             }
 
             if ($f < $flen)
             {
-                for ( ; $f < $flen; ++$f, ++$i)
+                for ( ; $f < $flen; ++$f)
                 {
-                    $pos = namespace\_get_line_pos($i, $count);
+                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
                     if ($equal && $cmp->equals_ok())
                     {
                         namespace\_delete_value($state->diff, $fvalues[$f], $show_key, $pos);
@@ -1751,9 +1693,9 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
             }
             else
             {
-                for ( ; $t < $tlen; ++$t, ++$i)
+                for ( ; $t < $tlen; ++$t)
                 {
-                    $pos = namespace\_get_line_pos($i, $count);
+                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
                     if ($equal && $cmp->equals_ok())
                     {
                         namespace\_insert_value($state->diff, $tvalues[$t], $show_key, $pos);
@@ -1771,18 +1713,27 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
 
             namespace\_copy_string($state->diff, $from->start_value($show_key));
 
-            list($f, $t, $i) = $cmp->diff_extra_values($state, $fvalues, $tvalues, $flen, $tlen, 0, $count, $show_subkey);
+            for ($f = 0; ($flen - $f) > $tlen; ++$f)
+            {
+                $pos = namespace\_get_line_pos($f, 0, $flen, $tlen, namespace\_DIFF_LINE_FROM);
+                namespace\_delete_value($state->diff, $fvalues[$f], $show_subkey, $pos);
+            }
+            for ($t = 0; ($tlen - $t) > $flen; ++$t)
+            {
+                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
+                namespace\_insert_value($state->diff, $tvalues[$t], $show_subkey, $pos);
+            }
 
             $equal = true;
-            for ( ; ($f < $flen) && $equal; ++$f, ++$t, ++$i)
+            for ( ; ($f < $flen) && $equal; ++$f, ++$t)
             {
-                $pos = namespace\_get_line_pos($i, $count);
+                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
                 $equal = namespace\_diff_unequal_values($state, $fvalues[$f], $tvalues[$t], $cmp);
             }
 
-            for ( ; $f < $flen; ++$f, ++$i)
+            for ( ; $f < $flen; ++$f)
             {
-                $pos = namespace\_get_line_pos($i, $count);
+                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
                 namespace\_copy_value($state->diff, $fvalues[$f], $show_subkey, $pos);
             }
 
@@ -1791,8 +1742,8 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
     }
     else
     {
-        $cmp->delete_value($state->diff, $from, $show_key);
-        $cmp->insert_value($state->diff, $to, $show_key);
+        $cmp->delete_value($from, $show_key);
+        $cmp->insert_value($to, $show_key);
     }
 
     return 0 === $result;
@@ -1814,45 +1765,35 @@ interface _UnequalComparator
 
 
     /**
-     * @param _DiffOperation[] $diff
      * @param bool $show_key
-     * @param _DiffPosition::* $pos
+     * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
      * @return void
      */
-    public function delete_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE);
+    public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE);
 
     /**
-     * @param _DiffOperation[] $diff
      * @param bool $show_key
-     * @param _DiffPosition::* $pos
+     * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
      * @return void
      */
-    public function insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE);
-
-    /**
-     * @param _Value[] $fvalues
-     * @param _Value[] $tvalues
-     * @param int $flen
-     * @param int $tlen
-     * @param int $i
-     * @param int $count
-     * @param bool $show_key
-     * @return array{int, int, int}
-     */
-    public function diff_extra_values(_DiffState $state, $fvalues, $tvalues, $flen, $tlen, $i, $count, $show_key);
+    public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE);
 }
 
 
 final class _GreaterThanComparator extends struct implements _UnequalComparator
 {
+    /** @var _DiffState */
+    private $state;
+
     /** @var bool */
     private $equals_ok;
 
     /**
      * @param bool $equals_ok
      */
-    public function __construct($equals_ok)
+    public function __construct(_DiffState $state, $equals_ok)
     {
+        $this->state = $state;
         $this->equals_ok = $equals_ok;
     }
 
@@ -1883,49 +1824,42 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
     }
 
 
-    public function delete_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+    public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
         $string = $value->format_value($pos, $show_key);
         foreach (\array_reverse(\explode("\n", $string)) as $v)
         {
-            $diff[] = new _DiffDeleteGreater($v);
+            $this->state->diff[] = new _DiffDeleteGreater($v);
         }
     }
 
 
-    public function insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+    public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
         $string = $value->format_value($pos, $show_key);
         foreach (\array_reverse(\explode("\n", $string)) as $v)
         {
-            $diff[] = new _DiffInsertLess($v);
+            $this->state->diff[] = new _DiffInsertLess($v);
         }
-    }
-
-
-    public function diff_extra_values(_DiffState $state, $fvalues, $tvalues, $flen, $tlen, $i, $count, $show_key)
-    {
-        for ($t = 0; ($tlen - $t) > $flen; ++$t, ++$i)
-        {
-            $pos = namespace\_get_line_pos($i, $count);
-            namespace\_insert_value($state->diff, $tvalues[$t], $show_key, $pos);
-        }
-
-        return array(0, $t, $i);
     }
 }
 
 
 final class _LessThanComparator extends struct implements _UnequalComparator
 {
+    /** @var _DiffState */
+    private $state;
+
     /** @var bool */
     private $equals_ok;
+
 
     /**
      * @param bool $equals_ok
      */
-    public function __construct($equals_ok)
+    public function __construct(_DiffState $state, $equals_ok)
     {
+        $this->state = $state;
         $this->equals_ok = $equals_ok;
     }
 
@@ -1956,57 +1890,73 @@ final class _LessThanComparator extends struct implements _UnequalComparator
     }
 
 
-    public function delete_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+    public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
         $string = $value->format_value($pos, $show_key);
         foreach (\array_reverse(\explode("\n", $string)) as $v)
         {
-            $diff[] = new _DiffDeleteLess($v);
+            $this->state->diff[] = new _DiffDeleteLess($v);
         }
     }
 
 
-    public function insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+    public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
         $string = $value->format_value($pos, $show_key);
         foreach (\array_reverse(\explode("\n", $string)) as $v)
         {
-            $diff[] = new _DiffInsertGreater($v);
+            $this->state->diff[] = new _DiffInsertGreater($v);
         }
-    }
-
-    public function diff_extra_values(_DiffState $state, $fvalues, $tvalues, $flen, $tlen, $i, $count, $show_key)
-    {
-        for ($f = 0; ($flen - $f) > $tlen; ++$f, ++$i)
-        {
-            $pos = namespace\_get_line_pos($i, $count);
-            namespace\_delete_value($state->diff, $fvalues[$f], $show_key, $pos);
-        }
-
-        return array($f, 0, $i);
     }
 }
 
 
 /**
- * @param int $i
- * @param int $count
- * @return _DiffPosition::START|_DiffPosition::MIDDLE|_DiffPosition::END
+ * @param int $f
+ * @param int $t
+ * @param int $flen
+ * @param int $tlen
+ * @param _DIFF_LINE_FROM|_DIFF_LINE_TO|_DIFF_LINE_BOTH $which
+ * @return _DIFF_LINE_FIRST|_DIFF_LINE_MIDDLE|_DIFF_LINE_LAST
  */
-function _get_line_pos($i, $count)
+function _get_line_pos($f, $t, $flen, $tlen, $which)
 {
-    if ($i === 0)
+    $result = namespace\_DIFF_LINE_FIRST | namespace\_DIFF_LINE_LAST;
+
+    if ($which & namespace\_DIFF_LINE_FROM)
     {
-        return _DiffPosition::START;
+        if ($f === 0)
+        {
+            $result &= namespace\_DIFF_LINE_FIRST;
+        }
+        elseif ($f === ($flen - 1))
+        {
+            $result &= namespace\_DIFF_LINE_LAST;
+        }
+        else
+        {
+            $result &= namespace\_DIFF_LINE_MIDDLE;
+        }
     }
-    elseif ($i === ($count - 1))
+
+    if ($which & namespace\_DIFF_LINE_TO)
     {
-        return _DiffPosition::END;
+        if ($t === 0)
+        {
+            $result &= namespace\_DIFF_LINE_FIRST;
+        }
+        elseif ($t === ($tlen - 1))
+        {
+            $result &= namespace\_DIFF_LINE_LAST;
+        }
+        else
+        {
+            $result &= namespace\_DIFF_LINE_MIDDLE;
+        }
     }
-    else
-    {
-        return _DiffPosition::MIDDLE;
-    }
+
+    \assert($result <= 2);
+    return $result;
 }
 
 
@@ -2014,10 +1964,10 @@ function _get_line_pos($i, $count)
 /**
  * @param string[] $diff
  * @param bool $show_key
- * @param _DiffPosition::* $pos
+ * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @return void
  */
-function _copy_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+function _copy_value(array &$diff, _Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
 {
     namespace\_copy_string($diff, $value->format_value($pos, $show_key));
 }
@@ -2026,10 +1976,10 @@ function _copy_value(array &$diff, _Value $value, $show_key, $pos = _DiffPositio
 /**
  * @param string[] $diff
  * @param bool $show_key
- * @param _DiffPosition::* $pos
+ * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @return void
  */
-function _insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+function _insert_value(array &$diff, _Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
 {
     namespace\_insert_string($diff, $value->format_value($pos, $show_key));
 }
@@ -2038,10 +1988,10 @@ function _insert_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosit
 /**
  * @param string[] $diff
  * @param bool $show_key
- * @param _DiffPosition::* $pos
+ * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @return void
  */
-function _delete_value(array &$diff, _Value $value, $show_key, $pos = _DiffPosition::NONE)
+function _delete_value(array &$diff, _Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
 {
     namespace\_delete_string($diff, $value->format_value($pos, $show_key));
 }
