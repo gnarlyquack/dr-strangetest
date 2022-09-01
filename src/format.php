@@ -59,9 +59,11 @@ function format_failure_message($assertion, $description = null, $detail = null)
  * @api
  * @param mixed $variable The variable to format. $variable is received as a
  *                        reference in order to detect self-referencing values.
+ * @param int $starting_indent_level
+ * @param bool $show_object_id
  * @return string A string representation of $var
  */
-function format_variable(&$variable)
+function format_variable(&$variable, $starting_indent_level = 0, $show_object_id = true)
 {
     $name = \is_object($variable) ? \get_class($variable) : \gettype($variable);
     $seen = array('byval' => array(), 'byref' => array());
@@ -69,20 +71,21 @@ function format_variable(&$variable)
     // let us do that with an object instance. As a mitigation, we'll just
     // create the sentinels once at the start and then pass it around
     $sentinels = array('byref' => null, 'byval' => new \stdClass());
-    return namespace\_format_recursive_variable($variable, $name, false, $seen, $sentinels, '');
+    $indent = namespace\format_indent($starting_indent_level);
+    return namespace\_format_recursive_variable($variable, $name, $show_object_id, $seen, $sentinels, $indent);
 }
 
 
 /**
  * @param mixed $var
  * @param string $name
- * @param bool $loose
+ * @param bool $strict
  * @param array{'byval': mixed[], 'byref': mixed[]} $seen
  * @param array{'byref': null, 'byval': \stdClass} $sentinels
  * @param string $indent
  * @return string
  */
-function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $indent)
+function _format_recursive_variable(&$var, $name, $strict, &$seen, $sentinels, $indent)
 {
     $reference = namespace\check_reference($var, $name, $seen, $sentinels);
     if ($reference)
@@ -99,11 +102,11 @@ function _format_recursive_variable(&$var, $name, $loose, &$seen, $sentinels, $i
     }
     if (\is_array($var))
     {
-        return namespace\format_array($var, $name, $loose, $seen, $sentinels, $indent);
+        return namespace\format_array($var, $name, $strict, $seen, $sentinels, $indent);
     }
     if (\is_object($var))
     {
-        return namespace\format_object($var, $name, $loose, $seen, $sentinels, $indent);
+        return namespace\format_object($var, $name, $strict, $seen, $sentinels, $indent);
     }
     throw new \Exception(
         \sprintf('Unexpected/unknown variable type: %s', \gettype($var))
@@ -149,13 +152,13 @@ function format_resource(&$var)
  * @template T
  * @param T[] $var
  * @param string $name
- * @param bool $loose
+ * @param bool $strict
  * @param array{'byval': mixed[], 'byref': mixed[]} $seen
  * @param array{'byref': null, 'byval': \stdClass} $sentinels
  * @param string $padding
  * @return string
  */
-function format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding)
+function format_array(array &$var, $name, $strict, &$seen, $sentinels, $padding)
 {
     $indent = $padding . namespace\FORMAT_INDENT;
     $out = '';
@@ -174,7 +177,7 @@ function format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding)
                 namespace\_format_recursive_variable(
                     $value,
                     \sprintf('%s[%s]', $name, $key),
-                    $loose,
+                    $strict,
                     $seen,
                     $sentinels,
                     $indent
@@ -190,18 +193,18 @@ function format_array(array &$var, $name, $loose, &$seen, $sentinels, $padding)
 /**
  * @param object $var
  * @param string $name
- * @param bool $loose
+ * @param bool $strict
  * @param array{'byval': mixed[], 'byref': mixed[]} $seen
  * @param array{'byref': null, 'byval': \stdClass} $sentinels
  * @param string $padding
  * @return string
  */
-function format_object(&$var, $name, $loose, &$seen, $sentinels, $padding)
+function format_object(&$var, $name, $strict, &$seen, $sentinels, $padding)
 {
     $indent = $padding . namespace\FORMAT_INDENT;
     $out = '';
 
-    $start = namespace\format_object_start($var, $loose, $class);
+    $start = namespace\format_object_start($var, $strict, $class);
     $values = (array)$var;
     if ($values)
     {
@@ -226,7 +229,7 @@ function format_object(&$var, $name, $loose, &$seen, $sentinels, $padding)
                 namespace\_format_recursive_variable(
                     $value,
                     \sprintf('%s->%s', $name, $property),
-                    $loose,
+                    $strict,
                     $seen,
                     $sentinels,
                     $indent
@@ -242,14 +245,14 @@ function format_object(&$var, $name, $loose, &$seen, $sentinels, $padding)
 
 /**
  * @param object $object
- * @param bool $loose
+ * @param bool $strict
  * @param ?string $class
  * @return string
  */
-function format_object_start(&$object, $loose, &$class = null)
+function format_object_start(&$object, $strict, &$class = null)
 {
     $class = \get_class($object);
-    if (!$loose)
+    if ($strict)
     {
         // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \function_exists('spl_object_id')
