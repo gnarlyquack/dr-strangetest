@@ -25,7 +25,7 @@ function test_array_greater_than_array()
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
   array(
       1,
@@ -46,8 +46,8 @@ function test_longer_array_greater_than_shorter_array()
     $actual = strangetest\assert_throws(
         'strangetest\\Failure',
         function() {
-            $array1 = array(1, 2, 3, 4);
-            $array2 = array(      3, 4);
+            $array1 = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
+            $array2 = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
             strangetest\assert_less_or_equal($array1, $array2);
         }
     );
@@ -56,18 +56,51 @@ function test_longer_array_greater_than_shorter_array()
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
   array(
--     1,
--     2,
-      3,
-      4,
+      1,
+      array(
+          2,
+          stdClass {
+              $0 = 1;
+<             $1 = 2;
+>             $1 = 1;
+              $2 = 3;
+          },
+          500,
+          10,
+      ),
+      5,
+      2,
   )
 EXPECTED;
 
     strangetest\assert_identical($actual->getMessage(), $expected);
 }
+
+
+/*
+class Boo
+{
+    var $one = 1;
+    var $two = 2;
+}
+
+class Far
+{
+    var $three = 1;
+    var $four = 2;
+}
+
+
+function test_incomparable_objects()
+{
+    $one = new Boo;
+    $two = new Far;
+    strangetest\assert_less_or_equal($one, $two);
+}
+*/
 
 
 function test_object_greater_than_array()
@@ -83,7 +116,7 @@ function test_object_greater_than_array()
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
 < stdClass {}
 > array()
@@ -108,7 +141,7 @@ function test_longer_string_greater_than_shorter_string()
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
   'One
 < Two
@@ -135,7 +168,7 @@ function test_shorter_string_greater_than_longer_string()
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
   'One
 < Two
@@ -162,7 +195,7 @@ function test_common_longer_string_greater_than_shorter_string()
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
   'One
   Two

@@ -441,7 +441,7 @@ class TestAssertGreater {
         $expected = <<<'EXPECTED'
 Assertion "$actual > $min" failed
 
- > $actual
+-> $actual
 +< $min
 
 > 0
@@ -464,7 +464,7 @@ EXPECTED;
 Assertion "$actual > $min" failed
 I failed.
 
- > $actual
+-> $actual
 +< $min
 
 > -6
@@ -493,7 +493,7 @@ class TestAssertGreaterOrEqual {
         $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
 > -1
@@ -516,7 +516,7 @@ EXPECTED;
 Assertion "$actual >= $min" failed
 I failed.
 
- > $actual
+-> $actual
 +< $min
 
 > -6
@@ -547,7 +547,7 @@ class TestAssertLess {
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
 < 0
 > 0
@@ -570,7 +570,7 @@ Assertion "$actual < $max" failed
 I failed.
 
 -< $actual
- > $max
++> $max
 
 < -5
 > -6
@@ -600,7 +600,7 @@ class TestAssertLessOrEqual {
 Assertion "$actual <= $max" failed
 
 -< $actual
- > $max
++> $max
 
 < 1
 > 0
@@ -623,7 +623,7 @@ Assertion "$actual <= $max" failed
 I failed.
 
 -< $actual
- > $max
++> $max
 
 < -5
 > -6

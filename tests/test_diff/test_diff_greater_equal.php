@@ -15,23 +15,31 @@ function test_array_less_than_array()
     $actual = strangetest\assert_throws(
         'strangetest\\Failure',
         function() {
-            strangetest\assert_greater_or_equal(
-                array(1,   3,  2, 5, 5),
-                array(1, 500, 10, 5, 2));
-                }
+            $array1 = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
+            $array2 = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
+            strangetest\assert_greater_or_equal($array1, $array2);
+        }
     );
 
     $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
   array(
       1,
->     3,
-<     500,
-      2,
+      array(
+          2,
+          stdClass {
+              $0 = 1;
+>             $1 = 1;
+<             $1 = 2;
+              $2 = 3;
+          },
+          3,
+          2,
+      ),
       5,
       5,
   )
@@ -47,8 +55,8 @@ function test_shorter_array_less_than_longer_array()
         'strangetest\\Failure',
         function() {
             strangetest\assert_greater_or_equal(
-                array(      3, 4),
-                array(1, 2, 3, 4)
+                array(      3, 3, 5),
+                array(1, 2, 3, 4, 5)
             );
         }
     );
@@ -56,14 +64,16 @@ function test_shorter_array_less_than_longer_array()
     $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
   array(
 +     1,
 +     2,
       3,
-      4,
+>     3,
+<     4,
+      5,
   )
 EXPECTED;
 
@@ -83,7 +93,7 @@ function test_array_less_than_object()
     $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
 > array()
@@ -108,7 +118,7 @@ function test_longer_string_less_than_shorter_string()
     $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
   'One
@@ -135,7 +145,7 @@ function test_shorter_string_less_than_longer_string()
     $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
   'Two
@@ -162,7 +172,7 @@ function test_common_shorter_string_less_than_longer_string()
     $expected = <<<'EXPECTED'
 Assertion "$actual >= $min" failed
 
- > $actual
+-> $actual
 +< $min
 
   'One

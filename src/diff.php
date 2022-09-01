@@ -1641,7 +1641,13 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
 
     $result = $cmp->compare_values($from, $to);
 
-    if (($result > 1) || (($result === 0) && $cmp->equals_ok()))
+    if ($result === _UnequalComparator::MATCH_ERROR)
+    {
+        namespace\_delete_value($state->diff, $from, $show_key);
+        namespace\_insert_value($state->diff, $to, $show_key);
+    }
+    elseif (($result === _UnequalComparator::MATCH_PASS)
+        || (($result === _UnequalComparator::MATCH_EQUAL) && $cmp->equals_ok()))
     {
         namespace\_copy_value($state->diff, $from, $show_key);
     }
@@ -1663,14 +1669,13 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
 
                 $result = $cmp->compare_values($fvalues[$f], $tvalues[$t]);
-
-                if (($result === 0) && $cmp->equals_ok())
+                if (($result === _UnequalComparator::MATCH_EQUAL) && $cmp->equals_ok())
                 {
                     namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
                 }
                 else
                 {
-                    $equal = $result === 0;
+                    $equal = $result === _UnequalComparator::MATCH_EQUAL;
                     $cmp->delete_value($fvalues[$f], $show_key, $pos);
                     $cmp->insert_value($tvalues[$t], $show_key, $pos);
                 }
@@ -1746,14 +1751,19 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
         $cmp->insert_value($to, $show_key);
     }
 
-    return 0 === $result;
+    return $result === _UnequalComparator::MATCH_EQUAL;
 }
 
 
 interface _UnequalComparator
 {
+    const MATCH_ERROR = 0;
+    const MATCH_PASS  = 1;
+    const MATCH_FAIL  = 2;
+    const MATCH_EQUAL = 3;
+
     /**
-     * @return int
+     * @return _UnequalComparator::*
      */
     public function compare_values(_Value $from, _Value $to);
 
@@ -1811,15 +1821,20 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
 
         if ($fvalue > $tvalue)
         {
-            return 1;
+            return self::MATCH_PASS;
         }
         elseif ($fvalue < $tvalue)
         {
-            return -1;
+            return self::MATCH_FAIL;
+        }
+        elseif ($fvalue != $tvalue)
+        {
+            // incomparable values
+            return self::MATCH_ERROR;
         }
         else
         {
-            return 0;
+            return self::MATCH_EQUAL;
         }
     }
 
@@ -1877,15 +1892,20 @@ final class _LessThanComparator extends struct implements _UnequalComparator
 
         if ($fvalue < $tvalue)
         {
-            return 1;
+            return self::MATCH_PASS;
         }
         elseif ($fvalue > $tvalue)
         {
-            return -1;
+            return self::MATCH_FAIL;
+        }
+        elseif ($fvalue != $tvalue)
+        {
+            // incomparable values
+            return self::MATCH_ERROR;
         }
         else
         {
-            return 0;
+            return self::MATCH_EQUAL;
         }
     }
 
@@ -2054,12 +2074,12 @@ function _format_diff(array $diff, $from_name, $to_name, $cmp)
     }
     elseif (($cmp === namespace\DIFF_GREATER) || ($cmp === namespace\DIFF_GREATER_EQUAL))
     {
-        $result = " > $from_name\n+< $to_name\n";
+        $result = "-> $from_name\n+< $to_name\n";
     }
     else
     {
         \assert(($cmp === namespace\DIFF_LESS) || ($cmp === namespace\DIFF_LESS_EQUAL));
-        $result = "-< $from_name\n > $to_name\n";
+        $result = "-< $from_name\n+> $to_name\n";
     }
 
     $prev_operation = null;

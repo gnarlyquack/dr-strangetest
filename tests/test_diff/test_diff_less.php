@@ -23,7 +23,7 @@ function test_equal_arrays()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
   array(
 <     1,
@@ -46,9 +46,9 @@ function test_array_greater_than_array()
     $actual = strangetest\assert_throws(
         'strangetest\\Failure',
         function() {
-            strangetest\assert_less(
-                array(1, 500, 5, 5,  2),
-                array(1,   3, 2, 5, 10));
+            $array1 = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
+            $array2 = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
+            strangetest\assert_less($array1, $array2);
         }
     );
 
@@ -56,14 +56,24 @@ function test_array_greater_than_array()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
   array(
 <     1,
-<     500,
 >     1,
->     3,
-      5,
+      array(
+<         2,
+>         2,
+          stdClass {
+<             $0 = 1;
+<             $1 = 2;
+>             $0 = 1;
+>             $1 = 1;
+              $2 = 3;
+          },
+          500,
+          10,
+      ),
       5,
       2,
   )
@@ -78,8 +88,8 @@ function test_longer_array_greater_than_shorter_array()
     $actual = strangetest\assert_throws(
         'strangetest\\Failure',
         function() {
-            $array1 = array(1, 2, 3, 4);
-            $array2 = array(      3, 4);
+            $array1 = array(1, 2, 3, 5, 5);
+            $array2 = array(      3, 4, 5);
             strangetest\assert_less($array1, $array2);
         }
     );
@@ -88,15 +98,16 @@ function test_longer_array_greater_than_shorter_array()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
   array(
 -     1,
 -     2,
 <     3,
-<     4,
+<     5,
 >     3,
 >     4,
+      5,
   )
 EXPECTED;
 
@@ -117,7 +128,7 @@ function test_object_greater_than_array()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
 < stdClass {}
 > array()
@@ -142,7 +153,7 @@ function test_longer_string_greater_than_shorter_string()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
 < 'One
 < Two
@@ -170,7 +181,7 @@ function test_shorter_string_greater_than_longer_string()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
 < 'One
 < Two
@@ -198,7 +209,7 @@ function test_common_longer_string_greater_than_shorter_string()
 Assertion "$actual < $max" failed
 
 -< $actual
- > $max
++> $max
 
 < 'One
 < Two
