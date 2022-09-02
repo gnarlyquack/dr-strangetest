@@ -5,7 +5,7 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace test\diff\compare_identical;
+namespace test\diff\identical;
 
 use strangetest;
 

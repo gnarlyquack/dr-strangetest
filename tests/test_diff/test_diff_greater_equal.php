@@ -5,28 +5,28 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-namespace test\diff\compare_greater_equal;
+namespace test\diff\greater_equal;
 
 use strangetest;
 
 
+// helper assertions
+
+function assert_diff(&$from, &$to, $expected) {
+    $expected = "-> from\n+< to\n\n" . $expected;
+    $actual = strangetest\diff($from, $to, 'from', 'to', strangetest\DIFF_GREATER_EQUAL);
+    strangetest\assert_identical($actual, $expected);
+}
+
+
+// tests
+
 function test_array_less_than_array()
 {
-    $actual = strangetest\assert_throws(
-        'strangetest\\Failure',
-        function() {
-            $array1 = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
-            $array2 = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
-            strangetest\assert_greater_or_equal($array1, $array2);
-        }
-    );
+    $from = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
+    $to   = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
 
     $expected = <<<'EXPECTED'
-Assertion "$actual >= $min" failed
-
--> $actual
-+< $min
-
   array(
       1,
       array(
@@ -45,28 +45,16 @@ Assertion "$actual >= $min" failed
   )
 EXPECTED;
 
-    strangetest\assert_identical($actual->getMessage(), $expected);
+    assert_diff($from, $to, $expected);
 }
 
 
 function test_shorter_array_less_than_longer_array()
 {
-    $actual = strangetest\assert_throws(
-        'strangetest\\Failure',
-        function() {
-            strangetest\assert_greater_or_equal(
-                array(      3, 3, 5),
-                array(1, 2, 3, 4, 5)
-            );
-        }
-    );
+    $from = array(      3, 3, 5);
+    $to   = array(1, 2, 3, 4, 5);
 
     $expected = <<<'EXPECTED'
-Assertion "$actual >= $min" failed
-
--> $actual
-+< $min
-
   array(
 +     1,
 +     2,
@@ -77,108 +65,66 @@ Assertion "$actual >= $min" failed
   )
 EXPECTED;
 
-    strangetest\assert_identical($actual->getMessage(), $expected);
+    assert_diff($from, $to, $expected);
 }
 
 
 function test_array_less_than_object()
 {
-    $actual = strangetest\assert_throws(
-        'strangetest\\Failure',
-        function() {
-            strangetest\assert_greater_or_equal(array(), new \stdClass);
-        }
-    );
+    $from = array();
+    $to   = new \stdClass;
 
     $expected = <<<'EXPECTED'
-Assertion "$actual >= $min" failed
-
--> $actual
-+< $min
-
 > array()
 < stdClass {}
 EXPECTED;
 
-    strangetest\assert_identical($actual->getMessage(), $expected);
+    assert_diff($from, $to, $expected);
 }
 
 
 function test_longer_string_less_than_shorter_string()
 {
-    $actual = strangetest\assert_throws(
-        'strangetest\\Failure',
-        function() {
-            $string1 = "One\nThree\nFive";
-            $string2 = "One\nTwo";
-            strangetest\assert_greater_or_equal($string1, $string2);
-        }
-    );
+    $from = "One\nThree\nFive";
+    $to   = "One\nTwo";
 
     $expected = <<<'EXPECTED'
-Assertion "$actual >= $min" failed
-
--> $actual
-+< $min
-
   'One
 > Three
 < Two
   Five'
 EXPECTED;
 
-    strangetest\assert_identical($actual->getMessage(), $expected);
+    assert_diff($from, $to, $expected);
 }
 
 
 function test_shorter_string_less_than_longer_string()
 {
-    $actual = strangetest\assert_throws(
-        'strangetest\\Failure',
-        function() {
-            $string1 = "Two\nOne";
-            $string2 = "Two\nThree\nFour";
-            strangetest\assert_greater_or_equal($string1, $string2);
-        }
-    );
+    $from = "Two\nOne";
+    $to   = "Two\nThree\nFour";
 
     $expected = <<<'EXPECTED'
-Assertion "$actual >= $min" failed
-
--> $actual
-+< $min
-
   'Two
 > One
 < Three
   Four'
 EXPECTED;
 
-    strangetest\assert_identical($actual->getMessage(), $expected);
+    assert_diff($from, $to, $expected);
 }
 
 
 function test_common_shorter_string_less_than_longer_string()
 {
-    $actual = strangetest\assert_throws(
-        'strangetest\\Failure',
-        function() {
-            $string1 = "One\nTwo";
-            $string2 = "One\nTwo\nThree";
-            strangetest\assert_greater_or_equal($string1, $string2);
-        }
-    );
+    $from = "One\nTwo";
+    $to   = "One\nTwo\nThree";
 
     $expected = <<<'EXPECTED'
-Assertion "$actual >= $min" failed
-
--> $actual
-+< $min
-
   'One
   Two
 + Three'
 EXPECTED;
 
-    strangetest\assert_identical($actual->getMessage(), $expected);
+    assert_diff($from, $to, $expected);
 }
