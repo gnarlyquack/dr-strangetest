@@ -1666,49 +1666,42 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
             $equal = true;
             for ($f = 0, $t = 0; ($f < $min) && $equal; ++$f, ++$t)
             {
-                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
-
                 $result = $cmp->compare_values($fvalues[$f], $tvalues[$t]);
-                if (($result === _UnequalComparator::MATCH_EQUAL) && $cmp->equals_ok())
+                $equal = $result === _UnequalComparator::MATCH_EQUAL;
+
+                if ($equal && $cmp->equals_ok())
                 {
+                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
                     namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
                 }
                 else
                 {
-                    $equal = $result === _UnequalComparator::MATCH_EQUAL;
+                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
                     $cmp->delete_value($fvalues[$f], $show_key, $pos);
                     $cmp->insert_value($tvalues[$t], $show_key, $pos);
                 }
             }
 
-            if ($f < $flen)
+            if ($equal && $cmp->equals_ok())
             {
                 for ( ; $f < $flen; ++$f)
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                    if ($equal && $cmp->equals_ok())
-                    {
-                        namespace\_delete_value($state->diff, $fvalues[$f], $show_key, $pos);
-                    }
-                    else
-                    {
-                        namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
-                    }
+                    namespace\_delete_value($state->diff, $fvalues[$f], $show_key, $pos);
+                }
+
+                for ( ; $t < $tlen; ++$t)
+                {
+                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
+                    namespace\_insert_value($state->diff, $tvalues[$t], $show_key, $pos);
                 }
             }
             else
             {
-                for ( ; $t < $tlen; ++$t)
+                for ( ; $f < $flen; ++$f)
                 {
-                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
-                    if ($equal && $cmp->equals_ok())
-                    {
-                        namespace\_insert_value($state->diff, $tvalues[$t], $show_key, $pos);
-                    }
-                    else
-                    {
-                        namespace\_copy_value($state->diff, $tvalues[$t], $show_key, $pos);
-                    }
+                    $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
+                    namespace\_copy_value($state->diff, $fvalues[$f], $show_key, $pos);
                 }
             }
         }

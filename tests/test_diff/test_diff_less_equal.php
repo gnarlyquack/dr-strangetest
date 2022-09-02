@@ -129,9 +129,8 @@ function test_shorter_string_greater_than_longer_string()
 
     $expected = <<<'EXPECTED'
   'One
-< Two
-> Three
-  Five'
+< Two'
+> Three'
 EXPECTED;
 
     assert_diff($from, $to, $expected);

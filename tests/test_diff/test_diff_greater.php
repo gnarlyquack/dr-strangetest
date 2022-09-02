@@ -152,10 +152,9 @@ function test_shorter_string_less_than_longer_string()
 
     $expected = <<<'EXPECTED'
 > 'Two
-> One
+> One'
 < 'Two
-< Three
-  Four'
+< Three'
 EXPECTED;
 
     assert_diff($from, $to, $expected);
@@ -169,10 +168,9 @@ function test_common_shorter_string_less_than_longer_string()
 
     $expected = <<<'EXPECTED'
 > 'One
-> Two
+> Two'
 < 'One
-< Two
-  Three'
+< Two'
 EXPECTED;
 
     assert_diff($from, $to, $expected);
