@@ -137,7 +137,7 @@ EXPECTED;
 
 function test_formats_resource() {
     $value = \fopen(__FILE__, 'rb');
-    $expected = '  ' . strangetest\format_resource($value);
+    $expected = '  ' . strangetest\format_variable($value);
     namespace\assert_diff($value, $value, $expected);
 }
 
@@ -297,8 +297,8 @@ EXPECTED;
 function test_diffs_different_resources() {
     $from = \fopen(__FILE__, 'rb');
     $to = \fopen(__FILE__, 'rb');
-    $expected = '- ' . strangetest\format_resource($from)
-            . "\n+ " . strangetest\format_resource($to);
+    $expected = '- ' . strangetest\format_variable($from)
+            . "\n+ " . strangetest\format_variable($to);
 
     namespace\assert_diff($from, $to, $expected);
 }

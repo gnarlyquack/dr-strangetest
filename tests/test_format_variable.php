@@ -182,7 +182,7 @@ array(
 )
 EXPECTED;
         $actual = strangetest\format_variable($variable);
-        strangetest\assert_identical($expected, $actual);
+        strangetest\assert_identical($actual, $expected);
     }
 
 

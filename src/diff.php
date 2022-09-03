@@ -565,20 +565,22 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
             $value = $from->value;
             $to_value = $to->value;
 
-            $seen = array('byval' => array(), 'byref' => array());
-            $sentinels = array('byref' => null, 'byval' => new \stdClass());
+            $formatter = new Formatter($state->cmp === namespace\DIFF_IDENTICAL);
             if ($from->type === _Value::TYPE_ARRAY)
             {
-                $string = namespace\format_array($value, $from->name, $state->cmp === namespace\DIFF_IDENTICAL, $seen, $sentinels, $indent);
+                $formatter->format_array($value, $from->name, $from->indent_level);
+                $string = \implode("\n", $formatter->get_formatted());
             }
             elseif ($from->type === _Value::TYPE_OBJECT)
             {
-                $string = namespace\format_object($value, $from->name, $state->cmp === namespace\DIFF_IDENTICAL, $seen, $sentinels, $indent);
+                $formatter->format_object($value, $from->name, $from->indent_level);
+                $string = \implode("\n", $formatter->get_formatted());
             }
             else
             {
                 \assert($from->type !== _Value::TYPE_STRING_PART);
-                $string = namespace\format_scalar($value);
+                $formatter->format_scalar($value);
+                $string = \implode("\n", $formatter->get_formatted());
             }
 
             list($start, $rest) = namespace\split_line_first($string);
@@ -1279,15 +1281,16 @@ function _format_value(_Value $value, $pos, $show_key, $show_object_id)
     }
     $line_end = namespace\_line_end($value->key);
 
-    $seen = array('byval' => array(), 'byref' => array());
-    $sentinels = array('byref' => null, 'byval' => new \stdClass());
+    $formatter = new Formatter($show_object_id);
     if ($value->type === _Value::TYPE_ARRAY)
     {
-        $result .= namespace\format_array($value->value, $value->name, $show_object_id, $seen, $sentinels, $indent);
+        $formatter->format_array($value->value, $value->name, $value->indent_level);
+        $result .= \implode("\n", $formatter->get_formatted());
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
-        $result .= namespace\format_object($value->value, $value->name, $show_object_id, $seen, $sentinels, $indent);
+        $formatter->format_object($value->value, $value->name, $value->indent_level);
+        $result .= \implode("\n", $formatter->get_formatted());
     }
     elseif ($value->type === _Value::TYPE_REFERENCE)
     {
@@ -1295,7 +1298,8 @@ function _format_value(_Value $value, $pos, $show_key, $show_object_id)
     }
     elseif ($value->type === _Value::TYPE_RESOURCE)
     {
-        $result .= namespace\format_resource($value->value);
+        $formatter->format_resource($value->value);
+        $result .= \implode("\n", $formatter->get_formatted());
     }
     elseif ($value->type === _Value::TYPE_STRING_PART)
     {
@@ -1319,7 +1323,8 @@ function _format_value(_Value $value, $pos, $show_key, $show_object_id)
     }
     else
     {
-        $result .= namespace\format_scalar($value->value);
+        $formatter->format_scalar($value->value);
+        $result .= \implode("\n", $formatter->get_formatted());
     }
 
     $result .= $line_end;
