@@ -601,7 +601,7 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
             $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
             namespace\_build_diff($state, $from->subvalues, $to->subvalues, $edit, ($from->type === _Value::TYPE_OBJECT) || !$from->is_list || !$to->is_list);
 
-            if (($from->key() === $to->key())
+            if ((!$show_key || ($from->key() === $to->key()))
                 && (($state->cmp !== namespace\DIFF_IDENTICAL)
                     || (_Value::TYPE_ARRAY === $from->type)))
             {
