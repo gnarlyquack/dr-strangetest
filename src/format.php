@@ -244,7 +244,22 @@ final class Formatter extends struct
      */
     public function format_scalar(&$var, $prefix = '', $suffix = '')
     {
-        $this->format[] = $prefix . \var_export($var, true) . $suffix;
+        $formatted = $prefix . \var_export($var, true) . $suffix;
+        if (\is_string($var))
+        {
+            $start = 0;
+            while (false !== ($end = \strpos($formatted, "\n", $start)))
+            {
+                $len = $end - $start;
+                $this->format[] = \substr($formatted, $start, $len);
+                $start = $end + 1;
+            }
+            $this->format[] = \substr($formatted, $start);
+        }
+        else
+        {
+            $this->format[] = $formatted;
+        }
     }
 
 

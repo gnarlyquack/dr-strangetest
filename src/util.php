@@ -100,20 +100,99 @@ function ksort_recursive(&$array, &$seen = array())
 
 
 /**
- * @param string $string
- * @return string[]
+ * @template T
  */
-function split_line_first($string)
+interface ListIterator
 {
-    $result = false;
-    $pos = \strpos($string, "\n");
-    \assert($pos > 0);
+    /**
+     * @return T
+     */
+    public function next();
 
-    $first = \substr($string, 0, $pos);
-    // @bc 5.6 substr with $pos >= string length returns false
-    $rest = (string)\substr($string, $pos + 1);
-    \assert(\strlen($rest) > 0);
+    /**
+     * @return bool
+     */
+    public function valid();
+}
 
-    $result = array($first, $rest);
-    return $result;
+
+/**
+ * @template T
+ * @implements ListIterator<T>
+ */
+final class ListForwardIterator extends struct implements ListIterator
+{
+    /** @var T[] */
+    private $list;
+
+    /** @var int */
+    private $index;
+
+    /** @var int */
+    private $len;
+
+
+    /**
+     * @param T[] $list
+     */
+    public function __construct(array $list)
+    {
+        \assert(\array_is_list($list));
+
+        $this->list = $list;
+        $this->index = 0;
+        $this->len = \count($list);
+    }
+
+    public function next()
+    {
+        $result = $this->list[$this->index++];
+        return $result;
+    }
+
+    public function valid()
+    {
+        return $this->index < $this->len;
+    }
+}
+
+
+/**
+ * @template T
+ * @implements ListIterator<T>
+ */
+final class ListReverseIterator extends struct implements ListIterator
+{
+    /** @var T[] */
+    private $list;
+
+    /** @var int */
+    private $index;
+
+    /** @var int */
+    private $len;
+
+
+    /**
+     * @param T[] $list
+     */
+    public function __construct(array $list)
+    {
+        \assert(\array_is_list($list));
+
+        $this->list = $list;
+        $this->len = \count($list);
+        $this->index = $this->len - 1;
+    }
+
+    public function next()
+    {
+        $result = $this->list[$this->index--];
+        return $result;
+    }
+
+    public function valid()
+    {
+        return $this->index >= 0;
+    }
 }

@@ -541,12 +541,12 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
 
     if ($cmp->matches === namespace\_DIFF_MATCH_FULL)
     {
-        namespace\_copy_value($state, $from, $show_key);
+        namespace\_copy_value($state, $from, $show_key, true);
     }
     elseif (0 === $cmp->lcs)
     {
-        namespace\_insert_value($state, $to, $show_key);
-        namespace\_delete_value($state, $from, $show_key);
+        namespace\_insert_value($state, $to, $show_key, true);
+        namespace\_delete_value($state, $from, $show_key, true);
     }
     else
     {
@@ -559,38 +559,35 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
             // If values match, then only the key is different, so we don't
             // need to generate a difference between the two values.
             $indent = namespace\format_indent($from->indent_level);
-            $key = namespace\_format_key($from->key);
-            $line_end = namespace\_line_end($from->key);
-
-            $value = $from->value;
-            $to_value = $to->value;
+            $suffix = namespace\_line_end($from->key);
 
             $formatter = new Formatter($state->cmp === namespace\DIFF_IDENTICAL);
             if ($from->type === _Value::TYPE_ARRAY)
             {
-                $formatter->format_array($value, $from->name, $from->indent_level);
-                $string = \implode("\n", $formatter->get_formatted());
+                $formatter->format_array($from->value, $from->name, $from->indent_level, '', $suffix);
+                $strings = $formatter->get_formatted();
             }
             elseif ($from->type === _Value::TYPE_OBJECT)
             {
-                $formatter->format_object($value, $from->name, $from->indent_level);
-                $string = \implode("\n", $formatter->get_formatted());
+                $formatter->format_object($from->value, $from->name, $from->indent_level, '', $suffix);
+                $strings = $formatter->get_formatted();
             }
             else
             {
                 \assert($from->type !== _Value::TYPE_STRING_PART);
-                $formatter->format_scalar($value);
-                $string = \implode("\n", $formatter->get_formatted());
+                $formatter->format_scalar($from->value, '', $suffix);
+                $strings = $formatter->get_formatted();
             }
 
-            list($start, $rest) = namespace\split_line_first($string);
-            $from_start = $indent . namespace\_format_key($from->key) . $start;
-            $to_start = $indent . namespace\_format_key($to->key) . $start;
-            $rest .= namespace\_line_end($from->key);
+            $from_start = $indent . namespace\_format_key($from->key) . $strings[0];
+            $to_start = $indent . namespace\_format_key($to->key) . $strings[0];
 
-            namespace\_copy_string($state, $rest);
-            namespace\_insert_string($state, $to_start);
-            namespace\_delete_string($state, $from_start);
+            for ($c = \count($strings), $i = $c - 1; $i > 0; --$i)
+            {
+                $state->diff[] = new _DiffCopy($strings[$i]);
+            }
+            $state->diff[] = new _DiffInsert($to_start);
+            $state->diff[] = new _DiffDelete($from_start);
         }
         elseif ($from->type === _Value::TYPE_STRING)
         {
@@ -599,7 +596,7 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
         }
         else
         {
-            namespace\_copy_string($state, namespace\_end_value($from));
+            $state->diff[] = new _DiffCopy(namespace\_end_value($from));
 
             $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
             namespace\_build_diff($state, $from->subvalues, $to->subvalues, $edit, ($from->type === _Value::TYPE_OBJECT) || !$from->is_list || !$to->is_list);
@@ -608,12 +605,12 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
                 && (($state->cmp !== namespace\DIFF_IDENTICAL)
                     || (_Value::TYPE_ARRAY === $from->type)))
             {
-                namespace\_copy_string($state, namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
+                $state->diff[] = new _DiffCopy(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
             }
             else
             {
-                namespace\_insert_string($state, namespace\_start_value($to, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-                namespace\_delete_string($state, namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
+                $state->diff[] = new _DiffInsert(namespace\_start_value($to, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
+                $state->diff[] = new _DiffDelete(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
             }
         }
     }
@@ -794,7 +791,7 @@ function _build_diff(_DiffState $state, array $from, array $to, _Edit $edit, $sh
                 --$f;
                 --$t;
                 $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_BOTH);
-                namespace\_copy_value($state, $from[$f], $show_key, $pos);
+                namespace\_copy_value($state, $from[$f], $show_key, true, $pos);
             }
             elseif ($m[$f-1][$t] < $m[$f][$t] && $m[$f][$t-1] < $m[$f][$t])
             {
@@ -806,26 +803,26 @@ function _build_diff(_DiffState $state, array $from, array $to, _Edit $edit, $sh
             {
                 --$t;
                 $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_TO);
-                namespace\_insert_value($state, $to[$t], $show_key, $pos);
+                namespace\_insert_value($state, $to[$t], $show_key, true, $pos);
             }
             else
             {
                 --$f;
                 $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_FROM);
-                namespace\_delete_value($state, $from[$f], $show_key, $pos);
+                namespace\_delete_value($state, $from[$f], $show_key, true, $pos);
             }
         }
         elseif ($f)
         {
             --$f;
             $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_FROM);
-            namespace\_delete_value($state, $from[$f], $show_key, $pos);
+            namespace\_delete_value($state, $from[$f], $show_key, true, $pos);
         }
         else
         {
             --$t;
             $pos = namespace\_get_line_pos($f, $t, $edit->flen, $edit->tlen, namespace\_DIFF_LINE_TO);
-            namespace\_insert_value($state, $to[$t], $show_key, $pos);
+            namespace\_insert_value($state, $to[$t], $show_key, true, $pos);
         }
     }
 }
@@ -842,13 +839,13 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
 
     if ($result === _UnequalComparator::MATCH_ERROR)
     {
-        namespace\_delete_value($state, $from, $show_key);
-        namespace\_insert_value($state, $to, $show_key);
+        namespace\_delete_value($state, $from, $show_key, false);
+        namespace\_insert_value($state, $to, $show_key, false);
     }
     elseif (($result === _UnequalComparator::MATCH_PASS)
         || (($result === _UnequalComparator::MATCH_EQUAL) && $cmp->equals_ok()))
     {
-        namespace\_copy_value($state, $from, $show_key);
+        namespace\_copy_value($state, $from, $show_key, false);
     }
     elseif (($to->type === $from->type)
         && (($from->type === _Value::TYPE_STRING) || ($from->type === _Value::TYPE_ARRAY) || (($from->type === _Value::TYPE_OBJECT) && ($to->value instanceof $from->value))))
@@ -871,7 +868,7 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 if ($equal && $cmp->equals_ok())
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
-                    namespace\_copy_value($state, $fvalues[$f], $show_key, $pos);
+                    namespace\_copy_value($state, $fvalues[$f], $show_key, false, $pos);
                 }
                 else
                 {
@@ -886,13 +883,13 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 for ( ; $f < $flen; ++$f)
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                    namespace\_delete_value($state, $fvalues[$f], $show_key, $pos);
+                    namespace\_delete_value($state, $fvalues[$f], $show_key, false, $pos);
                 }
 
                 for ( ; $t < $tlen; ++$t)
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
-                    namespace\_insert_value($state, $tvalues[$t], $show_key, $pos);
+                    namespace\_insert_value($state, $tvalues[$t], $show_key, false, $pos);
                 }
             }
             else
@@ -900,7 +897,7 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 for ( ; $f < $flen; ++$f)
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                    namespace\_copy_value($state, $fvalues[$f], $show_key, $pos);
+                    namespace\_copy_value($state, $fvalues[$f], $show_key, false, $pos);
                 }
             }
         }
@@ -908,17 +905,17 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
         {
             $show_subkey = ($from->type === _Value::TYPE_OBJECT) || !$from->is_list || !$to->is_list;
 
-            namespace\_copy_string($state, namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
+            $state->diff[] = new _DiffCopy(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
 
             for ($f = 0; ($flen - $f) > $tlen; ++$f)
             {
                 $pos = namespace\_get_line_pos($f, 0, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                namespace\_delete_value($state, $fvalues[$f], $show_subkey, $pos);
+                namespace\_delete_value($state, $fvalues[$f], $show_subkey, false, $pos);
             }
             for ($t = 0; ($tlen - $t) > $flen; ++$t)
             {
                 $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
-                namespace\_insert_value($state, $tvalues[$t], $show_subkey, $pos);
+                namespace\_insert_value($state, $tvalues[$t], $show_subkey, false, $pos);
             }
 
             $equal = true;
@@ -931,10 +928,10 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
             for ( ; $f < $flen; ++$f)
             {
                 $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                namespace\_copy_value($state, $fvalues[$f], $show_subkey, $pos);
+                namespace\_copy_value($state, $fvalues[$f], $show_subkey, false, $pos);
             }
 
-            namespace\_copy_string($state, namespace\_end_value($from));
+            $state->diff[] = new _DiffCopy(namespace\_end_value($from));
         }
     }
     else
@@ -1033,20 +1030,20 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
 
     public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
-        $string = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach (\array_reverse(\explode("\n", $string)) as $v)
+        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        foreach ($formatted as $string)
         {
-            $this->state->diff[] = new _DiffDeleteGreater($v);
+            $this->state->diff[] = new _DiffDeleteGreater($string);
         }
     }
 
 
     public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
-        $string = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach (\array_reverse(\explode("\n", $string)) as $v)
+        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        foreach ($formatted as $string)
         {
-            $this->state->diff[] = new _DiffInsertLess($v);
+            $this->state->diff[] = new _DiffInsertLess($string);
         }
     }
 }
@@ -1104,20 +1101,20 @@ final class _LessThanComparator extends struct implements _UnequalComparator
 
     public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
-        $string = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach (\array_reverse(\explode("\n", $string)) as $v)
+        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        foreach ($formatted as $string)
         {
-            $this->state->diff[] = new _DiffDeleteLess($v);
+            $this->state->diff[] = new _DiffDeleteLess($string);
         }
     }
 
 
     public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
     {
-        $string = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach (\array_reverse(\explode("\n", $string)) as $v)
+        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        foreach ($formatted as $string)
         {
-            $this->state->diff[] = new _DiffInsertGreater($v);
+            $this->state->diff[] = new _DiffInsertGreater($string);
         }
     }
 }
@@ -1175,72 +1172,78 @@ function _get_line_pos($f, $t, $flen, $tlen, $which)
 
 /**
  * @param bool $show_key
+ * @param bool $reverse
  * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @return void
  */
-function _copy_value(_DiffState $state, _Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
+function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = namespace\_DIFF_LINE_MIDDLE)
 {
-    namespace\_copy_string($state, namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-}
+    $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
-
-/**
- * @param bool $show_key
- * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
- * @return void
- */
-function _insert_value(_DiffState $state, _Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
-{
-    namespace\_insert_string($state, namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-}
-
-
-/**
- * @param bool $show_key
- * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
- * @return void
- */
-function _delete_value(_DiffState $state, _Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
-{
-    namespace\_delete_string($state, namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-}
-
-
-/**
- * @param string $string
- * @return void
- */
-function _copy_string(_DiffState $state, $string)
-{
-    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    if ($reverse)
     {
-        $state->diff[] = new _DiffCopy($v);
+        $iter = new ListReverseIterator($formatted);
+    }
+    else
+    {
+        $iter = new ListForwardIterator($formatted);
+    }
+
+    while ($iter->valid())
+    {
+        $state->diff[] = new _DiffCopy($iter->next());
     }
 }
 
 
 /**
- * @param string $string
+ * @param bool $show_key
+ * @param bool $reverse
+ * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @return void
  */
-function _insert_string(_DiffState $state, $string)
+function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = namespace\_DIFF_LINE_MIDDLE)
 {
-    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+
+    if ($reverse)
     {
-        $state->diff[] = new _DiffInsert($v);
+        $iter = new ListReverseIterator($formatted);
+    }
+    else
+    {
+        $iter = new ListForwardIterator($formatted);
+    }
+
+    while ($iter->valid())
+    {
+        $state->diff[] = new _DiffInsert($iter->next());
     }
 }
 
 
 /**
- * @param string $string
+ * @param bool $show_key
+ * @param bool $reverse
+ * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @return void
  */
-function _delete_string(_DiffState $state, $string)
+function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = namespace\_DIFF_LINE_MIDDLE)
 {
-    foreach (\array_reverse(\explode("\n", $string)) as $v)
+    $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+
+    if ($reverse)
     {
-        $state->diff[] = new _DiffDelete($v);
+        $iter = new ListReverseIterator($formatted);
+    }
+    else
+    {
+        $iter = new ListForwardIterator($formatted);
+    }
+
+    while ($iter->valid())
+    {
+        $state->diff[] = new _DiffDelete($iter->next());
     }
 }
 
@@ -1269,65 +1272,62 @@ function _format_key(_Key $key)
  * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
  * @param bool $show_key
  * @param bool $show_object_id
- * @return string
+ * @return string[]
  */
 function _format_value(_Value $value, $pos, $show_key, $show_object_id)
 {
-    $result = $indent = namespace\format_indent($value->indent_level);
-
+    $prefix = namespace\format_indent($value->indent_level);
     if ($show_key)
     {
-        $result .= namespace\_format_key($value->key);
+        $prefix .= namespace\_format_key($value->key);
     }
-    $line_end = namespace\_line_end($value->key);
+
+    $suffix = namespace\_line_end($value->key);
 
     $formatter = new Formatter($show_object_id);
     if ($value->type === _Value::TYPE_ARRAY)
     {
-        $formatter->format_array($value->value, $value->name, $value->indent_level);
-        $result .= \implode("\n", $formatter->get_formatted());
+        $formatter->format_array($value->value, $value->name, $value->indent_level, $prefix, $suffix);
+        $result = $formatter->get_formatted();
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
-        $formatter->format_object($value->value, $value->name, $value->indent_level);
-        $result .= \implode("\n", $formatter->get_formatted());
+        $formatter->format_object($value->value, $value->name, $value->indent_level, $prefix, $suffix);
+        $result = $formatter->get_formatted();
     }
     elseif ($value->type === _Value::TYPE_REFERENCE)
     {
-        $result .= $value->name;
+        $result = array($prefix . $value->name . $suffix);
     }
     elseif ($value->type === _Value::TYPE_RESOURCE)
     {
-        $formatter->format_resource($value->value);
-        $result .= \implode("\n", $formatter->get_formatted());
+        $formatter->format_resource($value->value, $prefix, $suffix);
+        $result = $formatter->get_formatted();
     }
     elseif ($value->type === _Value::TYPE_STRING_PART)
     {
+        \assert(\is_string($value->value));
+        $string = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $value->value);
+
         if (namespace\_DIFF_LINE_FIRST === $pos)
         {
-            $result .= "'";
-            $line_end = '';
+            $result = array($prefix . "'" . $string);
         }
         elseif (namespace\_DIFF_LINE_LAST === $pos)
         {
-            $result = '';
-            $line_end = "'" . $line_end;
+            $result = array($string . "'" . $suffix);
         }
         else
         {
-            $result = $line_end = '';
+            $result = array($string);
         }
-
-        \assert(\is_string($value->value));
-        $result .= \str_replace(array('\\', "'",), array('\\\\', "\\'",), $value->value);
     }
     else
     {
-        $formatter->format_scalar($value->value);
-        $result .= \implode("\n", $formatter->get_formatted());
+        $formatter->format_scalar($value->value, $prefix, $suffix);
+        $result = $formatter->get_formatted();
     }
 
-    $result .= $line_end;
     return $result;
 }
 

@@ -45,8 +45,8 @@ EXPECTED;
 
 function test_array_less_than_array()
 {
-    $from = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
-    $to   = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
+    $from = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, array(5));
+    $to   = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, array(2));
 
     $expected = <<<'EXPECTED'
   array(
@@ -66,7 +66,9 @@ function test_array_less_than_array()
           2,
       ),
       5,
-      5,
+      array(
+          5,
+      ),
   )
 EXPECTED;
 
