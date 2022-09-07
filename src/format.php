@@ -8,9 +8,6 @@
 namespace strangetest;
 
 
-const FORMAT_INDENT = '    ';
-
-
 /**
  * @api
  * @param ?string $assertion
@@ -43,17 +40,6 @@ function format_failure_message($assertion, $description = null, $detail = null)
 
 
 /**
- * @api
- * @param int $indent_level
- * @return string
- */
-function format_indent($indent_level)
-{
-    return \str_repeat(namespace\FORMAT_INDENT, $indent_level);
-}
-
-
-/**
  * Format a string representation of a variable.
  *
  * This provides more readable(?) formatting of variables than PHP's built-in
@@ -63,47 +49,84 @@ function format_indent($indent_level)
  * @api
  * @param mixed $variable The variable to format. $variable is received as a
  *                        reference in order to detect self-referencing values.
- * @param int $starting_indent_level
+ * @param int $nesting_level
  * @param bool $show_object_id
  * @param bool $as_array
  * @return ($as_array is true ? string[] : string) A string representation of $var
  */
-function format_variable(&$variable, $starting_indent_level = 0, $show_object_id = true, $as_array = false)
+function format_variable(&$variable, $nesting_level = 0, $show_object_id = true, $as_array = false)
 {
     $name = \is_object($variable) ? \get_class($variable) : \gettype($variable);
-    $prefix = namespace\format_indent($starting_indent_level);
 
-    $formatter = new Formatter($show_object_id);
-    $formatter->format_variable($variable, $name, $starting_indent_level, $prefix, '');
+    $formatter = new VariableFormatter($show_object_id);
 
-    $result = $formatter->get_formatted();
-    if (!$as_array)
+    $result = new FormatResult;
+    $prefix = $formatter->format_indent($nesting_level);
+    $formatter->format_variable($result, $variable, $name, $nesting_level, $prefix);
+
+    if ($as_array)
     {
-        $result = \implode("\n", $result);
+        return $result->formatted;
     }
+    else
+    {
+        return \implode("\n", $result->formatted);
+    }
+}
+
+
+/**
+ * @api
+ * @param int $nesting_level
+ * @return string
+ */
+function format_indent($nesting_level)
+{
+    return \str_repeat(' ', VariableFormatter::DEFAULT_INDENT_WIDTH * $nesting_level);
+}
+
+
+/**
+ * @api
+ * @param string|int $index;
+ * @param ?string $formatted
+ * @return string
+ */
+function format_array_index($index, &$formatted = null)
+{
+    $formatted = \var_export($index, true);
+
+    $result = $formatted . ' => ';
     return $result;
 }
 
 
 /**
- * @todo Make array start a constant?
  * @api
+ * @param string|int $property
+ * @param string $class
+ * @param ?string $formatted
  * @return string
  */
-function format_array_start()
+function format_property($property, $class, &$formatted = null)
 {
-    return 'array(';
-}
+    // Object properties are cast to array keys as follows:
+    //     public    $property -> "property"
+    //     protected $property -> "\0*\0property"
+    //     private   $property -> "\0class\0property"
+    //         where "class" is the name of the class where the
+    //         property is declared
+    $parts = \explode("\0", (string)$property);
 
+    $result = '$' . \array_pop($parts);
+    if ($parts && $parts[1] !== '*' && $parts[1] !== $class)
+    {
+        $result = $parts[1] . '::' . $result;
+    }
 
-/**
- * @todo Make array end a constant?
- * @api
- * @return string
- */
-function format_array_end()
-{
-    return ')';
+    $formatted = $result;
+    $result .= ' = ';
+    return $result;
 }
 
 
@@ -134,21 +157,35 @@ function format_object_start(&$object, $show_object_id, &$class = null)
 
 
 /**
- * @todo Make object end a constant?
  * @api
- * @return string
  */
-function format_object_end()
+final class FormatResult extends struct
 {
-    return '}';
+    /** @var string[] */
+    public $formatted = array();
 }
 
 
 /**
  * @api
  */
-final class Formatter extends struct
+final class VariableFormatter extends struct
 {
+    const DEFAULT_INDENT_WIDTH = 4;
+
+    const ARRAY_START = 'array(';
+    const ARRAY_END = ')';
+    const ARRAY_ELEMENT_SEPARATOR = ',';
+
+    const OBJECT_END = '}';
+    const PROPERTY_TERMINATOR = ';';
+
+    const STRING_MIDDLE =   0;
+    const STRING_START  = 0x1;
+    const STRING_END    = 0x2;
+    // @bc 5.5 hard-code constant value instead of using a constant expression
+    const STRING_WHOLE  = 0x3; // bitwise or of STRING_START and STRING_END
+
     /**
      * We'd really like to make this a constant, but PHP won't let us do that
      * with an object instance, so we'll just have to initialize it every time
@@ -160,72 +197,59 @@ final class Formatter extends struct
     /** @var array{'byval': mixed[], 'byref': mixed[]} */
     private $seen = array('byval' => array(), 'byref' => array());
 
-    /** @var string */
-    private $indent;
+    /** @var int */
+    private $indent_width;
 
     /** @var bool */
     private $show_object_id;
 
-    /** @var string[] */
-    private $format = array();
-
 
     /**
      * @param bool $show_object_id
-     * @param string $indent
+     * @param int $indent_width
      */
-    public function __construct($show_object_id, $indent = namespace\FORMAT_INDENT)
+    public function __construct($show_object_id, $indent_width = self::DEFAULT_INDENT_WIDTH)
     {
         $this->sentinels = array('byref' => null, 'byval' => new \stdClass);
         $this->show_object_id = $show_object_id;
-        $this->indent = $indent;
-    }
-
-
-    /**
-     * @todo should Formatter::get_formatted clear out the current state?
-     * This could allow a formatter to be reused for multiple values. Maybe
-     * paramaterize this as an option? Note that both the format array and the
-     * seen array would have to be reset.
-     *
-     * @return string[]
-     */
-    public function get_formatted()
-    {
-        return $this->format;
+        $this->indent_width = $indent_width;
     }
 
 
     /**
      * @param mixed $var
      * @param string $name
-     * @param int $indent_level
+     * @param int $nesting_level
      * @param string $prefix
      * @param string $suffix
      * @return void
      */
-    public function format_variable(&$var, $name, $indent_level, $prefix = '', $suffix = '')
+    public function format_variable(FormatResult $result, &$var, $name, $nesting_level, $prefix = '', $suffix = '')
     {
         $reference = namespace\check_reference($var, $name, $this->seen, $this->sentinels);
         if ($reference)
         {
-            $this->format[] = "{$prefix}{$reference}{$suffix}";
+            $result->formatted[] = $prefix . $reference . $suffix;
+        }
+        elseif(\is_string($var))
+        {
+            $this->format_string($result, $var, $prefix, $suffix);
         }
         elseif (\is_scalar($var) || null === $var)
         {
-            $this->format_scalar($var, $prefix, $suffix);
+            $this->format_scalar($result, $var, $prefix, $suffix);
         }
         elseif (\is_resource($var))
         {
-            $this->format_resource($var, $prefix, $suffix);
+            $this->format_resource($result, $var, $prefix, $suffix);
         }
         elseif (\is_array($var))
         {
-            $this->format_array($var, $name, $indent_level, $prefix, $suffix);
+            $this->format_array($result, $var, $name, $nesting_level, $prefix, $suffix);
         }
         elseif (\is_object($var))
         {
-            $this->format_object($var, $name, $indent_level, $prefix, $suffix);
+            $this->format_object($result, $var, $name, $nesting_level, $prefix, $suffix);
         }
         else
         {
@@ -242,24 +266,40 @@ final class Formatter extends struct
      * @param string $suffix
      * @return void
      */
-    public function format_scalar(&$var, $prefix = '', $suffix = '')
+    public function format_scalar(FormatResult $result, &$var, $prefix = '', $suffix = '')
     {
-        $formatted = $prefix . \var_export($var, true) . $suffix;
-        if (\is_string($var))
+        $result->formatted[] = $prefix . \var_export($var, true) . $suffix;
+    }
+
+
+    /**
+     * @param string $var
+     * @param string $prefix
+     * @param string $suffix
+     * @param self::STRING_* $part
+     * @return void
+     */
+    public function format_string(FormatResult $result, &$var, $prefix = '', $suffix = '', $part = self::STRING_WHOLE)
+    {
+        $formatted = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $var);
+
+        if ($part & self::STRING_START)
         {
-            $start = 0;
-            while (false !== ($end = \strpos($formatted, "\n", $start)))
-            {
-                $len = $end - $start;
-                $this->format[] = \substr($formatted, $start, $len);
-                $start = $end + 1;
-            }
-            $this->format[] = \substr($formatted, $start);
+            $formatted = $prefix . "'" . $formatted;
         }
-        else
+        if ($part & self::STRING_END)
         {
-            $this->format[] = $formatted;
+            $formatted .= "'" . $suffix;
         }
+
+        $start = 0;
+        while (false !== ($end = \strpos($formatted, "\n", $start)))
+        {
+            $len = $end - $start;
+            $result->formatted[] = \substr($formatted, $start, $len);
+            $start = $end + 1;
+        }
+        $result->formatted[] = \substr($formatted, $start);
     }
 
 
@@ -269,9 +309,9 @@ final class Formatter extends struct
      * @param string $suffix
      * @return void
      */
-    function format_resource(&$var, $prefix = '', $suffix = '')
+    public function format_resource(FormatResult $result, &$var, $prefix = '', $suffix = '')
     {
-        $this->format[] = $prefix . \sprintf(
+        $result->formatted[] = $prefix . \sprintf(
             '%s of type "%s"',
             \print_r($var, true),
             \get_resource_type($var)
@@ -282,49 +322,49 @@ final class Formatter extends struct
     /**
      * @param mixed[] $var
      * @param string $name
-     * @param int $indent_level
+     * @param int $nesting_level
      * @param string $prefix
      * @param string $suffix
      * @return void
      */
-    public function format_array(array &$var, $name, $indent_level, $prefix = '', $suffix = '')
+    public function format_array(FormatResult $result, array &$var, $name, $nesting_level, $prefix = '', $suffix = '')
     {
-        $start = namespace\format_array_start();
-        $end = namespace\format_array_end();
+        $start = self::ARRAY_START;
+        $end = self::ARRAY_END;
 
         if ($var)
         {
-            $padding = $this->format_indent($indent_level);
-            ++$indent_level;
-            $indent = $this->format_indent($indent_level);
+            $padding = $this->format_indent($nesting_level);
+            ++$nesting_level;
+            $indent = $this->format_indent($nesting_level);
             $show_key = !\array_is_list($var);
 
-            $this->format[] = "{$prefix}{$start}";
+            $result->formatted[] = $prefix . $start;
 
             foreach ($var as $key => &$value)
             {
-                $key = \var_export($key, true);
+                $index = namespace\format_array_index($key, $formatted);
 
                 $prefix = $indent;
                 if ($show_key)
                 {
-                    $prefix .= "{$key} => ";
+                    $prefix .= $index;
                 }
 
                 $this->format_variable(
+                    $result,
                     $value,
-                    \sprintf('%s[%s]', $name, $key),
-                    $indent_level,
+                    \sprintf('%s[%s]', $name, $formatted),
+                    $nesting_level,
                     $prefix,
-                    // @todo Make a constant for array line end?
-                    ',');
+                    self::ARRAY_ELEMENT_SEPARATOR);
             }
 
-            $this->format[] = "{$padding}{$end}{$suffix}";
+            $result->formatted[] = $padding . $end . $suffix;
         }
         else
         {
-            $this->format[] = "{$prefix}{$start}{$end}{$suffix}";
+            $result->formatted[] = $prefix . $start . $end . $suffix;
         }
     }
 
@@ -332,65 +372,53 @@ final class Formatter extends struct
     /**
      * @param object $var
      * @param string $name
-     * @param int $indent_level
+     * @param int $nesting_level
      * @param string $prefix
      * @param string $suffix
      * @return void
      */
-    public function format_object(&$var, $name, $indent_level, $prefix = '', $suffix = '')
+    public function format_object(FormatResult $result, &$var, $name, $nesting_level, $prefix = '', $suffix = '')
     {
         $start = namespace\format_object_start($var, $this->show_object_id, $class);
-        $end = namespace\format_object_end();
+        $end = self::OBJECT_END;
 
         $values = (array)$var;
         if ($values)
         {
-            $padding = $this->format_indent($indent_level);
-            ++$indent_level;
-            $indent = $this->format_indent($indent_level);
+            $padding = $this->format_indent($nesting_level);
+            ++$nesting_level;
+            $indent = $this->format_indent($nesting_level);
 
-            $this->format[] = "{$prefix}{$start}";
+            $result->formatted[] = $prefix . $start;
 
             foreach ($values as $key => &$value)
             {
-                // Object properties are cast to array keys as follows:
-                //     public    $property -> "property"
-                //     protected $property -> "\0*\0property"
-                //     private   $property -> "\0class\0property"
-                //         where "class" is the name of the class where the
-                //         property is declared
-                $key = \explode("\0", $key);
-                $property = '$' . \array_pop($key);
-                if ($key && $key[1] !== '*' && $key[1] !== $class)
-                {
-                    $property = "$key[1]::$property";
-                }
-
-                $prefix = $indent . $property . ' = ';
+                $property = namespace\format_property($key, $class, $formatted);
+                $prefix = $indent . $property;
                 $this->format_variable(
+                    $result,
                     $value,
-                    \sprintf('%s->%s', $name, $property),
-                    $indent_level,
+                    \sprintf('%s->%s', $name, $formatted),
+                    $nesting_level,
                     $prefix,
-                    // @todo Make a constant for object line end?
-                    ';');
+                    self::PROPERTY_TERMINATOR);
             }
 
-            $this->format[] = "{$padding}{$end}{$suffix}";
+            $result->formatted[] = $padding . $end . $suffix;
         }
         else
         {
-            $this->format[] = "{$prefix}{$start}{$end}{$suffix}";
+            $result->formatted[] = $prefix . $start . $end . $suffix;
         }
     }
 
 
     /**
-     * @param int $indent_level
+     * @param int $nesting_level
      * @return string
      */
-    public function format_indent($indent_level)
+    public function format_indent($nesting_level)
     {
-        return \str_repeat($this->indent, $indent_level);
+        return \str_repeat(' ' , $this->indent_width * $nesting_level);
     }
 }

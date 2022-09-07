@@ -23,11 +23,6 @@ const _DIFF_MATCH_NONE    = 0; // Elements have neither matching values nor matc
 const _DIFF_MATCH_PARTIAL = 1; // Elements have matching values but nonmatching keys
 const _DIFF_MATCH_FULL    = 2; // Elements have both matching values and keys
 
-
-const _DIFF_LINE_MIDDLE = 0;
-const _DIFF_LINE_FIRST  = 0x1;
-const _DIFF_LINE_LAST   = 0x2;
-
 const _DIFF_LINE_FROM = 0x1;
 const _DIFF_LINE_TO   = 0x2;
 // @bc 5.5 define run-time constant instead of using a constant expression
@@ -349,6 +344,10 @@ final class _Key extends struct
 
     /** @var bool */
     public $in_list = false;
+
+    /** @var string */
+    public $formatted = '';
+
 }
 
 
@@ -489,8 +488,9 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $subkey->type = _Key::TYPE_INDEX;
             $subkey->value = $k;
             $subkey->in_list =& $result->is_list;
+            $subkey->formatted = namespace\format_array_index($k, $formatted);
 
-            $subname = \sprintf('%s[%s]', $name, \var_export($k, true));
+            $subname = \sprintf('%s[%s]', $name, $formatted);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
             $result->cost += $subvalue->cost;
             $result->subvalues[] = $subvalue;
@@ -505,6 +505,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         $result->indent_level = $indent_level;
         $result->cost = 1;
 
+        $class = \get_class($value);
         $cost = 1;
         $index = 0;
         // @bc 5.4 use variable for array cast in order to create references
@@ -516,8 +517,9 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $subkey = new _Key;
             $subkey->type = _Key::TYPE_PROPERTY;
             $subkey->value = $k;
+            $subkey->formatted = namespace\format_property($k, $class, $formatted);
 
-            $subname = \sprintf('%s->%s', $name, $k);
+            $subname = \sprintf('%s->%s', $name, $formatted);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
             $result->cost += $subvalue->cost;
             $result->subvalues[] = $subvalue;
@@ -568,23 +570,21 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
             $indent = namespace\format_indent($from->indent_level);
             $suffix = namespace\_line_end($from->key);
 
-            $formatter = new Formatter($state->cmp === namespace\DIFF_IDENTICAL);
+            $strings = new FormatResult;
+            $formatter = new VariableFormatter($state->cmp === namespace\DIFF_IDENTICAL);
             if ($from->type === _Value::TYPE_ARRAY)
             {
-                $formatter->format_array($from->value, $from->name, $from->indent_level, '', $suffix);
-                $strings = $formatter->get_formatted();
+                $formatter->format_array($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
             }
             elseif ($from->type === _Value::TYPE_OBJECT)
             {
-                $formatter->format_object($from->value, $from->name, $from->indent_level, '', $suffix);
-                $strings = $formatter->get_formatted();
+                $formatter->format_object($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
             }
             else
             {
-                \assert($from->type !== _Value::TYPE_STRING_PART);
-                $formatter->format_scalar($from->value, '', $suffix);
-                $strings = $formatter->get_formatted();
+                $formatter->format_string($strings, $from->value, '', $suffix);
             }
+            $strings = $strings->formatted;
 
             $from_start = $indent . namespace\_format_key($from->key) . $strings[0];
             $to_start = $indent . namespace\_format_key($to->key) . $strings[0];
@@ -976,17 +976,17 @@ interface _UnequalComparator
 
     /**
      * @param bool $show_key
-     * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
+     * @param VariableFormatter::STRING_* $pos
      * @return void
      */
-    public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE);
+    public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE);
 
     /**
      * @param bool $show_key
-     * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
+     * @param VariableFormatter::STRING_* $pos
      * @return void
      */
-    public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE);
+    public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE);
 }
 
 
@@ -1039,7 +1039,7 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
     }
 
 
-    public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
+    public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
         $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
@@ -1049,7 +1049,7 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
     }
 
 
-    public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
+    public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
         $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
@@ -1110,7 +1110,7 @@ final class _LessThanComparator extends struct implements _UnequalComparator
     }
 
 
-    public function delete_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
+    public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
         $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
@@ -1120,7 +1120,7 @@ final class _LessThanComparator extends struct implements _UnequalComparator
     }
 
 
-    public function insert_value(_Value $value, $show_key, $pos = namespace\_DIFF_LINE_MIDDLE)
+    public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
         $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
@@ -1137,25 +1137,25 @@ final class _LessThanComparator extends struct implements _UnequalComparator
  * @param int $flen
  * @param int $tlen
  * @param _DIFF_LINE_FROM|_DIFF_LINE_TO|_DIFF_LINE_BOTH $which
- * @return _DIFF_LINE_FIRST|_DIFF_LINE_MIDDLE|_DIFF_LINE_LAST
+ * @return VariableFormatter::STRING_*
  */
 function _get_line_pos($f, $t, $flen, $tlen, $which)
 {
-    $result = namespace\_DIFF_LINE_FIRST | namespace\_DIFF_LINE_LAST;
+    $result = VariableFormatter::STRING_WHOLE;
 
     if ($which & namespace\_DIFF_LINE_FROM)
     {
         if ($f === 0)
         {
-            $result &= namespace\_DIFF_LINE_FIRST;
+            $result &= VariableFormatter::STRING_START;
         }
         elseif ($f === ($flen - 1))
         {
-            $result &= namespace\_DIFF_LINE_LAST;
+            $result &= VariableFormatter::STRING_END;
         }
         else
         {
-            $result &= namespace\_DIFF_LINE_MIDDLE;
+            $result &= VariableFormatter::STRING_MIDDLE;
         }
     }
 
@@ -1163,19 +1163,18 @@ function _get_line_pos($f, $t, $flen, $tlen, $which)
     {
         if ($t === 0)
         {
-            $result &= namespace\_DIFF_LINE_FIRST;
+            $result &= VariableFormatter::STRING_START;
         }
         elseif ($t === ($tlen - 1))
         {
-            $result &= namespace\_DIFF_LINE_LAST;
+            $result &= VariableFormatter::STRING_END;
         }
         else
         {
-            $result &= namespace\_DIFF_LINE_MIDDLE;
+            $result &= VariableFormatter::STRING_MIDDLE;
         }
     }
 
-    \assert($result <= 2);
     return $result;
 }
 
@@ -1184,10 +1183,10 @@ function _get_line_pos($f, $t, $flen, $tlen, $which)
 /**
  * @param bool $show_key
  * @param bool $reverse
- * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
+ * @param VariableFormatter::STRING_* $pos
  * @return void
  */
-function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = namespace\_DIFF_LINE_MIDDLE)
+function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
     $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
@@ -1210,10 +1209,10 @@ function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos
 /**
  * @param bool $show_key
  * @param bool $reverse
- * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
+ * @param VariableFormatter::STRING_* $pos
  * @return void
  */
-function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = namespace\_DIFF_LINE_MIDDLE)
+function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
     $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
@@ -1236,10 +1235,10 @@ function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $p
 /**
  * @param bool $show_key
  * @param bool $reverse
- * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
+ * @param VariableFormatter::STRING_* $pos
  * @return void
  */
-function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = namespace\_DIFF_LINE_MIDDLE)
+function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
     $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
@@ -1264,23 +1263,12 @@ function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $p
  */
 function _format_key(_Key $key)
 {
-    if ($key->type === _Key::TYPE_INDEX)
-    {
-        return \sprintf('%s => ', \var_export($key->value, true));
-    }
-    elseif ($key->type === _Key::TYPE_PROPERTY)
-    {
-        return "\${$key->value} = ";
-    }
-    else
-    {
-        return '';
-    }
+    return $key->formatted;
 }
 
 
 /**
- * @param _DIFF_LINE_MIDDLE|_DIFF_LINE_FIRST|_DIFF_LINE_LAST $pos
+ * @param VariableFormatter::STRING_* $pos
  * @param bool $show_key
  * @param bool $show_object_id
  * @return string[]
@@ -1295,51 +1283,38 @@ function _format_value(_Value $value, $pos, $show_key, $show_object_id)
 
     $suffix = namespace\_line_end($value->key);
 
-    $formatter = new Formatter($show_object_id);
+    $result = new FormatResult;
+    $formatter = new VariableFormatter($show_object_id);
     if ($value->type === _Value::TYPE_ARRAY)
     {
-        $formatter->format_array($value->value, $value->name, $value->indent_level, $prefix, $suffix);
-        $result = $formatter->get_formatted();
+        $formatter->format_array($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
-        $formatter->format_object($value->value, $value->name, $value->indent_level, $prefix, $suffix);
-        $result = $formatter->get_formatted();
+        $formatter->format_object($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_REFERENCE)
     {
-        $result = array($prefix . $value->name . $suffix);
+        $result->formatted[] = $prefix . $value->name . $suffix;
     }
     elseif ($value->type === _Value::TYPE_RESOURCE)
     {
-        $formatter->format_resource($value->value, $prefix, $suffix);
-        $result = $formatter->get_formatted();
+        $formatter->format_resource($result, $value->value, $prefix, $suffix);
+    }
+    elseif ($value->type === _Value::TYPE_STRING)
+    {
+        $formatter->format_string($result, $value->value, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_STRING_PART)
     {
-        \assert(\is_string($value->value));
-        $string = \str_replace(array('\\', "'",), array('\\\\', "\\'",), $value->value);
-
-        if (namespace\_DIFF_LINE_FIRST === $pos)
-        {
-            $result = array($prefix . "'" . $string);
-        }
-        elseif (namespace\_DIFF_LINE_LAST === $pos)
-        {
-            $result = array($string . "'" . $suffix);
-        }
-        else
-        {
-            $result = array($string);
-        }
+        $formatter->format_string($result, $value->value, $prefix, $suffix, $pos);
     }
     else
     {
-        $formatter->format_scalar($value->value, $prefix, $suffix);
-        $result = $formatter->get_formatted();
+        $formatter->format_scalar($result, $value->value, $prefix, $suffix);
     }
 
-    return $result;
+    return $result->formatted;
 }
 
 
@@ -1361,7 +1336,7 @@ function _start_value(_Value $value, $show_key, $show_object_id)
 
     if ($value->type === _Value::TYPE_ARRAY)
     {
-        $result .= 'array(';
+        $result .= VariableFormatter::ARRAY_START;
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
@@ -1382,11 +1357,11 @@ function _end_value(_Value $value)
 
     if ($value->type === _Value::TYPE_ARRAY)
     {
-        $result .= ')';
+        $result .= VariableFormatter::ARRAY_END;
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
-        $result .= '}';
+        $result .= VariableFormatter::OBJECT_END;
     }
 
     $result .= namespace\_line_end($value->key);
@@ -1401,11 +1376,11 @@ function _line_end(_Key $key)
 {
     if ($key->type === _Key::TYPE_INDEX)
     {
-        return ',';
+        return VariableFormatter::ARRAY_ELEMENT_SEPARATOR;
     }
     elseif ($key->type === _Key::TYPE_PROPERTY)
     {
-        return ';';
+        return VariableFormatter::PROPERTY_TERMINATOR;
     }
     else
     {
