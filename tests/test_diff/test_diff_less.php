@@ -275,3 +275,31 @@ EXPECTED;
 
     assert_diff($from, $to, $expected);
 }
+
+
+function test_reference()
+{
+    $from =  array(1, 3, 3, array(6, 5, 4));
+    $from[3][] =& $from[2];
+
+    $to   =  array(1, 2, 3, array(6, 5, 4));
+    $to[3][] =& $to[2];
+
+    $expected = <<<'EXPECTED'
+  array(
+<     1,
+<     3,
+>     1,
+>     2,
+      3,
+      array(
+          6,
+          5,
+          4,
+          &$actual[2],
+      ),
+  )
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
+}

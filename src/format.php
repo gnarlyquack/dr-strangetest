@@ -186,16 +186,8 @@ final class VariableFormatter extends struct
     // @bc 5.5 hard-code constant value instead of using a constant expression
     const STRING_WHOLE  = 0x3; // bitwise or of STRING_START and STRING_END
 
-    /**
-     * We'd really like to make this a constant, but PHP won't let us do that
-     * with an object instance, so we'll just have to initialize it every time
-     * we instantiate a new class. :-(
-     * @var array{'byref': null, 'byval': \stdClass}
-     */
-    private $sentinels;
-
-    /** @var array{'byval': mixed[], 'byref': mixed[]} */
-    private $seen = array('byval' => array(), 'byref' => array());
+    /** @var ReferenceChecker */
+    private $references;
 
     /** @var int */
     private $indent_width;
@@ -208,10 +200,15 @@ final class VariableFormatter extends struct
      * @param bool $show_object_id
      * @param int $indent_width
      */
-    public function __construct($show_object_id, $indent_width = self::DEFAULT_INDENT_WIDTH)
+    public function __construct($show_object_id, ReferenceChecker $references = null, $indent_width = self::DEFAULT_INDENT_WIDTH)
     {
-        $this->sentinels = array('byref' => null, 'byval' => new \stdClass);
+        if (!$references)
+        {
+            $references = new ReferenceChecker;
+        }
+
         $this->show_object_id = $show_object_id;
+        $this->references = $references;
         $this->indent_width = $indent_width;
     }
 
@@ -226,7 +223,7 @@ final class VariableFormatter extends struct
      */
     public function format_variable(FormatResult $result, &$var, $name, $nesting_level, $prefix = '', $suffix = '')
     {
-        $reference = namespace\check_reference($var, $name, $this->seen, $this->sentinels);
+        $reference = $this->references->check_variable($var, $name);
         if ($reference)
         {
             $result->formatted[] = $prefix . $reference . $suffix;

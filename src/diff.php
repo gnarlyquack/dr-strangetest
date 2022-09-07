@@ -79,11 +79,12 @@ final class _DiffState extends struct {
     /** @var _DiffOperation[] */
     public $diff = array();
 
-    /** @var array{'byval': mixed[], 'byref': mixed[]} */
-    public $seen = array('byval' => array(), 'byref' => array());
+    /** @var ReferenceChecker */
+    public $references;
 
-    /** @var array{'byref': null, 'byval': \stdClass} */
-    public $sentinels;
+
+    /** @var VariableFormatter */
+    public $formatter;
 
     /**
      * @param int $cmp
@@ -91,7 +92,10 @@ final class _DiffState extends struct {
     public function __construct($cmp)
     {
         $this->cmp = $cmp;
-        $this->sentinels = array('byref' => null, 'byval' => new \stdClass());
+        $this->references = new ReferenceChecker;
+        $this->formatter = new VariableFormatter(
+            $cmp === namespace\DIFF_IDENTICAL,
+            $this->references);
     }
 }
 
@@ -420,7 +424,7 @@ final class _Value extends struct
 function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_level = 0)
 {
     $result = new _Value;
-    $reference = namespace\check_reference($value, $name, $state->seen, $state->sentinels);
+    $reference = $state->references->check_variable($value, $name);
 
     if ($reference)
     {
@@ -571,18 +575,17 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
             $suffix = namespace\_line_end($from->key);
 
             $strings = new FormatResult;
-            $formatter = new VariableFormatter($state->cmp === namespace\DIFF_IDENTICAL);
             if ($from->type === _Value::TYPE_ARRAY)
             {
-                $formatter->format_array($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
+                $state->formatter->format_array($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
             }
             elseif ($from->type === _Value::TYPE_OBJECT)
             {
-                $formatter->format_object($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
+                $state->formatter->format_object($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
             }
             else
             {
-                $formatter->format_string($strings, $from->value, '', $suffix);
+                $state->formatter->format_string($strings, $from->value, '', $suffix);
             }
             $strings = $strings->formatted;
 
@@ -1041,7 +1044,7 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
 
     public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
-        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
         {
             $this->state->diff[] = new _DiffDeleteGreater($string);
@@ -1051,7 +1054,7 @@ final class _GreaterThanComparator extends struct implements _UnequalComparator
 
     public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
-        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
         {
             $this->state->diff[] = new _DiffInsertLess($string);
@@ -1112,7 +1115,7 @@ final class _LessThanComparator extends struct implements _UnequalComparator
 
     public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
-        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
         {
             $this->state->diff[] = new _DiffDeleteLess($string);
@@ -1122,7 +1125,7 @@ final class _LessThanComparator extends struct implements _UnequalComparator
 
     public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
     {
-        $formatted = namespace\_format_value($value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
+        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
         foreach ($formatted as $string)
         {
             $this->state->diff[] = new _DiffInsertGreater($string);
@@ -1188,7 +1191,7 @@ function _get_line_pos($f, $t, $flen, $tlen, $which)
  */
 function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
-    $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+    $formatted = namespace\_format_value($state->formatter, $value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
     if ($reverse)
     {
@@ -1214,7 +1217,7 @@ function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos
  */
 function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
-    $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+    $formatted = namespace\_format_value($state->formatter, $value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
     if ($reverse)
     {
@@ -1240,7 +1243,7 @@ function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $p
  */
 function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
-    $formatted = namespace\_format_value($value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+    $formatted = namespace\_format_value($state->formatter, $value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
 
     if ($reverse)
     {
@@ -1273,7 +1276,7 @@ function _format_key(_Key $key)
  * @param bool $show_object_id
  * @return string[]
  */
-function _format_value(_Value $value, $pos, $show_key, $show_object_id)
+function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_key, $show_object_id)
 {
     $prefix = namespace\format_indent($value->indent_level);
     if ($show_key)
@@ -1284,7 +1287,6 @@ function _format_value(_Value $value, $pos, $show_key, $show_object_id)
     $suffix = namespace\_line_end($value->key);
 
     $result = new FormatResult;
-    $formatter = new VariableFormatter($show_object_id);
     if ($value->type === _Value::TYPE_ARRAY)
     {
         $formatter->format_array($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);

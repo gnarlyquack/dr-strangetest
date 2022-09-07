@@ -8,63 +8,97 @@
 namespace strangetest;
 
 
-// Check if $var is a reference to another value in $seen.
-//
-// If $var is normally pass-by-value, then it can only be an explicit
-// reference. If it's normally pass-by-reference, then it can either be an
-// object reference or an explicit reference. Explicit references are
-// marked with the reference operator, i.e., '&'.
-//
-// Since PHP has no built-in way to determine if a variable is a reference,
-// references are identified using jank wherein $var is changed and $seen
-// is checked for an equivalent change.
-/**
- * @param mixed $var
- * @param string $name
- * @param array{'byval': mixed[], 'byref': mixed[]} $seen
- * @param array{'byref': null, 'byval': \stdClass} $sentinels
- * @return false|string
- */
-function check_reference(&$var, $name, &$seen, $sentinels)
+
+final class ReferenceChecker extends struct
 {
-    if (\is_scalar($var) || \is_array($var) || null === $var)
+    /** @var null */
+    const BYREF_SENTINEL = null;
+
+    /**
+     * We'd really like to make this a constant, but PHP won't let us do that
+     * with an object instance, so we'll just have to initialize it every time
+     * we instantiate a new class. :-(
+     * @var \stdClass
+     */
+    private $byval_sentinel;
+
+    /** @var mixed[] */
+    private $seen_byval = array();
+
+    /** @var mixed[] */
+    private $seen_byref = array();
+
+
+    public function __construct()
     {
-        $copy = $var;
-        $var = $sentinels['byval'];
-        $reference = \array_search($var, $seen['byval'], true);
-        if (false === $reference)
-        {
-            $seen['byval'][$name] = &$var;
-        }
-        else
-        {
-            $reference = "&$reference";
-        }
-        $var = $copy;
+        $this->byval_sentinel = new \stdClass;
     }
-    else
+
+    /**
+     * Check if $var is a reference to another value in $seen.
+     *
+     * If $var is normally pass-by-value, then it can only be an explicit
+     * reference. If it's normally pass-by-reference, then it can either be an
+     * object reference or an explicit reference. Explicit references are
+     * marked with the reference operator, i.e., '&'.
+     *
+     * Since PHP has no built-in way to determine if a variable is a reference,
+     * references are identified using jank wherein $var is changed and $seen
+     * is checked for an equivalent change.
+     *
+     * @param mixed $var
+     * @param string $name
+     * @return false|string
+     */
+    public function check_variable(&$var, $name)
     {
-        $reference = \array_search($var, $seen['byref'], true);
-        if (false === $reference)
+        if (\is_scalar($var) || \is_array($var) || null === $var)
         {
-            $seen['byref'][$name] = &$var;
-        }
-        else
-        {
-            \assert(\is_string($reference));
-            \assert(\strlen($reference) > 0);
             $copy = $var;
-            $var = $sentinels['byref'];
-            if ($var === $seen['byref'][$reference])
+            $var = $this->byval_sentinel;
+            $reference = \array_search($var, $this->seen_byval, true);
+            if (false === $reference)
+            {
+                $this->seen_byval[$name] = &$var;
+            }
+            elseif ($reference === $name)
+            {
+                $reference = false;
+            }
+            else
             {
                 $reference = "&$reference";
             }
             $var = $copy;
         }
-    }
-    return $reference;
-}
+        else
+        {
+            $reference = \array_search($var, $this->seen_byref, true);
+            if (false === $reference)
+            {
+                $this->seen_byref[$name] = &$var;
+            }
+            elseif ($reference === $name)
+            {
+                $reference = false;
+            }
+            else
+            {
+                \assert(\is_string($reference));
+                \assert(\strlen($reference) > 0);
+                $copy = $var;
+                $var = self::BYREF_SENTINEL;
+                if ($var === $this->seen_byref[$reference])
+                {
+                    $reference = "&$reference";
+                }
+                $var = $copy;
+            }
+        }
 
+        return $reference;
+    }
+}
 
 
 /**
