@@ -9,13 +9,32 @@ namespace test\diff\less_equal;
 
 use strangetest;
 
+use test\diff\Incomparable1;
+use test\diff\Incomparable2;
+
 
 // helper assertions
 
-function assert_diff(&$from, &$to, $expected) {
-    $expected = "-< from\n+> to\n\n" . $expected;
-    $actual = strangetest\diff($from, $to, 'from', 'to', strangetest\DIFF_LESS_EQUAL);
-    strangetest\assert_identical($actual, $expected);
+function assert_diff($from, $to, $expected)
+{
+    $actual = strangetest\assert_throws(
+        'strangetest\\Failure',
+        function() use ($from, $to)
+        {
+            strangetest\assert_less_or_equal($from, $to);
+        }
+    );
+
+    $expected = <<<EXPECTED
+Assertion "\$actual <= \$max" failed
+
+-< \$actual
++> \$max
+
+$expected
+EXPECTED;
+
+    strangetest\assert_identical($actual->getMessage(), $expected);
 }
 
 
@@ -23,27 +42,7 @@ function assert_diff(&$from, &$to, $expected) {
 
 function test_array_greater_than_array()
 {
-    $from = array(1, 500, 5,  2, 5);
-    $to   = array(1,   3, 2, 10, 5);
-
-    $expected = <<<'EXPECTED'
-  array(
-      1,
-<     500,
->     3,
-      5,
-      2,
-      5,
-  )
-EXPECTED;
-
-    assert_diff($from, $to, $expected);
-}
-
-
-function test_longer_array_greater_than_shorter_array()
-{
-    $from = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, 2);
+    $from = array(1, array(2, (object)array(1, 2, 3), 500, 10), 5, array(5, 0));
     $to   = array(1, array(2, (object)array(1, 1, 3),   3,  2), 5, 5);
 
     $expected = <<<'EXPECTED'
@@ -61,7 +60,10 @@ function test_longer_array_greater_than_shorter_array()
           10,
       ),
       5,
-      2,
+      array(
+          5,
+          0,
+      ),
   )
 EXPECTED;
 
@@ -69,27 +71,64 @@ EXPECTED;
 }
 
 
-/*
-class Boo
+function test_comparable_longer_array_greater_than_shorter_array()
 {
-    var $one = 1;
-    var $two = 2;
+    $from = array(1, 2, 3, 4, 5);
+    $to   = array(1, 1, 3);
+
+    $expected = <<<'EXPECTED'
+  array(
+      1,
+<     2,
+>     1,
+      3,
+-     4,
+-     5,
+  )
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
 }
 
-class Far
+
+function test_incomparable_longer_array_greater_than_shorter_array()
 {
-    var $three = 1;
-    var $four = 2;
+    $from = array(0,      1, 2,      3, 4,      5);
+    $to   = array(   1 => 1,    3 => 2,    5 => 3, 6 => 4);
+
+    $expected = <<<'EXPECTED'
+  array(
+-     0 => 0,
+      1 => 1,
+-     2 => 2,
+<     3 => 3,
+-     4 => 4,
+>     3 => 2,
+      5 => 5,
++     6 => 4,
+  )
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
 }
 
 
-function test_incomparable_objects()
+function test_incomparable_arrays()
 {
-    $one = new Boo;
-    $two = new Far;
-    strangetest\assert_less_or_equal($one, $two);
+    $from = array('one' => 1, 'two' => 2);
+    $to   = array(1, 2);
+
+    $expected = <<<'EXPECTED'
+  array(
+-     'one' => 1,
+-     'two' => 2,
++     0 => 1,
++     1 => 2,
+  )
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
 }
-*/
 
 
 function test_object_greater_than_array()
@@ -100,6 +139,59 @@ function test_object_greater_than_array()
     $expected = <<<'EXPECTED'
 < stdClass {}
 > array()
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
+}
+
+
+function test_object_greater_than_object()
+{
+    $from = (object)array(1, 2, 3);
+    $to   = (object)array(1, 1, 3);
+
+    $expected = <<<'EXPECTED'
+  stdClass {
+      $0 = 1;
+<     $1 = 2;
+>     $1 = 1;
+      $2 = 3;
+  }
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
+}
+
+
+function test_incomparable_objects_of_same_class()
+{
+    $from = (object)array('one' => 1, 'two' => 2);
+    $to   = (object)array('two' => 2, 'three' => 3);
+
+    $expected = <<<'EXPECTED'
+  stdClass {
+-     $one = 1;
+      $two = 2;
++     $three = 3;
+  }
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
+}
+
+
+function test_incomparable_objects_of_different_class()
+{
+    $from = new Incomparable1;
+    $to   = new Incomparable2;
+
+    $expected = <<<'EXPECTED'
+- test\diff\Incomparable1 {
+-     $foo = 'foo';
+- }
++ test\diff\Incomparable2 {
++     $foo = 'foo';
++ }
 EXPECTED;
 
     assert_diff($from, $to, $expected);

@@ -387,6 +387,9 @@ final class _Value extends struct
     /** @var _Value[] */
     public $subvalues = array();
 
+    /** @var array<mixed, int> */
+    public $keys = array();
+
     /** @var bool */
     public $is_list;
 
@@ -476,10 +479,11 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         $result->indent_level = $indent_level;
         $result->cost = 1;
 
-        $prev_index = -1;
+        $index = 0;
         foreach ($value as $k => &$v)
         {
-            $result->is_list = $result->is_list && ($k === ++$prev_index);
+            $result->is_list = $result->is_list && ($k === $index);
+            $result->keys[$k] = $index++;
 
             $subkey = new _Key;
             $subkey->type = _Key::TYPE_INDEX;
@@ -502,10 +506,13 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
         $result->cost = 1;
 
         $cost = 1;
+        $index = 0;
         // @bc 5.4 use variable for array cast in order to create references
         $values = (array)$value;
         foreach ($values as $k => &$v)
         {
+            $result->keys[$k] = $index++;
+
             $subkey = new _Key;
             $subkey->type = _Key::TYPE_PROPERTY;
             $subkey->value = $k;
@@ -837,12 +844,7 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
 
     $result = $cmp->compare_values($from, $to);
 
-    if ($result === _UnequalComparator::MATCH_ERROR)
-    {
-        namespace\_delete_value($state, $from, $show_key, false);
-        namespace\_insert_value($state, $to, $show_key, false);
-    }
-    elseif (($result === _UnequalComparator::MATCH_PASS)
+    if (($result === _UnequalComparator::MATCH_PASS)
         || (($result === _UnequalComparator::MATCH_EQUAL) && $cmp->equals_ok()))
     {
         namespace\_copy_value($state, $from, $show_key, false);
@@ -907,32 +909,41 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
 
             $state->diff[] = new _DiffCopy(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
 
-            for ($f = 0; ($flen - $f) > $tlen; ++$f)
-            {
-                $pos = namespace\_get_line_pos($f, 0, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                namespace\_delete_value($state, $fvalues[$f], $show_subkey, false, $pos);
-            }
-            for ($t = 0; ($tlen - $t) > $flen; ++$t)
-            {
-                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_TO);
-                namespace\_insert_value($state, $tvalues[$t], $show_subkey, false, $pos);
-            }
-
+            $fkeys = $from->keys;
+            $tkeys = $to->keys;
             $equal = true;
-            for ( ; ($f < $flen) && $equal; ++$f, ++$t)
+            foreach($fkeys as $key => $index)
             {
-                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
-                $equal = namespace\_diff_unequal_values($state, $fvalues[$f], $tvalues[$t], $cmp);
+                $fvalue = $fvalues[$index];
+
+                if (!isset($tkeys[$key]))
+                {
+                    namespace\_delete_value($state, $fvalue, $show_subkey, false);
+                }
+                elseif ($equal)
+                {
+                    $tvalue = $tvalues[$tkeys[$key]];
+                    $equal = namespace\_diff_unequal_values($state, $fvalue, $tvalue, $cmp);
+                }
+                else
+                {
+                    namespace\_copy_value($state, $fvalue, $show_subkey, false);
+                }
+                unset($tkeys[$key]);
             }
 
-            for ( ; $f < $flen; ++$f)
+            foreach ($tkeys as $index)
             {
-                $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                namespace\_copy_value($state, $fvalues[$f], $show_subkey, false, $pos);
+                namespace\_insert_value($state, $tvalues[$index], $show_subkey, false);
             }
 
             $state->diff[] = new _DiffCopy(namespace\_end_value($from));
         }
+    }
+    elseif($result === _UnequalComparator::MATCH_ERROR)
+    {
+        namespace\_delete_value($state, $from, $show_key, false);
+        namespace\_insert_value($state, $to, $show_key, false);
     }
     else
     {
