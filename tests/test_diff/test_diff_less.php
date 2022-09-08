@@ -125,10 +125,10 @@ function test_incomparable_longer_array_greater_than_shorter_array()
     $expected = <<<'EXPECTED'
   array(
 -     0 => 0,
-<     1 => 1,
 -     2 => 2,
-<     3 => 3,
 -     4 => 4,
+<     1 => 1,
+<     3 => 3,
 >     1 => 1,
 >     3 => 2,
       5 => 5,

@@ -52,17 +52,20 @@ function diff(&$actual, &$expected, $actual_name, $expected_name, $cmp = namespa
     if (($cmp === namespace\DIFF_GREATER) || ($cmp === namespace\DIFF_GREATER_EQUAL))
     {
         namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _GreaterThanComparator($state, $cmp === namespace\DIFF_GREATER_EQUAL));
+        $diff = new ListForwardIterator($state->diff);
     }
     elseif (($cmp === namespace\DIFF_LESS) || ($cmp === namespace\DIFF_LESS_EQUAL))
     {
         namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _LessThanComparator($state, $cmp === namespace\DIFF_LESS_EQUAL));
+        $diff = new ListForwardIterator($state->diff);
     }
     else
     {
         namespace\_diff_equal_values($state, $fvalue, $tvalue);
+        $diff = new ListReverseIterator($state->diff);
     }
 
-    $result = namespace\_format_diff($state->diff, $actual_name, $expected_name, $cmp);
+    $result = namespace\_format_diff($diff, $actual_name, $expected_name, $cmp);
     return $result;
 }
 
@@ -99,37 +102,33 @@ final class _DiffState extends struct
 }
 
 
-interface _DiffOperation
+abstract class _DiffOperation extends struct
 {
-    const COPY = 1;
-    const INSERT = 2;
-    const DELETE = 3;
+    const DELETE         = 0;
+    const DELETE_UNEQUAL = 1;
+    const INSERT_UNEQUAL = 2;
+    const INSERT         = 3;
+    const COPY           = 4;
 
-    /**
-     * @return _DiffOperation::*
-     */
-    public function operation();
-
-    public function __toString();
-}
-
-
-final class _DiffCopy extends struct implements _DiffOperation
-{
     /** @var string */
     public $value;
 
+    /** @var _DiffOperation::* */
+    public $type;
+
+    abstract public function __toString();
+}
+
+
+final class _DiffCopy extends _DiffOperation
+{
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
-    }
-
-    public function operation()
-    {
-        return self::COPY;
+        $this->type = self::COPY;
     }
 
     public function __toString()
@@ -139,27 +138,17 @@ final class _DiffCopy extends struct implements _DiffOperation
 }
 
 
-final class _DiffInsert extends struct implements _DiffOperation
+final class _DiffInsert extends _DiffOperation
 {
-    /** @var string */
-    public $value;
-
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
+        $this->type = self::INSERT;
     }
 
-    public function operation()
-    {
-        return self::INSERT;
-    }
-
-    /**
-     * @return string
-     */
     public function __toString()
     {
         return "+ {$this->value}";
@@ -167,27 +156,17 @@ final class _DiffInsert extends struct implements _DiffOperation
 }
 
 
-final class _DiffInsertGreater extends struct implements _DiffOperation
+final class _DiffInsertGreater extends _DiffOperation
 {
-    /** @var string */
-    public $value;
-
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
+        $this->type = self::INSERT_UNEQUAL;
     }
 
-    public function operation()
-    {
-        return self::INSERT;
-    }
-
-    /**
-     * @return string
-     */
     public function __toString()
     {
         return "> {$this->value}";
@@ -195,27 +174,17 @@ final class _DiffInsertGreater extends struct implements _DiffOperation
 }
 
 
-final class _DiffInsertLess extends struct implements _DiffOperation
+final class _DiffInsertLess extends _DiffOperation
 {
-    /** @var string */
-    public $value;
-
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
+        $this->type = self::INSERT_UNEQUAL;
     }
 
-    public function operation()
-    {
-        return self::INSERT;
-    }
-
-    /**
-     * @return string
-     */
     public function __toString()
     {
         return "< {$this->value}";
@@ -223,27 +192,17 @@ final class _DiffInsertLess extends struct implements _DiffOperation
 }
 
 
-final class _DiffDelete extends struct implements _DiffOperation
+final class _DiffDelete extends _DiffOperation
 {
-    /** @var string */
-    public $value;
-
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
+        $this->type = self::DELETE;
     }
 
-    public function operation()
-    {
-        return self::DELETE;
-    }
-
-    /**
-     * @return string
-     */
     public function __toString()
     {
         return "- {$this->value}";
@@ -251,27 +210,17 @@ final class _DiffDelete extends struct implements _DiffOperation
 }
 
 
-final class _DiffDeleteGreater extends struct implements _DiffOperation
+final class _DiffDeleteGreater extends _DiffOperation
 {
-    /** @var string */
-    public $value;
-
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
+        $this->type = self::DELETE_UNEQUAL;
     }
 
-    public function operation()
-    {
-        return self::DELETE;
-    }
-
-    /**
-     * @return string
-     */
     public function __toString()
     {
         return "> {$this->value}";
@@ -279,27 +228,17 @@ final class _DiffDeleteGreater extends struct implements _DiffOperation
 }
 
 
-final class _DiffDeleteLess extends struct implements _DiffOperation
+final class _DiffDeleteLess extends _DiffOperation
 {
-    /** @var string */
-    public $value;
-
     /**
      * @param string $value
      */
     public function __construct($value)
     {
         $this->value = $value;
+        $this->type = self::DELETE_UNEQUAL;
     }
 
-    public function operation()
-    {
-        return self::DELETE;
-    }
-
-    /**
-     * @return string
-     */
     public function __toString()
     {
         return "< {$this->value}";
@@ -598,8 +537,8 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
         $strings = $formatted->formatted;
 
         $indent = $state->formatter->format_indent($from->indent_level);
-        $from_start = $indent . namespace\_format_key($from->key) . $strings[0];
-        $to_start = $indent . namespace\_format_key($to->key) . $strings[0];
+        $from_start = $indent . $from->key->formatted . $strings[0];
+        $to_start = $indent . $to->key->formatted . $strings[0];
 
         for ($c = \count($strings), $i = $c - 1; $i > 0; --$i)
         {
@@ -1264,15 +1203,6 @@ function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $p
 
 
 /**
- * @return string
- */
-function _format_key(_Key $key)
-{
-    return $key->formatted;
-}
-
-
-/**
  * @param VariableFormatter::STRING_* $pos
  * @param bool $show_key
  * @param bool $show_object_id
@@ -1283,7 +1213,7 @@ function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_
     $prefix = $formatter->format_indent($value->indent_level);
     if ($show_key)
     {
-        $prefix .= namespace\_format_key($value->key);
+        $prefix .= $value->key->formatted;
     }
 
     $suffix = $value->key->line_end;
@@ -1334,7 +1264,7 @@ function _start_value(VariableFormatter $formatter, _Value $value, $show_key)
 
     if ($show_key)
     {
-        $result .= namespace\_format_key($value->key);
+        $result .= $value->key->formatted;
     }
 
     if ($value->type === _Value::TYPE_ARRAY)
@@ -1373,13 +1303,13 @@ function _end_value(VariableFormatter $formatter, _Value $value)
 
 
 /**
- * @param _DiffOperation[] $diff
+ * @param ListIterator<_DiffOperation> $diff
  * @param string $from_name
  * @param string $to_name
  * @param int $cmp
  * @return string
  */
-function _format_diff(array $diff, $from_name, $to_name, $cmp)
+function _format_diff($diff, $from_name, $to_name, $cmp)
 {
     if (($cmp === namespace\DIFF_IDENTICAL) || ($cmp === namespace\DIFF_EQUAL))
     {
@@ -1395,81 +1325,79 @@ function _format_diff(array $diff, $from_name, $to_name, $cmp)
         $result = "-< $from_name\n+> $to_name\n";
     }
 
-    $prev_operation = null;
-    $prev_operations = array();
-    if (($cmp === namespace\DIFF_IDENTICAL) || ($cmp === namespace\DIFF_EQUAL))
-    {
-        for ($i = \count($diff) - 1; $i >= 0; --$i)
-        {
-            $operation = $diff[$i];
+    $prev_operations = array(
+        _DiffOperation::DELETE_UNEQUAL => array(),
+        _DiffOperation::INSERT_UNEQUAL => array(),
+        _DiffOperation::INSERT         => array(),
+    );
 
-            if ($operation instanceof _DiffCopy)
-            {
-                if ($prev_operations)
-                {
-                    foreach ($prev_operations as $prev)
-                    {
-                        $result .= "\n$prev";
-                    }
-                    $prev_operations = array();
-                }
-                $result .= "\n$operation";
-            }
-            elseif($operation instanceof _DiffDelete)
-            {
-                $result .= "\n$operation";
-            }
-            else
-            {
-                \assert($operation instanceof _DiffInsert);
-                $prev_operations[] = $operation;
-                $prev_operation = $operation;
-            }
-        }
-    }
-    else
+    while ($diff->valid())
     {
-        foreach($diff as $operation)
+        $operation = $diff->next();
+
+        if ($operation->type === _DiffOperation::DELETE)
         {
-            if ($operation->operation() === _DiffOperation::COPY)
+            $result .= "\n" . $operation;
+        }
+        elseif ($operation->type === _DiffOperation::COPY)
+        {
+            if ($prev_operations[_DiffOperation::DELETE_UNEQUAL])
             {
-                if ($prev_operations)
+                foreach ($prev_operations[_DiffOperation::DELETE_UNEQUAL] as $prev)
                 {
-                    foreach ($prev_operations as $prev)
-                    {
-                        $result .= "\n$prev";
-                    }
-                    $prev_operations = array();
+                    $result .= "\n" . $prev;
                 }
-                $result .= "\n$operation";
+                $prev_operations[_DiffOperation::DELETE_UNEQUAL] = array();
             }
-            elseif($operation->operation() === _DiffOperation::DELETE)
+
+            if ($prev_operations[_DiffOperation::INSERT_UNEQUAL])
             {
-                if ($prev_operations
-                    && ((($operation instanceof _DiffDeleteGreater) && !($prev_operation instanceof _DiffInsertLess))
-                        || (($operation instanceof _DiffDeleteLess) && !($prev_operation instanceof _DiffInsertGreater))))
+                foreach ($prev_operations[_DiffOperation::INSERT_UNEQUAL] as $prev)
                 {
-                    foreach ($prev_operations as $prev)
-                    {
-                        $result .= "\n$prev";
-                    }
-                    $prev_operations = array();
-                    $prev_operation = null;
+                    $result .= "\n" . $prev;
                 }
-                $result .= "\n$operation";
+                $prev_operations[_DiffOperation::INSERT_UNEQUAL] = array();
             }
-            else
+
+            if ($prev_operations[_DiffOperation::INSERT])
             {
-                \assert($operation->operation() === _DiffOperation::INSERT);
-                $prev_operations[] = $operation;
-                $prev_operation = $operation;
+                foreach ($prev_operations[_DiffOperation::INSERT] as $prev)
+                {
+                    $result .= "\n" . $prev;
+                }
+                $prev_operations[_DiffOperation::INSERT] = array();
             }
+
+            $result .= "\n" . $operation;
+        }
+        else
+        {
+            $prev_operations[$operation->type][] = $operation;
         }
     }
 
-    foreach ($prev_operations as $prev)
+    if ($prev_operations[_DiffOperation::DELETE_UNEQUAL])
     {
-        $result .= "\n$prev";
+        foreach ($prev_operations[_DiffOperation::DELETE_UNEQUAL] as $prev)
+        {
+            $result .= "\n" . $prev;
+        }
+    }
+
+    if ($prev_operations[_DiffOperation::INSERT_UNEQUAL])
+    {
+        foreach ($prev_operations[_DiffOperation::INSERT_UNEQUAL] as $prev)
+        {
+            $result .= "\n" . $prev;
+        }
+    }
+
+    if ($prev_operations[_DiffOperation::INSERT])
+    {
+        foreach ($prev_operations[_DiffOperation::INSERT] as $prev)
+        {
+            $result .= "\n" . $prev;
+        }
     }
 
     return $result;
