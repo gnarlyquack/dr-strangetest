@@ -52,11 +52,6 @@ Release
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
--   Diffs and formatting
-
-    -   Ensure that values formatted in whole by format_variable() match
-        how values are formatted when individual elements are diffed
-
 -   Any event that is logged using a string as the reason (as opposed to using
     an exception as the reason) will not have a backtrace identifying the
     source file name and line number. To the extent that it's possible, we
@@ -104,17 +99,6 @@ Release
 
 Future / Wishlist
 -----------------
--   Improve diff algorithm
-    -   "a high-performance library in multiple languages that manipulates
-        plain text"
-        https://github.com/google/diff-match-patch
-
-    -   "Utility to do an N-way diff and N-way merge, for N > 2"
-        https://github.com/Quuxplusone/difdef
-
-    -   Limit number of lines that are reported before and after the differing
-        portion of text?
-
 -   Support calling assert() with arbitrary exceptions in PHP >= 7? It's not
     entirely clear what this would even entail: perhaps allow treating custom
     exceptions as failures instead of errors?

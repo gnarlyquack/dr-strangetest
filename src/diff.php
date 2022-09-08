@@ -5,6 +5,14 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+// @todo Improve performance of the diff algorithm?
+// References to potentially improve the performance
+// -   "a high-performance library in multiple languages that manipulates plain text"
+//      https://github.com/google/diff-match-patch
+// -   "Utility to do an N-way diff and N-way merge, for N > 2"
+//      https://github.com/Quuxplusone/difdef
+
+// @todo Limit the number of lines shown before and after differing text
 
 namespace strangetest;
 
