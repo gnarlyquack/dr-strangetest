@@ -46,6 +46,8 @@ function test_diffs_unequal_arrays() {
         false,
         '5',
     );
+    /*
+     * reference for the actual array that is diffed against
     $to = array(
         true,
         2,
@@ -53,6 +55,7 @@ function test_diffs_unequal_arrays() {
         array(),
         4,
     );
+     */
     $to = array(
         4 => 4,
         3 => array(),

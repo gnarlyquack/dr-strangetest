@@ -8,7 +8,6 @@
 namespace strangetest;
 
 
-
 final class ReferenceChecker extends struct
 {
     /** @var null */

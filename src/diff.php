@@ -30,26 +30,24 @@ define('strangetest\\_DIFF_LINE_BOTH', namespace\_DIFF_LINE_FROM | namespace\_DI
 
 
 /**
- * @todo Consider changing diff parameters from $from, $to to $actual, $expected
  * @api
- * @param mixed $from
- * @param mixed $to
- * @param string $from_name
- * @param string $to_name
+ * @param mixed $actual
+ * @param mixed $expected
+ * @param string $actual_name
+ * @param string $expected_name
  * @param int $cmp
  * @return string
  */
-function diff(&$from, &$to, $from_name, $to_name, $cmp = namespace\DIFF_IDENTICAL)
+function diff(&$actual, &$expected, $actual_name, $expected_name, $cmp = namespace\DIFF_IDENTICAL)
 {
-    if ($from_name === $to_name)
+    if ($actual_name === $expected_name)
     {
-        throw new \Exception('Parameters $from_name and $to_name must be different');
+        throw new \Exception('Parameters $actual_name and $expected_name must be different');
     }
 
     $state = new _DiffState($cmp);
-
-    $fvalue = namespace\_process_value($state, $from_name, new _Key, $from);
-    $tvalue = namespace\_process_value($state, $to_name, new _Key, $to);
+    $fvalue = namespace\_process_value($state, $actual_name, new _Key, $actual);
+    $tvalue = namespace\_process_value($state, $expected_name, new _Key, $expected);
 
     if (($cmp === namespace\DIFF_GREATER) || ($cmp === namespace\DIFF_GREATER_EQUAL))
     {
@@ -64,12 +62,13 @@ function diff(&$from, &$to, $from_name, $to_name, $cmp = namespace\DIFF_IDENTICA
         namespace\_diff_equal_values($state, $fvalue, $tvalue);
     }
 
-    $result = namespace\_format_diff($state->diff, $from_name, $to_name, $cmp);
+    $result = namespace\_format_diff($state->diff, $actual_name, $expected_name, $cmp);
     return $result;
 }
 
 
-final class _DiffState extends struct {
+final class _DiffState extends struct
+{
     /** @var int */
     public $cmp;
 
@@ -309,7 +308,14 @@ final class _DiffDeleteLess extends struct implements _DiffOperation
 
 
 
-final class _Edit extends struct {
+final class _Edit extends struct
+{
+    /** @var _Value[] */
+    public $fvalues;
+
+    /** @var _Value[] */
+    public $tvalues;
+
     /** @var int */
     public $flen;
 
@@ -320,12 +326,16 @@ final class _Edit extends struct {
     public $m;
 
     /**
+     * @param _Value[] $fvalues
+     * @param _Value[] $tvalues
      * @param int $flen
      * @param int $tlen
      * @param array<int, int[]> $m
      */
-    public function __construct($flen, $tlen, $m)
+    public function __construct(array $fvalues, array $tvalues, $flen, $tlen, $m)
     {
+        $this->fvalues = $fvalues;
+        $this->tvalues = $tvalues;
         $this->flen = $flen;
         $this->tlen = $tlen;
         $this->m = $m;
@@ -352,6 +362,8 @@ final class _Key extends struct
     /** @var string */
     public $formatted = '';
 
+    /** @var string */
+    public $line_end = '';
 }
 
 
@@ -394,7 +406,7 @@ final class _Value extends struct
     public $keys = array();
 
     /** @var bool */
-    public $is_list;
+    public $is_list = false;
 
     /**
      * @return null|int|string
@@ -493,6 +505,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $subkey->value = $k;
             $subkey->in_list =& $result->is_list;
             $subkey->formatted = namespace\format_array_index($k, $formatted);
+            $subkey->line_end = VariableFormatter::ARRAY_ELEMENT_SEPARATOR;
 
             $subname = \sprintf('%s[%s]', $name, $formatted);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
@@ -522,6 +535,7 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
             $subkey->type = _Key::TYPE_PROPERTY;
             $subkey->value = $k;
             $subkey->formatted = namespace\format_property($k, $class, $formatted);
+            $subkey->line_end = VariableFormatter::PROPERTY_TERMINATOR;
 
             $subname = \sprintf('%s->%s', $name, $formatted);
             $subvalue = namespace\_process_value($state, $subname, $subkey, $v, $indent_level + 1);
@@ -548,9 +562,8 @@ function _process_value(_DiffState $state, $name, _Key $key, &$value, $indent_le
  */
 function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
 {
-    $cmp = namespace\_lcs_values($state, $from, $to, $state->cmp);
-
     $show_key = !$from->key->in_list || !$to->key->in_list;
+    $cmp = namespace\_lcs_values($state, $from, $to);
 
     if ($cmp->matches === namespace\_DIFF_MATCH_FULL)
     {
@@ -561,67 +574,66 @@ function _diff_equal_values(_DiffState $state, _Value $from, _Value $to)
         namespace\_insert_value($state, $to, $show_key, true);
         namespace\_delete_value($state, $from, $show_key, true);
     }
-    else
+    // for $from and $to to not match but have an $lcs > 0, they must be
+    // composite values of the same type with something in common
+    elseif ($cmp->matches === namespace\_DIFF_MATCH_PARTIAL)
     {
-        \assert(
-            (($from->type === _Value::TYPE_STRING) || ($from->type === _Value::TYPE_ARRAY) || ($from->type === _Value::TYPE_OBJECT))
-            && ($to->type === $from->type));
-
-        if ($cmp->matches === namespace\_DIFF_MATCH_PARTIAL)
+        // Values match but the key is different, so we don't need to generate
+        // a difference between the two values. Instead, we can just format one
+        // of the values and then show that the keys are different
+        $suffix = $from->key->line_end;
+        $formatted = new FormatResult;
+        if ($from->type === _Value::TYPE_ARRAY)
         {
-            // If values match, then only the key is different, so we don't
-            // need to generate a difference between the two values.
-            $indent = namespace\format_indent($from->indent_level);
-            $suffix = namespace\_line_end($from->key);
-
-            $strings = new FormatResult;
-            if ($from->type === _Value::TYPE_ARRAY)
-            {
-                $state->formatter->format_array($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
-            }
-            elseif ($from->type === _Value::TYPE_OBJECT)
-            {
-                $state->formatter->format_object($strings, $from->value, $from->name, $from->indent_level, '', $suffix);
-            }
-            else
-            {
-                $state->formatter->format_string($strings, $from->value, '', $suffix);
-            }
-            $strings = $strings->formatted;
-
-            $from_start = $indent . namespace\_format_key($from->key) . $strings[0];
-            $to_start = $indent . namespace\_format_key($to->key) . $strings[0];
-
-            for ($c = \count($strings), $i = $c - 1; $i > 0; --$i)
-            {
-                $state->diff[] = new _DiffCopy($strings[$i]);
-            }
-            $state->diff[] = new _DiffInsert($to_start);
-            $state->diff[] = new _DiffDelete($from_start);
+            $state->formatter->format_array($formatted, $from->value, $from->name, $from->indent_level, '', $suffix);
         }
-        elseif ($from->type === _Value::TYPE_STRING)
+        elseif ($from->type === _Value::TYPE_OBJECT)
         {
-            $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
-            namespace\_build_diff($state, $from->subvalues, $to->subvalues, $edit, $show_key);
+            $state->formatter->format_object($formatted, $from->value, $from->name, $from->indent_level, '', $suffix);
         }
         else
         {
-            $state->diff[] = new _DiffCopy(namespace\_end_value($from));
+            $state->formatter->format_string($formatted, $from->value, '', $suffix);
+        }
+        $strings = $formatted->formatted;
 
-            $edit = namespace\_lcs_array($state, $from, $to, $state->cmp);
-            namespace\_build_diff($state, $from->subvalues, $to->subvalues, $edit, ($from->type === _Value::TYPE_OBJECT) || !$from->is_list || !$to->is_list);
+        $indent = $state->formatter->format_indent($from->indent_level);
+        $from_start = $indent . namespace\_format_key($from->key) . $strings[0];
+        $to_start = $indent . namespace\_format_key($to->key) . $strings[0];
 
-            if ((!$show_key || ($from->key() === $to->key()))
-                && (($state->cmp !== namespace\DIFF_IDENTICAL)
-                    || (_Value::TYPE_ARRAY === $from->type)))
-            {
-                $state->diff[] = new _DiffCopy(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-            }
-            else
-            {
-                $state->diff[] = new _DiffInsert(namespace\_start_value($to, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-                $state->diff[] = new _DiffDelete(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
-            }
+        for ($c = \count($strings), $i = $c - 1; $i > 0; --$i)
+        {
+            $state->diff[] = new _DiffCopy($strings[$i]);
+        }
+        $state->diff[] = new _DiffInsert($to_start);
+        $state->diff[] = new _DiffDelete($from_start);
+    }
+    elseif ($from->type === _Value::TYPE_STRING)
+    {
+        // One of the strings has be multiline if they don't match but $lcs > 0
+        \assert($to->type === _Value::TYPE_STRING);
+        $edit = namespace\_lcs_array($state, $from, $to);
+        namespace\_build_diff($state, $edit, $show_key);
+    }
+    else
+    {
+        \assert($from->type === $to->type);
+
+        $state->diff[] = new _DiffCopy(namespace\_end_value($state->formatter, $from));
+
+        $edit = namespace\_lcs_array($state, $from, $to);
+        namespace\_build_diff($state, $edit, !$from->is_list || !$to->is_list);
+
+        if ((!$show_key || ($from->key() === $to->key()))
+            && (($state->cmp !== namespace\DIFF_IDENTICAL)
+                || (_Value::TYPE_ARRAY === $from->type)))
+        {
+            $state->diff[] = new _DiffCopy(namespace\_start_value($state->formatter, $from, $show_key));
+        }
+        else
+        {
+            $state->diff[] = new _DiffInsert(namespace\_start_value($state->formatter, $to, $show_key));
+            $state->diff[] = new _DiffDelete(namespace\_start_value($state->formatter, $from, $show_key));
         }
     }
 }
@@ -638,12 +650,11 @@ class _ComparisonResult
 
 
 /**
- * @param int $cmp
  * @return _ComparisonResult
  */
-function _lcs_values(_DiffState $state, _Value $from, _Value $to, $cmp)
+function _lcs_values(_DiffState $state, _Value $from, _Value $to)
 {
-    $match = namespace\_compare_equal_values($from, $to, $cmp === namespace\DIFF_IDENTICAL);
+    $match = namespace\_compare_equal_values($from, $to, $state->cmp === namespace\DIFF_IDENTICAL);
 
     if ($match === namespace\_DIFF_MATCH_FULL)
     {
@@ -652,95 +663,85 @@ function _lcs_values(_DiffState $state, _Value $from, _Value $to, $cmp)
         $result->lcs = \max($from->cost, $to->cost);
         return $result;
     }
-
-    $lcs = 0;
-    if ($from->type === $to->type)
+    else
     {
-        // if $from and $to are the same type and are composite types, then
-        // generate a diff for their subtypes
-        if ($from->type === _Value::TYPE_STRING)
+        $lcs = 0;
+        if (($from->type === _Value::TYPE_STRING) && ($to->type === _Value::TYPE_STRING))
         {
             if (($from->cost > 1) || ($to->cost > 1))
             {
-                $edit = namespace\_lcs_array($state, $from, $to, $cmp);
+                $edit = namespace\_lcs_array($state, $from, $to);
                 $lcs = $edit->m[$edit->flen][$edit->tlen];
             }
         }
         elseif (
-            (($from->type === _Value::TYPE_ARRAY) && ($to->type === _Value::TYPE_ARRAY)) ||
-            (($from->type === _Value::TYPE_OBJECT) && ($to->type === _Value::TYPE_OBJECT) && ($from->value instanceof $to->value)))
+            (($from->type === _Value::TYPE_ARRAY) && ($to->type === _Value::TYPE_ARRAY))
+            || (($from->type === _Value::TYPE_OBJECT) && ($to->type === _Value::TYPE_OBJECT) && ($from->value instanceof $to->value)))
         {
             $lcs = 1;
             if (($from->cost > 1) && ($to->cost > 1))
             {
-                $edit = namespace\_lcs_array($state, $from, $to, $cmp);
+                $edit = namespace\_lcs_array($state, $from, $to);
                 $lcs += $edit->m[$edit->flen][$edit->tlen];
             }
         }
-    }
 
-    $result = new _ComparisonResult;
-    $result->matches = $match;
-    $result->lcs = $lcs;
-    return $result;
+        $result = new _ComparisonResult;
+        $result->matches = $match;
+        $result->lcs = $lcs;
+        return $result;
+    }
 }
 
 
 /**
- * @param int $cmp
  * @return _Edit
  */
-function _lcs_array(_DiffState $state, _Value $from, _Value $to, $cmp)
+function _lcs_array(_DiffState $state, _Value $from, _Value $to)
 {
-    \assert(
-        ($from->type === $to->type)
-        && (($from->type === _Value::TYPE_ARRAY) || ($from->type === _Value::TYPE_OBJECT) || ($from->type === _Value::TYPE_STRING)));
-
-    if (isset($state->matrix_cache[$from->name][$to->name]))
+    if (!isset($state->matrix_cache[$from->name][$to->name]))
     {
-        $edit = $state->matrix_cache[$from->name][$to->name];
-        return $edit;
-    }
+        $m = array();
+        $fvalues = $from->subvalues;
+        $tvalues = $to->subvalues;
+        $flen = \count($fvalues);
+        $tlen = \count($tvalues);
 
-    $m = array();
-    $fvalues = $from->subvalues;
-    $tvalues = $to->subvalues;
-    $flen = \count($fvalues);
-    $tlen = \count($tvalues);
-
-    for ($f = 0; $f <= $flen; ++$f)
-    {
-        for ($t = 0; $t <= $tlen; ++$t)
+        for ($f = 0; $f <= $flen; ++$f)
         {
-            if (!$f || !$t)
+            for ($t = 0; $t <= $tlen; ++$t)
             {
-                $m[$f][$t] = 0;
-                continue;
-            }
-
-            $fvalue = $fvalues[$f-1];
-            $tvalue = $tvalues[$t-1];
-            $result = namespace\_lcs_values($state, $fvalue, $tvalue, $cmp);
-            if ($result->matches === namespace\_DIFF_MATCH_FULL)
-            {
-                $result->lcs += $m[$f-1][$t-1];
-            }
-            else
-            {
-                $max = \max($m[$f-1][$t], $m[$f][$t-1]);
-                if ($result->lcs)
+                if (($f === 0) || ($t === 0))
                 {
-                    $max = \max($max, $m[$f-1][$t-1] + $result->lcs);
+                    $m[$f][$t] = 0;
+                    continue;
                 }
-                $result->lcs = $max;
+
+                $fvalue = $fvalues[$f-1];
+                $tvalue = $tvalues[$t-1];
+                $result = namespace\_lcs_values($state, $fvalue, $tvalue);
+                if ($result->matches === namespace\_DIFF_MATCH_FULL)
+                {
+                    $result->lcs += $m[$f-1][$t-1];
+                }
+                else
+                {
+                    $max = \max($m[$f-1][$t], $m[$f][$t-1]);
+                    if ($result->lcs)
+                    {
+                        $max = \max($max, $m[$f-1][$t-1] + $result->lcs);
+                    }
+                    $result->lcs = $max;
+                }
+                $m[$f][$t] = $result->lcs;
             }
-            $m[$f][$t] = $result->lcs;
         }
+
+        $edit = new _Edit($fvalues, $tvalues, $flen, $tlen, $m);
+        $state->matrix_cache[$from->name][$to->name] = $edit;
     }
 
-
-    $result = new _Edit($flen, $tlen, $m);
-    $state->matrix_cache[$from->name][$to->name] = $result;
+    $result = $state->matrix_cache[$from->name][$to->name];
     return $result;
 }
 
@@ -770,7 +771,8 @@ function _compare_equal_values(_Value $from, _Value $to, $strict)
 
     if ($result)
     {
-        if (($from->key->in_list && $to->key->in_list) || ($from->key() === $to->key()))
+        if (($from->key->in_list && $to->key->in_list)
+            || (($from->key->type === $to->key->type) && ($from->key() === $to->key())))
         {
             $result = namespace\_DIFF_MATCH_FULL;
         }
@@ -781,14 +783,14 @@ function _compare_equal_values(_Value $from, _Value $to, $strict)
 
 
 /**
- * @param _Value[] $from
- * @param _Value[] $to
  * @param bool $show_key
  * @return void
  */
-function _build_diff(_DiffState $state, array $from, array $to, _Edit $edit, $show_key)
+function _build_diff(_DiffState $state, _Edit $edit, $show_key)
 {
     $m = $edit->m;
+    $from = $edit->fvalues;
+    $to = $edit->tvalues;
     $f = $edit->flen;
     $t = $edit->tlen;
 
@@ -910,7 +912,7 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
         {
             $show_subkey = ($from->type === _Value::TYPE_OBJECT) || !$from->is_list || !$to->is_list;
 
-            $state->diff[] = new _DiffCopy(namespace\_start_value($from, $show_key, $state->cmp === namespace\DIFF_IDENTICAL));
+            $state->diff[] = new _DiffCopy(namespace\_start_value($state->formatter, $from, $show_key));
 
             $fkeys = $from->keys;
             $tkeys = $to->keys;
@@ -940,7 +942,7 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 namespace\_insert_value($state, $tvalues[$index], $show_subkey, false);
             }
 
-            $state->diff[] = new _DiffCopy(namespace\_end_value($from));
+            $state->diff[] = new _DiffCopy(namespace\_end_value($state->formatter, $from));
         }
     }
     elseif($result === _UnequalComparator::MATCH_ERROR)
@@ -1278,13 +1280,13 @@ function _format_key(_Key $key)
  */
 function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_key, $show_object_id)
 {
-    $prefix = namespace\format_indent($value->indent_level);
+    $prefix = $formatter->format_indent($value->indent_level);
     if ($show_key)
     {
         $prefix .= namespace\_format_key($value->key);
     }
 
-    $suffix = namespace\_line_end($value->key);
+    $suffix = $value->key->line_end;
 
     $result = new FormatResult;
     if ($value->type === _Value::TYPE_ARRAY)
@@ -1322,14 +1324,13 @@ function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_
 
 /**
  * @param bool $show_key
- * @param bool $show_object_id
  * @return string
  */
-function _start_value(_Value $value, $show_key, $show_object_id)
+function _start_value(VariableFormatter $formatter, _Value $value, $show_key)
 {
     \assert(($value->type === _Value::TYPE_ARRAY) || ($value->type === _Value::TYPE_OBJECT));
 
-    $result = namespace\format_indent($value->indent_level);
+    $result = $formatter->format_indent($value->indent_level);
 
     if ($show_key)
     {
@@ -1342,7 +1343,7 @@ function _start_value(_Value $value, $show_key, $show_object_id)
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
-        $result .= namespace\format_object_start($value->value, $show_object_id);
+        $result .= $formatter->format_object_start($value->value);
     }
 
     return $result;
@@ -1351,11 +1352,11 @@ function _start_value(_Value $value, $show_key, $show_object_id)
 /**
  * @return string
  */
-function _end_value(_Value $value)
+function _end_value(VariableFormatter $formatter, _Value $value)
 {
     \assert(($value->type === _Value::TYPE_ARRAY) || ($value->type === _Value::TYPE_OBJECT));
 
-    $result = namespace\format_indent($value->indent_level);
+    $result = $formatter->format_indent($value->indent_level);
 
     if ($value->type === _Value::TYPE_ARRAY)
     {
@@ -1366,28 +1367,8 @@ function _end_value(_Value $value)
         $result .= VariableFormatter::OBJECT_END;
     }
 
-    $result .= namespace\_line_end($value->key);
+    $result .= $value->key->line_end;
     return $result;
-}
-
-
-/**
- * @return string
- */
-function _line_end(_Key $key)
-{
-    if ($key->type === _Key::TYPE_INDEX)
-    {
-        return VariableFormatter::ARRAY_ELEMENT_SEPARATOR;
-    }
-    elseif ($key->type === _Key::TYPE_PROPERTY)
-    {
-        return VariableFormatter::PROPERTY_TERMINATOR;
-    }
-    else
-    {
-        return '';
-    }
 }
 
 

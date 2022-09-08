@@ -76,18 +76,6 @@ function format_variable(&$variable, $nesting_level = 0, $show_object_id = true,
 
 
 /**
- * @api
- * @param int $nesting_level
- * @return string
- */
-function format_indent($nesting_level)
-{
-    return \str_repeat(' ', VariableFormatter::DEFAULT_INDENT_WIDTH * $nesting_level);
-}
-
-
-/**
- * @api
  * @param string|int $index;
  * @param ?string $formatted
  * @return string
@@ -102,7 +90,6 @@ function format_array_index($index, &$formatted = null)
 
 
 /**
- * @api
  * @param string|int $property
  * @param string $class
  * @param ?string $formatted
@@ -130,35 +117,6 @@ function format_property($property, $class, &$formatted = null)
 }
 
 
-/**
- * @api
- * @param object $object
- * @param bool $show_object_id
- * @param ?string $class
- * @return string
- */
-function format_object_start(&$object, $show_object_id, &$class = null)
-{
-    $result = \get_class($object);
-    $class = $result;
-
-    if ($show_object_id)
-    {
-        // @bc 7.1 use spl_object_hash instead of spl_object_id
-        $id = \function_exists('spl_object_id')
-            ? \spl_object_id($object)
-            : \spl_object_hash($object);
-        $result .= " #$id";
-    }
-
-    $result .= ' {';
-    return $result;
-}
-
-
-/**
- * @api
- */
 final class FormatResult extends struct
 {
     /** @var string[] */
@@ -166,9 +124,6 @@ final class FormatResult extends struct
 }
 
 
-/**
- * @api
- */
 final class VariableFormatter extends struct
 {
     const DEFAULT_INDENT_WIDTH = 4;
@@ -376,7 +331,7 @@ final class VariableFormatter extends struct
      */
     public function format_object(FormatResult $result, &$var, $name, $nesting_level, $prefix = '', $suffix = '')
     {
-        $start = namespace\format_object_start($var, $this->show_object_id, $class);
+        $start = $this->format_object_start($var, $class);
         $end = self::OBJECT_END;
 
         $values = (array)$var;
@@ -407,6 +362,30 @@ final class VariableFormatter extends struct
         {
             $result->formatted[] = $prefix . $start . $end . $suffix;
         }
+    }
+
+
+    /**
+     * @param object $object
+     * @param ?string $class
+     * @return string
+     */
+    public function format_object_start(&$object, &$class = null)
+    {
+        $result = \get_class($object);
+        $class = $result;
+
+        if ($this->show_object_id)
+        {
+            // @bc 7.1 use spl_object_hash instead of spl_object_id
+            $id = \function_exists('spl_object_id')
+                ? \spl_object_id($object)
+                : \spl_object_hash($object);
+            $result .= " #$id";
+        }
+
+        $result .= ' {';
+        return $result;
     }
 
 
