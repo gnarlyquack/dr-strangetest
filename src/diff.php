@@ -12,21 +12,30 @@ namespace strangetest;
 // is described at:
 // https://www.php.net/manual/en/language.operators.comparison.php
 const DIFF_IDENTICAL = 0;
-const DIFF_EQUAL = 1;
-const DIFF_GREATER = 2;
-const DIFF_GREATER_EQUAL = 3;
-const DIFF_LESS = 4;
-const DIFF_LESS_EQUAL = 5;
+const DIFF_EQUAL     = 0x1;
+const DIFF_GREATER   = 0x2;
+const DIFF_LESS      = 0x4;
+// @bc 5.5 define run-time constants instead of using constant expressions
+\define('strangetest\\DIFF_GREATER_EQUAL', namespace\DIFF_EQUAL | namespace\DIFF_GREATER);
+\define('strangetest\\DIFF_LESS_EQUAL', namespace\DIFF_EQUAL | namespace\DIFF_LESS);
 
 
+// results for unequal comparisons
 const _DIFF_MATCH_NONE    = 0; // Elements have neither matching values nor matching keys
 const _DIFF_MATCH_PARTIAL = 1; // Elements have matching values but nonmatching keys
 const _DIFF_MATCH_FULL    = 2; // Elements have both matching values and keys
 
+
+// results for unequal comparisons
+const _DIFF_MATCH_ERROR = 0; // incomparable values
+const _DIFF_MATCH_PASS  = 1; // match is unequal and satisfies condition
+const _DIFF_MATCH_FAIL  = 2; // match is unequal and doesn't satisfy condition
+const _DIFF_MATCH_EQUAL = 3;
+
 const _DIFF_LINE_FROM = 0x1;
 const _DIFF_LINE_TO   = 0x2;
 // @bc 5.5 define run-time constant instead of using a constant expression
-define('strangetest\\_DIFF_LINE_BOTH', namespace\_DIFF_LINE_FROM | namespace\_DIFF_LINE_TO);
+\define('strangetest\\_DIFF_LINE_BOTH', namespace\_DIFF_LINE_FROM | namespace\_DIFF_LINE_TO);
 
 
 /**
@@ -51,12 +60,12 @@ function diff(&$actual, &$expected, $actual_name, $expected_name, $cmp = namespa
 
     if (($cmp === namespace\DIFF_GREATER) || ($cmp === namespace\DIFF_GREATER_EQUAL))
     {
-        namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _GreaterThanComparator($state, $cmp === namespace\DIFF_GREATER_EQUAL));
+        namespace\_diff_unequal_values($state, $fvalue, $tvalue);
         $diff = new ListForwardIterator($state->diff);
     }
     elseif (($cmp === namespace\DIFF_LESS) || ($cmp === namespace\DIFF_LESS_EQUAL))
     {
-        namespace\_diff_unequal_values($state, $fvalue, $tvalue, new _LessThanComparator($state, $cmp === namespace\DIFF_LESS_EQUAL));
+        namespace\_diff_unequal_values($state, $fvalue, $tvalue);
         $diff = new ListForwardIterator($state->diff);
     }
     else
@@ -587,7 +596,6 @@ class _ComparisonResult
     public $lcs;
 }
 
-
 /**
  * @return _ComparisonResult
  */
@@ -782,14 +790,14 @@ function _build_diff(_DiffState $state, _Edit $edit, $show_key)
 /**
  * @return bool
  */
-function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _UnequalComparator $cmp)
+function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to)
 {
     $show_key = !$from->key->in_list || !$to->key->in_list;
 
-    $result = $cmp->compare_values($from, $to);
+    $result = namespace\_compare_unequal_values($from, $to, (bool)($state->cmp & namespace\DIFF_GREATER));
 
-    if (($result === _UnequalComparator::MATCH_PASS)
-        || (($result === _UnequalComparator::MATCH_EQUAL) && $cmp->equals_ok()))
+    if (($result === _DIFF_MATCH_PASS)
+        || (($result === _DIFF_MATCH_EQUAL) && ($state->cmp & namespace\DIFF_EQUAL)))
     {
         namespace\_copy_value($state, $from, $show_key, false);
     }
@@ -808,10 +816,10 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
             $equal = true;
             for ($f = 0, $t = 0; ($f < $min) && $equal; ++$f, ++$t)
             {
-                $result = $cmp->compare_values($fvalues[$f], $tvalues[$t]);
-                $equal = $result === _UnequalComparator::MATCH_EQUAL;
+                $result = namespace\_compare_unequal_values($fvalues[$f], $tvalues[$t], (bool)($state->cmp & namespace\DIFF_GREATER));
+                $equal = $result === _DIFF_MATCH_EQUAL;
 
-                if ($equal && $cmp->equals_ok())
+                if ($equal && ($state->cmp & namespace\DIFF_EQUAL))
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_BOTH);
                     namespace\_copy_value($state, $fvalues[$f], $show_key, false, $pos);
@@ -819,12 +827,12 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 else
                 {
                     $pos = namespace\_get_line_pos($f, $t, $flen, $tlen, namespace\_DIFF_LINE_FROM);
-                    $cmp->delete_value($fvalues[$f], $show_key, $pos);
-                    $cmp->insert_value($tvalues[$t], $show_key, $pos);
+                    namespace\_delete_unequal_value($state, $fvalues[$f], $show_key, $pos);
+                    namespace\_insert_unequal_value($state, $tvalues[$t], $show_key, $pos);
                 }
             }
 
-            if ($equal && $cmp->equals_ok())
+            if ($equal && ($state->cmp & namespace\DIFF_EQUAL))
             {
                 for ( ; $f < $flen; ++$f)
                 {
@@ -867,7 +875,7 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
                 elseif ($equal)
                 {
                     $tvalue = $tvalues[$tkeys[$key]];
-                    $equal = namespace\_diff_unequal_values($state, $fvalue, $tvalue, $cmp);
+                    $equal = namespace\_diff_unequal_values($state, $fvalue, $tvalue);
                 }
                 else
                 {
@@ -884,193 +892,43 @@ function _diff_unequal_values(_DiffState $state, _Value $from, _Value $to, _Uneq
             $state->diff[] = new _DiffCopy(namespace\_end_value($state->formatter, $from));
         }
     }
-    elseif($result === _UnequalComparator::MATCH_ERROR)
+    elseif($result === _DIFF_MATCH_ERROR)
     {
         namespace\_delete_value($state, $from, $show_key, false);
         namespace\_insert_value($state, $to, $show_key, false);
     }
     else
     {
-        $cmp->delete_value($from, $show_key);
-        $cmp->insert_value($to, $show_key);
+        namespace\_delete_unequal_value($state, $from, $show_key);
+        namespace\_insert_unequal_value($state, $to, $show_key);
     }
 
-    return $result === _UnequalComparator::MATCH_EQUAL;
+    return $result === _DIFF_MATCH_EQUAL;
 }
 
 
-interface _UnequalComparator
+/**
+ * @param bool $greater
+ * @return _DIFF_MATCH_PASS|_DIFF_MATCH_FAIL|_DIFF_MATCH_EQUAL|_DIFF_MATCH_ERROR
+ */
+function _compare_unequal_values(_Value $from, _Value $to, $greater)
 {
-    const MATCH_ERROR = 0;
-    const MATCH_PASS  = 1;
-    const MATCH_FAIL  = 2;
-    const MATCH_EQUAL = 3;
-
-    /**
-     * @return _UnequalComparator::*
-     */
-    public function compare_values(_Value $from, _Value $to);
-
-
-    /**
-     * @return bool
-     */
-    public function equals_ok();
-
-
-    /**
-     * @param bool $show_key
-     * @param VariableFormatter::STRING_* $pos
-     * @return void
-     */
-    public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE);
-
-    /**
-     * @param bool $show_key
-     * @param VariableFormatter::STRING_* $pos
-     * @return void
-     */
-    public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE);
-}
-
-
-final class _GreaterThanComparator extends struct implements _UnequalComparator
-{
-    /** @var _DiffState */
-    private $state;
-
-    /** @var bool */
-    private $equals_ok;
-
-    /**
-     * @param bool $equals_ok
-     */
-    public function __construct(_DiffState $state, $equals_ok)
+    if ($from->value > $to->value)
     {
-        $this->state = $state;
-        $this->equals_ok = $equals_ok;
+        return $greater ? _DIFF_MATCH_PASS : _DIFF_MATCH_FAIL;
     }
-
-
-    public function equals_ok()
+    elseif ($from->value < $to->value)
     {
-        return $this->equals_ok;
+        return $greater ? _DIFF_MATCH_FAIL : _DIFF_MATCH_PASS;
     }
-
-
-    public function compare_values(_Value $from, _Value $to)
+    elseif ($from->value != $to->value)
     {
-        $fvalue = $from->value;
-        $tvalue = $to->value;
-
-        if ($fvalue > $tvalue)
-        {
-            return self::MATCH_PASS;
-        }
-        elseif ($fvalue < $tvalue)
-        {
-            return self::MATCH_FAIL;
-        }
-        elseif ($fvalue != $tvalue)
-        {
-            // incomparable values
-            return self::MATCH_ERROR;
-        }
-        else
-        {
-            return self::MATCH_EQUAL;
-        }
+        // incomparable values
+        return _DIFF_MATCH_ERROR;
     }
-
-
-    public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
+    else
     {
-        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach ($formatted as $string)
-        {
-            $this->state->diff[] = new _DiffDeleteGreater($string);
-        }
-    }
-
-
-    public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
-    {
-        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach ($formatted as $string)
-        {
-            $this->state->diff[] = new _DiffInsertLess($string);
-        }
-    }
-}
-
-
-final class _LessThanComparator extends struct implements _UnequalComparator
-{
-    /** @var _DiffState */
-    private $state;
-
-    /** @var bool */
-    private $equals_ok;
-
-
-    /**
-     * @param bool $equals_ok
-     */
-    public function __construct(_DiffState $state, $equals_ok)
-    {
-        $this->state = $state;
-        $this->equals_ok = $equals_ok;
-    }
-
-
-    public function equals_ok()
-    {
-        return $this->equals_ok;
-    }
-
-
-    public function compare_values(_Value $from, _Value $to)
-    {
-        $fvalue = $from->value;
-        $tvalue = $to->value;
-
-        if ($fvalue < $tvalue)
-        {
-            return self::MATCH_PASS;
-        }
-        elseif ($fvalue > $tvalue)
-        {
-            return self::MATCH_FAIL;
-        }
-        elseif ($fvalue != $tvalue)
-        {
-            // incomparable values
-            return self::MATCH_ERROR;
-        }
-        else
-        {
-            return self::MATCH_EQUAL;
-        }
-    }
-
-
-    public function delete_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
-    {
-        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach ($formatted as $string)
-        {
-            $this->state->diff[] = new _DiffDeleteLess($string);
-        }
-    }
-
-
-    public function insert_value(_Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
-    {
-        $formatted = namespace\_format_value($this->state->formatter, $value, $pos, $show_key, $this->state->cmp === namespace\DIFF_IDENTICAL);
-        foreach ($formatted as $string)
-        {
-            $this->state->diff[] = new _DiffInsertGreater($string);
-        }
+        return _DIFF_MATCH_EQUAL;
     }
 }
 
@@ -1132,7 +990,7 @@ function _get_line_pos($f, $t, $flen, $tlen, $which)
  */
 function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
-    $formatted = namespace\_format_value($state->formatter, $value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+    $formatted = namespace\_format_value($state, $value, $pos, $show_key);
 
     if ($reverse)
     {
@@ -1158,7 +1016,7 @@ function _copy_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos
  */
 function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
-    $formatted = namespace\_format_value($state->formatter, $value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+    $formatted = namespace\_format_value($state, $value, $pos, $show_key);
 
     if ($reverse)
     {
@@ -1184,7 +1042,7 @@ function _insert_value(_DiffState $state, _Value $value, $show_key, $reverse, $p
  */
 function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $pos = VariableFormatter::STRING_WHOLE)
 {
-    $formatted = namespace\_format_value($state->formatter, $value, $pos, $show_key, $state->cmp === namespace\DIFF_IDENTICAL);
+    $formatted = namespace\_format_value($state, $value, $pos, $show_key);
 
     if ($reverse)
     {
@@ -1203,14 +1061,69 @@ function _delete_value(_DiffState $state, _Value $value, $show_key, $reverse, $p
 
 
 /**
+ * @param bool $show_key
+ * @param VariableFormatter::STRING_* $pos
+ * @return void
+ */
+function _insert_unequal_value(_DiffState $state, _Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
+{
+    $formatted = namespace\_format_value($state, $value, $pos, $show_key);
+
+    if ($state->cmp & namespace\DIFF_GREATER)
+    {
+        foreach ($formatted as $string)
+        {
+            $state->diff[] = new _DiffInsertLess($string);
+        }
+    }
+    else
+    {
+        \assert(($state->cmp & namespace\DIFF_LESS) === namespace\DIFF_LESS);
+        foreach ($formatted as $string)
+        {
+            $state->diff[] = new _DiffInsertGreater($string);
+        }
+    }
+}
+
+
+/**
+ * @param bool $show_key
+ * @param VariableFormatter::STRING_* $pos
+ * @return void
+ */
+function _delete_unequal_value(_DiffState $state, _Value $value, $show_key, $pos = VariableFormatter::STRING_WHOLE)
+{
+    $formatted = namespace\_format_value($state, $value, $pos, $show_key);
+
+    if ($state->cmp & namespace\DIFF_GREATER)
+    {
+        foreach ($formatted as $string)
+        {
+            $state->diff[] = new _DiffDeleteGreater($string);
+        }
+    }
+    else
+    {
+        \assert(($state->cmp & namespace\DIFF_LESS) === namespace\DIFF_LESS);
+        foreach ($formatted as $string)
+        {
+            $state->diff[] = new _DiffDeleteLess($string);
+        }
+    }
+}
+
+
+/**
  * @param VariableFormatter::STRING_* $pos
  * @param bool $show_key
- * @param bool $show_object_id
  * @return string[]
  */
-function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_key, $show_object_id)
+function _format_value(_DiffState $state, _Value $value, $pos, $show_key)
 {
-    $prefix = $formatter->format_indent($value->indent_level);
+    $show_object_id = $state->cmp === namespace\DIFF_IDENTICAL;
+
+    $prefix = $state->formatter->format_indent($value->indent_level);
     if ($show_key)
     {
         $prefix .= $value->key->formatted;
@@ -1221,11 +1134,11 @@ function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_
     $result = new FormatResult;
     if ($value->type === _Value::TYPE_ARRAY)
     {
-        $formatter->format_array($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);
+        $state->formatter->format_array($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_OBJECT)
     {
-        $formatter->format_object($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);
+        $state->formatter->format_object($result, $value->value, $value->name, $value->indent_level, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_REFERENCE)
     {
@@ -1233,19 +1146,19 @@ function _format_value(VariableFormatter $formatter, _Value $value, $pos, $show_
     }
     elseif ($value->type === _Value::TYPE_RESOURCE)
     {
-        $formatter->format_resource($result, $value->value, $prefix, $suffix);
+        $state->formatter->format_resource($result, $value->value, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_STRING)
     {
-        $formatter->format_string($result, $value->value, $prefix, $suffix);
+        $state->formatter->format_string($result, $value->value, $prefix, $suffix);
     }
     elseif ($value->type === _Value::TYPE_STRING_PART)
     {
-        $formatter->format_string($result, $value->value, $prefix, $suffix, $pos);
+        $state->formatter->format_string($result, $value->value, $prefix, $suffix, $pos);
     }
     else
     {
-        $formatter->format_scalar($result, $value->value, $prefix, $suffix);
+        $state->formatter->format_scalar($result, $value->value, $prefix, $suffix);
     }
 
     return $result->formatted;

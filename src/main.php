@@ -25,9 +25,9 @@ const LOG_PASS   = 0x01;
 const LOG_SKIP   = 0x02;
 const LOG_OUTPUT = 0x04;
 // @bc 5.5 Use define() to define constant expressions
-define('strangetest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
+\define('strangetest\\LOG_VERBOSE', namespace\LOG_SKIP | namespace\LOG_OUTPUT);
 // Right now just used for debugging
-define('strangetest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
+\define('strangetest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
 
 
 
