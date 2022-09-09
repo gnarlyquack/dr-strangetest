@@ -49,29 +49,18 @@ function format_failure_message($assertion, $description = null, $detail = null)
  * @api
  * @param mixed $variable The variable to format. $variable is received as a
  *                        reference in order to detect self-referencing values.
- * @param int $nesting_level
  * @param bool $show_object_id
- * @param bool $as_array
- * @return ($as_array is true ? string[] : string) A string representation of $var
+ * @return string A string representation of $var
  */
-function format_variable(&$variable, $nesting_level = 0, $show_object_id = true, $as_array = false)
+function format_variable(&$variable, $show_object_id = true)
 {
     $name = \is_object($variable) ? \get_class($variable) : \gettype($variable);
 
     $formatter = new VariableFormatter($show_object_id);
-
     $result = new FormatResult;
-    $prefix = $formatter->format_indent($nesting_level);
-    $formatter->format_variable($result, $variable, $name, $nesting_level, $prefix);
+    $formatter->format_variable($result, $variable, $name);
 
-    if ($as_array)
-    {
-        return $result->formatted;
-    }
-    else
-    {
-        return \implode("\n", $result->formatted);
-    }
+    return \implode("\n", $result->formatted);
 }
 
 
@@ -82,9 +71,10 @@ function format_variable(&$variable, $nesting_level = 0, $show_object_id = true,
  */
 function format_array_index($index, &$formatted = null)
 {
-    $formatted = \var_export($index, true);
+    $result = \var_export($index, true);
+    $formatted = $result;
 
-    $result = $formatted . ' => ';
+    $result .= ' => ';
     return $result;
 }
 
@@ -110,8 +100,8 @@ function format_property($property, $class, &$formatted = null)
     {
         $result = $parts[1] . '::' . $result;
     }
-
     $formatted = $result;
+
     $result .= ' = ';
     return $result;
 }
@@ -141,11 +131,11 @@ final class VariableFormatter extends struct
     // @bc 5.5 hard-code constant value instead of using a constant expression
     const STRING_WHOLE  = 0x3; // bitwise or of STRING_START and STRING_END
 
-    /** @var ReferenceChecker */
-    private $references;
-
     /** @var int */
     private $indent_width;
+
+    /** @var ReferenceChecker */
+    private $references;
 
     /** @var bool */
     private $show_object_id;
@@ -162,9 +152,9 @@ final class VariableFormatter extends struct
             $references = new ReferenceChecker;
         }
 
-        $this->show_object_id = $show_object_id;
-        $this->references = $references;
         $this->indent_width = $indent_width;
+        $this->references = $references;
+        $this->show_object_id = $show_object_id;
     }
 
 
@@ -176,7 +166,7 @@ final class VariableFormatter extends struct
      * @param string $suffix
      * @return void
      */
-    public function format_variable(FormatResult $result, &$var, $name, $nesting_level, $prefix = '', $suffix = '')
+    public function format_variable(FormatResult $result, &$var, $name, $nesting_level = 0, $prefix = '', $suffix = '')
     {
         $reference = $this->references->check_variable($var, $name);
         if ($reference)
