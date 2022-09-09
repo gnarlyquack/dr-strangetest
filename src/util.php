@@ -13,6 +13,9 @@ final class ReferenceChecker extends struct
     /** @var null */
     const BYREF_SENTINEL = null;
 
+    /** @var mixed[] */
+    private $byref_seen = array();
+
     /**
      * We'd really like to make this a constant, but PHP won't let us do that
      * with an object instance, so we'll just have to initialize it every time
@@ -22,10 +25,7 @@ final class ReferenceChecker extends struct
     private $byval_sentinel;
 
     /** @var mixed[] */
-    private $seen_byval = array();
-
-    /** @var mixed[] */
-    private $seen_byref = array();
+    private $byval_seen = array();
 
 
     public function __construct()
@@ -33,17 +33,11 @@ final class ReferenceChecker extends struct
         $this->byval_sentinel = new \stdClass;
     }
 
+
     /**
-     * Check if $var is a reference to another value in $seen.
-     *
-     * If $var is normally pass-by-value, then it can only be an explicit
-     * reference. If it's normally pass-by-reference, then it can either be an
-     * object reference or an explicit reference. Explicit references are
-     * marked with the reference operator, i.e., '&'.
-     *
-     * Since PHP has no built-in way to determine if a variable is a reference,
-     * references are identified using jank wherein $var is changed and $seen
-     * is checked for an equivalent change.
+     * Check if $var is a reference to a value previously passed to the
+     * reference checker. Returns false if not, or the name of the previous
+     * value that this value references.
      *
      * @param mixed $var
      * @param string $name
@@ -51,14 +45,24 @@ final class ReferenceChecker extends struct
      */
     public function check_variable(&$var, $name)
     {
+        // Since PHP has no built-in way to determine if a variable is a
+        // reference, references are identified using jank wherein $var is
+        // changed to a value that it could not possibly be (i.e., one of the
+        // sentinel values, depending on the value's type) and $seen is checked
+        // to see if that value is found.
+        //
+        // If $var is normally pass-by-value, then it can only be an explicit
+        // reference. If it's normally pass-by-reference, then it can either be an
+        // object reference or an explicit reference. Explicit references are
+        // marked with the reference operator, i.e., '&'.
         if (\is_scalar($var) || \is_array($var) || null === $var)
         {
             $copy = $var;
             $var = $this->byval_sentinel;
-            $reference = \array_search($var, $this->seen_byval, true);
+            $reference = \array_search($var, $this->byval_seen, true);
             if (false === $reference)
             {
-                $this->seen_byval[$name] = &$var;
+                $this->byval_seen[$name] = &$var;
             }
             elseif ($reference === $name)
             {
@@ -72,10 +76,10 @@ final class ReferenceChecker extends struct
         }
         else
         {
-            $reference = \array_search($var, $this->seen_byref, true);
+            $reference = \array_search($var, $this->byref_seen, true);
             if (false === $reference)
             {
-                $this->seen_byref[$name] = &$var;
+                $this->byref_seen[$name] = &$var;
             }
             elseif ($reference === $name)
             {
@@ -87,7 +91,7 @@ final class ReferenceChecker extends struct
                 \assert(\strlen($reference) > 0);
                 $copy = $var;
                 $var = self::BYREF_SENTINEL;
-                if ($var === $this->seen_byref[$reference])
+                if ($var === $this->byref_seen[$reference])
                 {
                     $reference = "&$reference";
                 }
@@ -177,11 +181,13 @@ final class ListForwardIterator extends struct implements ListIterator
         $this->len = \count($list);
     }
 
+
     public function next()
     {
         $result = $this->list[$this->index++];
         return $result;
     }
+
 
     public function valid()
     {
@@ -218,11 +224,13 @@ final class ListReverseIterator extends struct implements ListIterator
         $this->index = $this->len - 1;
     }
 
+
     public function next()
     {
         $result = $this->list[$this->index--];
         return $result;
     }
+
 
     public function valid()
     {
