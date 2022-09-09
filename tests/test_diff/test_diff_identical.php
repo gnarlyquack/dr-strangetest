@@ -261,23 +261,23 @@ function test_diffs_different_objects() {
 + stdClass #{$oid2} {
       \$one = 1;
 -     \$two = 'foo';
--     \$three = array();
--     \$four = array(
 +     \$two = 'bar';
-+     \$three = array(
-          2,
-          3,
+      \$three = array(
++         2,
++         3,
       );
--     \$five = 'An old pond
+-     \$four = array(
+-         0 => 2,
 +     \$four = 2;
 +     \$five = array(
-+         1 => 3,
+          1 => 3,
 +         2 => 4,
 +         3 => array(
 +             5,
 +             6,
 +         ),
-+     );
+      );
+-     \$five = 'An old pond
 +     \$six = 'An old pond
   A frog jumps in
 -     \$six = stdClass #{$oid3} {

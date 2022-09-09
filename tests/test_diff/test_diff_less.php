@@ -277,6 +277,21 @@ EXPECTED;
 }
 
 
+function test_string_greater_than_empty_string()
+{
+    $from = "Hello\nWorld";
+    $to   = '';
+
+    $expected = <<<'EXPECTED'
+< 'Hello
+> '
+  World'
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
+}
+
+
 function test_reference()
 {
     $from =  array(1, 3, 3, array(6, 5, 4));

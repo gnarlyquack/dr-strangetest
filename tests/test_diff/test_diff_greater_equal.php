@@ -240,6 +240,20 @@ EXPECTED;
 }
 
 
+function test_empty_string_less_than_string()
+{
+    $from = '';
+    $to = "Hello\nWorld";
+
+    $expected = <<<'EXPECTED'
+> ''
+< 'Hello'
+EXPECTED;
+
+    assert_diff($from, $to, $expected);
+}
+
+
 function test_reference()
 {
     $from =  array(1, 2, 3, array(6, 5, 4));
