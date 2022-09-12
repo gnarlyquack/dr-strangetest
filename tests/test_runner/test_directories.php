@@ -6,8 +6,12 @@
 // LICENSE.txt file.
 
 namespace test\runner;
+
 use strangetest;
+use strangetest\BasicLogger;
 use strangetest\State;
+
+use NoOutputter;
 
 
 class TestRunDirectories {
@@ -16,7 +20,7 @@ class TestRunDirectories {
 
 
     public function setup() {
-        $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
+        $this->logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
         $this->path = __DIR__ . '/resources/directories/';
     }
 

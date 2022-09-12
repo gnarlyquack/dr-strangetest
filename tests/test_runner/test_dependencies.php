@@ -5,6 +5,7 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+use strangetest\BasicLogger;
 use strangetest\State;
 
 
@@ -17,7 +18,7 @@ class TestDependencies {
     public function setup() {
         $this->root = __DIR__ . '/resources/dependencies/';
         $this->path = '';
-        $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
+        $this->logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
     }
 
 

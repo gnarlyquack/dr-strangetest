@@ -8,77 +8,36 @@
 namespace strangetest;
 
 
-final class LiveUpdatingLogger extends struct implements Logger {
-
-    public function __construct(Logger $logger)
+final class CommandLineOutputter extends struct implements LogOutputter
+{
+    public function output_pass()
     {
-        $this->logger = $logger;
+        echo '.';
     }
 
 
-    /**
-     * @param string $source
-     * @return void
-     */
-    public function log_pass($source)
+    public function output_failure()
     {
-        namespace\output_pass();
-        $this->logger->log_pass($source);
+        echo 'F';
     }
 
 
-    /**
-     * @param string $source
-     * @param string|\Throwable $reason
-     * @return void
-     */
-    public function log_failure($source, $reason)
+    public function output_error()
     {
-        namespace\output_failure();
-        $this->logger->log_failure($source, $reason);
+        echo 'E';
     }
 
 
-    /**
-     * @param string $source
-     * @param string|\Throwable $reason
-     * @return void
-     */
-    public function log_error($source, $reason)
+    public function output_skip()
     {
-        namespace\output_error();
-        $this->logger->log_error($source, $reason);
+        echo 'S';
     }
 
 
-    /**
-     * @param string $source
-     * @param string|\Throwable $reason
-     * @param ?bool $during_error
-     * @return void
-     */
-    public function log_skip($source, $reason, $during_error = false)
+    public function output_output()
     {
-        namespace\output_skip();
-        $this->logger->log_skip($source, $reason, $during_error);
+        echo 'O';
     }
-
-
-    /**
-     * @param string $source
-     * @param string|\Throwable $reason
-     * @param ?bool $during_error
-     * @return void
-     */
-    public function log_output($source, $reason, $during_error = false)
-    {
-        namespace\output_output();
-        $this->logger->log_output($source, $reason, $during_error);
-    }
-
-
-    /** @var Logger */
-    private $logger;
 }
 
 
@@ -100,51 +59,6 @@ function output($text)
 function output_header($text)
 {
     echo "$text\n\n";
-}
-
-
-/**
- * @return void
- */
-function output_pass()
-{
-    echo '.';
-}
-
-
-/**
- * @return void
- */
-function output_error()
-{
-    echo 'E';
-}
-
-
-/**
- * @return void
- */
-function output_failure()
-{
-    echo 'F';
-}
-
-
-/**
- * @return void
- */
-function output_skip()
-{
-    echo 'S';
-}
-
-
-/**
- * @return void
- */
-function output_output()
-{
-    echo 'O';
 }
 
 

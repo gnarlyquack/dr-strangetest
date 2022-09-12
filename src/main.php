@@ -73,7 +73,9 @@ interface Log {
     public function get_events();
 }
 
-interface Logger {
+
+interface Logger
+{
     /**
      * @param string $source
      * @return void
@@ -109,6 +111,25 @@ interface Logger {
      * @return void
      */
     public function log_output($source, $reason, $during_error = false);
+}
+
+
+interface LogOutputter
+{
+    /** @return void */
+    public function output_pass();
+
+    /** @return void */
+    public function output_failure();
+
+    /** @return void */
+    public function output_error();
+
+    /** @return void */
+    public function output_skip();
+
+    /** @return void */
+    public function output_output();
 }
 
 
@@ -224,8 +245,8 @@ function main($argc, $argv)
     // @todo Add configuration option to explicitly set the test root directory
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
-    $logger = new BasicLogger($options['verbose']);
-    $buffering = new BufferingLogger(new LiveUpdatingLogger($logger));
+    $logger = new BasicLogger($options['verbose'], new CommandLineOutputter);
+    $buffering = new BufferingLogger($logger);
     $state = new State();
 
     namespace\output_header(namespace\_get_version());

@@ -15,6 +15,8 @@ use strangetest\Logger;
 use strangetest\State;
 use strangetest\_DiscoveryState;
 
+use NoOutputter;
+
 
 class TestFiles
 {
@@ -26,7 +28,7 @@ class TestFiles
     public function setup() {
         $this->root =  __DIR__ . '/resources/files/';
         $this->path = '';
-        $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL);
+        $this->logger = new strangetest\BasicLogger(strangetest\LOG_ALL, new NoOutputter);
     }
 
 
@@ -833,7 +835,7 @@ function filepath($name) {
 
 function assert_run_file($filepath, $events) {
     $state = new State();
-    $logger = new BasicLogger(strangetest\LOG_ALL);
+    $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
     $buffed_logger = new BufferingLogger($logger);
     $discovery_state = new _DiscoveryState($state, $buffed_logger);
 

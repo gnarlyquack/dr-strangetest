@@ -100,13 +100,17 @@ final class BasicLogger extends struct implements Logger {
     /** @var int */
     private $verbose;
 
+    /** @var LogOutputter */
+    private $outputter;
+
 
     /**
      * @param int $verbose
      */
-    public function __construct($verbose)
+    public function __construct($verbose, LogOutputter $outputter)
     {
         $this->verbose = $verbose;
+        $this->outputter = $outputter;
     }
 
 
@@ -117,6 +121,7 @@ final class BasicLogger extends struct implements Logger {
         {
             $this->events[] = array(namespace\EVENT_PASS, $source, null);
         }
+        $this->outputter->output_pass();
     }
 
 
@@ -124,6 +129,7 @@ final class BasicLogger extends struct implements Logger {
     {
         ++$this->count[namespace\EVENT_FAIL];
         $this->events[] = array(namespace\EVENT_FAIL, $source, $reason);
+        $this->outputter->output_failure();
     }
 
 
@@ -131,6 +137,7 @@ final class BasicLogger extends struct implements Logger {
     {
         ++$this->count[namespace\EVENT_ERROR];
         $this->events[] = array(namespace\EVENT_ERROR, $source, $reason);
+        $this->outputter->output_error();
     }
 
 
@@ -147,6 +154,7 @@ final class BasicLogger extends struct implements Logger {
         {
             $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
         }
+        $this->outputter->output_skip();
     }
 
 
@@ -157,6 +165,7 @@ final class BasicLogger extends struct implements Logger {
         {
             $this->events[] = array(namespace\EVENT_OUTPUT, $source, $reason);
         }
+        $this->outputter->output_output();
     }
 
 

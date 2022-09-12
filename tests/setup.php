@@ -9,6 +9,20 @@ class ExpectedException extends \Exception {}
 class UnexpectedException extends \Exception {}
 
 
+final class NoOutputter extends strangetest\struct implements strangetest\LogOutputter
+{
+    public function output_pass() {}
+
+    public function output_failure() {}
+
+    public function output_error() {}
+
+    public function output_skip() {}
+
+    public function output_output() {}
+}
+
+
 function assert_log(array $log, strangetest\BasicLogger $logger) {
     $expected = array(
         strangetest\EVENT_PASS => 0,
