@@ -65,9 +65,9 @@ in $file on line $lines[4]
 
 Called from:
 $file($lines[3]): strangetest\\assert_throws()
-$file($lines[2]): ${class}->fail()
-$file($lines[1]): ${class}->helper_two()
-$file($lines[0]): ${class}->helper_one()
+$file($lines[2]): {$class}->fail()
+$file($lines[1]): {$class}->helper_two()
+$file($lines[0]): {$class}->helper_one()
 MSG;
         strangetest\assert_identical($expected, "$actual");
     }
@@ -84,9 +84,19 @@ MSG;
 
     private function fail($message, &$lines) {
         // @bc 5.6 Adjust the reported line on which a function is called
-        $lines[] = version_compare(PHP_VERSION, '7.0', '<')
-                 ? __LINE__ + 8
-                 : __LINE__ + 6;
+        if (\version_compare(\PHP_VERSION, '7.0', '<'))
+        {
+            $lines[] = __LINE__ + 17;
+        }
+        // @bc 8.1 Adjust the reported line on which a function is called
+        elseif (\version_compare(\PHP_VERSION, '8.2', '<'))
+        {
+            $lines[] = __LINE__ + 11;
+        }
+        else
+        {
+            $lines[] =  __LINE__ + 2;
+        }
         return strangetest\assert_throws(
             'strangetest\\Failure',
             function() use ($message, &$lines) {

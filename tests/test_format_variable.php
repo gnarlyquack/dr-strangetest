@@ -11,6 +11,7 @@ class ObjectFormat {
     public $one = 'parent public';
     protected $two = 'parent protected';
     private $three = 'parent private';
+    public $reference = null;
 }
 
 class InheritFormat extends ObjectFormat {
@@ -18,14 +19,6 @@ class InheritFormat extends ObjectFormat {
     protected $two = 'child protected';
     private $three = 'child private';
 }
-
-class IntegerProperties {
-    public function __construct() {
-        $this->{0} = 'zero';
-        $this->{1} = 'one';
-    }
-}
-
 
 
 class TestFormatVariable {
@@ -101,16 +94,30 @@ EXPECTED;
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
 
+        // @bc 5.3 Check ordering of serialized class properties
         // @bc 8.0 Check ordering of serialized class properties
-        // PHP 8.1 changed the order of serialized class properties to match
-        // the order of inheritance and declaration
-        if (\version_compare(\PHP_VERSION, '8.1', '<'))
+        // PHP 5.4 and 8.1 changed the order of serialized class properties to
+        // match the order of inheritance and declaration
+        if (\version_compare(\PHP_VERSION, '5.4', '<'))
         {
             $expected = <<<EXPECTED
 InheritFormat #$id {
     \$one = 'child public';
     \$two = 'child protected';
     \$three = 'child private';
+    ObjectFormat::\$three = 'parent private';
+    \$reference = NULL;
+}
+EXPECTED;
+        }
+        elseif (\version_compare(\PHP_VERSION, '8.1', '<'))
+        {
+            $expected = <<<EXPECTED
+InheritFormat #$id {
+    \$one = 'child public';
+    \$two = 'child protected';
+    \$three = 'child private';
+    \$reference = NULL;
     ObjectFormat::\$three = 'parent private';
 }
 EXPECTED;
@@ -122,6 +129,7 @@ InheritFormat #$id {
     \$one = 'child public';
     \$two = 'child protected';
     ObjectFormat::\$three = 'parent private';
+    \$reference = NULL;
     \$three = 'child private';
 }
 EXPECTED;
@@ -190,7 +198,7 @@ EXPECTED;
         $variable = new ObjectFormat();
         $variable->one = new ObjectFormat();
         $variable->one->one = $variable;
-        $variable->one->six = &$variable->one;
+        $variable->one->reference = &$variable->one;
 
         // @bc 7.1 use spl_object_hash instead of spl_object_id
         if (\version_compare(\PHP_VERSION, '7.2', '<')) {
@@ -208,10 +216,11 @@ ObjectFormat #$id1 {
         \$one = ObjectFormat;
         \$two = 'parent protected';
         \$three = 'parent private';
-        \$six = &ObjectFormat->\$one;
+        \$reference = &ObjectFormat->\$one;
     };
     \$two = 'parent protected';
     \$three = 'parent private';
+    \$reference = NULL;
 }
 EXPECTED;
         $actual = strangetest\format_variable($variable);
@@ -220,14 +229,14 @@ EXPECTED;
 
 
     function test_formats_integer_object_properties() {
-        $variable = new IntegerProperties();
+        $variable = (object)array('zero', 'one');
         // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
 
         $expected = <<<EXPECTED
-IntegerProperties #$id {
+stdClass #$id {
     \$0 = 'zero';
     \$1 = 'one';
 }
