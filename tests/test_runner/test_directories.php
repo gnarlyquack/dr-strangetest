@@ -30,13 +30,12 @@ class TestRunDirectories {
     private function assert_events($directories, strangetest\Context $context) {
         $root = $this->path . \DIRECTORY_SEPARATOR;
 
-        $logger = new strangetest\BufferingLogger($this->logger);
         $state = new State;
 
-        $tests = strangetest\discover_tests($state, $logger, $root);
+        $tests = strangetest\discover_tests($state, $this->logger, $root);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
-        strangetest\run_tests($state, $logger, $tests, $tests);
+        strangetest\run_tests($state, $this->logger, $tests, $tests);
 
         $root = null;
         $current = null;
@@ -229,13 +228,12 @@ class TestRunDirectories {
     private function assert_log($expected) {
         $root = $this->path . \DIRECTORY_SEPARATOR;
 
-        $logger = new strangetest\BufferingLogger($this->logger);
         $state = new State;
 
-        $tests = strangetest\discover_tests($state, $logger, $root);
+        $tests = strangetest\discover_tests($state, $this->logger, $root);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
 
-        strangetest\run_tests($state, $logger, $tests, $tests);
+        strangetest\run_tests($state, $this->logger, $tests, $tests);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event) {
@@ -256,9 +254,8 @@ class TestRunDirectories {
     private function assert_run($tests, $expected)
     {
         $tests = make_test($tests);
-        $logger = new strangetest\BufferingLogger($this->logger);
         $state = new State;
-        strangetest\run_tests($state, $logger, $tests, $tests);
+        strangetest\run_tests($state, $this->logger, $tests, $tests);
 
         $actual = $this->logger->get_log()->get_events();
         foreach ($actual as $i => $event)

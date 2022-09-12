@@ -9,7 +9,6 @@ namespace test\discover\file;
 
 use strangetest;
 use strangetest\BasicLogger;
-use strangetest\BufferingLogger;
 use strangetest\State;
 use strangetest\_DiscoveryState;
 
@@ -29,7 +28,7 @@ function filepath($name) {
 
 function assert_file_discovery($filepath, array $events) {
     $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
-    $state = new _DiscoveryState(new State(), new BufferingLogger($logger));
+    $state = new _DiscoveryState(new State(), $logger);
     strangetest\_discover_file($state, $filepath, 0);
 
     \assert_events($events, $logger);
@@ -98,7 +97,7 @@ function test_handles_non_test_definition() {
 
     $filepath = namespace\filepath($file);
     $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
-    $state = new _DiscoveryState(new State(), new BufferingLogger($logger));
+    $state = new _DiscoveryState(new State(), $logger);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
@@ -124,7 +123,7 @@ function test_does_not_discover_enumerations()
     $file = 'test_enumeration.php';
     $filepath = namespace\filepath($file);
     $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
-    $state = new _DiscoveryState(new State(), new BufferingLogger($logger));
+    $state = new _DiscoveryState(new State(), $logger);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
@@ -150,7 +149,7 @@ function test_discovers_tests_marked_with_attributes()
     $file = 'test_attributes.php';
     $filepath = namespace\filepath($file);
     $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
-    $state = new _DiscoveryState(new State, new BufferingLogger($logger));
+    $state = new _DiscoveryState(new State, $logger);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->get_events());

@@ -175,7 +175,7 @@ function test_reports_error_for_multiple_directory_fixtures( BasicLogger $logger
 
 function assert_discovered($logger, $path, $discovered, $log)
 {
-    $state = new _DiscoveryState(new State, new strangetest\BufferingLogger($logger));
+    $state = new _DiscoveryState(new State, $logger);
     $actual = strangetest\_discover_directory($state, $path, 0);
 
     $discovered = make_test($discovered);

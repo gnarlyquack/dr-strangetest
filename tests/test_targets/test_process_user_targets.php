@@ -6,7 +6,6 @@
 // LICENSE.txt file.
 
 use strangetest\BasicLogger;
-use strangetest\BufferingLogger;
 use strangetest\Context;
 use strangetest\State;
 
@@ -28,7 +27,7 @@ class TestProcessUserTargets
         $state = new State;
         $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
         $path = __DIR__ . '/resources/';
-        $tests = strangetest\discover_tests($state, new BufferingLogger($logger), $path, 0);
+        $tests = strangetest\discover_tests($state, $logger, $path, 0);
         \assert(!$logger->get_log()->get_events());
 
         $this->tests = $tests;

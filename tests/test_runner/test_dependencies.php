@@ -26,10 +26,9 @@ class TestDependencies {
 
     private function assert_events($expected) {
         $state = new State;
-        $logger = new strangetest\BufferingLogger($this->logger);
-        $tests = strangetest\discover_tests($state, $logger, $this->root);
+        $tests = strangetest\discover_tests($state, $this->logger, $this->root);
         strangetest\assert_truthy($tests);
-        strangetest\run_tests($state, $logger, $tests, $tests);
+        strangetest\run_tests($state, $this->logger, $tests, $tests);
 
         assert_events($expected, $this->logger);
     }
@@ -250,12 +249,11 @@ class TestDependencies {
         );
 
         $state = new State;
-        $logger = new strangetest\BufferingLogger($this->logger);
-        $tests = strangetest\discover_tests($state, $logger, $root);
+        $tests = strangetest\discover_tests($state, $this->logger, $root);
         strangetest\assert_truthy($tests);
 
-        $targets = strangetest\process_specifiers($logger, $tests, $args);
-        strangetest\run_tests($state, $logger, $tests, $targets);
+        $targets = strangetest\process_specifiers($this->logger, $tests, $args);
+        strangetest\run_tests($state, $this->logger, $tests, $targets);
 
         assert_events($events, $this->logger);
     }

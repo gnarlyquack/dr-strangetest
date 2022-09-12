@@ -9,7 +9,6 @@ namespace test\run\file;
 
 use strangetest;
 use strangetest\BasicLogger;
-use strangetest\BufferingLogger;
 use strangetest\PathTest;
 use strangetest\Logger;
 use strangetest\State;
@@ -37,13 +36,12 @@ class TestFiles
     private function assert_events($expected)
     {
         $state = new State;
-        $logger = new BufferingLogger($this->logger);
-        $tests = strangetest\discover_tests($state, $logger, $this->root);
+        $tests = strangetest\discover_tests($state, $this->logger, $this->root);
 
         if ($tests)
         {
-            $targets = strangetest\process_specifiers($logger, $tests, (array)$this->path);
-            strangetest\run_tests($state, $logger, $tests, $targets);
+            $targets = strangetest\process_specifiers($this->logger, $tests, (array)$this->path);
+            strangetest\run_tests($state, $this->logger, $tests, $targets);
         }
 
         assert_events($expected, $this->logger);
@@ -836,18 +834,17 @@ function filepath($name) {
 function assert_run_file($filepath, $events) {
     $state = new State();
     $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
-    $buffed_logger = new BufferingLogger($logger);
-    $discovery_state = new _DiscoveryState($state, $buffed_logger);
+    $discovery_state = new _DiscoveryState($state, $logger);
 
     $file = strangetest\_discover_file($discovery_state, $filepath, 0);
     strangetest\assert_identical(array(), $logger->get_log()->get_events());
     if ($file instanceof strangetest\FileTest)
     {
-        strangetest\_run_file($state, $buffed_logger, $file, array(0), array());
+        strangetest\_run_file($state, $logger, $file, array(0), array());
     }
     else
     {
-        strangetest\_run_test_run_group($state, $buffed_logger, $file, array(0), array());
+        strangetest\_run_test_run_group($state, $logger, $file, array(0), array());
     }
     \assert_events($events, $logger);
 }

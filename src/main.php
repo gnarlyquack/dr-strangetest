@@ -106,11 +106,11 @@ interface Logger
 
     /**
      * @param string $source
-     * @param string|\Throwable|null $reason
+     * @param string|\Throwable|null $output
      * @param ?bool $during_error
      * @return void
      */
-    public function log_output($source, $reason, $during_error = false);
+    public function log_output($source, $output, $during_error = false);
 }
 
 
@@ -246,12 +246,11 @@ function main($argc, $argv)
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
     $logger = new BasicLogger($options['verbose'], new CommandLineOutputter);
-    $buffering = new BufferingLogger($logger);
     $state = new State();
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-    $tests = namespace\discover_tests($state, $buffering, $cwd);
+    $tests = namespace\discover_tests($state, $logger, $cwd);
     if ($tests)
     {
         if ($args)
@@ -259,12 +258,12 @@ function main($argc, $argv)
             $targets = namespace\process_specifiers($logger, $tests, $args);
             if ($targets)
             {
-                namespace\run_tests($state, $buffering, $tests, $targets);
+                namespace\run_tests($state, $logger, $tests, $targets);
             }
         }
         else
         {
-            namespace\run_tests($state, $buffering, $tests, $tests);
+            namespace\run_tests($state, $logger, $tests, $tests);
         }
     }
     $end = namespace\_microtime();
@@ -393,7 +392,6 @@ function _load_strangetest()
 {
     $files = array(
         'assertions',
-        'buffer',
         'dependency',
         'diff',
         'discover',

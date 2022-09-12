@@ -221,7 +221,7 @@ final class _Context extends struct implements Context
  * @param TestRunGroup|DirectoryTest $tests
  * @return void
  */
-function run_tests(State $state, BufferingLogger $logger, $suite, $tests)
+function run_tests(State $state, BasicLogger $logger, $suite, $tests)
 {
     $args = array();
     $run = array(0);
@@ -259,7 +259,7 @@ function run_tests(State $state, BufferingLogger $logger, $suite, $tests)
  * @return void
  */
 function _run_test_run_group(
-    State $state, BufferingLogger $logger,
+    State $state, BasicLogger $logger,
     TestRunGroup $group, array $run, array $args)
 {
     foreach ($group->runs as $test)
@@ -319,7 +319,7 @@ function _run_test_run_group(
  * @return void
  */
 function _run_directory(
-    State $state, BufferingLogger $logger,
+    State $state, BasicLogger $logger,
     DirectoryTest $directory, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
@@ -373,7 +373,7 @@ function _run_directory(
  * @return void
  */
 function _run_file(
-    State $state, BufferingLogger $logger,
+    State $state, BasicLogger $logger,
     FileTest $file, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
@@ -424,7 +424,7 @@ function _run_file(
  * @return void
  */
 function _run_class(
-    State $state, BufferingLogger $logger,
+    State $state, BasicLogger $logger,
     ClassTest $class, array $run, array $args)
 {
     namespace\start_buffering($logger, $class->test->name);
@@ -498,7 +498,7 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
  * @return void
  */
 function _run_method(
-    State $state, BufferingLogger $logger, $object, MethodTest $test, $setup_method, $teardown_method, array $run)
+    State $state, BasicLogger $logger, $object, MethodTest $test, $setup_method, $teardown_method, array $run)
 {
     $run_name = namespace\_get_run_name($state, $run);
     $test_name = $test->name . $run_name;
@@ -546,7 +546,7 @@ function _run_method(
  * @return void
  */
 function _run_function(
-    State $state, BufferingLogger $logger,
+    State $state, BasicLogger $logger,
     FunctionTest $test, $setup_function, $teardown_function, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
