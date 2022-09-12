@@ -7,7 +7,7 @@
 
 namespace test\discover\directory;
 use strangetest;
-use strangetest\BasicLogger;
+use strangetest\Logger;
 use strangetest\State;
 use strangetest\_DiscoveryState;
 
@@ -17,7 +17,7 @@ use NoOutputter;
 function setup()
 {
     return array(
-        new BasicLogger(strangetest\LOG_ALL, new NoOutputter),
+        new Logger(strangetest\LOG_ALL, new NoOutputter),
         __DIR__ . '/resources/directory/',
     );
 }
@@ -26,7 +26,7 @@ function setup()
 // tests
 
 function test_discover_directory(
-    BasicLogger $logger, $path,
+    Logger $logger, $path,
     strangetest\Context $context)
 {
     $path .= 'discover_directory/';
@@ -86,8 +86,7 @@ function test_discover_directory(
 }
 
 
-function test_does_not_find_conditionally_nondeclared_tests(
-    BasicLogger $logger, $path)
+function test_does_not_find_conditionally_nondeclared_tests(Logger $logger, $path)
 {
     $path .= 'conditional/';
     $discovered = array(
@@ -134,7 +133,7 @@ function test_does_not_find_conditionally_nondeclared_tests(
 }
 
 
-function test_handles_error_in_setup_file(BasicLogger $logger, $path)
+function test_handles_error_in_setup_file(Logger $logger, $path)
 {
     $path .= 'setup_error/';
     $discovered = false;
@@ -151,7 +150,7 @@ function test_handles_error_in_setup_file(BasicLogger $logger, $path)
 }
 
 
-function test_reports_error_for_multiple_directory_fixtures( BasicLogger $logger, $path)
+function test_reports_error_for_multiple_directory_fixtures(Logger $logger, $path)
 {
     $path .= 'multiple_fixtures/';
     $discovered = false;

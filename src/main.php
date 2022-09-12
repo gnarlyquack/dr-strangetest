@@ -74,46 +74,6 @@ interface Log {
 }
 
 
-interface Logger
-{
-    /**
-     * @param string $source
-     * @return void
-     */
-    public function log_pass($source);
-
-    /**
-     * @param string $source
-     * @param string|\Throwable|null $reason
-     * @return void
-     */
-    public function log_failure($source, $reason);
-
-    /**
-     * @param string $source
-     * @param string|\Throwable|null $reason
-     * @return void
-     */
-    public function log_error($source, $reason);
-
-    /**
-     * @param string $source
-     * @param string|\Throwable|null $reason
-     * @param ?bool $during_error
-     * @return void
-     */
-    public function log_skip($source, $reason, $during_error = false);
-
-    /**
-     * @param string $source
-     * @param string|\Throwable|null $output
-     * @param ?bool $during_error
-     * @return void
-     */
-    public function log_output($source, $output, $during_error = false);
-}
-
-
 interface LogOutputter
 {
     /** @return void */
@@ -245,7 +205,7 @@ function main($argc, $argv)
     // @todo Add configuration option to explicitly set the test root directory
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
-    $logger = new BasicLogger($options['verbose'], new CommandLineOutputter);
+    $logger = new Logger($options['verbose'], new CommandLineOutputter);
     $state = new State();
 
     namespace\output_header(namespace\_get_version());

@@ -5,7 +5,7 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-use strangetest\BasicLogger;
+use strangetest\Logger;
 
 
 class TestQuietOutput {
@@ -13,7 +13,7 @@ class TestQuietOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new BasicLogger(strangetest\LOG_QUIET, new NoOutputter);
+        $this->logger = new Logger(strangetest\LOG_QUIET, new NoOutputter);
         ob_start();
     }
 
@@ -193,7 +193,7 @@ class TestVerboseOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new BasicLogger(strangetest\LOG_VERBOSE, new NoOutputter);
+        $this->logger = new Logger(strangetest\LOG_VERBOSE, new NoOutputter);
         ob_start();
     }
 

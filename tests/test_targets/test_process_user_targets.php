@@ -5,8 +5,8 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
-use strangetest\BasicLogger;
 use strangetest\Context;
+use strangetest\Logger;
 use strangetest\State;
 
 
@@ -25,7 +25,7 @@ class TestProcessUserTargets
     public function setup_object()
     {
         $state = new State;
-        $logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
+        $logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
         $path = __DIR__ . '/resources/';
         $tests = strangetest\discover_tests($state, $logger, $path, 0);
         \assert(!$logger->get_log()->get_events());
@@ -38,7 +38,7 @@ class TestProcessUserTargets
 
     public function setup()
     {
-        $this->logger = new BasicLogger(strangetest\LOG_ALL, new NoOutputter);
+        $this->logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
         $this->targets = null;
         $this->events = array();
     }

@@ -23,7 +23,7 @@ final class NoOutputter extends strangetest\struct implements strangetest\LogOut
 }
 
 
-function assert_log(array $log, strangetest\BasicLogger $logger) {
+function assert_log(array $log, strangetest\Logger $logger) {
     $expected = array(
         strangetest\EVENT_PASS => 0,
         strangetest\EVENT_FAIL => 0,
@@ -58,7 +58,7 @@ function assert_log(array $log, strangetest\BasicLogger $logger) {
 }
 
 
-function assert_events($expected, strangetest\BasicLogger $logger) {
+function assert_events($expected, strangetest\Logger $logger) {
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event) {
         list($type, $source, $reason) = $event;
@@ -77,7 +77,7 @@ function assert_events($expected, strangetest\BasicLogger $logger) {
 }
 
 
-function assert_report($expected, strangetest\BasicLogger $logger) {
+function assert_report($expected, strangetest\Logger $logger) {
     $log = $logger->get_log();
     $log->seconds_elapsed = 1;
     $log->megabytes_used = 1;

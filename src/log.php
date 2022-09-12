@@ -84,7 +84,7 @@ final class BasicLog extends struct implements Log {
 
 
 
-final class BasicLogger extends struct implements Logger
+final class Logger extends struct
 {
     /** @var int[] */
     private $count = array(
@@ -130,6 +130,10 @@ final class BasicLogger extends struct implements Logger
     }
 
 
+    /**
+     * @param string $source
+     * @return void
+     */
     public function log_pass($source)
     {
         if ($this->buffer)
@@ -148,6 +152,11 @@ final class BasicLogger extends struct implements Logger
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @return void
+     */
     public function log_failure($source, $reason)
     {
         if ($this->buffer)
@@ -164,6 +173,11 @@ final class BasicLogger extends struct implements Logger
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @return void
+     */
     public function log_error($source, $reason)
     {
         if ($this->buffer)
@@ -180,6 +194,12 @@ final class BasicLogger extends struct implements Logger
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $reason
+     * @param ?bool $during_error
+     * @return void
+     */
     public function log_skip($source, $reason, $during_error = false)
     {
         if ($this->buffer)
@@ -204,6 +224,12 @@ final class BasicLogger extends struct implements Logger
     }
 
 
+    /**
+     * @param string $source
+     * @param string|\Throwable|null $output
+     * @param ?bool $during_error
+     * @return void
+     */
     public function log_output($source, $output, $during_error = false)
     {
         if ($this->buffer)
@@ -236,7 +262,7 @@ final class BasicLogger extends struct implements Logger
  * @param string $source
  * @return void
  */
-function start_buffering(BasicLogger $logger, $source)
+function start_buffering(Logger $logger, $source)
 {
     if ($logger->buffer)
     {
@@ -255,7 +281,7 @@ function start_buffering(BasicLogger $logger, $source)
 /**
  * @return void
  */
-function end_buffering(BasicLogger $logger)
+function end_buffering(Logger $logger)
 {
     $source = $logger->buffer;
     \assert(\is_string($source));
@@ -336,7 +362,7 @@ function end_buffering(BasicLogger $logger)
 /**
  * @return void
  */
-function _reset_buffer(BasicLogger $logger)
+function _reset_buffer(Logger $logger)
 {
     \assert(\is_string($logger->buffer));
     $level = \ob_get_level();

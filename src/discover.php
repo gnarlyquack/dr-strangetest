@@ -17,7 +17,7 @@ namespace strangetest;
  *                                                  were found and an error
  *                                                  occurred during discovery.
  */
-function discover_tests(State $state, BasicLogger $logger, $path)
+function discover_tests(State $state, Logger $logger, $path)
 {
     return namespace\_discover_directory(new _DiscoveryState($state, $logger), $path, 0);
 }
@@ -34,11 +34,11 @@ final class _DiscoveryState extends struct
     /** @var State */
     public $global;
 
-    /** @var BasicLogger */
+    /** @var Logger */
     public $logger;
 
 
-    public function __construct(State $state, BasicLogger $logger)
+    public function __construct(State $state, Logger $logger)
     {
         $this->global = $state;
         $this->logger = $logger;
@@ -456,7 +456,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
  *                              false if no tests were found but an error
  *                              occurred during discovery.
  */
-function _discover_class(BasicLogger $logger, \ReflectionClass $reflected_class, $run_group_id)
+function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run_group_id)
 {
     $class = new ClassTest;
     $class->test = $reflected_class;
@@ -556,7 +556,7 @@ function _discover_class(BasicLogger $logger, \ReflectionClass $reflected_class,
  * @param ?T $old
  * @return bool
  */
-function _validate_fixture(BasicLogger $logger, $source, $new, &$old)
+function _validate_fixture(Logger $logger, $source, $new, &$old)
 {
     $valid = true;
 
@@ -584,7 +584,7 @@ function _validate_fixture(BasicLogger $logger, $source, $new, &$old)
  * @param bool $setup
  * @return bool
  */
-function _validate_run_fixture(BasicLogger $logger, $filepath, TestRunGroup $run_group, \ReflectionFunction $function, $run_name, $setup)
+function _validate_run_fixture(Logger $logger, $filepath, TestRunGroup $run_group, \ReflectionFunction $function, $run_name, $setup)
 {
     $valid = true;
 
@@ -733,11 +733,11 @@ final class _NamespaceToken extends struct implements _Token {
 
 
 /**
- * @param BasicLogger $logger
+ * @param Logger $logger
  * @param string $filepath
  * @return ?_TokenIterator
  */
-function _new_token_iterator(BasicLogger $logger, $filepath)
+function _new_token_iterator(Logger $logger, $filepath)
 {
     $iterator = null;
     $source = namespace\_read_file($logger, $filepath);
@@ -829,7 +829,7 @@ function _next_token(_TokenIterator $iterator)
  * @param string $filepath
  * @return string|false
  */
-function _read_file(BasicLogger $logger, $filepath)
+function _read_file(Logger $logger, $filepath)
 {
     $source = false;
 
