@@ -63,6 +63,51 @@ function output_header($text)
 
 
 /**
+ * @return string
+ */
+function _format_message_from_event(Event $event)
+{
+    $message = '';
+
+    if (isset($event->reason))
+    {
+        $message .= $event->reason;
+    }
+
+    if (isset($event->file))
+    {
+        if (\strlen($message))
+        {
+            $message .= "\n";
+        }
+
+        $message .= 'in ' . $event->file;
+
+        if (isset($event->line))
+        {
+            $message .= ':' . $event->line;
+        }
+    }
+
+    if ($event->additional)
+    {
+        if (\strlen($message))
+        {
+            $message .= "\n\n";
+        }
+        $message .= $event->additional;
+    }
+
+    if (\strlen($message))
+    {
+        $message .= "\n";
+    }
+
+    return $message;
+}
+
+
+/**
  * @return void
  */
 function output_log(Log $log)
@@ -76,9 +121,19 @@ function output_log(Log $log)
 
     $output_count = 0;
     $skip_count = 0;
-    foreach ($log->get_events() as $entry)
+    foreach ($log->get_events() as $event)
     {
-        list($type, $source, $message) = $entry;
+        if ($event instanceof Event)
+        {
+            $type = $event->type;
+            $source = $event->source;
+            // @fixme Fixure out how/where to format messagse from events
+            $message = namespace\_format_message_from_event($event);
+        }
+        else
+        {
+            list($type, $source, $message) = $event;
+        }
         switch ($type)
         {
             case namespace\EVENT_OUTPUT:

@@ -612,7 +612,12 @@ function _record_test_result(
 
         if (namespace\RESULT_PASS === $result)
         {
-            $logger->log_pass($name);
+            $file = $test->test->getFileName();
+            $line = $test->test->getStartLine();
+            // @todo Eliminate asserting if reflection function returns file info
+            \assert(\is_string($file));
+            \assert(\is_int($line));
+            $logger->log_pass($name, $file, $line);
             for ($i = 0, $c = \count($run); $i < $c; ++$i)
             {
                 $id = \implode(',', \array_slice($run, 0, $i + 1));

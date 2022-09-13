@@ -61,7 +61,16 @@ function assert_log(array $log, strangetest\Logger $logger) {
 function assert_events($expected, strangetest\Logger $logger) {
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event) {
-        list($type, $source, $reason) = $event;
+        if ($event instanceof strangetest\Event)
+        {
+            $type = $event->type;
+            $source = $event->source;
+            $reason = $event->reason;
+        }
+        else
+        {
+            list($type, $source, $reason) = $event;
+        }
 
         // @bc 5.6 Check if reason is instance of Exception
         if ($reason instanceof \Throwable

@@ -8,6 +8,28 @@
 namespace strangetest;
 
 
+final class Event extends struct
+{
+    /** @var EVENT_PASS|EVENT_FAIL|EVENT_ERROR|EVENT_SKIP|EVENT_OUTPUT */
+    public $type;
+
+    /** @var ?string */
+    public $reason;
+
+    /** @var string */
+    public $source;
+
+    /** @var ?string */
+    public $file;
+
+    /** @var ?int */
+    public $line;
+
+    /** @var ?string */
+    public $additional;
+}
+
+
 final class Log extends struct
 {
     /** @var float */
@@ -19,13 +41,13 @@ final class Log extends struct
     /** @var int[] $count */
     private $count;
 
-    /** @var array{int, string, string|\Throwable|null}[] */
+    /** @var array<array{int, string, string|\Throwable|null}|Event> */
     private $events;
 
 
     /**
      * @param int[] $count
-     * @param array{int, string, string|\Throwable|null}[] $events
+     * @param array<array{int, string, string|\Throwable|null}|Event> $events
      */
     public function __construct(array $count, array $events)
     {
@@ -97,7 +119,7 @@ final class Log extends struct
 
 
     /**
-     * @return array{int, string, string|\Throwable|null}[]
+     * @return array<array{int, string, string|\Throwable|null}|Event>
      */
     public function get_events()
     {
@@ -119,7 +141,7 @@ final class Logger extends struct
         namespace\EVENT_OUTPUT => 0,
     );
 
-    /** @var array{int, string, string|\Throwable|null}[] */
+    /** @var array<array{int, string, string|\Throwable|null}|Event> */
     private $events = array();
 
     /** @var int */
@@ -140,7 +162,7 @@ final class Logger extends struct
     /** @var int */
     public $ob_level_start;
 
-    /** @var array{int, string, string|\Throwable|null}[] */
+    /** @var array<array{int, string, string|\Throwable|null}|Event> */
     public $queued = array();
 
 
@@ -156,20 +178,28 @@ final class Logger extends struct
 
     /**
      * @param string $source
+     * @param string $file
+     * @param int $line
      * @return void
      */
-    public function log_pass($source)
+    public function log_pass($source, $file, $line)
     {
+        $event = new Event;
+        $event->type = namespace\EVENT_PASS;
+        $event->source = $source;
+        $event->file = $file;
+        $event->line = $line;
+
         if ($this->buffer)
         {
-            $this->queued[] = array(namespace\EVENT_PASS, $source, null);
+            $this->queued[] = $event;
         }
         else
         {
             ++$this->count[namespace\EVENT_PASS];
             if ($this->verbose & namespace\LOG_PASS)
             {
-                $this->events[] = array(namespace\EVENT_PASS, $source, null);
+                $this->events[] = $event;
             }
             $this->outputter->output_pass();
         }
@@ -235,6 +265,9 @@ final class Logger extends struct
             ++$this->count[namespace\EVENT_SKIP];
             if ($during_error)
             {
+                // An error could happen during a skipped test if the skip is
+                // thrown from a test function and then an error happens during
+                // teardown
                 \assert($reason instanceof \Throwable);
                 $reason = new Skip('Although this test was skipped, there was also an error', $reason);
                 $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
@@ -352,11 +385,26 @@ function end_buffering(Logger $logger)
     $logger->buffer = null;
     foreach ($logger->queued as $event)
     {
-        list($type, $source, $reason) = $event;
+        if ($event instanceof Event)
+        {
+            $type = $event->type;
+            $source = $event->source;
+            $reason = $event->reason;
+            $file = $event->file;
+            $line = $event->line;
+            $additional = $event->additional;
+        }
+        else
+        {
+            list($type, $source, $reason) = $event;
+            $file = $line = $additional = null;
+        }
         switch ($type)
         {
             case namespace\EVENT_PASS:
-                $logger->log_pass($source);
+                \assert(\is_string($file));
+                \assert(\is_int($line));
+                $logger->log_pass($source, $file, $line);
                 break;
 
             case namespace\EVENT_FAIL:
