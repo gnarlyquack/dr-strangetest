@@ -8,7 +8,8 @@
 namespace strangetest;
 
 
-final class BasicLog extends struct implements Log {
+final class Log extends struct
+{
     /** @var float */
     public $megabytes_used;
 
@@ -33,48 +34,71 @@ final class BasicLog extends struct implements Log {
     }
 
 
+    /**
+     * @return int
+     */
     public function pass_count()
     {
         return $this->count[namespace\EVENT_PASS];
     }
 
 
+    /**
+     * @return int
+     */
     public function failure_count()
     {
         return $this->count[namespace\EVENT_FAIL];
     }
 
 
+    /**
+     * @return int
+     */
     public function error_count()
     {
         return $this->count[namespace\EVENT_ERROR];
     }
 
-
+    /**
+     * @return int
+     */
     public function skip_count()
     {
         return $this->count[namespace\EVENT_SKIP];
     }
 
 
+    /**
+     * @return int
+     */
     public function output_count()
     {
         return $this->count[namespace\EVENT_OUTPUT];
     }
 
 
+    /**
+     * @return float
+     */
     public function seconds_elapsed()
     {
         return $this->seconds_elapsed;
     }
 
 
+    /**
+     * @return float
+     */
     public function memory_used()
     {
         return $this->megabytes_used;
     }
 
 
+    /**
+     * @return array{int, string, string|\Throwable|null}[]
+     */
     public function get_events()
     {
         // This is safe because PHP arrays are copy-on-write
@@ -249,11 +273,11 @@ final class Logger extends struct
 
 
     /**
-     * @return BasicLog
+     * @return Log
      */
     public function get_log()
     {
-        return new BasicLog($this->count, $this->events);
+        return new Log($this->count, $this->events);
     }
 }
 

@@ -30,50 +30,6 @@ const LOG_OUTPUT = 0x04;
 \define('strangetest\\LOG_ALL',     namespace\LOG_PASS | namespace\LOG_VERBOSE);
 
 
-
-interface Log {
-    /**
-     * @return int
-     */
-    public function pass_count();
-
-    /**
-     * @return int
-     */
-    public function failure_count();
-
-    /**
-     * @return int
-     */
-    public function error_count();
-
-    /**
-     * @return int
-     */
-    public function skip_count();
-
-    /**
-     * @return int
-     */
-    public function output_count();
-
-    /**
-     * @return float
-     */
-    public function seconds_elapsed();
-
-    /**
-     * @return float
-     */
-    public function memory_used();
-
-    /**
-     * @return array{int, string, string|\Throwable|null}[]
-     */
-    public function get_events();
-}
-
-
 interface LogOutputter
 {
     /** @return void */
