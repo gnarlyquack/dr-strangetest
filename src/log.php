@@ -240,20 +240,31 @@ final class Logger extends struct
 
     /**
      * @param string $source
-     * @param string|\Throwable|null $reason
+     * @param string $reason
+     * @param ?string $file
+     * @param ?int $line
+     * @param ?string $additional
      * @return void
      */
-    public function log_error($source, $reason)
+    public function log_error($source, $reason, $file = null, $line = null, $additional = null)
     {
+        $event = new Event;
+        $event->type = namespace\EVENT_ERROR;
+        $event->source = $source;
+        $event->reason = $reason;
+        $event->file = $file;
+        $event->line = $line;
+        $event->additional = $additional;
+
         if ($this->buffer)
         {
-            $this->queued[] = array(namespace\EVENT_ERROR, $source, $reason);
+            $this->queued[] = $event;
             $this->error = true;
         }
         else
         {
             ++$this->count[namespace\EVENT_ERROR];
-            $this->events[] = array(namespace\EVENT_ERROR, $source, $reason);
+            $this->events[] = $event;
             $this->outputter->output_error();
         }
     }
@@ -367,8 +378,9 @@ function end_buffering(Logger $logger)
             $source,
             \sprintf(
                 "An output buffer was started but never deleted.\nBuffer contents were: %s",
-                namespace\_format_buffer((string)\ob_get_clean())
-            )
+                namespace\_format_buffer((string)\ob_get_clean())),
+            // @fixme pass file and line information for buffer errors
+            null, null
         );
     }
 
@@ -376,7 +388,9 @@ function end_buffering(Logger $logger)
     {
         $logger->log_error(
             $source,
-            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
+            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
+            // @fixme pass file and line information for buffer errors
+            null, null
         );
     }
     else
@@ -426,7 +440,8 @@ function end_buffering(Logger $logger)
                 break;
 
             case namespace\EVENT_ERROR:
-                $logger->log_error($source, $reason);
+                \assert(\is_string($reason));
+                $logger->log_error($source, $reason, $file, $line, $additional);
                 break;
 
             case namespace\EVENT_SKIP:
@@ -457,7 +472,9 @@ function _reset_buffer(Logger $logger)
     {
         $logger->log_error(
             $logger->buffer,
-            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions."
+            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
+            // @fixme pass file and line information for buffer errors
+            null, null
         );
         \ob_start();
         $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();

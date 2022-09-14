@@ -270,8 +270,13 @@ function _run_test_run_group(
         $setup = $test->setup;
         $name = $setup->name . $run_name;
         $callable = namespace\_get_callable_function($setup);
+        $file = $setup->getFileName();
+        $line = $setup->getStartLine();
+        // @todo Stop asserting if reflection function returns file info
+        \assert(\is_string($file));
+        \assert(\is_int($line));
         namespace\start_buffering($logger, $name);
-        list($result, $run_args) = namespace\_run_setup($logger, $name, $callable, $args);
+        list($result, $run_args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
         namespace\end_buffering($logger);
 
         if (namespace\RESULT_PASS === $result)
@@ -295,7 +300,7 @@ function _run_test_run_group(
                 else
                 {
                     $message = "'{$name}' did not return any arguments";
-                    $logger->log_error($test->tests->name, $message);
+                    $logger->log_error($test->tests->name, $message, $file, $line);
                 }
             }
 
@@ -329,8 +334,13 @@ function _run_directory(
     {
         $name = $directory->setup->name . $run_name;
         $callable = namespace\_get_callable_function($directory->setup);
+        $file = $directory->setup->getFileName();
+        $line = $directory->setup->getStartLine();
+        // @todo Stop asserting if reflection function returns file info
+        \assert(\is_string($file));
+        \assert(\is_int($line));
         namespace\start_buffering($logger, $name);
-        list($setup, $args) = namespace\_run_setup($logger, $name, $callable, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
         namespace\end_buffering($logger);
     }
 
@@ -383,8 +393,13 @@ function _run_file(
     {
         $name = $file->setup_file->name . $run_name;
         $callable = namespace\_get_callable_function($file->setup_file);
+        $setup_filename = $file->setup_file->getFileName();
+        $line = $file->setup_file->getStartLine();
+        // @todo Stop asserting if reflection function returns file info
+        \assert(\is_string($setup_filename));
+        \assert(\is_int($line));
         namespace\start_buffering($logger, $name);
-        list($setup, $args) = namespace\_run_setup($logger, $name, $callable, $args);
+        list($setup, $args) = namespace\_run_setup($logger, $name, $setup_filename, $line, $callable, $args);
         namespace\end_buffering($logger);
     }
 
@@ -440,8 +455,13 @@ function _run_class(
         {
             $name = $class->test->name . '::' . $class->setup_object->name . $run_name;
             $method = namespace\_get_callable_method($class->setup_object, $object);
+            $file = $class->setup_object->getFileName();
+            $line = $class->setup_object->getStartLine();
+            // @todo Stop asserting if reflection function returns file info
+            \assert(\is_string($file));
+            \assert(\is_int($line));
             namespace\start_buffering($logger, $name);
-            list($setup,) = namespace\_run_setup($logger, $name, $method);
+            list($setup,) = namespace\_run_setup($logger, $name, $file, $line, $method);
             namespace\end_buffering($logger);
         }
 
@@ -480,11 +500,11 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($class->name, $e);
+        $logger->log_error($class->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($class->name, $e);
+        $logger->log_error($class->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     return null;
 }
@@ -508,8 +528,13 @@ function _run_method(
     {
         $name = $setup_method->name . ' for ' . $test_name;
         $setup = namespace\_get_callable_method($setup_method, $object);
+        $file = $setup_method->getFileName();
+        $line = $setup_method->getStartLine();
+        // @todo Stop asserting if reflection function returns file info
+        \assert(\is_string($file));
+        \assert(\is_int($line));
         namespace\start_buffering($logger, $name);
-        list($result, ) = namespace\_run_setup($logger, $name, $setup);
+        list($result, ) = namespace\_run_setup($logger, $name, $file, $line, $setup);
     }
 
     if (namespace\RESULT_PASS === $result)
@@ -557,8 +582,13 @@ function _run_function(
     {
         $name = $setup_function->getShortName() . ' for ' . $test_name;
         $callable = namespace\_get_callable_function($setup_function);
+        $file = $setup_function->getFileName();
+        $line = $setup_function->getStartLine();
+        // @todo Stop asserting if reflection function returns file info
+        \assert(\is_string($file));
+        \assert(\is_int($line));
         namespace\start_buffering($logger, $name);
-        list($result, $args) = namespace\_run_setup($logger, $name, $callable, $args);
+        list($result, $args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
     }
 
     if (namespace\RESULT_PASS === $result)
@@ -645,11 +675,13 @@ function _record_test_result(
 
 /**
  * @param string $name
+ * @param string $file
+ * @param int $line
  * @param callable(mixed ...$args): mixed $callable
  * @param ?mixed[] $args
  * @return array{int, mixed}
  */
-function _run_setup(Logger $logger, $name, $callable, array $args = null)
+function _run_setup(Logger $logger, $name, $file, $line, $callable, array $args = null)
 {
     $status = namespace\RESULT_FAIL;
     $result = null;
@@ -681,7 +713,7 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
                 else
                 {
                     $message = "Invalid return value: setup fixtures should return an iterable (or 'null')";
-                    $logger->log_error($name, $message);
+                    $logger->log_error($name, $message, $file, $line);
                 }
             }
             else
@@ -697,11 +729,11 @@ function _run_setup(Logger $logger, $name, $callable, array $args = null)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($name, $e);
+        $logger->log_error($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($name, $e);
+        $logger->log_error($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
 
     return array($status, $result);
@@ -755,12 +787,12 @@ function _run_test(
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($name, $e);
+        $logger->log_error($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         $result = namespace\RESULT_FAIL;
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($name, $e);
+        $logger->log_error($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         $result = namespace\RESULT_FAIL;
     }
     return $result;
@@ -797,11 +829,11 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($name, $e);
+        $logger->log_error($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($name, $e);
+        $logger->log_error($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     return namespace\RESULT_FAIL;
 }

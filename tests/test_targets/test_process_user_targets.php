@@ -461,7 +461,12 @@ class TestProcessUserTargets
         );
 
         $expected = $this->events;
-        $actual = $this->logger->get_log()->get_events();
+        $events = $this->logger->get_log()->get_events();
+        $actual = array();
+        foreach ($events as $event)
+        {
+            $actual[] = array($event->type, $event->source, $event->reason);
+        }
         $context->subtest(
             function() use ($expected, $actual)
             {

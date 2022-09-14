@@ -122,13 +122,18 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                         } while ($key !== $pre_name);
 
                         $valid = false;
+
+                        $file = $dependency->test->test->getFileName();
+                        $line = $dependency->test->test->getStartLine();
+                        // @todo Eliminate asserting if reflection function returns file info
+                        \assert(\is_string($file));
+                        \assert(\is_int($line));
                         $graph->logger->log_error(
                             $name,
                             \sprintf(
                                 "This test has a cyclical dependency with the following tests:\n\t%s",
-                                \implode("\n\t", \array_slice($cycle, 1))
-                            )
-                        );
+                                \implode("\n\t", \array_slice($cycle, 1))),
+                            $file, $line);
                     }
                     else
                     {
@@ -145,9 +150,15 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                 elseif (!isset($graph->state->results[$pre_name]))
                 {
                     $valid = false;
+                    $file = $dependency->test->test->getFileName();
+                    $line = $dependency->test->test->getStartLine();
+                    // @todo Eliminate asserting if reflection function returns file info
+                    \assert(\is_string($file));
+                    \assert(\is_int($line));
                     $graph->logger->log_error(
                         $name,
-                        "This test depends on test '{$pre_name}', which was never run");
+                        "This test depends on test '{$pre_name}', which was never run",
+                        $file, $line);
                 }
                 else
                 {

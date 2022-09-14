@@ -157,13 +157,13 @@ function test_reports_error_for_multiple_directory_fixtures(Logger $logger, $pat
     $log = array(
         array(
             strangetest\EVENT_ERROR,
-            "{$path}setup.php",
-            'Multiple fixtures found: setup_directory_multiple_fixtures and SetupDirectoryMultipleFixtures',
+            'SetupDirectoryMultipleFixtures',
+            'This fixture conflicts with \'setup_directory_multiple_fixtures\' defined on line 3',
         ),
         array(
             strangetest\EVENT_ERROR,
-            "{$path}setup.php",
-            'Multiple fixtures found: teardown_directory_multiple_fixtures and TeardownDirectoryMultipleFixtures',
+            'TeardownDirectoryMultipleFixtures',
+            'This fixture conflicts with \'teardown_directory_multiple_fixtures\' defined on line 7',
         ),
     );
     assert_discovered($logger, $path, $discovered, $log);
@@ -178,18 +178,28 @@ function assert_discovered($logger, $path, $discovered, $log)
     $actual = strangetest\_discover_directory($state, $path, 0);
 
     $discovered = make_test($discovered);
-    strangetest\assert_equal($discovered, $actual);
+    strangetest\assert_equal($actual, $discovered);
 
 
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event)
     {
-        list($type, $source, $reason) = $event;
+        if ($event instanceof strangetest\Event)
+        {
+            $type = $event->type;
+            $source = $event->source;
+            $reason = $event->reason;
+            $actual[$i] = array($type, $source, $reason);
+        }
+        else
+        {
+            list($type, $source, $reason) = $event;
+        }
         // @bc 5.6 Check if reason is instance of Exception
         if ($reason instanceof \Throwable || $reason instanceof \Exception)
         {
             $actual[$i][2] = $reason->getMessage();
         }
     }
-    strangetest\assert_identical($log, $actual);
+    strangetest\assert_identical($actual, $log);
 }

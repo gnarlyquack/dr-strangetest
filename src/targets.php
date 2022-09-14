@@ -219,8 +219,7 @@ function _parse_path_specifier(
                     {
                         $logger->log_error(
                             $arg,
-                            "This path is not a test path"
-                        );
+                            "This path is not a test path");
                         $valid = false;
                         break;
                     }
@@ -485,8 +484,7 @@ function _parse_class_specifier(
                         {
                             $logger->log_error(
                                 $arg,
-                                "Method '{$method}' is not a test method in {$test->test->name}"
-                            );
+                                "Method '{$method}' is not a test method in {$test->test->name}");
                             $valid = false;
                         }
                     }
@@ -505,8 +503,7 @@ function _parse_class_specifier(
             {
                 $logger->log_error(
                     $arg,
-                    "'{$class}' is not a test class in {$reference->name}"
-                );
+                    "'{$class}' is not a test class in {$reference->name}");
                 $valid = false;
             }
         }
@@ -550,8 +547,7 @@ function _parse_function_specifier(
             {
                 $logger->log_error(
                     $arg,
-                    "Function '{$function}' is not a test function in {$reference->name}"
-                );
+                    "Function '{$function}' is not a test function in {$reference->name}");
                 $valid = false;
             }
         }

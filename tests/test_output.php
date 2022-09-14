@@ -51,13 +51,16 @@ OUT;
 
 
     public function test_reports_error() {
-        $this->logger->log_error('source', 'message');
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_error('source', 'message', $file, $line);
         $expected = <<<OUT
 
 
 
 ERROR: source
 message
+in $file:$line
 
 
 
@@ -153,7 +156,9 @@ OUT;
         $line2 = __LINE__;
         $this->logger->log_failure('fail', 'failure', $file, $line2);
         $this->logger->log_output('output2', 'output 2', true);
-        $this->logger->log_error('error', 'error');
+
+        $line3 = __LINE__;
+        $this->logger->log_error('error', 'error', $file, $line3);
         $this->logger->log_output('output3', 'output 3', true);
         $this->logger->log_skip('skip', 'skip');
         $this->logger->log_output('output4', 'output 4', false);
@@ -175,6 +180,7 @@ output 2
 
 ERROR: error
 error
+in $file:$line3
 
 
 
@@ -239,13 +245,16 @@ OUT;
 
 
     public function test_reports_error() {
-        $this->logger->log_error('source', 'message');
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_error('source', 'message', $file, $line);
         $expected = <<<OUT
 
 
 
 ERROR: source
 message
+in $file:$line
 
 
 
@@ -325,7 +334,10 @@ OUT;
         $line2 = __LINE__;
         $this->logger->log_failure('fail', 'failure', $file, $line2);
         $this->logger->log_output('output2', 'output 2', true);
-        $this->logger->log_error('error', 'error');
+
+        $line3 = __LINE__;
+        $this->logger->log_error('error', 'error', $file, $line3);
+
         $this->logger->log_output('output3', 'output 3', true);
         $this->logger->log_skip('skip', 'skip');
         $this->logger->log_output('output4', 'output 4', false);
@@ -352,6 +364,7 @@ output 2
 
 ERROR: error
 error
+in $file:$line3
 
 
 

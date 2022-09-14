@@ -443,8 +443,8 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple fixtures found: setup_object and SetUpObject"),
-            array(strangetest\EVENT_ERROR, 'multiple_object_fixtures\\test', "Multiple fixtures found: teardown_object and TearDownObject"),
+            array(strangetest\EVENT_ERROR, 'SetUpObject', 'This fixture conflicts with \'setup_object\' defined on line 29'),
+            array(strangetest\EVENT_ERROR, 'TearDownObject', 'This fixture conflicts with \'teardown_object\' defined on line 37'),
 
             array(strangetest\EVENT_OUTPUT, 'multiple_object_fixtures\\setup_file', '.'),
 

@@ -488,7 +488,10 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
         {
             if ($lexer->eat_remainder(''))
             {
-                if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->setup_method))
+                // @todo Remove asserting if reflection functions return file info
+                $file = $class->test->getFileName();
+                \assert(\is_string($file));
+                if (!namespace\_validate_fixture($logger, $file, $method, $class->setup_method))
                 {
                     $valid = false;
                 }
@@ -498,7 +501,10 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
                 $lexer->eat_underscore();
                 if ($lexer->eat_remainder('object'))
                 {
-                    if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->setup_object))
+                    // @todo Remove asserting if reflection functions return file info
+                    $file = $class->test->getFileName();
+                    \assert(\is_string($file));
+                    if (!namespace\_validate_fixture($logger, $file, $method, $class->setup_object))
                     {
                         $valid = false;
                     }
@@ -509,7 +515,10 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
         {
             if ($lexer->eat_remainder(''))
             {
-                if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->teardown_method))
+                // @todo Remove asserting if reflection functions return file info
+                $file = $class->test->getFileName();
+                \assert(\is_string($file));
+                if (!namespace\_validate_fixture($logger, $file, $method, $class->teardown_method))
                 {
                     $valid = false;
                 }
@@ -519,7 +528,10 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
                 $lexer->eat_underscore();
                 if ($lexer->eat_remainder('object'))
                 {
-                    if (!namespace\_validate_fixture($logger, $class->test->name, $method, $class->teardown_object))
+                    // @todo Remove asserting if reflection functions return file info
+                    $file = $class->test->getFileName();
+                    \assert(\is_string($file));
+                    if (!namespace\_validate_fixture($logger, $file, $method, $class->teardown_object))
                     {
                         $valid = false;
                     }
@@ -537,7 +549,12 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
         }
         else
         {
-            $logger->log_error($class->test->name, 'No tests were found in this class');
+            // @todo Remove asserting if reflection functions return file info
+            $file = $class->test->getFileName();
+            $line = $class->test->getStartLine();
+            \assert(\is_string($file));
+            \assert(\is_int($line));
+            $logger->log_error($class->test->name, 'No tests were found in this class', $file, $line);
         }
     }
     else
@@ -551,23 +568,26 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
 
 /**
  * @template T of \ReflectionFunctionAbstract
- * @param string $source
+ * @param string $filepath
  * @param T $new
  * @param ?T $old
  * @return bool
  */
-function _validate_fixture(Logger $logger, $source, $new, &$old)
+function _validate_fixture(Logger $logger, $filepath, $new, &$old)
 {
     $valid = true;
 
     if ($old)
     {
         $valid = false;
-        // @todo Show lines numbers on which duplicate functions were defined
         $message = \sprintf(
-            'Multiple fixtures found: %s and %s',
-            $old->getName(), $new->getName());
-        $logger->log_error($source, $message);
+            'This fixture conflicts with \'%s\' defined on line %d',
+            $old->getName(), $old->getStartLine());
+
+        // @todo Remove asserting that reflection function returns file info
+        $line = $new->getStartLine();
+        \assert(\is_int($line));
+        $logger->log_error($new->getName(), $message, $filepath, $line);
     }
     else
     {
@@ -594,7 +614,13 @@ function _validate_run_fixture(Logger $logger, $filepath, TestRunGroup $run_grou
         $message = \sprintf(
             'Unable to determine run name from run fixture function %s',
             $function->getName());
-        $logger->log_error($filepath, $message);
+
+        $file = $function->getFileName();
+        $line = $function->getStartLine();
+        // @todo Remove asserting if reflection function returns file info
+        \assert(\is_string($file));
+        \assert(\is_int($line));
+        $logger->log_error($function->getName(), $message, $file, $line);
     }
     else
     {
@@ -644,11 +670,17 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
             {
                 \assert(isset($run->teardown));
                 $valid = false;
+
+                $file = $run->teardown->getFileName();
+                $line = $run->teardown->getStartLine();
+                // @todo Remove asserting if reflection function returns file info
+                \assert(\is_string($file));
+                \assert(\is_int($line));
                 $message = \sprintf(
                     "Teardown run function '%s' has no matching setup run function",
                     $run->teardown->getName()
                 );
-                $state->logger->log_error($filepath, $message);
+                $state->logger->log_error($filepath, $message, $file, $line);
             }
             else
             {
@@ -881,11 +913,11 @@ function _include_file(Logger $logger, $file)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($file, $e);
+        $logger->log_error($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($file, $e);
+        $logger->log_error($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
 
     return $included;

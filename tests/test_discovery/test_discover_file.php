@@ -35,10 +35,10 @@ function assert_file_discovery($filepath, array $events) {
 }
 
 
-function assert_fixture_error($file, $message) {
+function assert_fixture_error($file, $source, $message) {
     $filepath = namespace\filepath($file);
     $events = array(
-        array(strangetest\EVENT_ERROR, $filepath, $message),
+        array(strangetest\EVENT_ERROR, $source, $message),
     );
     namespace\assert_file_discovery($filepath, $events);
 }
@@ -49,36 +49,41 @@ function assert_fixture_error($file, $message) {
 
 function test_logs_error_on_multiple_file_setup_fixtures() {
     $file = 'test_multiple_setup_file.php';
-    $error = 'Multiple fixtures found: multiple_setup_file\setup_file_one and multiple_setup_file\setup_file_two';
-    namespace\assert_fixture_error($file, $error);
+    $source = 'multiple_setup_file\\setup_file_two';
+    $error = 'This fixture conflicts with \'multiple_setup_file\\setup_file_one\' defined on line 7';
+    namespace\assert_fixture_error($file, $source, $error);
 }
 
 
 function test_logs_error_on_multiple_function_setup_fixtures() {
     $file = 'test_multiple_setup_function.php';
-    $error = 'Multiple fixtures found: multiple_setup_function\setup_one and multiple_setup_function\setup_two';
-    namespace\assert_fixture_error($file, $error);
+    $source = 'multiple_setup_function\\setup_two';
+    $error = 'This fixture conflicts with \'multiple_setup_function\\setup_one\' defined on line 9';
+    namespace\assert_fixture_error($file, $source, $error);
 }
 
 
 function test_logs_error_on_multiple_file_teardown_fixtures() {
     $file = 'test_multiple_teardown_file.php';
-    $error = 'Multiple fixtures found: multiple_teardown_file\teardown_file_one and multiple_teardown_file\teardown_file_two';
-    namespace\assert_fixture_error($file, $error);
+    $source = 'multiple_teardown_file\\teardown_file_two';
+    $error = 'This fixture conflicts with \'multiple_teardown_file\\teardown_file_one\' defined on line 6';
+    namespace\assert_fixture_error($file, $source, $error);
 }
 
 
 function test_logs_error_on_multiple_run_teardown_fixtures() {
     $file = 'test_multiple_teardown_run.php';
-    $error = 'Multiple fixtures found: multiple_teardown_run\teardown_run_one and multiple_teardown_run\teardownRunOne';
-    namespace\assert_fixture_error($file, $error);
+    $source = 'multiple_teardown_run\\teardownRunOne';
+    $error = 'This fixture conflicts with \'multiple_teardown_run\\teardown_run_one\' defined on line 7';
+    namespace\assert_fixture_error($file, $source, $error);
 }
 
 
 function test_logs_error_on_multiple_function_teardown_fixtures() {
     $file = 'test_multiple_teardown_function.php';
-    $error = 'Multiple fixtures found: multiple_teardown_function\teardown_one and multiple_teardown_function\teardown_two';
-    namespace\assert_fixture_error($file, $error);
+    $source = 'multiple_teardown_function\\teardown_two';
+    $error = 'This fixture conflicts with \'multiple_teardown_function\\teardown_one\' defined on line 8';
+    namespace\assert_fixture_error($file, $source, $error);
 }
 
 
