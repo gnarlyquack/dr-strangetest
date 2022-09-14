@@ -91,7 +91,7 @@ function assert_report($expected, strangetest\Logger $logger) {
     $log->seconds_elapsed = 1;
     $log->megabytes_used = 1;
     strangetest\output_log($log);
-    strangetest\assert_identical($expected, ob_get_contents());
+    strangetest\assert_identical(ob_get_contents(), $expected);
 }
 
 

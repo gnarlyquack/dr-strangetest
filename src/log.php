@@ -208,20 +208,31 @@ final class Logger extends struct
 
     /**
      * @param string $source
-     * @param string|\Throwable|null $reason
+     * @param string $reason
+     * @param string $file
+     * @param int $line
+     * @param ?string $additional
      * @return void
      */
-    public function log_failure($source, $reason)
+    public function log_failure($source, $reason, $file, $line, $additional = null)
     {
+        $event = new Event;
+        $event->type = namespace\EVENT_FAIL;
+        $event->source = $source;
+        $event->reason = $reason;
+        $event->file = $file;
+        $event->line = $line;
+        $event->additional = $additional;
+
         if ($this->buffer)
         {
-            $this->queued[] = array(namespace\EVENT_FAIL, $source, $reason);
+            $this->queued[] = $event;
             $this->error = true;
         }
         else
         {
             ++$this->count[namespace\EVENT_FAIL];
-            $this->events[] = array(namespace\EVENT_FAIL, $source, $reason);
+            $this->events[] = $event;
             $this->outputter->output_failure();
         }
     }
@@ -408,7 +419,10 @@ function end_buffering(Logger $logger)
                 break;
 
             case namespace\EVENT_FAIL:
-                $logger->log_failure($source, $reason);
+                \assert(\is_string($reason));
+                \assert(\is_string($file));
+                \assert(\is_int($line));
+                $logger->log_failure($source, $reason, $file, $line, $additional);
                 break;
 
             case namespace\EVENT_ERROR:

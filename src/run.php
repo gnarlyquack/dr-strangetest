@@ -83,12 +83,12 @@ final class _Context extends struct implements Context
         }
         catch (\AssertionError $e)
         {
-            $this->logger->log_failure($this->test->name, $e);
+            $this->logger->log_failure($this->test->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         }
         // @bc 5.6 Catch Failure
         catch (Failure $e)
         {
-            $this->logger->log_failure($this->test->name, $e);
+            $this->logger->log_failure($this->test->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         }
         $this->result = namespace\RESULT_FAIL;
         return false;
@@ -734,13 +734,13 @@ function _run_test(
     }
     catch (\AssertionError $e)
     {
-        $logger->log_failure($name, $e);
+        $logger->log_failure($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         $result = namespace\RESULT_FAIL;
     }
     // @bc 5.6 Catch Failure
     catch (Failure $e)
     {
-        $logger->log_failure($name, $e);
+        $logger->log_failure($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         $result = namespace\RESULT_FAIL;
     }
     catch (Skip $e)

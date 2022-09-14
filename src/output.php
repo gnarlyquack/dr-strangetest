@@ -98,11 +98,6 @@ function _format_message_from_event(Event $event)
         $message .= $event->additional;
     }
 
-    if (\strlen($message))
-    {
-        $message .= "\n";
-    }
-
     return $message;
 }
 

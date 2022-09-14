@@ -70,13 +70,16 @@ OUT;
 
 
     public function test_reports_failure() {
-        $this->logger->log_failure('source', 'message');
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_failure('source', 'message', $file, $line);
         $expected = <<<OUT
 
 
 
 FAILED: source
 message
+in $file:$line
 
 
 
@@ -142,9 +145,13 @@ OUT;
 
 
     public function test_reports_multiple_events() {
-        $this->logger->log_pass('pass1', __FILE__, __LINE__);
+        $file = __FILE__;
+        $line1 = __LINE__;
+        $this->logger->log_pass('pass1', $file, $line1);
         $this->logger->log_output('output1', 'output 1', false);
-        $this->logger->log_failure('fail', 'failure');
+
+        $line2 = __LINE__;
+        $this->logger->log_failure('fail', 'failure', $file, $line2);
         $this->logger->log_output('output2', 'output 2', true);
         $this->logger->log_error('error', 'error');
         $this->logger->log_output('output3', 'output 3', true);
@@ -157,6 +164,7 @@ OUT;
 
 FAILED: fail
 failure
+in $file:$line2
 
 
 
@@ -250,13 +258,16 @@ OUT;
 
 
     public function test_reports_failure() {
-        $this->logger->log_failure('source', 'message');
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_failure('source', 'message', $file, $line);
         $expected = <<<OUT
 
 
 
 FAILED: source
 message
+in $file:$line
 
 
 
@@ -307,9 +318,12 @@ OUT;
 
 
     public function test_reports_multiple_events() {
-        $this->logger->log_pass('pass1', __FILE__, __LINE__);
+        $file = __FILE__;
+        $line1 = __LINE__;
+        $this->logger->log_pass('pass1', $file, $line1);
         $this->logger->log_output('output1', 'output 1', false);
-        $this->logger->log_failure('fail', 'failure');
+        $line2 = __LINE__;
+        $this->logger->log_failure('fail', 'failure', $file, $line2);
         $this->logger->log_output('output2', 'output 2', true);
         $this->logger->log_error('error', 'error');
         $this->logger->log_output('output3', 'output 3', true);
@@ -327,6 +341,7 @@ output 1
 
 FAILED: fail
 failure
+in $file:$line2
 
 
 
