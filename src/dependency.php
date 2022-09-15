@@ -141,9 +141,15 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                             $graph, $graph->state->postponed[$pre_name]);
                         if (!$valid)
                         {
+                            $file = $dependency->test->test->getFileName();
+                            $line = $dependency->test->test->getStartLine();
+                            // @todo Eliminate asserting if reflection function returns file info
+                            \assert(\is_string($file));
+                            \assert(\is_int($line));
                             $graph->logger->log_skip(
                                 $name,
-                                "This test depends on '{$pre_name}', which did not pass");
+                                "This test depends on '{$pre_name}', which did not pass",
+                                $file, $line);
                         }
                     }
                 }

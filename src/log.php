@@ -272,15 +272,26 @@ final class Logger extends struct
 
     /**
      * @param string $source
-     * @param string|\Throwable|null $reason
+     * @param string $reason
+     * @param string $file
+     * @param int $line
+     * @param ?string $additional
      * @param ?bool $during_error
      * @return void
      */
-    public function log_skip($source, $reason, $during_error = false)
+    public function log_skip($source, $reason, $file, $line, $additional = null, $during_error = false)
     {
+        $event = new Event;
+        $event->type = namespace\EVENT_SKIP;
+        $event->source = $source;
+        $event->reason = $reason;
+        $event->file = $file;
+        $event->line = $line;
+        $event->additional = $additional;
+
         if ($this->buffer)
         {
-            $this->queued[] = array(namespace\EVENT_SKIP, $source, $reason);
+            $this->queued[] = $event;
         }
         else
         {
@@ -290,13 +301,13 @@ final class Logger extends struct
                 // An error could happen during a skipped test if the skip is
                 // thrown from a test function and then an error happens during
                 // teardown
-                \assert($reason instanceof \Throwable);
-                $reason = new Skip('Although this test was skipped, there was also an error', $reason);
-                $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
+                $reason = "This test was skipped, but there was also an error\nThe reason the test was skipped is:\n\n" . $reason;
+                $event->reason = $reason;
+                $this->events[] = $event;
             }
             elseif ($this->verbose & namespace\LOG_SKIP)
             {
-                $this->events[] = array(namespace\EVENT_SKIP, $source, $reason);
+                $this->events[] = $event;
             }
             $this->outputter->output_skip();
         }
@@ -445,7 +456,10 @@ function end_buffering(Logger $logger)
                 break;
 
             case namespace\EVENT_SKIP:
-                $logger->log_skip($source, $reason, $logger->error);
+                \assert(\is_string($reason));
+                \assert(\is_string($file));
+                \assert(\is_int($line));
+                $logger->log_skip($source, $reason, $file, $line, $additional, $logger->error);
                 break;
 
             case namespace\EVENT_OUTPUT:

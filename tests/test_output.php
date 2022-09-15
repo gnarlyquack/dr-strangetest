@@ -95,7 +95,7 @@ OUT;
 
 
     public function test_suppresses_skips() {
-        $this->logger->log_skip('source', 'message');
+        $this->logger->log_skip('source', 'message', __FILE__, __LINE__);
         $expected = <<<OUT
 
 
@@ -160,7 +160,9 @@ OUT;
         $line3 = __LINE__;
         $this->logger->log_error('error', 'error', $file, $line3);
         $this->logger->log_output('output3', 'output 3', true);
-        $this->logger->log_skip('skip', 'skip');
+
+        $line4 = __LINE__;
+        $this->logger->log_skip('skip', 'skip', $file, $line4);
         $this->logger->log_output('output4', 'output 4', false);
 
         $expected = <<<OUT
@@ -289,13 +291,16 @@ OUT;
 
 
     public function test_reports_skips() {
-        $this->logger->log_skip('source', 'message');
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_skip('source', 'message', $file, $line);
         $expected = <<<OUT
 
 
 
 SKIPPED: source
 message
+in $file:$line
 
 
 
@@ -339,7 +344,9 @@ OUT;
         $this->logger->log_error('error', 'error', $file, $line3);
 
         $this->logger->log_output('output3', 'output 3', true);
-        $this->logger->log_skip('skip', 'skip');
+
+        $line4 = __LINE__;
+        $this->logger->log_skip('skip', 'skip', $file, $line4);
         $this->logger->log_output('output4', 'output 4', false);
 
         $expected = <<<OUT
@@ -375,6 +382,7 @@ output 3
 
 SKIPPED: skip
 skip
+in $file:$line4
 
 
 

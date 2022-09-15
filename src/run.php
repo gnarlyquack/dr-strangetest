@@ -724,7 +724,7 @@ function _run_setup(Logger $logger, $name, $file, $line, $callable, array $args 
     }
     catch (Skip $e)
     {
-        $logger->log_skip($name, $e);
+        $logger->log_skip($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
     }
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
@@ -777,7 +777,7 @@ function _run_test(
     }
     catch (Skip $e)
     {
-        $logger->log_skip($name, $e);
+        $logger->log_skip($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         $result = namespace\RESULT_FAIL;
     }
     catch (Postpone $_)
