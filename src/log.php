@@ -13,11 +13,11 @@ final class Event extends struct
     /** @var EVENT_PASS|EVENT_FAIL|EVENT_ERROR|EVENT_SKIP|EVENT_OUTPUT */
     public $type;
 
-    /** @var ?string */
-    public $reason;
-
     /** @var string */
     public $source;
+
+    /** @var ?string */
+    public $reason;
 
     /** @var ?string */
     public $file;
@@ -41,13 +41,13 @@ final class Log extends struct
     /** @var int[] $count */
     private $count;
 
-    /** @var array<array{int, string, string|\Throwable|null}|Event> */
+    /** @var Event[] */
     private $events;
 
 
     /**
      * @param int[] $count
-     * @param array<array{int, string, string|\Throwable|null}|Event> $events
+     * @param Event[] $events
      */
     public function __construct(array $count, array $events)
     {
@@ -119,7 +119,7 @@ final class Log extends struct
 
 
     /**
-     * @return array<array{int, string, string|\Throwable|null}|Event>
+     * @return Event[]
      */
     public function get_events()
     {
@@ -141,7 +141,7 @@ final class Logger extends struct
         namespace\EVENT_OUTPUT => 0,
     );
 
-    /** @var array<array{int, string, string|\Throwable|null}|Event> */
+    /** @var Event[] */
     private $events = array();
 
     /** @var int */
@@ -153,6 +153,12 @@ final class Logger extends struct
     /** @var ?string */
     public $buffer;
 
+    /** @var ?string */
+    public $buffer_file;
+
+    /** @var ?int */
+    public $buffer_line;
+
     /** @var bool */
     public $error = false;
 
@@ -162,7 +168,7 @@ final class Logger extends struct
     /** @var int */
     public $ob_level_start;
 
-    /** @var array<array{int, string, string|\Throwable|null}|Event> */
+    /** @var Event[] */
     public $queued = array();
 
 
@@ -316,22 +322,31 @@ final class Logger extends struct
 
     /**
      * @param string $source
-     * @param string|\Throwable|null $output
+     * @param string $output
+     * @param ?string $file
+     * @param ?int $line
      * @param ?bool $during_error
      * @return void
      */
-    public function log_output($source, $output, $during_error = false)
+    public function log_output($source, $output, $file = null, $line = null, $during_error = false)
     {
+        $event = new Event;
+        $event->type = namespace\EVENT_OUTPUT;
+        $event->source = $source;
+        $event->reason = $output;
+        $event->file = $file;
+        $event->line = $line;
+
         if ($this->buffer)
         {
-            $this->queued[] = array(namespace\EVENT_OUTPUT, $source, $output);
+            $this->queued[] = $event;
         }
         else
         {
             ++$this->count[namespace\EVENT_OUTPUT];
             if (($this->verbose & namespace\LOG_OUTPUT) || $during_error)
             {
-                $this->events[] = array(namespace\EVENT_OUTPUT, $source, $output);
+                $this->events[] = $event;
             }
             $this->outputter->output_output();
         }
@@ -350,19 +365,25 @@ final class Logger extends struct
 
 /**
  * @param string $source
+ * @param ?string $file
+ * @param ?int $line
  * @return void
  */
-function start_buffering(Logger $logger, $source)
+function start_buffering(Logger $logger, $source, $file = null, $line = null)
 {
     if ($logger->buffer)
     {
         namespace\_reset_buffer($logger);
         $logger->buffer = $source;
+        $logger->buffer_file = $file;
+        $logger->buffer_line = $line;
     }
     else
     {
         \ob_start();
         $logger->buffer = $source;
+        $logger->buffer_file = $file;
+        $logger->buffer_line = $line;
         $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();
     }
 }
@@ -390,9 +411,7 @@ function end_buffering(Logger $logger)
             \sprintf(
                 "An output buffer was started but never deleted.\nBuffer contents were: %s",
                 namespace\_format_buffer((string)\ob_get_clean())),
-            // @fixme pass file and line information for buffer errors
-            null, null
-        );
+            $logger->buffer_file, $logger->buffer_line);
     }
 
     if ($level < $logger->ob_level_start)
@@ -400,9 +419,7 @@ function end_buffering(Logger $logger)
         $logger->log_error(
             $source,
             "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
-            // @fixme pass file and line information for buffer errors
-            null, null
-        );
+            $logger->buffer_file, $logger->buffer_line);
     }
     else
     {
@@ -412,29 +429,22 @@ function end_buffering(Logger $logger)
             $logger->log_output(
                 $source,
                 namespace\_format_buffer($output),
-                $logger->error
-            );
+                $logger->buffer_file, $logger->buffer_line,
+                $logger->error);
         }
     }
 
     // Now unbuffer the logger and log any buffered events as normal
-    $logger->buffer = null;
+    $logger->buffer = $logger->buffer_file = $logger->buffer_line = null;
     foreach ($logger->queued as $event)
     {
-        if ($event instanceof Event)
-        {
-            $type = $event->type;
-            $source = $event->source;
-            $reason = $event->reason;
-            $file = $event->file;
-            $line = $event->line;
-            $additional = $event->additional;
-        }
-        else
-        {
-            list($type, $source, $reason) = $event;
-            $file = $line = $additional = null;
-        }
+        $type = $event->type;
+        $source = $event->source;
+        $reason = $event->reason;
+        $file = $event->file;
+        $line = $event->line;
+        $additional = $event->additional;
+
         switch ($type)
         {
             case namespace\EVENT_PASS:
@@ -463,7 +473,8 @@ function end_buffering(Logger $logger)
                 break;
 
             case namespace\EVENT_OUTPUT:
-                $logger->log_output($source, $reason, $logger->error);
+                \assert(\is_string($reason));
+                $logger->log_output($source, $reason, $file, $line, $logger->error);
                 break;
         }
     }
@@ -487,9 +498,7 @@ function _reset_buffer(Logger $logger)
         $logger->log_error(
             $logger->buffer,
             "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
-            // @fixme pass file and line information for buffer errors
-            null, null
-        );
+            $logger->buffer_file, $logger->buffer_line);
         \ob_start();
         $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();
         return;
@@ -523,8 +532,8 @@ function _reset_buffer(Logger $logger)
         $logger->log_output(
             $logger->buffer,
             namespace\_format_buffer($output),
-            $logger->error
-        );
+            $logger->buffer_file, $logger->buffer_line,
+            $logger->error);
     }
 
     while ($buffers)

@@ -275,7 +275,7 @@ function _run_test_run_group(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name);
+        namespace\start_buffering($logger, $name, $file, $line);
         list($result, $run_args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
         namespace\end_buffering($logger);
 
@@ -309,7 +309,12 @@ function _run_test_run_group(
                 $teardown = $test->teardown;
                 $name = $teardown->name . $run_name;
                 $callable = namespace\_get_callable_function($teardown);
-                namespace\start_buffering($logger, $name);
+                $file = $teardown->getFileName();
+                $line = $teardown->getStartLine();
+                // @todo Stop asserting if reflection function returns file info
+                \assert(\is_string($file));
+                \assert(\is_int($line));
+                namespace\start_buffering($logger, $name, $file, $line);
                 namespace\_run_teardown($logger, $name, $callable, $run_args);
                 namespace\end_buffering($logger);
             }
@@ -339,7 +344,7 @@ function _run_directory(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name);
+        namespace\start_buffering($logger, $name, $file, $line);
         list($setup, $args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
         namespace\end_buffering($logger);
     }
@@ -369,7 +374,12 @@ function _run_directory(
         {
             $name = $directory->teardown->name . $run_name;
             $callable = namespace\_get_callable_function($directory->teardown);
-            namespace\start_buffering($logger, $name);
+            $file = $directory->teardown->getFileName();
+            $line = $directory->teardown->getStartLine();
+            // @todo Stop asserting if reflection function returns file info
+            \assert(\is_string($file));
+            \assert(\is_int($line));
+            namespace\start_buffering($logger, $name, $file, $line);
             namespace\_run_teardown($logger, $name, $callable, $args);
             namespace\end_buffering($logger);
         }
@@ -398,7 +408,7 @@ function _run_file(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($setup_filename));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name);
+        namespace\start_buffering($logger, $name, $setup_filename, $line);
         list($setup, $args) = namespace\_run_setup($logger, $name, $setup_filename, $line, $callable, $args);
         namespace\end_buffering($logger);
     }
@@ -425,7 +435,12 @@ function _run_file(
         {
             $name = $file->teardown_file->name . $run_name;
             $callable = namespace\_get_callable_function($file->teardown_file);
-            namespace\start_buffering($logger, $name);
+            $teardown_filename = $file->teardown_file->getFileName();
+            $line = $file->teardown_file->getStartLine();
+            // @todo Stop asserting if reflection function returns file info
+            \assert(\is_string($teardown_filename));
+            \assert(\is_int($line));
+            namespace\start_buffering($logger, $name, $teardown_filename, $line);
             namespace\_run_teardown($logger, $name, $callable, $args);
             namespace\end_buffering($logger);
         }
@@ -442,7 +457,12 @@ function _run_class(
     State $state, Logger $logger,
     ClassTest $class, array $run, array $args)
 {
-    namespace\start_buffering($logger, $class->test->name);
+    $file = $class->test->getFileName();
+    $line = $class->test->getStartLine();
+    // @todo Stop asserting if reflection function returns file info
+    \assert(\is_string($file));
+    \assert(\is_int($line));
+    namespace\start_buffering($logger, $class->test->name, $file, $line);
     $object = namespace\_instantiate_test($logger, $class->test, $args);
     namespace\end_buffering($logger);
 
@@ -460,7 +480,7 @@ function _run_class(
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $name);
+            namespace\start_buffering($logger, $name, $file, $line);
             list($setup,) = namespace\_run_setup($logger, $name, $file, $line, $method);
             namespace\end_buffering($logger);
         }
@@ -476,7 +496,12 @@ function _run_class(
             {
                 $name = $class->test->name . '::' . $class->teardown_object->name . $run_name;
                 $method = namespace\_get_callable_method($class->teardown_object, $object);
-                namespace\start_buffering($logger, $name);
+                $file = $class->teardown_object->getFileName();
+                $line = $class->teardown_object->getStartLine();
+                // @todo Stop asserting if reflection function returns file info
+                \assert(\is_string($file));
+                \assert(\is_int($line));
+                namespace\start_buffering($logger, $name, $file, $line);
                 namespace\_run_teardown($logger, $name, $method);
                 namespace\end_buffering($logger);
             }
@@ -533,7 +558,7 @@ function _run_method(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name);
+        namespace\start_buffering($logger, $name, $file, $line);
         list($result, ) = namespace\_run_setup($logger, $name, $file, $line, $setup);
     }
 
@@ -541,7 +566,12 @@ function _run_method(
     {
         $method = namespace\_get_callable_method($test->test, $object);
         $context = new _Context($state, $logger, $test, $run);
-        namespace\start_buffering($logger, $test_name);
+        $file = $test->test->getFileName();
+        $line = $test->test->getStartLine();
+        // @todo Stop asserting if reflection function returns file info
+        \assert(\is_string($file));
+        \assert(\is_int($line));
+        namespace\start_buffering($logger, $test_name, $file, $line);
         $result = namespace\_run_test($logger, $test_name, $method, $context);
 
         while ($context->teardowns)
@@ -554,7 +584,12 @@ function _run_method(
         {
             $name = $teardown_method->name . ' for ' . $test_name;
             $teardown = namespace\_get_callable_method($teardown_method, $object);
-            namespace\start_buffering($logger, $name);
+            $file = $teardown_method->getFileName();
+            $line = $teardown_method->getStartLine();
+            // @todo Stop asserting if reflection function returns file info
+            \assert(\is_string($file));
+            \assert(\is_int($line));
+            namespace\start_buffering($logger, $name, $file, $line);
             $result |= namespace\_run_teardown($logger, $name, $teardown);
         }
     }
@@ -587,7 +622,7 @@ function _run_function(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name);
+        namespace\start_buffering($logger, $name, $file, $line);
         list($result, $args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
     }
 
@@ -597,7 +632,12 @@ function _run_function(
         {
             $context = new _Context($state, $logger, $test, $run);
             $callable = namespace\_get_callable_function($test->test);
-            namespace\start_buffering($logger, $test_name);
+            $file = $test->test->getFileName();
+            $line = $test->test->getStartLine();
+            // @todo Stop asserting if reflection function returns file info
+            \assert(\is_string($file));
+            \assert(\is_int($line));
+            namespace\start_buffering($logger, $test_name, $file, $line);
             $result = namespace\_run_test($logger, $test_name, $callable, $context, $args);
 
             while ($context->teardowns)
@@ -611,7 +651,12 @@ function _run_function(
         {
             $name = $teardown_function->getShortName() . ' for ' . $test_name;
             $callable = namespace\_get_callable_function($teardown_function);
-            namespace\start_buffering($logger, $name);
+            $file = $teardown_function->getFileName();
+            $line = $teardown_function->getStartLine();
+            // @todo Stop asserting if reflection function returns file info
+            \assert(\is_string($file));
+            \assert(\is_int($line));
+            namespace\start_buffering($logger, $name, $file, $line);
             $result |= namespace\_run_teardown($logger, $name, $callable, $args);
         }
     }

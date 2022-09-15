@@ -112,7 +112,7 @@ OUT;
 
 
     public function test_suppresses_output() {
-        $this->logger->log_output('source', 'message', false);
+        $this->logger->log_output('source', 'message', __FILE__, __LINE__, false);
         $expected = <<<OUT
 
 
@@ -129,13 +129,16 @@ OUT;
 
 
     public function test_reports_output_during_an_error() {
-        $this->logger->log_output('source', 'message', true);
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_output('source', 'message', $file, $line, true);
         $expected = <<<OUT
 
 
 
 OUTPUT: source
 message
+in $file:$line
 
 
 
@@ -149,21 +152,30 @@ OUT;
 
     public function test_reports_multiple_events() {
         $file = __FILE__;
+
         $line1 = __LINE__;
         $this->logger->log_pass('pass1', $file, $line1);
-        $this->logger->log_output('output1', 'output 1', false);
 
         $line2 = __LINE__;
-        $this->logger->log_failure('fail', 'failure', $file, $line2);
-        $this->logger->log_output('output2', 'output 2', true);
+        $this->logger->log_output('output1', 'output 1', $file, $line2, false);
 
         $line3 = __LINE__;
-        $this->logger->log_error('error', 'error', $file, $line3);
-        $this->logger->log_output('output3', 'output 3', true);
+        $this->logger->log_failure('fail', 'failure', $file, $line3);
 
         $line4 = __LINE__;
-        $this->logger->log_skip('skip', 'skip', $file, $line4);
-        $this->logger->log_output('output4', 'output 4', false);
+        $this->logger->log_output('output2', 'output 2', $file, $line4, true);
+
+        $line5 = __LINE__;
+        $this->logger->log_error('error', 'error', $file, $line5);
+
+        $line6 = __LINE__;
+        $this->logger->log_output('output3', 'output 3', $file, $line6, true);
+
+        $line7 = __LINE__;
+        $this->logger->log_skip('skip', 'skip', $file, $line7);
+
+        $line8 = __LINE__;
+        $this->logger->log_output('output4', 'output 4', $file, $line8, false);
 
         $expected = <<<OUT
 
@@ -171,23 +183,25 @@ OUT;
 
 FAILED: fail
 failure
-in $file:$line2
+in $file:$line3
 
 
 
 OUTPUT: output2
 output 2
+in $file:$line4
 
 
 
 ERROR: error
 error
-in $file:$line3
+in $file:$line5
 
 
 
 OUTPUT: output3
 output 3
+in $file:$line6
 
 
 
@@ -313,13 +327,16 @@ OUT;
 
 
     public function test_reports_output() {
-        $this->logger->log_output('source', 'message', false);
+        $file = __FILE__;
+        $line = __LINE__;
+        $this->logger->log_output('source', 'message', $file, $line, false);
         $expected = <<<OUT
 
 
 
 OUTPUT: source
 message
+in $file:$line
 
 
 
@@ -333,21 +350,30 @@ OUT;
 
     public function test_reports_multiple_events() {
         $file = __FILE__;
+
         $line1 = __LINE__;
         $this->logger->log_pass('pass1', $file, $line1);
-        $this->logger->log_output('output1', 'output 1', false);
+
         $line2 = __LINE__;
-        $this->logger->log_failure('fail', 'failure', $file, $line2);
-        $this->logger->log_output('output2', 'output 2', true);
+        $this->logger->log_output('output1', 'output 1', $file, $line2, false);
 
         $line3 = __LINE__;
-        $this->logger->log_error('error', 'error', $file, $line3);
-
-        $this->logger->log_output('output3', 'output 3', true);
+        $this->logger->log_failure('fail', 'failure', $file, $line3);
 
         $line4 = __LINE__;
-        $this->logger->log_skip('skip', 'skip', $file, $line4);
-        $this->logger->log_output('output4', 'output 4', false);
+        $this->logger->log_output('output2', 'output 2', $file, $line4, true);
+
+        $line5 = __LINE__;
+        $this->logger->log_error('error', 'error', $file, $line5);
+
+        $line6 = __LINE__;
+        $this->logger->log_output('output3', 'output 3', $file, $line6, true);
+
+        $line7 = __LINE__;
+        $this->logger->log_skip('skip', 'skip', $file, $line7);
+
+        $line8 = __LINE__;
+        $this->logger->log_output('output4', 'output 4', $file, $line8, false);
 
         $expected = <<<OUT
 
@@ -355,39 +381,43 @@ OUT;
 
 OUTPUT: output1
 output 1
+in $file:$line2
 
 
 
 FAILED: fail
 failure
-in $file:$line2
+in $file:$line3
 
 
 
 OUTPUT: output2
 output 2
+in $file:$line4
 
 
 
 ERROR: error
 error
-in $file:$line3
+in $file:$line5
 
 
 
 OUTPUT: output3
 output 3
+in $file:$line6
 
 
 
 SKIPPED: skip
 skip
-in $file:$line4
+in $file:$line7
 
 
 
 OUTPUT: output4
 output 4
+in $file:$line8
 
 
 

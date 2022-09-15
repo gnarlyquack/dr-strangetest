@@ -118,17 +118,11 @@ function output_log(Log $log)
     $skip_count = 0;
     foreach ($log->get_events() as $event)
     {
-        if ($event instanceof Event)
-        {
-            $type = $event->type;
-            $source = $event->source;
-            // @fixme Fixure out how/where to format messagse from events
-            $message = namespace\_format_message_from_event($event);
-        }
-        else
-        {
-            list($type, $source, $message) = $event;
-        }
+        $type = $event->type;
+        $source = $event->source;
+        // @fixme Figure out how/where to format messagse from events
+        $message = namespace\_format_message_from_event($event);
+
         switch ($type)
         {
             case namespace\EVENT_OUTPUT:
