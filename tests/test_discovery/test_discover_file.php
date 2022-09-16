@@ -27,7 +27,7 @@ function filepath($name) {
 // helper assertions
 
 function assert_file_discovery($filepath, array $events) {
-    $logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
     $state = new _DiscoveryState(new State(), $logger);
     strangetest\_discover_file($state, $filepath, 0);
 
@@ -101,7 +101,7 @@ function test_handles_non_test_definition() {
     }
 
     $filepath = namespace\filepath($file);
-    $logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
     $state = new _DiscoveryState(new State(), $logger);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
@@ -127,7 +127,7 @@ function test_does_not_discover_enumerations()
 
     $file = 'test_enumeration.php';
     $filepath = namespace\filepath($file);
-    $logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
     $state = new _DiscoveryState(new State(), $logger);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
@@ -153,7 +153,7 @@ function test_discovers_tests_marked_with_attributes()
 
     $file = 'test_attributes.php';
     $filepath = namespace\filepath($file);
-    $logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
     $state = new _DiscoveryState(new State, $logger);
     $result = strangetest\_discover_file($state, $filepath, 0);
 

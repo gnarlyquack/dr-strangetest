@@ -83,12 +83,12 @@ final class _Context extends struct implements Context
         }
         catch (\AssertionError $e)
         {
-            $this->logger->log_failure(new FailEvent($this->test->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+            $this->logger->log_failure($this->logger->failure_from_exception($this->test->name, $e));
         }
         // @bc 5.6 Catch Failure
         catch (Failure $e)
         {
-            $this->logger->log_failure(new FailEvent($this->test->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+            $this->logger->log_failure($this->logger->failure_from_exception($this->test->name, $e));
         }
         $this->result = namespace\RESULT_FAIL;
         return false;
@@ -525,11 +525,11 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error(new ErrorEvent($class->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($class->name, $e));
     }
     catch (\Throwable $e)
     {
-        $logger->log_error(new ErrorEvent($class->name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($class->name, $e));
     }
     return null;
 }
@@ -769,16 +769,16 @@ function _run_setup(Logger $logger, $name, $file, $line, $callable, array $args 
     }
     catch (Skip $e)
     {
-        $logger->log_skip(new SkipEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_skip($logger->skip_from_exception($name, $e));
     }
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error(new ErrorEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($name, $e));
     }
     catch (\Throwable $e)
     {
-        $logger->log_error(new ErrorEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($name, $e));
     }
 
     return array($status, $result);
@@ -811,18 +811,18 @@ function _run_test(
     }
     catch (\AssertionError $e)
     {
-        $logger->log_failure(new FailEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_failure($logger->failure_from_exception($name, $e));
         $result = namespace\RESULT_FAIL;
     }
     // @bc 5.6 Catch Failure
     catch (Failure $e)
     {
-        $logger->log_failure(new FailEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_failure($logger->failure_from_exception($name, $e));
         $result = namespace\RESULT_FAIL;
     }
     catch (Skip $e)
     {
-        $logger->log_skip(new SkipEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_skip($logger->skip_from_exception($name, $e));
         $result = namespace\RESULT_FAIL;
     }
     catch (Postpone $_)
@@ -832,12 +832,12 @@ function _run_test(
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error(new ErrorEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($name, $e));
         $result = namespace\RESULT_FAIL;
     }
     catch (\Throwable $e)
     {
-        $logger->log_error(new ErrorEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($name, $e));
         $result = namespace\RESULT_FAIL;
     }
     return $result;
@@ -874,11 +874,11 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error(new ErrorEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($name, $e));
     }
     catch (\Throwable $e)
     {
-        $logger->log_error(new ErrorEvent($name, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($name, $e));
     }
     return namespace\RESULT_FAIL;
 }

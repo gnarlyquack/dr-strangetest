@@ -913,11 +913,11 @@ function _include_file(Logger $logger, $file)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error(new ErrorEvent($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($file, $e));
     }
     catch (\Throwable $e)
     {
-        $logger->log_error(new ErrorEvent($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
+        $logger->log_error($logger->error_from_exception($file, $e));
     }
 
     return $included;

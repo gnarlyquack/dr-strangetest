@@ -176,6 +176,91 @@ final class OutputEvent extends struct implements Event
 }
 
 
+final class _FormatExceptionResult extends struct
+{
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+
+    /** @var ?string */
+    public $trace;
+}
+
+/**
+ * @param \Throwable $exception
+ * @param string $root
+ * @return _FormatExceptionResult
+ */
+function _format_exception($exception, $root)
+{
+    $result = new _FormatExceptionResult;
+    $offset = \strlen($root);
+    $backtrace = array();
+
+    // Create a backtrace excluding calls made within Dr. Strangetest
+    foreach ($exception->getTrace() as $frame)
+    {
+        // There seem to be occasions (which may vary by versions of PHP) in
+        // which a frame may not have a file, such as if an exception is thrown
+        // from a function invoked from call_user_func(), or if an exception is
+        // thrown from an error handler, and possibly others. It seems safe to
+        // just ignore these.
+        if (!isset($frame['file']))
+        {
+            continue;
+        }
+        if (0 === \strpos($frame['file'], __DIR__))
+        {
+            continue;
+        }
+        if ('strangetest\\main' === $frame['function'])
+        {
+            // strangetest\main is invoked from the entry point script, i.e.,
+            // bin/strangetest. So when we've reached this function, we're at
+            // the bottom of the call stack.
+            break;
+        }
+
+        \assert(isset($frame['line']));
+        if (!isset($file, $line))
+        {
+            $file = $frame['file'];
+            $result->file = \substr($file, $offset);
+            $result->line = $line = $frame['line'];
+        }
+
+        if (($line === $frame['line']) && ($file === $frame['file']))
+        {
+            continue;
+        }
+
+        $callee = $frame['function'];
+        if (isset($frame['class']))
+        {
+            \assert(isset($frame['type']));
+            $callee = $frame['class'] . $frame['type'] . $callee;
+        }
+
+        $backtrace[] = \sprintf(
+            '%s(%d): %s()',
+            \substr($frame['file'], $offset), $frame['line'], $callee);
+    }
+
+    if ($backtrace)
+    {
+        $result->trace = "Called from:\n" .  \implode("\n", $backtrace);
+    }
+    elseif (!isset($file, $line))
+    {
+        $result->file = \substr($exception->getFile(), $offset);
+        $result->line = $exception->getLine();
+    }
+
+    return $result;
+}
+
 
 final class Log extends struct
 {
@@ -291,6 +376,9 @@ final class Logger extends struct
     /** @var Event[] */
     private $events = array();
 
+    /** @var string */
+    private $root;
+
     /** @var int */
     private $verbose;
 
@@ -320,10 +408,12 @@ final class Logger extends struct
 
 
     /**
+     * @param string $root
      * @param int $verbose
      */
-    public function __construct($verbose, LogOutputter $outputter)
+    public function __construct($root, $verbose, LogOutputter $outputter)
     {
+        $this->root = $root;
         $this->verbose = $verbose;
         $this->outputter = $outputter;
     }
@@ -440,6 +530,41 @@ final class Logger extends struct
         }
     }
 
+
+    /**
+     * @param string $source
+     * @param \AssertionError|Failure $failure
+     * @return FailEvent
+     */
+    public function failure_from_exception($source, $failure)
+    {
+        $formatted = namespace\_format_exception($failure, $this->root);
+        return new FailEvent($source, $failure->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+    }
+
+
+    /**
+     * @param string $source
+     * @param \Throwable $error
+     * @return ErrorEvent
+     */
+    public function error_from_exception($source, $error)
+    {
+        $formatted = namespace\_format_exception($error, $this->root);
+        return new ErrorEvent($source, $error->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+    }
+
+
+
+    /**
+     * @param string $source
+     * @return SkipEvent
+     */
+    public function skip_from_exception($source, Skip $skip)
+    {
+        $formatted = namespace\_format_exception($skip, $this->root);
+        return new SkipEvent($source, $skip->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+    }
 
     /**
      * @return Log

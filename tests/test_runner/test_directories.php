@@ -20,7 +20,7 @@ class TestRunDirectories {
 
 
     public function setup() {
-        $this->logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
         $this->path = __DIR__ . '/resources/directories/';
     }
 

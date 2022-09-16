@@ -17,7 +17,7 @@ use NoOutputter;
 function setup()
 {
     return array(
-        new Logger(strangetest\LOG_ALL, new NoOutputter),
+        new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter),
         __DIR__ . '/resources/directory/',
     );
 }

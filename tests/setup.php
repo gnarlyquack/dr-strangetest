@@ -5,6 +5,9 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+
+const TEST_ROOT = __DIR__;
+
 class ExpectedException extends \Exception {}
 class UnexpectedException extends \Exception {}
 

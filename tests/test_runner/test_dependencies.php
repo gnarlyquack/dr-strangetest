@@ -18,7 +18,7 @@ class TestDependencies {
     public function setup() {
         $this->root = __DIR__ . '/resources/dependencies/';
         $this->path = '';
-        $this->logger = new Logger(strangetest\LOG_ALL, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
     }
 
 

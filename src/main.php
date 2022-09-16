@@ -161,7 +161,7 @@ function main($argc, $argv)
     // @todo Add configuration option to explicitly set the test root directory
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
-    $logger = new Logger($options['verbose'], new CommandLineOutputter);
+    $logger = new Logger($cwd, $options['verbose'], new CommandLineOutputter);
     $state = new State();
 
     namespace\output_header(namespace\_get_version());
