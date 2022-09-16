@@ -69,33 +69,52 @@ function _format_message_from_event(Event $event)
 {
     $message = '';
 
-    if (isset($event->reason))
+    if ($event instanceof PassEvent)
     {
-        $message .= $event->reason;
+        $message = \sprintf("PASS: %s\nin %s:%d\n",
+            $event->source, $event->file, $event->line);
     }
-
-    if (isset($event->file))
+    elseif ($event instanceof FailEvent)
     {
-        if (\strlen($message))
+        $message = \sprintf("FAILED: %s\n%s\nin %s:%d\n",
+            $event->source, $event->reason, $event->file, $event->line);
+        if (isset($event->additional))
         {
-            $message .= "\n";
-        }
-
-        $message .= 'in ' . $event->file;
-
-        if (isset($event->line))
-        {
-            $message .= ':' . $event->line;
+            $message .= "\n" . $event->additional . "\n";
         }
     }
-
-    if ($event->additional)
+    elseif ($event instanceof ErrorEvent)
     {
-        if (\strlen($message))
+        $message = \sprintf("ERROR: %s\n%s\n", $event->source, $event->reason);
+
+        if (isset($event->file, $event->line))
         {
-            $message .= "\n\n";
+            $message .= \sprintf("in %s:%d\n", $event->file, $event->line);
         }
-        $message .= $event->additional;
+
+        if (isset($event->additional))
+        {
+            $message .= "\n" . $event->additional . "\n";
+        }
+    }
+    elseif ($event instanceof SkipEvent)
+    {
+        $message = \sprintf("SKIPPED: %s\n%s\nin %s:%d\n",
+            $event->source, $event->reason, $event->file, $event->line);
+        if (isset($event->additional))
+        {
+            $message .= "\n" . $event->additional . "\n";
+        }
+    }
+    else
+    {
+        \assert($event instanceof OutputEvent);
+        $message = \sprintf("OUTPUT: %s\n%s\n", $event->source, $event->output);
+
+        if (isset($event->file, $event->line))
+        {
+            $message .= \sprintf("in %s:%d\n", $event->file, $event->line);
+        }
     }
 
     return $message;
@@ -118,23 +137,19 @@ function output_log(Log $log)
     $skip_count = 0;
     foreach ($log->get_events() as $event)
     {
-        $type = $event->type;
-        $source = $event->source;
         // @fixme Figure out how/where to format messagse from events
         $message = namespace\_format_message_from_event($event);
 
-        switch ($type)
+        if ($event instanceof OutputEvent)
         {
-            case namespace\EVENT_OUTPUT:
-                ++$output_count;
-                break;
-
-            case namespace\EVENT_SKIP:
-                ++$skip_count;
-                break;
+            ++$output_count;
+        }
+        elseif ($event instanceof SkipEvent)
+        {
+            ++$skip_count;
         }
 
-        \printf("\n\n\n%s: %s\n%s\n", $event_types[$type], $source, $message);
+        echo "\n\n\n", $message;
     }
 
     $passed = $log->pass_count();

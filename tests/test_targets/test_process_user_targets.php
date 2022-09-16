@@ -465,7 +465,39 @@ class TestProcessUserTargets
         $actual = array();
         foreach ($events as $event)
         {
-            $actual[] = array($event->type, $event->source, $event->reason);
+            if ($event instanceof strangetest\PassEvent)
+            {
+                $type = strangetest\EVENT_PASS;
+                $source = $event->source;
+                $reason = null;
+            }
+            elseif ($event instanceof strangetest\FailEvent)
+            {
+                $type = strangetest\EVENT_FAIL;
+                $source = $event->source;
+                $reason = $event->reason;
+            }
+            elseif ($event instanceof strangetest\ErrorEvent)
+            {
+                $type = strangetest\EVENT_ERROR;
+                $source = $event->source;
+                $reason = $event->reason;
+            }
+            elseif ($event instanceof strangetest\SkipEvent)
+            {
+                $type = strangetest\EVENT_SKIP;
+                $source = $event->source;
+                $reason = $event->reason;
+            }
+            else
+            {
+                \assert($event instanceof strangetest\OutputEvent);
+                $type = strangetest\EVENT_OUTPUT;
+                $source = $event->source;
+                $reason = $event->output;
+            }
+
+            $actual[] = array($type, $source, $reason);
         }
         $context->subtest(
             function() use ($expected, $actual)

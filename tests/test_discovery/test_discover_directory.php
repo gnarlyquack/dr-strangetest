@@ -184,22 +184,39 @@ function assert_discovered($logger, $path, $discovered, $log)
     $actual = $logger->get_log()->get_events();
     foreach ($actual as $i => $event)
     {
-        if ($event instanceof strangetest\Event)
+        if ($event instanceof strangetest\PassEvent)
         {
-            $type = $event->type;
+            $type = strangetest\EVENT_PASS;
+            $source = $event->source;
+            $reason = null;
+        }
+        elseif ($event instanceof strangetest\FailEvent)
+        {
+            $type = strangetest\EVENT_FAIL;
             $source = $event->source;
             $reason = $event->reason;
-            $actual[$i] = array($type, $source, $reason);
+        }
+        elseif ($event instanceof strangetest\ErrorEvent)
+        {
+            $type = strangetest\EVENT_ERROR;
+            $source = $event->source;
+            $reason = $event->reason;
+        }
+        elseif ($event instanceof strangetest\SkipEvent)
+        {
+            $type = strangetest\EVENT_SKIP;
+            $source = $event->source;
+            $reason = $event->reason;
         }
         else
         {
-            list($type, $source, $reason) = $event;
+            \assert($event instanceof strangetest\OutputEvent);
+            $type = strangetest\EVENT_OUTPUT;
+            $source = $event->source;
+            $reason = $event->output;
         }
-        // @bc 5.6 Check if reason is instance of Exception
-        if ($reason instanceof \Throwable || $reason instanceof \Exception)
-        {
-            $actual[$i][2] = $reason->getMessage();
-        }
+
+        $actual[$i] = array($type, $source, $reason);
     }
     strangetest\assert_identical($actual, $log);
 }

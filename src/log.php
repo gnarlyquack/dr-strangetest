@@ -8,15 +8,47 @@
 namespace strangetest;
 
 
-final class Event extends struct
-{
-    /** @var EVENT_PASS|EVENT_FAIL|EVENT_ERROR|EVENT_SKIP|EVENT_OUTPUT */
-    public $type;
+interface Event {}
 
+
+final class PassEvent extends struct implements Event
+{
     /** @var string */
     public $source;
 
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+}
+
+
+final class FailEvent extends struct implements Event
+{
+    /** @var string */
+    public $source;
+
+    /** @var string */
+    public $reason;
+
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+
     /** @var ?string */
+    public $additional;
+}
+
+
+final class ErrorEvent extends struct implements Event
+{
+    /** @var string */
+    public $source;
+
+    /** @var string */
     public $reason;
 
     /** @var ?string */
@@ -28,6 +60,42 @@ final class Event extends struct
     /** @var ?string */
     public $additional;
 }
+
+
+final class SkipEvent extends struct implements Event
+{
+    /** @var string */
+    public $source;
+
+    /** @var string */
+    public $reason;
+
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+
+    /** @var ?string */
+    public $additional;
+}
+
+
+final class OutputEvent extends struct implements Event
+{
+    /** @var string */
+    public $source;
+
+    /** @var string */
+    public $output;
+
+    /** @var ?string */
+    public $file;
+
+    /** @var ?int */
+    public $line;
+}
+
 
 
 final class Log extends struct
@@ -190,8 +258,7 @@ final class Logger extends struct
      */
     public function log_pass($source, $file, $line)
     {
-        $event = new Event;
-        $event->type = namespace\EVENT_PASS;
+        $event = new PassEvent;
         $event->source = $source;
         $event->file = $file;
         $event->line = $line;
@@ -222,8 +289,7 @@ final class Logger extends struct
      */
     public function log_failure($source, $reason, $file, $line, $additional = null)
     {
-        $event = new Event;
-        $event->type = namespace\EVENT_FAIL;
+        $event = new FailEvent;
         $event->source = $source;
         $event->reason = $reason;
         $event->file = $file;
@@ -254,8 +320,7 @@ final class Logger extends struct
      */
     public function log_error($source, $reason, $file = null, $line = null, $additional = null)
     {
-        $event = new Event;
-        $event->type = namespace\EVENT_ERROR;
+        $event = new ErrorEvent;
         $event->source = $source;
         $event->reason = $reason;
         $event->file = $file;
@@ -287,8 +352,7 @@ final class Logger extends struct
      */
     public function log_skip($source, $reason, $file, $line, $additional = null, $during_error = false)
     {
-        $event = new Event;
-        $event->type = namespace\EVENT_SKIP;
+        $event = new SkipEvent;
         $event->source = $source;
         $event->reason = $reason;
         $event->file = $file;
@@ -330,10 +394,9 @@ final class Logger extends struct
      */
     public function log_output($source, $output, $file = null, $line = null, $during_error = false)
     {
-        $event = new Event;
-        $event->type = namespace\EVENT_OUTPUT;
+        $event = new OutputEvent;
         $event->source = $source;
-        $event->reason = $output;
+        $event->output = $output;
         $event->file = $file;
         $event->line = $line;
 
@@ -438,44 +501,26 @@ function end_buffering(Logger $logger)
     $logger->buffer = $logger->buffer_file = $logger->buffer_line = null;
     foreach ($logger->queued as $event)
     {
-        $type = $event->type;
-        $source = $event->source;
-        $reason = $event->reason;
-        $file = $event->file;
-        $line = $event->line;
-        $additional = $event->additional;
-
-        switch ($type)
+        if ($event instanceof PassEvent)
         {
-            case namespace\EVENT_PASS:
-                \assert(\is_string($file));
-                \assert(\is_int($line));
-                $logger->log_pass($source, $file, $line);
-                break;
-
-            case namespace\EVENT_FAIL:
-                \assert(\is_string($reason));
-                \assert(\is_string($file));
-                \assert(\is_int($line));
-                $logger->log_failure($source, $reason, $file, $line, $additional);
-                break;
-
-            case namespace\EVENT_ERROR:
-                \assert(\is_string($reason));
-                $logger->log_error($source, $reason, $file, $line, $additional);
-                break;
-
-            case namespace\EVENT_SKIP:
-                \assert(\is_string($reason));
-                \assert(\is_string($file));
-                \assert(\is_int($line));
-                $logger->log_skip($source, $reason, $file, $line, $additional, $logger->error);
-                break;
-
-            case namespace\EVENT_OUTPUT:
-                \assert(\is_string($reason));
-                $logger->log_output($source, $reason, $file, $line, $logger->error);
-                break;
+            $logger->log_pass($event->source, $event->file, $event->line);
+        }
+        elseif ($event instanceof FailEvent)
+        {
+            $logger->log_failure($event->source, $event->reason, $event->file, $event->line, $event->additional);
+        }
+        elseif ($event instanceof ErrorEvent)
+        {
+            $logger->log_error($event->source, $event->reason, $event->file, $event->line, $event->additional);
+        }
+        elseif ($event instanceof SkipEvent)
+        {
+            $logger->log_skip($event->source, $event->reason, $event->file, $event->line, $event->additional, $logger->error);
+        }
+        else
+        {
+            \assert($event instanceof OutputEvent);
+            $logger->log_output($event->source, $event->output, $event->file, $event->line, $logger->error);
         }
     }
 

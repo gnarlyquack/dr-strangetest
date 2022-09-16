@@ -60,25 +60,39 @@ function assert_log(array $log, strangetest\Logger $logger) {
 
 function assert_events($expected, strangetest\Logger $logger) {
     $actual = $logger->get_log()->get_events();
-    foreach ($actual as $i => $event) {
-        if ($event instanceof strangetest\Event)
+    foreach ($actual as $i => $event)
+    {
+        if ($event instanceof strangetest\PassEvent)
         {
-            $type = $event->type;
+            $type = strangetest\EVENT_PASS;
+            $source = $event->source;
+            $reason = null;
+        }
+        elseif ($event instanceof strangetest\FailEvent)
+        {
+            $type = strangetest\EVENT_FAIL;
+            $source = $event->source;
+            $reason = $event->reason;
+        }
+        elseif ($event instanceof strangetest\ErrorEvent)
+        {
+            $type = strangetest\EVENT_ERROR;
+            $source = $event->source;
+            $reason = $event->reason;
+        }
+        elseif ($event instanceof strangetest\SkipEvent)
+        {
+            $type = strangetest\EVENT_SKIP;
             $source = $event->source;
             $reason = $event->reason;
         }
         else
         {
-            list($type, $source, $reason) = $event;
+            \assert($event instanceof strangetest\OutputEvent);
+            $type = strangetest\EVENT_OUTPUT;
+            $source = $event->source;
+            $reason = $event->output;
         }
-
-        // @bc 5.6 Check if reason is instance of Exception
-        if ($reason instanceof \Throwable
-            || $reason instanceof \Exception)
-        {
-            $reason = $reason->getMessage();
-        }
-
 
         $actual[$i] = array($type, $source, $reason);
     }
