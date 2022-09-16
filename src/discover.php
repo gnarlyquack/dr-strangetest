@@ -103,7 +103,7 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
                     $message = \sprintf(
                         'Found multiple directory setup files: %s and %s',
                         $setup_filename, $filename);
-                    $state->logger->log_error($dirpath, $message);
+                    $state->logger->log_error(new ErrorEvent($dirpath, $message));
                 }
             }
             elseif ((0 === \substr_compare($filename, 'test', 0, 4, true))
@@ -156,7 +156,7 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
         }
         elseif ($valid)
         {
-            $state->logger->log_error($dirpath, 'No tests were found in this directory');
+            $state->logger->log_error(new ErrorEvent($dirpath, 'No tests were found in this directory'));
         }
         else
         {
@@ -432,7 +432,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
         }
         elseif ($valid)
         {
-            $state->logger->log_error($filepath, 'No tests were found in this file');
+            $state->logger->log_error(new ErrorEvent($filepath, 'No tests were found in this file'));
         }
         else
         {
@@ -554,7 +554,7 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
             $line = $class->test->getStartLine();
             \assert(\is_string($file));
             \assert(\is_int($line));
-            $logger->log_error($class->test->name, 'No tests were found in this class', $file, $line);
+            $logger->log_error(new ErrorEvent($class->test->name, 'No tests were found in this class', $file, $line));
         }
     }
     else
@@ -587,7 +587,7 @@ function _validate_fixture(Logger $logger, $filepath, $new, &$old)
         // @todo Remove asserting that reflection function returns file info
         $line = $new->getStartLine();
         \assert(\is_int($line));
-        $logger->log_error($new->getName(), $message, $filepath, $line);
+        $logger->log_error(new ErrorEvent($new->getName(), $message, $filepath, $line));
     }
     else
     {
@@ -620,7 +620,7 @@ function _validate_run_fixture(Logger $logger, $filepath, TestRunGroup $run_grou
         // @todo Remove asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        $logger->log_error($function->getName(), $message, $file, $line);
+        $logger->log_error(new ErrorEvent($function->getName(), $message, $file, $line));
     }
     else
     {
@@ -680,7 +680,7 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
                     "Teardown run function '%s' has no matching setup run function",
                     $run->teardown->getName()
                 );
-                $state->logger->log_error($filepath, $message, $file, $line);
+                $state->logger->log_error(new ErrorEvent($filepath, $message, $file, $line));
             }
             else
             {
@@ -880,17 +880,17 @@ function _read_file(Logger $logger, $filepath)
                 // file_get_contents() can return false if it fails. Presumably
                 // an error/exception would have been generated, so we would
                 // never get here, but the documentation isn't explicit
-                $logger->log_error($filepath, 'Unable to read file');
+                $logger->log_error(new ErrorEvent($filepath, 'Unable to read file'));
             }
         }
         // @bc 5.6 Catch Exception
         catch (\Exception $e)
         {
-            $logger->log_error($filepath, 'Unable to read file: ' . $e->getMessage());
+            $logger->log_error(new ErrorEvent($filepath, 'Unable to read file: ' . $e->getMessage()));
         }
         catch (\Throwable $e)
         {
-            $logger->log_error($filepath, 'Unable to read file: ' . $e->getMessage());
+            $logger->log_error(new ErrorEvent($filepath, 'Unable to read file: ' . $e->getMessage()));
         }
     }
 
@@ -913,11 +913,11 @@ function _include_file(Logger $logger, $file)
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+        $logger->log_error(new ErrorEvent($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+        $logger->log_error(new ErrorEvent($file, $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString()));
     }
 
     return $included;

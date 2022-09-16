@@ -169,7 +169,7 @@ function _parse_path_specifier(
     $target = \realpath($target);
     if (false === $target)
     {
-        $logger->log_error($arg, 'This path does not exist');
+        $logger->log_error(new ErrorEvent($arg, 'This path does not exist'));
     }
     else
     {
@@ -217,9 +217,9 @@ function _parse_path_specifier(
                     }
                     else
                     {
-                        $logger->log_error(
+                        $logger->log_error(new ErrorEvent(
                             $arg,
-                            "This path is not a test path");
+                            "This path is not a test path"));
                         $valid = false;
                         break;
                     }
@@ -232,7 +232,7 @@ function _parse_path_specifier(
         }
         else
         {
-            $logger->log_error($arg, "This path is outside the test root directory $root");
+            $logger->log_error(new ErrorEvent($arg, "This path is outside the test root directory $root"));
         }
     }
 
@@ -287,16 +287,16 @@ function _parse_directory_specifiers(
     {
         if ('class' === $matches[1])
         {
-            $logger->log_error(
+            $logger->log_error(new ErrorEvent(
                 $iter->args[$iter->index++],
-                'Classes can only be specified for a file');
+                'Classes can only be specified for a file'));
             $valid = false;
         }
         elseif ('function' === $matches[1])
         {
-            $logger->log_error(
+            $logger->log_error(new ErrorEvent(
                 $iter->args[$iter->index++],
-                'Functions can only be specified for a file');
+                'Functions can only be specified for a file'));
             $valid = false;
         }
         else
@@ -406,7 +406,7 @@ function _parse_run_specifier(
             }
             else
             {
-                $logger->log_error($arg, "Run specifier '{$run}' is missing a run name");
+                $logger->log_error(new ErrorEvent($arg, "Run specifier '{$run}' is missing a run name"));
                 $valid = false;
                 break;
             }
@@ -419,9 +419,9 @@ function _parse_run_specifier(
             if ($name_index < $name_count)
             {
                 $extra = \implode(',', \array_slice($names, $name_index));
-                $logger->log_error(
+                $logger->log_error(new ErrorEvent(
                     $arg,
-                    "Run specifier '{$run}' had extra and/or invalid run names: {$extra}");
+                    "Run specifier '{$run}' had extra and/or invalid run names: {$extra}"));
                 $valid = false;
             }
             else
@@ -482,36 +482,36 @@ function _parse_class_specifier(
                         }
                         else
                         {
-                            $logger->log_error(
+                            $logger->log_error(new ErrorEvent(
                                 $arg,
-                                "Method '{$method}' is not a test method in {$test->test->name}");
+                                "Method '{$method}' is not a test method in {$test->test->name}"));
                             $valid = false;
                         }
                     }
                     else
                     {
-                        $logger->log_error(
+                        $logger->log_error(new ErrorEvent(
                             $arg,
                             \sprintf(
                                 'Method specifier %d for class \'%s\' is missing a name',
-                                $m + 1, $test->test->name));
+                                $m + 1, $test->test->name)));
                         $valid = false;
                     }
                 }
             }
             else
             {
-                $logger->log_error(
+                $logger->log_error(new ErrorEvent(
                     $arg,
-                    "'{$class}' is not a test class in {$reference->name}");
+                    "'{$class}' is not a test class in {$reference->name}"));
                 $valid = false;
             }
         }
         else
         {
-            $logger->log_error(
+            $logger->log_error(new ErrorEvent(
                 $arg,
-                \sprintf('Class specifier %d is missing a name', $c + 1));
+                \sprintf('Class specifier %d is missing a name', $c + 1)));
             $valid = false;
         }
     }
@@ -545,17 +545,17 @@ function _parse_function_specifier(
             }
             else
             {
-                $logger->log_error(
+                $logger->log_error(new ErrorEvent(
                     $arg,
-                    "Function '{$function}' is not a test function in {$reference->name}");
+                    "Function '{$function}' is not a test function in {$reference->name}"));
                 $valid = false;
             }
         }
         else
         {
-            $logger->log_error(
+            $logger->log_error(new ErrorEvent(
                 $arg,
-                \sprintf('Function specifier %d is missing a name', $f + 1));
+                \sprintf('Function specifier %d is missing a name', $f + 1)));
             $valid = false;
         }
     }

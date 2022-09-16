@@ -6,6 +6,11 @@
 // LICENSE.txt file.
 
 use strangetest\Logger;
+use strangetest\PassEvent;
+use strangetest\FailEvent;
+use strangetest\ErrorEvent;
+use strangetest\SkipEvent;
+use strangetest\OutputEvent;
 
 
 class TestQuietOutput {
@@ -37,7 +42,7 @@ class TestQuietOutput {
 
 
     public function test_reports_success() {
-        $this->logger->log_pass('source', __FILE__, __LINE__);
+        $this->logger->log_pass(new PassEvent('source', __FILE__, __LINE__));
         $expected = <<<OUT
 
 
@@ -53,7 +58,7 @@ OUT;
     public function test_reports_error() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_error('source', 'message', $file, $line);
+        $this->logger->log_error(new ErrorEvent('source', 'message', $file, $line));
         $expected = <<<OUT
 
 
@@ -75,7 +80,7 @@ OUT;
     public function test_reports_failure() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_failure('source', 'message', $file, $line);
+        $this->logger->log_failure(new FailEvent('source', 'message', $file, $line));
         $expected = <<<OUT
 
 
@@ -95,7 +100,7 @@ OUT;
 
 
     public function test_suppresses_skips() {
-        $this->logger->log_skip('source', 'message', __FILE__, __LINE__);
+        $this->logger->log_skip(new SkipEvent('source', 'message', __FILE__, __LINE__));
         $expected = <<<OUT
 
 
@@ -112,7 +117,7 @@ OUT;
 
 
     public function test_suppresses_output() {
-        $this->logger->log_output('source', 'message', __FILE__, __LINE__, false);
+        $this->logger->log_output(new OutputEvent('source', 'message', __FILE__, __LINE__), false);
         $expected = <<<OUT
 
 
@@ -131,7 +136,7 @@ OUT;
     public function test_reports_output_during_an_error() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_output('source', 'message', $file, $line, true);
+        $this->logger->log_output(new OutputEvent('source', 'message', $file, $line), true);
         $expected = <<<OUT
 
 
@@ -154,28 +159,28 @@ OUT;
         $file = __FILE__;
 
         $line1 = __LINE__;
-        $this->logger->log_pass('pass1', $file, $line1);
+        $this->logger->log_pass(new PassEvent('pass1', $file, $line1));
 
         $line2 = __LINE__;
-        $this->logger->log_output('output1', 'output 1', $file, $line2, false);
+        $this->logger->log_output(new OutputEvent('output1', 'output 1', $file, $line2), false);
 
         $line3 = __LINE__;
-        $this->logger->log_failure('fail', 'failure', $file, $line3);
+        $this->logger->log_failure(new FailEvent('fail', 'failure', $file, $line3));
 
         $line4 = __LINE__;
-        $this->logger->log_output('output2', 'output 2', $file, $line4, true);
+        $this->logger->log_output(new OutputEvent('output2', 'output 2', $file, $line4), true);
 
         $line5 = __LINE__;
-        $this->logger->log_error('error', 'error', $file, $line5);
+        $this->logger->log_error(new ErrorEvent('error', 'error', $file, $line5));
 
         $line6 = __LINE__;
-        $this->logger->log_output('output3', 'output 3', $file, $line6, true);
+        $this->logger->log_output(new OutputEvent('output3', 'output 3', $file, $line6), true);
 
         $line7 = __LINE__;
-        $this->logger->log_skip('skip', 'skip', $file, $line7);
+        $this->logger->log_skip(new SkipEvent('skip', 'skip', $file, $line7));
 
         $line8 = __LINE__;
-        $this->logger->log_output('output4', 'output 4', $file, $line8, false);
+        $this->logger->log_output(new OutputEvent('output4', 'output 4', $file, $line8), false);
 
         $expected = <<<OUT
 
@@ -247,7 +252,7 @@ class TestVerboseOutput {
 
 
     public function test_reports_success() {
-        $this->logger->log_pass('source', __FILE__, __LINE__);
+        $this->logger->log_pass(new PassEvent('source', __FILE__, __LINE__));
         $expected = <<<OUT
 
 
@@ -263,7 +268,7 @@ OUT;
     public function test_reports_error() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_error('source', 'message', $file, $line);
+        $this->logger->log_error(new ErrorEvent('source', 'message', $file, $line));
         $expected = <<<OUT
 
 
@@ -285,7 +290,7 @@ OUT;
     public function test_reports_failure() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_failure('source', 'message', $file, $line);
+        $this->logger->log_failure(new FailEvent('source', 'message', $file, $line));
         $expected = <<<OUT
 
 
@@ -307,7 +312,7 @@ OUT;
     public function test_reports_skips() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_skip('source', 'message', $file, $line);
+        $this->logger->log_skip(new SkipEvent('source', 'message', $file, $line));
         $expected = <<<OUT
 
 
@@ -329,7 +334,7 @@ OUT;
     public function test_reports_output() {
         $file = __FILE__;
         $line = __LINE__;
-        $this->logger->log_output('source', 'message', $file, $line, false);
+        $this->logger->log_output(new OutputEvent('source', 'message', $file, $line), false);
         $expected = <<<OUT
 
 
@@ -352,28 +357,28 @@ OUT;
         $file = __FILE__;
 
         $line1 = __LINE__;
-        $this->logger->log_pass('pass1', $file, $line1);
+        $this->logger->log_pass(new PassEvent('pass1', $file, $line1));
 
         $line2 = __LINE__;
-        $this->logger->log_output('output1', 'output 1', $file, $line2, false);
+        $this->logger->log_output(new OutputEvent('output1', 'output 1', $file, $line2), false);
 
         $line3 = __LINE__;
-        $this->logger->log_failure('fail', 'failure', $file, $line3);
+        $this->logger->log_failure(new FailEvent('fail', 'failure', $file, $line3));
 
         $line4 = __LINE__;
-        $this->logger->log_output('output2', 'output 2', $file, $line4, true);
+        $this->logger->log_output(new OutputEvent('output2', 'output 2', $file, $line4), true);
 
         $line5 = __LINE__;
-        $this->logger->log_error('error', 'error', $file, $line5);
+        $this->logger->log_error(new ErrorEvent('error', 'error', $file, $line5));
 
         $line6 = __LINE__;
-        $this->logger->log_output('output3', 'output 3', $file, $line6, true);
+        $this->logger->log_output(new OutputEvent('output3', 'output 3', $file, $line6), true);
 
         $line7 = __LINE__;
-        $this->logger->log_skip('skip', 'skip', $file, $line7);
+        $this->logger->log_skip(new SkipEvent('skip', 'skip', $file, $line7));
 
         $line8 = __LINE__;
-        $this->logger->log_output('output4', 'output 4', $file, $line8, false);
+        $this->logger->log_output(new OutputEvent('output4', 'output 4', $file, $line8), false);
 
         $expected = <<<OUT
 

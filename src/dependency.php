@@ -129,11 +129,12 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                         \assert(\is_string($file));
                         \assert(\is_int($line));
                         $graph->logger->log_error(
-                            $name,
-                            \sprintf(
-                                "This test has a cyclical dependency with the following tests:\n\t%s",
-                                \implode("\n\t", \array_slice($cycle, 1))),
-                            $file, $line);
+                            new ErrorEvent(
+                                $name,
+                                \sprintf(
+                                    "This test has a cyclical dependency with the following tests:\n\t%s",
+                                    \implode("\n\t", \array_slice($cycle, 1))),
+                                $file, $line));
                     }
                     else
                     {
@@ -147,9 +148,10 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                             \assert(\is_string($file));
                             \assert(\is_int($line));
                             $graph->logger->log_skip(
-                                $name,
-                                "This test depends on '{$pre_name}', which did not pass",
-                                $file, $line);
+                                new SkipEvent(
+                                    $name,
+                                    "This test depends on '{$pre_name}', which did not pass",
+                                    $file, $line));
                         }
                     }
                 }
@@ -162,9 +164,10 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                     \assert(\is_string($file));
                     \assert(\is_int($line));
                     $graph->logger->log_error(
-                        $name,
-                        "This test depends on test '{$pre_name}', which was never run",
-                        $file, $line);
+                        new ErrorEvent(
+                            $name,
+                            "This test depends on test '{$pre_name}', which was never run",
+                            $file, $line));
                 }
                 else
                 {

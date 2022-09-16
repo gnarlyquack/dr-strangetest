@@ -21,6 +21,19 @@ final class PassEvent extends struct implements Event
 
     /** @var int */
     public $line;
+
+
+    /**
+     * @param string $source
+     * @param string $file
+     * @param int $line
+     */
+    public function __construct($source, $file, $line)
+    {
+        $this->source = $source;
+        $this->file = $file;
+        $this->line = $line;
+    }
 }
 
 
@@ -40,6 +53,23 @@ final class FailEvent extends struct implements Event
 
     /** @var ?string */
     public $additional;
+
+
+    /**
+     * @param string $source
+     * @param string $reason
+     * @param string $file
+     * @param int $line
+     * @param ?string $additional
+     */
+    public function __construct($source, $reason, $file, $line, $additional = null)
+    {
+        $this->source = $source;
+        $this->reason = $reason;
+        $this->file = $file;
+        $this->line = $line;
+        $this->additional = $additional;
+    }
 }
 
 
@@ -59,6 +89,23 @@ final class ErrorEvent extends struct implements Event
 
     /** @var ?string */
     public $additional;
+
+
+    /**
+     * @param string $source
+     * @param string $reason
+     * @param ?string $file
+     * @param ?int $line
+     * @param ?string $additional
+     */
+    public function __construct($source, $reason, $file = null, $line = null, $additional = null)
+    {
+        $this->source = $source;
+        $this->reason = $reason;
+        $this->file = $file;
+        $this->line = $line;
+        $this->additional = $additional;
+    }
 }
 
 
@@ -78,6 +125,23 @@ final class SkipEvent extends struct implements Event
 
     /** @var ?string */
     public $additional;
+
+
+    /**
+     * @param string $source
+     * @param string $reason
+     * @param string $file
+     * @param int $line
+     * @param ?string $additional
+     */
+    public function __construct($source, $reason, $file, $line, $additional = null)
+    {
+        $this->source = $source;
+        $this->reason = $reason;
+        $this->file = $file;
+        $this->line = $line;
+        $this->additional = $additional;
+    }
 }
 
 
@@ -94,6 +158,21 @@ final class OutputEvent extends struct implements Event
 
     /** @var ?int */
     public $line;
+
+
+    /**
+     * @param string $source
+     * @param string $output
+     * @param ?string $file
+     * @param ?int $line
+     */
+    public function __construct($source, $output, $file = null, $line = null)
+    {
+        $this->source = $source;
+        $this->output = $output;
+        $this->file = $file;
+        $this->line = $line;
+    }
 }
 
 
@@ -251,18 +330,10 @@ final class Logger extends struct
 
 
     /**
-     * @param string $source
-     * @param string $file
-     * @param int $line
      * @return void
      */
-    public function log_pass($source, $file, $line)
+    public function log_pass(PassEvent $event)
     {
-        $event = new PassEvent;
-        $event->source = $source;
-        $event->file = $file;
-        $event->line = $line;
-
         if ($this->buffer)
         {
             $this->queued[] = $event;
@@ -280,22 +351,10 @@ final class Logger extends struct
 
 
     /**
-     * @param string $source
-     * @param string $reason
-     * @param string $file
-     * @param int $line
-     * @param ?string $additional
      * @return void
      */
-    public function log_failure($source, $reason, $file, $line, $additional = null)
+    public function log_failure(FailEvent $event)
     {
-        $event = new FailEvent;
-        $event->source = $source;
-        $event->reason = $reason;
-        $event->file = $file;
-        $event->line = $line;
-        $event->additional = $additional;
-
         if ($this->buffer)
         {
             $this->queued[] = $event;
@@ -311,22 +370,10 @@ final class Logger extends struct
 
 
     /**
-     * @param string $source
-     * @param string $reason
-     * @param ?string $file
-     * @param ?int $line
-     * @param ?string $additional
      * @return void
      */
-    public function log_error($source, $reason, $file = null, $line = null, $additional = null)
+    public function log_error(ErrorEvent $event)
     {
-        $event = new ErrorEvent;
-        $event->source = $source;
-        $event->reason = $reason;
-        $event->file = $file;
-        $event->line = $line;
-        $event->additional = $additional;
-
         if ($this->buffer)
         {
             $this->queued[] = $event;
@@ -342,23 +389,11 @@ final class Logger extends struct
 
 
     /**
-     * @param string $source
-     * @param string $reason
-     * @param string $file
-     * @param int $line
-     * @param ?string $additional
      * @param ?bool $during_error
      * @return void
      */
-    public function log_skip($source, $reason, $file, $line, $additional = null, $during_error = false)
+    public function log_skip(SkipEvent $event, $during_error = false)
     {
-        $event = new SkipEvent;
-        $event->source = $source;
-        $event->reason = $reason;
-        $event->file = $file;
-        $event->line = $line;
-        $event->additional = $additional;
-
         if ($this->buffer)
         {
             $this->queued[] = $event;
@@ -371,7 +406,7 @@ final class Logger extends struct
                 // An error could happen during a skipped test if the skip is
                 // thrown from a test function and then an error happens during
                 // teardown
-                $reason = "This test was skipped, but there was also an error\nThe reason the test was skipped is:\n\n" . $reason;
+                $reason = "This test was skipped, but there was also an error\nThe reason the test was skipped is:\n\n" . $event->reason;
                 $event->reason = $reason;
                 $this->events[] = $event;
             }
@@ -385,21 +420,11 @@ final class Logger extends struct
 
 
     /**
-     * @param string $source
-     * @param string $output
-     * @param ?string $file
-     * @param ?int $line
      * @param ?bool $during_error
      * @return void
      */
-    public function log_output($source, $output, $file = null, $line = null, $during_error = false)
+    public function log_output(OutputEvent $event, $during_error = false)
     {
-        $event = new OutputEvent;
-        $event->source = $source;
-        $event->output = $output;
-        $event->file = $file;
-        $event->line = $line;
-
         if ($this->buffer)
         {
             $this->queued[] = $event;
@@ -470,19 +495,21 @@ function end_buffering(Logger $logger)
          --$level)
     {
         $logger->log_error(
-            $source,
-            \sprintf(
-                "An output buffer was started but never deleted.\nBuffer contents were: %s",
-                namespace\_format_buffer((string)\ob_get_clean())),
-            $logger->buffer_file, $logger->buffer_line);
+            new ErrorEvent(
+                $source,
+                \sprintf(
+                    "An output buffer was started but never deleted.\nBuffer contents were: %s",
+                    namespace\_format_buffer((string)\ob_get_clean())),
+                $logger->buffer_file, $logger->buffer_line));
     }
 
     if ($level < $logger->ob_level_start)
     {
         $logger->log_error(
-            $source,
-            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
-            $logger->buffer_file, $logger->buffer_line);
+            new ErrorEvent(
+                $source,
+                "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
+                $logger->buffer_file, $logger->buffer_line));
     }
     else
     {
@@ -490,10 +517,10 @@ function end_buffering(Logger $logger)
         if (\strlen($output))
         {
             $logger->log_output(
-                $source,
-                namespace\_format_buffer($output),
-                $logger->buffer_file, $logger->buffer_line,
-                $logger->error);
+                new OutputEvent(
+                    $source,
+                    namespace\_format_buffer($output),
+                    $logger->buffer_file, $logger->buffer_line));
         }
     }
 
@@ -503,24 +530,24 @@ function end_buffering(Logger $logger)
     {
         if ($event instanceof PassEvent)
         {
-            $logger->log_pass($event->source, $event->file, $event->line);
+            $logger->log_pass($event);
         }
         elseif ($event instanceof FailEvent)
         {
-            $logger->log_failure($event->source, $event->reason, $event->file, $event->line, $event->additional);
+            $logger->log_failure($event);
         }
         elseif ($event instanceof ErrorEvent)
         {
-            $logger->log_error($event->source, $event->reason, $event->file, $event->line, $event->additional);
+            $logger->log_error($event);
         }
         elseif ($event instanceof SkipEvent)
         {
-            $logger->log_skip($event->source, $event->reason, $event->file, $event->line, $event->additional, $logger->error);
+            $logger->log_skip($event, $logger->error);
         }
         else
         {
             \assert($event instanceof OutputEvent);
-            $logger->log_output($event->source, $event->output, $event->file, $event->line, $logger->error);
+            $logger->log_output($event, $logger->error);
         }
     }
 
@@ -541,9 +568,10 @@ function _reset_buffer(Logger $logger)
     if ($level < $logger->ob_level_start)
     {
         $logger->log_error(
-            $logger->buffer,
-            "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
-            $logger->buffer_file, $logger->buffer_line);
+            new ErrorEvent(
+                $logger->buffer,
+                "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
+                $logger->buffer_file, $logger->buffer_line));
         \ob_start();
         $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();
         return;
@@ -575,10 +603,10 @@ function _reset_buffer(Logger $logger)
     if (\strlen($output))
     {
         $logger->log_output(
-            $logger->buffer,
-            namespace\_format_buffer($output),
-            $logger->buffer_file, $logger->buffer_line,
-            $logger->error);
+            new OutputEvent(
+                $logger->buffer,
+                namespace\_format_buffer($output),
+                $logger->buffer_file, $logger->buffer_line));
     }
 
     while ($buffers)
