@@ -6,6 +6,7 @@
 // LICENSE.txt file.
 
 use strangetest\Context;
+use strangetest\LogBufferer;
 use strangetest\Logger;
 use strangetest\State;
 
@@ -25,9 +26,11 @@ class TestProcessUserTargets
     public function setup_object()
     {
         $state = new State;
+        $state->bufferer = new LogBufferer(\TEST_ROOT);
         $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+        $state->logger = $logger;
         $path = __DIR__ . '/resources/';
-        $tests = strangetest\discover_tests($state, $logger, $path, 0);
+        $tests = strangetest\discover_tests($state, $path, 0);
         \assert(!$logger->get_log()->get_events());
 
         $this->tests = $tests;

@@ -5,6 +5,7 @@
 // propagated, or distributed except according to the terms contained in the
 // LICENSE.txt file.
 
+use strangetest\LogBufferer;
 use strangetest\Logger;
 use strangetest\State;
 
@@ -26,9 +27,11 @@ class TestDependencies {
 
     private function assert_events($expected) {
         $state = new State;
-        $tests = strangetest\discover_tests($state, $this->logger, $this->root);
+        $state->logger = $this->logger;
+        $state->bufferer = new LogBufferer(\TEST_ROOT);
+        $tests = strangetest\discover_tests($state, $this->root);
         strangetest\assert_truthy($tests);
-        strangetest\run_tests($state, $this->logger, $tests, $tests);
+        strangetest\run_tests($state, $tests, $tests);
 
         assert_events($expected, $this->logger);
     }
@@ -249,11 +252,13 @@ class TestDependencies {
         );
 
         $state = new State;
-        $tests = strangetest\discover_tests($state, $this->logger, $root);
+        $state->logger = $this->logger;
+        $state->bufferer = new LogBufferer(\TEST_ROOT);
+        $tests = strangetest\discover_tests($state, $root);
         strangetest\assert_truthy($tests);
 
         $targets = strangetest\process_specifiers($this->logger, $tests, $args);
-        strangetest\run_tests($state, $this->logger, $tests, $targets);
+        strangetest\run_tests($state, $tests, $targets);
 
         assert_events($events, $this->logger);
     }

@@ -188,6 +188,7 @@ final class _FormatExceptionResult extends struct
     public $trace;
 }
 
+
 /**
  * @param \Throwable $exception
  * @param string $root
@@ -385,24 +386,6 @@ final class Logger extends struct
     /** @var LogOutputter */
     private $outputter;
 
-    /** @var ?string */
-    public $buffer;
-
-    /** @var ?string */
-    public $buffer_file;
-
-    /** @var ?int */
-    public $buffer_line;
-
-    /** @var bool */
-    public $error = false;
-
-    /** @var int */
-    public $ob_level_start;
-
-    /** @var Event[] */
-    public $queued = array();
-
 
     /**
      * @param string $root
@@ -421,19 +404,12 @@ final class Logger extends struct
      */
     public function log_pass(PassEvent $event)
     {
-        if ($this->buffer)
+        ++$this->count[namespace\EVENT_PASS];
+        if ($this->verbose & namespace\LOG_PASS)
         {
-            $this->queued[] = $event;
+            $this->events[] = $event;
         }
-        else
-        {
-            ++$this->count[namespace\EVENT_PASS];
-            if ($this->verbose & namespace\LOG_PASS)
-            {
-                $this->events[] = $event;
-            }
-            $this->outputter->output_pass();
-        }
+        $this->outputter->output_pass();
     }
 
 
@@ -442,17 +418,9 @@ final class Logger extends struct
      */
     public function log_failure(FailEvent $event)
     {
-        if ($this->buffer)
-        {
-            $this->queued[] = $event;
-            $this->error = true;
-        }
-        else
-        {
-            ++$this->count[namespace\EVENT_FAIL];
-            $this->events[] = $event;
-            $this->outputter->output_failure();
-        }
+        ++$this->count[namespace\EVENT_FAIL];
+        $this->events[] = $event;
+        $this->outputter->output_failure();
     }
 
 
@@ -461,17 +429,9 @@ final class Logger extends struct
      */
     public function log_error(ErrorEvent $event)
     {
-        if ($this->buffer)
-        {
-            $this->queued[] = $event;
-            $this->error = true;
-        }
-        else
-        {
-            ++$this->count[namespace\EVENT_ERROR];
-            $this->events[] = $event;
-            $this->outputter->output_error();
-        }
+        ++$this->count[namespace\EVENT_ERROR];
+        $this->events[] = $event;
+        $this->outputter->output_error();
     }
 
 
@@ -481,28 +441,21 @@ final class Logger extends struct
      */
     public function log_skip(SkipEvent $event, $during_error = false)
     {
-        if ($this->buffer)
+        ++$this->count[namespace\EVENT_SKIP];
+        if ($during_error)
         {
-            $this->queued[] = $event;
+            // An error could happen during a skipped test if the skip is
+            // thrown from a test function and then an error happens during
+            // teardown
+            $reason = "This test was skipped, but there was also an error\nThe reason the test was skipped is:\n\n" . $event->reason;
+            $event->reason = $reason;
+            $this->events[] = $event;
         }
-        else
+        elseif ($this->verbose & namespace\LOG_SKIP)
         {
-            ++$this->count[namespace\EVENT_SKIP];
-            if ($during_error)
-            {
-                // An error could happen during a skipped test if the skip is
-                // thrown from a test function and then an error happens during
-                // teardown
-                $reason = "This test was skipped, but there was also an error\nThe reason the test was skipped is:\n\n" . $event->reason;
-                $event->reason = $reason;
-                $this->events[] = $event;
-            }
-            elseif ($this->verbose & namespace\LOG_SKIP)
-            {
-                $this->events[] = $event;
-            }
-            $this->outputter->output_skip();
+            $this->events[] = $event;
         }
+        $this->outputter->output_skip();
     }
 
 
@@ -512,19 +465,12 @@ final class Logger extends struct
      */
     public function log_output(OutputEvent $event, $during_error = false)
     {
-        if ($this->buffer)
+        ++$this->count[namespace\EVENT_OUTPUT];
+        if (($this->verbose & namespace\LOG_OUTPUT) || $during_error)
         {
-            $this->queued[] = $event;
+            $this->events[] = $event;
         }
-        else
-        {
-            ++$this->count[namespace\EVENT_OUTPUT];
-            if (($this->verbose & namespace\LOG_OUTPUT) || $during_error)
-            {
-                $this->events[] = $event;
-            }
-            $this->outputter->output_output();
-        }
+        $this->outputter->output_output();
     }
 
 
@@ -552,7 +498,6 @@ final class Logger extends struct
     }
 
 
-
     /**
      * @param string $source
      * @return SkipEvent
@@ -563,6 +508,7 @@ final class Logger extends struct
         return new SkipEvent($source, $skip->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
     }
 
+
     /**
      * @return Log
      */
@@ -570,163 +516,237 @@ final class Logger extends struct
     {
         return new Log($this->count, $this->events);
     }
-}
 
 
-/**
- * @param string $source
- * @param ?string $file
- * @param ?int $line
- * @return void
- */
-function start_buffering(Logger $logger, $source, $file = null, $line = null)
-{
-    if ($logger->buffer)
+    /**
+     * @return void
+     */
+    public function clear()
     {
-        namespace\_reset_buffer($logger);
-        $logger->buffer = $source;
-        $logger->buffer_file = $file;
-        $logger->buffer_line = $line;
-    }
-    else
-    {
-        \ob_start();
-        $logger->buffer = $source;
-        $logger->buffer_file = $file;
-        $logger->buffer_line = $line;
-        $logger->ob_level_start = \ob_get_level();
+        foreach ($this->count as $i => $_)
+        {
+            $this->count[$i] = 0;
+        }
+        $this->events = array();
     }
 }
 
 
-/**
- * @return void
- */
-function end_buffering(Logger $logger)
+final class LogBufferer extends struct implements LogOutputter
 {
-    $source = $logger->buffer;
-    \assert(\is_string($source));
+    /** @var Logger */
+    private $logger;
 
-    // While clearing out the buffers, we still want to keep the logger
-    // buffered in case this process results in more events being logged. This
-    // way, the new events are properly added to the end of the existing
-    // buffered event queue.
-    $buffers = array();
-    for ($level = \ob_get_level();
-         $level > $logger->ob_level_start;
-         --$level)
+    /** @var ?string */
+    public $buffer_source;
+
+    /** @var ?string */
+    public $buffer_file;
+
+    /** @var ?int */
+    public $buffer_line;
+
+    /** @var bool */
+    public $error = false;
+
+    /** @var int */
+    public $ob_level_start;
+
+
+    /**
+     * @param string $root
+     */
+    public function __construct($root)
     {
-        $logger->log_error(
-            new ErrorEvent(
-                $source,
-                \sprintf(
-                    "An output buffer was started but never deleted.\nBuffer contents were: %s",
-                    namespace\_format_buffer((string)\ob_get_clean())),
-                $logger->buffer_file, $logger->buffer_line));
+        $this->logger = new Logger($root, namespace\LOG_ALL, $this);
     }
 
-    if ($level < $logger->ob_level_start)
-    {
-        $logger->log_error(
-            new ErrorEvent(
-                $source,
-                "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
-                $logger->buffer_file, $logger->buffer_line));
-    }
-    else
-    {
-        $output = (string)\ob_get_clean();
-        if (\strlen($output))
-        {
-            $logger->log_output(
-                new OutputEvent(
-                    $source,
-                    namespace\_format_buffer($output),
-                    $logger->buffer_file, $logger->buffer_line));
-        }
-    }
 
-    // Now unbuffer the logger and log any buffered events as normal
-    $logger->buffer = $logger->buffer_file = $logger->buffer_line = null;
-    foreach ($logger->queued as $event)
+    /**
+     * @param string $source
+     * @param ?string $file
+     * @param ?int $line
+     * @return Logger
+     */
+    public function start_buffering($source, $file = null, $line = null)
     {
-        if ($event instanceof PassEvent)
+        if ($this->buffer_source)
         {
-            $logger->log_pass($event);
-        }
-        elseif ($event instanceof FailEvent)
-        {
-            $logger->log_failure($event);
-        }
-        elseif ($event instanceof ErrorEvent)
-        {
-            $logger->log_error($event);
-        }
-        elseif ($event instanceof SkipEvent)
-        {
-            $logger->log_skip($event, $logger->error);
+            $this->reset_buffer();
         }
         else
         {
-            \assert($event instanceof OutputEvent);
-            $logger->log_output($event, $logger->error);
+            \ob_start();
+            $this->ob_level_start = \ob_get_level();
+        }
+
+        $this->buffer_source = $source;
+        $this->buffer_file = $file;
+        $this->buffer_line = $line;
+
+        return $this->logger;
+    }
+
+
+    /**
+     * @return void
+     */
+    public function end_buffering(Logger $logger)
+    {
+        \assert(\is_string($this->buffer_source));
+
+        // While clearing out the buffers, we still want to keep the logger
+        // buffered in case this process results in more events being logged. This
+        // way, the new events are properly added to the end of the existing
+        // buffered event queue.
+        $buffers = array();
+        for ($level = \ob_get_level();
+             $level > $this->ob_level_start;
+             --$level)
+        {
+            $this->logger->log_error(
+                new ErrorEvent(
+                    $this->buffer_source,
+                    \sprintf(
+                        "An output buffer was started but never deleted.\nBuffer contents were: %s",
+                        namespace\_format_buffer((string)\ob_get_clean())),
+                    $this->buffer_file, $this->buffer_line));
+        }
+
+        if ($level < $this->ob_level_start)
+        {
+            $this->logger->log_error(
+                new ErrorEvent(
+                    $this->buffer_source,
+                    "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
+                    $this->buffer_file, $this->buffer_line));
+        }
+        else
+        {
+            $output = (string)\ob_get_clean();
+            if (\strlen($output))
+            {
+                $this->logger->log_output(
+                    new OutputEvent(
+                        $this->buffer_source,
+                        namespace\_format_buffer($output),
+                        $this->buffer_file, $this->buffer_line));
+            }
+        }
+
+        // Now unbuffer the logger and log any buffered events as normal
+        foreach ($this->logger->get_log()->get_events() as $event)
+        {
+            if ($event instanceof PassEvent)
+            {
+                $logger->log_pass($event);
+            }
+            elseif ($event instanceof FailEvent)
+            {
+                $logger->log_failure($event);
+            }
+            elseif ($event instanceof ErrorEvent)
+            {
+                $logger->log_error($event);
+            }
+            elseif ($event instanceof SkipEvent)
+            {
+                $logger->log_skip($event, $this->error);
+            }
+            else
+            {
+                \assert($event instanceof OutputEvent);
+                $logger->log_output($event, $this->error);
+            }
+        }
+
+        $this->buffer_source = $this->buffer_file = $this->buffer_line = null;
+        $this->error = false;
+        $this->logger->clear();
+    }
+
+
+    /**
+     * @return void
+     */
+    public function reset_buffer()
+    {
+        \assert(\is_string($this->buffer_source));
+
+        $level = \ob_get_level();
+
+        if ($level < $this->ob_level_start)
+        {
+            $this->logger->log_error(
+                new ErrorEvent(
+                    $this->buffer_source,
+                    "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
+                    $this->buffer_file, $this->buffer_line));
+            \ob_start();
+            $this->ob_level_start = \ob_get_level();
+            return;
+        }
+
+        $buffers = array();
+        for ( ; $level > $this->ob_level_start; --$level)
+        {
+            // Somebody else is doing their own output buffering, so we want to pop
+            // off their buffer(s), check our own, and then put their buffer(s)
+            // back.
+            $buffers[] = \ob_get_clean();
+        }
+
+        $output = (string)\ob_get_contents();
+        if (\strlen($output))
+        {
+            \ob_clean();
+            $this->logger->log_output(
+                new OutputEvent(
+                    $this->buffer_source,
+                    namespace\_format_buffer($output),
+                    $this->buffer_file, $this->buffer_line));
+        }
+
+        while ($buffers)
+        {
+            // Output buffers stack, so the first buffer we read was the last
+            // buffer that was written. To restore them in the correct order,
+            // we output them in reverse order from which we read them
+            \ob_start();
+            echo \array_pop($buffers);
         }
     }
 
-    // Now clear out any state accumulated while the logger was buffered
-    $logger->error = false;
-    $logger->queued = array();
-}
 
+    //
+    // Implementation of LogOutputter interface
+    //
 
-/**
- * @return void
- */
-function _reset_buffer(Logger $logger)
-{
-    \assert(\is_string($logger->buffer));
-    $level = \ob_get_level();
-
-    if ($level < $logger->ob_level_start)
+    /** @return void */
+    public function output_pass()
     {
-        $logger->log_error(
-            new ErrorEvent(
-                $logger->buffer,
-                "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
-                $logger->buffer_file, $logger->buffer_line));
-        \ob_start();
-        $logger->ob_level_start = \ob_get_level();
-        return;
     }
 
-    $buffers = array();
-    for ( ; $level > $logger->ob_level_start; --$level)
+    /** @return void */
+    public function output_failure()
     {
-        // Somebody else is doing their own output buffering, so we want to pop
-        // off their buffer(s), check our own, and then put their buffer(s)
-        // back.
-        $buffers[] = \ob_get_clean();
+        $this->error = true;
     }
 
-    $output = (string)\ob_get_contents();
-    \ob_clean();
-    if (\strlen($output))
+    /** @return void */
+    public function output_error()
     {
-        $logger->log_output(
-            new OutputEvent(
-                $logger->buffer,
-                namespace\_format_buffer($output),
-                $logger->buffer_file, $logger->buffer_line));
+        $this->error = true;
     }
 
-    while ($buffers)
+    /** @return void */
+    public function output_skip()
     {
-        // Output buffers stack, so the first buffer we read was the last
-        // buffer that was written. To restore them in the correct order,
-        // we output them in reverse order from which we read them
-        $buffer = \array_pop($buffers);
-        \ob_start();
-        echo $buffer;
+    }
+
+    /** @return void */
+    public function output_output()
+    {
     }
 }
 

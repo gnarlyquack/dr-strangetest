@@ -49,8 +49,10 @@ final class _Context extends struct implements Context
 {
     /** @var State */
     private $state;
+
     /** @var Logger */
     private $logger;
+
     /** @var FunctionTest|MethodTest */
     private $test;
     /** @var int[] */
@@ -221,7 +223,7 @@ final class _Context extends struct implements Context
  * @param TestRunGroup|DirectoryTest $tests
  * @return void
  */
-function run_tests(State $state, Logger $logger, $suite, $tests)
+function run_tests(State $state, $suite, $tests)
 {
     $args = array();
     $run = array(0);
@@ -229,11 +231,11 @@ function run_tests(State $state, Logger $logger, $suite, $tests)
     {
         if ($tests instanceof TestRunGroup)
         {
-            namespace\_run_test_run_group($state, $logger, $tests, $run, $args);
+            namespace\_run_test_run_group($state, $tests, $run, $args);
         }
         else
         {
-            namespace\_run_directory($state, $logger, $tests, $run, $args);
+            namespace\_run_directory($state, $tests, $run, $args);
         }
 
         if (!$state->postponed)
@@ -241,7 +243,7 @@ function run_tests(State $state, Logger $logger, $suite, $tests)
             break;
         }
 
-        $dependencies = namespace\resolve_dependencies($state, $logger);
+        $dependencies = namespace\resolve_dependencies($state);
         if (!$dependencies)
         {
             break;
@@ -259,7 +261,7 @@ function run_tests(State $state, Logger $logger, $suite, $tests)
  * @return void
  */
 function _run_test_run_group(
-    State $state, Logger $logger,
+    State $state,
     TestRunGroup $group, array $run, array $args)
 {
     foreach ($group->runs as $test)
@@ -275,9 +277,9 @@ function _run_test_run_group(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name, $file, $line);
+        $logger = $state->bufferer->start_buffering($name, $file, $line);
         list($result, $run_args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
-        namespace\end_buffering($logger);
+        $state->bufferer->end_buffering($state->logger);
 
         if (namespace\RESULT_PASS === $result)
         {
@@ -290,17 +292,17 @@ function _run_test_run_group(
                     $tests = $test->tests;
                     if ($tests instanceof DirectoryTest)
                     {
-                        namespace\_run_directory($state, $logger, $tests, $new_run, $run_args);
+                        namespace\_run_directory($state, $tests, $new_run, $run_args);
                     }
                     else
                     {
-                        namespace\_run_file($state, $logger, $tests, $new_run, $run_args);
+                        namespace\_run_file($state, $tests, $new_run, $run_args);
                     }
                 }
                 else
                 {
                     $message = "'{$name}' did not return any arguments";
-                    $logger->log_error(new ErrorEvent($test->tests->name, $message, $file, $line));
+                    $state->logger->log_error(new ErrorEvent($test->tests->name, $message, $file, $line));
                 }
             }
 
@@ -314,9 +316,9 @@ function _run_test_run_group(
                 // @todo Stop asserting if reflection function returns file info
                 \assert(\is_string($file));
                 \assert(\is_int($line));
-                namespace\start_buffering($logger, $name, $file, $line);
+                $logger = $state->bufferer->start_buffering($name, $file, $line);
                 namespace\_run_teardown($logger, $name, $callable, $run_args);
-                namespace\end_buffering($logger);
+                $state->bufferer->end_buffering($state->logger);
             }
         }
     }
@@ -329,7 +331,7 @@ function _run_test_run_group(
  * @return void
  */
 function _run_directory(
-    State $state, Logger $logger,
+    State $state,
     DirectoryTest $directory, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
@@ -344,9 +346,9 @@ function _run_directory(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name, $file, $line);
+        $logger = $state->bufferer->start_buffering($name, $file, $line);
         list($setup, $args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
-        namespace\end_buffering($logger);
+        $state->bufferer->end_buffering($state->logger);
     }
 
     if (namespace\RESULT_PASS === $setup)
@@ -357,15 +359,15 @@ function _run_directory(
             {
                 if ($test instanceof TestRunGroup)
                 {
-                    namespace\_run_test_run_group($state, $logger, $test, $run, $args);
+                    namespace\_run_test_run_group($state, $test, $run, $args);
                 }
                 elseif ($test instanceof DirectoryTest)
                 {
-                    namespace\_run_directory($state, $logger, $test, $run, $args);
+                    namespace\_run_directory($state, $test, $run, $args);
                 }
                 else
                 {
-                    namespace\_run_file($state, $logger, $test, $run, $args);
+                    namespace\_run_file($state, $test, $run, $args);
                 }
             }
         }
@@ -379,9 +381,9 @@ function _run_directory(
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $name, $file, $line);
+            $logger = $state->bufferer->start_buffering($name, $file, $line);
             namespace\_run_teardown($logger, $name, $callable, $args);
-            namespace\end_buffering($logger);
+            $state->bufferer->end_buffering($state->logger);
         }
     }
 }
@@ -393,7 +395,7 @@ function _run_directory(
  * @return void
  */
 function _run_file(
-    State $state, Logger $logger,
+    State $state,
     FileTest $file, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
@@ -408,9 +410,9 @@ function _run_file(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($setup_filename));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name, $setup_filename, $line);
+        $logger = $state->bufferer->start_buffering($name, $setup_filename, $line);
         list($setup, $args) = namespace\_run_setup($logger, $name, $setup_filename, $line, $callable, $args);
-        namespace\end_buffering($logger);
+        $state->bufferer->end_buffering($state->logger);
     }
 
     if (namespace\RESULT_PASS === $setup)
@@ -421,12 +423,12 @@ function _run_file(
             {
                 if ($test instanceof ClassTest)
                 {
-                    namespace\_run_class($state, $logger, $test, $run, $args);
+                    namespace\_run_class($state, $test, $run, $args);
                 }
                 else
                 {
                     \assert($test instanceof FunctionTest);
-                    namespace\_run_function($state, $logger, $test, $file->setup_function, $file->teardown_function, $run, $args);
+                    namespace\_run_function($state, $test, $file->setup_function, $file->teardown_function, $run, $args);
                 }
             }
         }
@@ -440,9 +442,9 @@ function _run_file(
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($teardown_filename));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $name, $teardown_filename, $line);
+            $logger = $state->bufferer->start_buffering($name, $teardown_filename, $line);
             namespace\_run_teardown($logger, $name, $callable, $args);
-            namespace\end_buffering($logger);
+            $state->bufferer->end_buffering($state->logger);
         }
     }
 }
@@ -454,7 +456,7 @@ function _run_file(
  * @return void
  */
 function _run_class(
-    State $state, Logger $logger,
+    State $state,
     ClassTest $class, array $run, array $args)
 {
     $file = $class->test->getFileName();
@@ -462,9 +464,9 @@ function _run_class(
     // @todo Stop asserting if reflection function returns file info
     \assert(\is_string($file));
     \assert(\is_int($line));
-    namespace\start_buffering($logger, $class->test->name, $file, $line);
+    $logger = $state->bufferer->start_buffering($class->test->name, $file, $line);
     $object = namespace\_instantiate_test($logger, $class->test, $args);
-    namespace\end_buffering($logger);
+    $state->bufferer->end_buffering($state->logger);
 
     if ($object)
     {
@@ -480,16 +482,16 @@ function _run_class(
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $name, $file, $line);
+            $logger = $state->bufferer->start_buffering($name, $file, $line);
             list($setup,) = namespace\_run_setup($logger, $name, $file, $line, $method);
-            namespace\end_buffering($logger);
+            $state->bufferer->end_buffering($state->logger);
         }
 
         if (namespace\RESULT_PASS === $setup)
         {
             foreach ($class->tests as $test)
             {
-                namespace\_run_method($state, $logger, $object, $test, $class->setup_method, $class->teardown_method, $run);
+                namespace\_run_method($state, $object, $test, $class->setup_method, $class->teardown_method, $run);
             }
 
             if ($class->teardown_object)
@@ -501,9 +503,9 @@ function _run_class(
                 // @todo Stop asserting if reflection function returns file info
                 \assert(\is_string($file));
                 \assert(\is_int($line));
-                namespace\start_buffering($logger, $name, $file, $line);
+                $logger = $state->bufferer->start_buffering($name, $file, $line);
                 namespace\_run_teardown($logger, $name, $method);
-                namespace\end_buffering($logger);
+                $state->bufferer->end_buffering($state->logger);
             }
         }
     }
@@ -543,7 +545,7 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
  * @return void
  */
 function _run_method(
-    State $state, Logger $logger, $object, MethodTest $test, $setup_method, $teardown_method, array $run)
+    State $state, $object, MethodTest $test, $setup_method, $teardown_method, array $run)
 {
     $run_name = namespace\_get_run_name($state, $run);
     $test_name = $test->name . $run_name;
@@ -558,22 +560,24 @@ function _run_method(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name, $file, $line);
+        $logger = $state->bufferer->start_buffering($name, $file, $line);
         list($result, ) = namespace\_run_setup($logger, $name, $file, $line, $setup);
     }
 
     if (namespace\RESULT_PASS === $result)
     {
         $method = namespace\_get_callable_method($test->test, $object);
-        $context = new _Context($state, $logger, $test, $run);
         $file = $test->test->getFileName();
         $line = $test->test->getStartLine();
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $test_name, $file, $line);
+
+        $logger = $state->bufferer->start_buffering($test_name, $file, $line);
+        $context = new _Context($state, $logger, $test, $run);
         $result = namespace\_run_test($logger, $test_name, $method, $context);
 
+        // @todo Buffer function-specific teardown functions separately from test function?
         while ($context->teardowns)
         {
             $teardown = \array_pop($context->teardowns);
@@ -589,12 +593,12 @@ function _run_method(
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $name, $file, $line);
+            $logger = $state->bufferer->start_buffering($name, $file, $line);
             $result |= namespace\_run_teardown($logger, $name, $teardown);
         }
     }
-    namespace\end_buffering($logger);
-    namespace\_record_test_result($state, $logger, $test, $run, $test_name, $result);
+    $state->bufferer->end_buffering($state->logger);
+    namespace\_record_test_result($state, $test, $run, $test_name, $result);
 }
 
 
@@ -606,7 +610,7 @@ function _run_method(
  * @return void
  */
 function _run_function(
-    State $state, Logger $logger,
+    State $state,
     FunctionTest $test, $setup_function, $teardown_function, array $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run);
@@ -622,7 +626,7 @@ function _run_function(
         // @todo Stop asserting if reflection function returns file info
         \assert(\is_string($file));
         \assert(\is_int($line));
-        namespace\start_buffering($logger, $name, $file, $line);
+        $logger = $state->bufferer->start_buffering($name, $file, $line);
         list($result, $args) = namespace\_run_setup($logger, $name, $file, $line, $callable, $args);
     }
 
@@ -630,16 +634,18 @@ function _run_function(
     {
         if (\is_array($args))
         {
-            $context = new _Context($state, $logger, $test, $run);
             $callable = namespace\_get_callable_function($test->test);
             $file = $test->test->getFileName();
             $line = $test->test->getStartLine();
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $test_name, $file, $line);
+
+            $logger = $state->bufferer->start_buffering($test_name, $file, $line);
+            $context = new _Context($state, $logger, $test, $run);
             $result = namespace\_run_test($logger, $test_name, $callable, $context, $args);
 
+            // @todo Buffer test-specific teardown functions separately from the test?
             while ($context->teardowns)
             {
                 $teardown = \array_pop($context->teardowns);
@@ -656,12 +662,12 @@ function _run_function(
             // @todo Stop asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            namespace\start_buffering($logger, $name, $file, $line);
+            $logger = $state->bufferer->start_buffering($name, $file, $line);
             $result |= namespace\_run_teardown($logger, $name, $callable, $args);
         }
     }
-    namespace\end_buffering($logger);
-    namespace\_record_test_result($state, $logger, $test, $run, $test_name, $result);
+    $state->bufferer->end_buffering($state->logger);
+    namespace\_record_test_result($state, $test, $run, $test_name, $result);
 }
 
 
@@ -672,8 +678,7 @@ function _run_function(
  * @param int $result
  * @return void
  */
-function _record_test_result(
-    State $state, Logger $logger, $test, array $run, $name, $result)
+function _record_test_result(State $state, $test, array $run, $name, $result)
 {
     if (namespace\RESULT_POSTPONE !== $result)
     {
@@ -692,7 +697,7 @@ function _record_test_result(
             // @todo Eliminate asserting if reflection function returns file info
             \assert(\is_string($file));
             \assert(\is_int($line));
-            $logger->log_pass(new PassEvent($name, $file, $line));
+            $state->logger->log_pass(new PassEvent($name, $file, $line));
             for ($i = 0, $c = \count($run); $i < $c; ++$i)
             {
                 $id = \implode(',', \array_slice($run, 0, $i + 1));
@@ -791,8 +796,7 @@ function _run_setup(Logger $logger, $name, $file, $line, $callable, array $args 
  * @param ?mixed[] $args
  * @return int
  */
-function _run_test(
-    Logger $logger, $name, $callable, _Context $context, array $args = null)
+function _run_test(Logger $logger, $name, $callable, _Context $context, array $args = null)
 {
     try
     {

@@ -17,9 +17,9 @@ namespace strangetest;
  *                                                  were found and an error
  *                                                  occurred during discovery.
  */
-function discover_tests(State $state, Logger $logger, $path)
+function discover_tests(State $state, $path)
 {
-    return namespace\_discover_directory(new _DiscoveryState($state, $logger), $path, 0);
+    return namespace\_discover_directory(new _DiscoveryState($state), $path, 0);
 }
 
 
@@ -34,14 +34,10 @@ final class _DiscoveryState extends struct
     /** @var State */
     public $global;
 
-    /** @var Logger */
-    public $logger;
 
-
-    public function __construct(State $state, Logger $logger)
+    public function __construct(State $state)
     {
         $this->global = $state;
-        $this->logger = $logger;
     }
 }
 
@@ -103,7 +99,7 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
                     $message = \sprintf(
                         'Found multiple directory setup files: %s and %s',
                         $setup_filename, $filename);
-                    $state->logger->log_error(new ErrorEvent($dirpath, $message));
+                    $state->global->logger->log_error(new ErrorEvent($dirpath, $message));
                 }
             }
             elseif ((0 === \substr_compare($filename, 'test', 0, 4, true))
@@ -156,7 +152,7 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
         }
         elseif ($valid)
         {
-            $state->logger->log_error(new ErrorEvent($dirpath, 'No tests were found in this directory'));
+            $state->global->logger->log_error(new ErrorEvent($dirpath, 'No tests were found in this directory'));
         }
         else
         {
@@ -178,7 +174,7 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
  */
 function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $directory, TestRunGroup $run_group, $filepath)
 {
-    $iterator = namespace\_new_token_iterator($state->logger, $filepath);
+    $iterator = namespace\_new_token_iterator($state->global, $filepath);
     if (!$iterator)
     {
         return false;
@@ -208,14 +204,14 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
                         if ($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
+                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
                             {
                                 $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $directory->setup))
+                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $directory->setup))
                             {
                                 $valid = false;
                             }
@@ -227,14 +223,14 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
                         if ($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
+                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
                             {
                                $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $directory->teardown))
+                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $directory->teardown))
                             {
                                 $valid = false;
                             }
@@ -268,7 +264,7 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
  */
 function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
 {
-    $iterator = namespace\_new_token_iterator($state->logger, $filepath);
+    $iterator = namespace\_new_token_iterator($state->global, $filepath);
     if (!$iterator)
     {
         return false;
@@ -337,7 +333,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
                         $lexer->eat_underscore();
                         if ($lexer->eat_string('file'))
                         {
-                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->setup_file))
+                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->setup_file))
                             {
                                 $valid = false;
                             }
@@ -345,14 +341,14 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
                         elseif($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
+                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
                             {
                                 $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->setup_function))
+                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->setup_function))
                             {
                                 $valid = false;
                             }
@@ -363,7 +359,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
                         $lexer->eat_underscore();
                         if ($lexer->eat_string('file'))
                         {
-                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->teardown_file))
+                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->teardown_file))
                             {
                                 $valid = false;
                             }
@@ -371,14 +367,14 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
                         elseif ($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
+                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
                             {
                                 $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->logger, $filepath, $function, $file->teardown_function))
+                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->teardown_function))
                             {
                                 $valid = false;
                             }
@@ -406,7 +402,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
         {
             if ($reflected_test instanceof \ReflectionClass)
             {
-                $test = namespace\_discover_class($state->logger, $reflected_test, $file->run_group_id);
+                $test = namespace\_discover_class($state->global->logger, $reflected_test, $file->run_group_id);
                 if ($test)
                 {
                     $file->tests[$test_index] = $test;
@@ -432,7 +428,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
         }
         elseif ($valid)
         {
-            $state->logger->log_error(new ErrorEvent($filepath, 'No tests were found in this file'));
+            $state->global->logger->log_error(new ErrorEvent($filepath, 'No tests were found in this file'));
         }
         else
         {
@@ -680,7 +676,7 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
                     "Teardown run function '%s' has no matching setup run function",
                     $run->teardown->getName()
                 );
-                $state->logger->log_error(new ErrorEvent($filepath, $message, $file, $line));
+                $state->global->logger->log_error(new ErrorEvent($filepath, $message, $file, $line));
             }
             else
             {
@@ -765,14 +761,13 @@ final class _NamespaceToken extends struct implements _Token {
 
 
 /**
- * @param Logger $logger
  * @param string $filepath
  * @return ?_TokenIterator
  */
-function _new_token_iterator(Logger $logger, $filepath)
+function _new_token_iterator(State $state, $filepath)
 {
     $iterator = null;
-    $source = namespace\_read_file($logger, $filepath);
+    $source = namespace\_read_file($state, $filepath);
     if ($source)
     {
         $iterator = new _TokenIterator;
@@ -861,14 +856,14 @@ function _next_token(_TokenIterator $iterator)
  * @param string $filepath
  * @return string|false
  */
-function _read_file(Logger $logger, $filepath)
+function _read_file(State $state, $filepath)
 {
     $source = false;
 
     // First include the file to ensure it parses correctly
-    namespace\start_buffering($logger, $filepath);
+    $logger = $state->bufferer->start_buffering($filepath);
     $included = namespace\_include_file($logger, $filepath);
-    namespace\end_buffering($logger);
+    $state->bufferer->end_buffering($state->logger);
 
     if ($included)
     {
@@ -880,17 +875,17 @@ function _read_file(Logger $logger, $filepath)
                 // file_get_contents() can return false if it fails. Presumably
                 // an error/exception would have been generated, so we would
                 // never get here, but the documentation isn't explicit
-                $logger->log_error(new ErrorEvent($filepath, 'Unable to read file'));
+                $state->logger->log_error(new ErrorEvent($filepath, 'Unable to read file'));
             }
         }
         // @bc 5.6 Catch Exception
         catch (\Exception $e)
         {
-            $logger->log_error(new ErrorEvent($filepath, 'Unable to read file: ' . $e->getMessage()));
+            $state->logger->log_error(new ErrorEvent($filepath, 'Unable to read file: ' . $e->getMessage()));
         }
         catch (\Throwable $e)
         {
-            $logger->log_error(new ErrorEvent($filepath, 'Unable to read file: ' . $e->getMessage()));
+            $state->logger->log_error(new ErrorEvent($filepath, 'Unable to read file: ' . $e->getMessage()));
         }
     }
 

@@ -118,7 +118,14 @@ final class Error extends \ErrorException {
 }
 
 
-final class State extends struct {
+final class State extends struct
+{
+    /** @var Logger */
+    public $logger;
+
+    /** @var LogBufferer */
+    public $bufferer;
+
     /** @var array<string, array{'group': int, 'runs': bool[]}> */
     public $results = array();
 
@@ -161,30 +168,31 @@ function main($argc, $argv)
     // @todo Add configuration option to explicitly set the test root directory
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
-    $logger = new Logger($cwd, $options['verbose'], new CommandLineOutputter);
-    $state = new State();
+    $state = new State;
+    $state->logger = new Logger($cwd, $options['verbose'], new CommandLineOutputter);
+    $state->bufferer = new LogBufferer($cwd);
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
-    $tests = namespace\discover_tests($state, $logger, $cwd);
+    $tests = namespace\discover_tests($state, $cwd);
     if ($tests)
     {
         if ($args)
         {
-            $targets = namespace\process_specifiers($logger, $tests, $args);
+            $targets = namespace\process_specifiers($state->logger, $tests, $args);
             if ($targets)
             {
-                namespace\run_tests($state, $logger, $tests, $targets);
+                namespace\run_tests($state, $tests, $targets);
             }
         }
         else
         {
-            namespace\run_tests($state, $logger, $tests, $tests);
+            namespace\run_tests($state, $tests, $tests);
         }
     }
     $end = namespace\_microtime();
 
-    $log = $logger->get_log();
+    $log = $state->logger->get_log();
     $log->megabytes_used = \round(\memory_get_peak_usage() / 1048576, 3);
     $log->seconds_elapsed = \round(($end - $start) / 1000000, 3);
     namespace\output_log($log);

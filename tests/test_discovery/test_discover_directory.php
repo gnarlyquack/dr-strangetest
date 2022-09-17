@@ -7,6 +7,7 @@
 
 namespace test\discover\directory;
 use strangetest;
+use strangetest\LogBufferer;
 use strangetest\Logger;
 use strangetest\State;
 use strangetest\_DiscoveryState;
@@ -174,7 +175,9 @@ function test_reports_error_for_multiple_directory_fixtures(Logger $logger, $pat
 
 function assert_discovered($logger, $path, $discovered, $log)
 {
-    $state = new _DiscoveryState(new State, $logger);
+    $state = new _DiscoveryState(new State);
+    $state->global->logger = $logger;
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
     $actual = strangetest\_discover_directory($state, $path, 0);
 
     $discovered = make_test($discovered);

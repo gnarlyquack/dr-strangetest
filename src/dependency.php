@@ -54,9 +54,6 @@ final class _DependencyGraph extends struct
     /** @var State */
     public $state;
 
-    /** @var Logger */
-    public $logger;
-
     /** @var FunctionDependency[] */
     public $postorder = array();
 
@@ -67,10 +64,9 @@ final class _DependencyGraph extends struct
     public $stack = array();
 
 
-    public function __construct(State $state, Logger $logger)
+    public function __construct(State $state)
     {
         $this->state = $state;
-        $this->logger = $logger;
     }
 }
 
@@ -78,9 +74,9 @@ final class _DependencyGraph extends struct
 /**
  * @return FunctionDependency[]
  */
-function resolve_dependencies(State $state, Logger $logger)
+function resolve_dependencies(State $state)
 {
-    $graph = new _DependencyGraph($state, $logger);
+    $graph = new _DependencyGraph($state);
     foreach ($state->postponed as $postponed)
     {
         namespace\_resolve_dependency($graph, $postponed);
@@ -128,7 +124,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                         // @todo Eliminate asserting if reflection function returns file info
                         \assert(\is_string($file));
                         \assert(\is_int($line));
-                        $graph->logger->log_error(
+                        $graph->state->logger->log_error(
                             new ErrorEvent(
                                 $name,
                                 \sprintf(
@@ -147,7 +143,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                             // @todo Eliminate asserting if reflection function returns file info
                             \assert(\is_string($file));
                             \assert(\is_int($line));
-                            $graph->logger->log_skip(
+                            $graph->state->logger->log_skip(
                                 new SkipEvent(
                                     $name,
                                     "This test depends on '{$pre_name}', which did not pass",
@@ -163,7 +159,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                     // @todo Eliminate asserting if reflection function returns file info
                     \assert(\is_string($file));
                     \assert(\is_int($line));
-                    $graph->logger->log_error(
+                    $graph->state->logger->log_error(
                         new ErrorEvent(
                             $name,
                             "This test depends on test '{$pre_name}', which was never run",
