@@ -398,9 +398,6 @@ final class Logger extends struct
     public $error = false;
 
     /** @var int */
-    public $ob_level_current;
-
-    /** @var int */
     public $ob_level_start;
 
     /** @var Event[] */
@@ -597,7 +594,7 @@ function start_buffering(Logger $logger, $source, $file = null, $line = null)
         $logger->buffer = $source;
         $logger->buffer_file = $file;
         $logger->buffer_line = $line;
-        $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();
+        $logger->ob_level_start = \ob_get_level();
     }
 }
 
@@ -698,29 +695,17 @@ function _reset_buffer(Logger $logger)
                 "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.",
                 $logger->buffer_file, $logger->buffer_line));
         \ob_start();
-        $logger->ob_level_start = $logger->ob_level_current = \ob_get_level();
+        $logger->ob_level_start = \ob_get_level();
         return;
     }
 
     $buffers = array();
-    if ($level > $logger->ob_level_start)
+    for ( ; $level > $logger->ob_level_start; --$level)
     {
-        // Somebody else is doing their own output buffering, so we don't
-        // want to mess it with. If their buffering started before we last
-        // reset our own buffer then we don't need to do anything. But if
-        // their buffering started after we last reset our own buffer, then
-        // we want to pop off the other buffer(s), handle our own, and then
-        // put the other buffer(s) back.
-        if ($logger->ob_level_current > $logger->ob_level_start)
-        {
-            return;
-        }
-
-        $logger->ob_level_current = $level;
-        while ($level-- > $logger->ob_level_start)
-        {
-            $buffers[] = \ob_get_clean();
-        }
+        // Somebody else is doing their own output buffering, so we want to pop
+        // off their buffer(s), check our own, and then put their buffer(s)
+        // back.
+        $buffers[] = \ob_get_clean();
     }
 
     $output = (string)\ob_get_contents();
@@ -743,7 +728,6 @@ function _reset_buffer(Logger $logger)
         \ob_start();
         echo $buffer;
     }
-    \assert($logger->ob_level_current === \ob_get_level());
 }
 
 
