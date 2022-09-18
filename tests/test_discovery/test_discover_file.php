@@ -41,7 +41,7 @@ function assert_file_discovery($filepath, array $events) {
 function assert_fixture_error($file, $source, $message) {
     $filepath = namespace\filepath($file);
     $events = array(
-        array(strangetest\EVENT_ERROR, $source, $message),
+        array(\EVENT_ERROR, $source, $message),
     );
     namespace\assert_file_discovery($filepath, $events);
 }

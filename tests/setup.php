@@ -8,6 +8,13 @@
 
 const TEST_ROOT = __DIR__;
 
+const EVENT_PASS   = 1;
+const EVENT_FAIL   = 2;
+const EVENT_ERROR  = 3;
+const EVENT_SKIP   = 4;
+const EVENT_OUTPUT = 5;
+
+
 class ExpectedException extends \Exception {}
 class UnexpectedException extends \Exception {}
 
@@ -28,11 +35,11 @@ final class NoOutputter extends strangetest\struct implements strangetest\LogOut
 
 function assert_log(array $log, strangetest\Logger $logger) {
     $expected = array(
-        strangetest\EVENT_PASS => 0,
-        strangetest\EVENT_FAIL => 0,
-        strangetest\EVENT_ERROR => 0,
-        strangetest\EVENT_SKIP => 0,
-        strangetest\EVENT_OUTPUT => 0,
+        \EVENT_PASS => 0,
+        \EVENT_FAIL => 0,
+        \EVENT_ERROR => 0,
+        \EVENT_SKIP => 0,
+        \EVENT_OUTPUT => 0,
         'events' => array(),
     );
     foreach ($log as $i => $entry) {
@@ -41,11 +48,11 @@ function assert_log(array $log, strangetest\Logger $logger) {
 
     $actual = $logger->get_log();
     $actual = array(
-        strangetest\EVENT_PASS => $actual->pass_count(),
-        strangetest\EVENT_FAIL => $actual->failure_count(),
-        strangetest\EVENT_ERROR => $actual->error_count(),
-        strangetest\EVENT_SKIP => $actual->skip_count(),
-        strangetest\EVENT_OUTPUT => $actual->output_count(),
+        \EVENT_PASS => $actual->pass_count(),
+        \EVENT_FAIL => $actual->failure_count(),
+        \EVENT_ERROR => $actual->error_count(),
+        \EVENT_SKIP => $actual->skip_count(),
+        \EVENT_OUTPUT => $actual->output_count(),
         'events' => $actual->get_events(),
     );
     for ($i = 0, $c = count($actual['events']); $i < $c; ++$i) {
@@ -67,32 +74,32 @@ function assert_events($expected, strangetest\Logger $logger) {
     {
         if ($event instanceof strangetest\PassEvent)
         {
-            $type = strangetest\EVENT_PASS;
+            $type = \EVENT_PASS;
             $source = $event->source;
             $reason = null;
         }
         elseif ($event instanceof strangetest\FailEvent)
         {
-            $type = strangetest\EVENT_FAIL;
+            $type = \EVENT_FAIL;
             $source = $event->source;
             $reason = $event->reason;
         }
         elseif ($event instanceof strangetest\ErrorEvent)
         {
-            $type = strangetest\EVENT_ERROR;
+            $type = \EVENT_ERROR;
             $source = $event->source;
             $reason = $event->reason;
         }
         elseif ($event instanceof strangetest\SkipEvent)
         {
-            $type = strangetest\EVENT_SKIP;
+            $type = \EVENT_SKIP;
             $source = $event->source;
             $reason = $event->reason;
         }
         else
         {
             \assert($event instanceof strangetest\OutputEvent);
-            $type = strangetest\EVENT_OUTPUT;
+            $type = \EVENT_OUTPUT;
             $source = $event->source;
             $reason = $event->output;
         }

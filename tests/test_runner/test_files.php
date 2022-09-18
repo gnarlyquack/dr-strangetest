@@ -57,14 +57,14 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'test_one', null),
-            array(strangetest\EVENT_PASS, 'Test1::TestMe', null),
-            array(strangetest\EVENT_PASS, 'TestTwo', null),
-            array(strangetest\EVENT_PASS, 'TestTwo::test1', null),
-            array(strangetest\EVENT_PASS, 'TestTwo::test2', null),
-            array(strangetest\EVENT_PASS, 'TestTwo::test3', null),
-            array(strangetest\EVENT_PASS, 'test::test_two', null),
-            array(strangetest\EVENT_PASS, 'test', null),
+            array(\EVENT_PASS, 'test_one', null),
+            array(\EVENT_PASS, 'Test1::TestMe', null),
+            array(\EVENT_PASS, 'TestTwo', null),
+            array(\EVENT_PASS, 'TestTwo::test1', null),
+            array(\EVENT_PASS, 'TestTwo::test2', null),
+            array(\EVENT_PASS, 'TestTwo::test3', null),
+            array(\EVENT_PASS, 'test::test_two', null),
+            array(\EVENT_PASS, 'test', null),
         ));
     }
 
@@ -74,29 +74,29 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test_one', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test_one', "teardown 2teardown 1"),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_fixtures\\test_one', '2 4'),
-            array(strangetest\EVENT_PASS, 'file_fixtures\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup for file_fixtures\\test_one', '2 4'),
+            array(\EVENT_OUTPUT, 'file_fixtures\\test_one', "teardown 2teardown 1"),
+            array(\EVENT_OUTPUT, 'teardown for file_fixtures\\test_one', '2 4'),
+            array(\EVENT_PASS, 'file_fixtures\\test_one', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test_two', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_fixtures\\test_two', '2 4'),
-            array(strangetest\EVENT_PASS, 'file_fixtures\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup for file_fixtures\\test_two', '2 4'),
+            array(\EVENT_OUTPUT, 'teardown for file_fixtures\\test_two', '2 4'),
+            array(\EVENT_PASS, 'file_fixtures\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test::setup_object', '2 4'),
+            array(\EVENT_OUTPUT, 'file_fixtures\\test::setup_object', '2 4'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test::test_one', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test::test_one', "teardown 2teardown 1"),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_fixtures\\test::test_one', '2 4'),
-            array(strangetest\EVENT_PASS, 'file_fixtures\\test::test_one', null),
+            array(\EVENT_OUTPUT, 'setup for file_fixtures\\test::test_one', '2 4'),
+            array(\EVENT_OUTPUT, 'file_fixtures\\test::test_one', "teardown 2teardown 1"),
+            array(\EVENT_OUTPUT, 'teardown for file_fixtures\\test::test_one', '2 4'),
+            array(\EVENT_PASS, 'file_fixtures\\test::test_one', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_fixtures\\test::test_two', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_fixtures\\test::test_two', '2 4'),
-            array(strangetest\EVENT_PASS, 'file_fixtures\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'setup for file_fixtures\\test::test_two', '2 4'),
+            array(\EVENT_OUTPUT, 'teardown for file_fixtures\\test::test_two', '2 4'),
+            array(\EVENT_PASS, 'file_fixtures\\test::test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\test::teardown_object', '2 4'),
+            array(\EVENT_OUTPUT, 'file_fixtures\\test::teardown_object', '2 4'),
 
-            array(strangetest\EVENT_OUTPUT, 'file_fixtures\\teardown_file', '2 4'),
+            array(\EVENT_OUTPUT, 'file_fixtures\\teardown_file', '2 4'),
         ));
     }
 
@@ -106,27 +106,27 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'SetUpFunction for FileCase\\TestOne', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'TearDownFunction for FileCase\\TestOne', '2 4'),
-            array(strangetest\EVENT_PASS, 'FileCase\\TestOne', null),
+            array(\EVENT_OUTPUT, 'SetUpFunction for FileCase\\TestOne', '2 4'),
+            array(\EVENT_OUTPUT, 'TearDownFunction for FileCase\\TestOne', '2 4'),
+            array(\EVENT_PASS, 'FileCase\\TestOne', null),
 
-            array(strangetest\EVENT_OUTPUT, 'SetUpFunction for FileCase\\TestTwo', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'TearDownFunction for FileCase\\TestTwo', '2 4'),
-            array(strangetest\EVENT_PASS, 'FileCase\\TestTwo', null),
+            array(\EVENT_OUTPUT, 'SetUpFunction for FileCase\\TestTwo', '2 4'),
+            array(\EVENT_OUTPUT, 'TearDownFunction for FileCase\\TestTwo', '2 4'),
+            array(\EVENT_PASS, 'FileCase\\TestTwo', null),
 
-            array(strangetest\EVENT_OUTPUT, 'FileCase\\Test::SetUpObject', '2 4'),
+            array(\EVENT_OUTPUT, 'FileCase\\Test::SetUpObject', '2 4'),
 
-            array(strangetest\EVENT_OUTPUT, 'SetUp for FileCase\\Test::TestOne', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'TearDown for FileCase\\Test::TestOne', '2 4'),
-            array(strangetest\EVENT_PASS, 'FileCase\\Test::TestOne', null),
+            array(\EVENT_OUTPUT, 'SetUp for FileCase\\Test::TestOne', '2 4'),
+            array(\EVENT_OUTPUT, 'TearDown for FileCase\\Test::TestOne', '2 4'),
+            array(\EVENT_PASS, 'FileCase\\Test::TestOne', null),
 
-            array(strangetest\EVENT_OUTPUT, 'SetUp for FileCase\\Test::TestTwo', '2 4'),
-            array(strangetest\EVENT_OUTPUT, 'TearDown for FileCase\\Test::TestTwo', '2 4'),
-            array(strangetest\EVENT_PASS, 'FileCase\\Test::TestTwo', null),
+            array(\EVENT_OUTPUT, 'SetUp for FileCase\\Test::TestTwo', '2 4'),
+            array(\EVENT_OUTPUT, 'TearDown for FileCase\\Test::TestTwo', '2 4'),
+            array(\EVENT_PASS, 'FileCase\\Test::TestTwo', null),
 
-            array(strangetest\EVENT_OUTPUT, 'FileCase\\Test::TearDownObject', '2 4'),
+            array(\EVENT_OUTPUT, 'FileCase\\Test::TearDownObject', '2 4'),
 
-            array(strangetest\EVENT_OUTPUT, 'FileCase\\TearDownFile', '2 4'),
+            array(\EVENT_OUTPUT, 'FileCase\\TearDownFile', '2 4'),
         ));
     }
 
@@ -136,8 +136,8 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'ns02\\TestNamespaces::test', null),
-            array(strangetest\EVENT_PASS, 'ns03\\TestNamespaces::test', null),
+            array(\EVENT_PASS, 'ns02\\TestNamespaces::test', null),
+            array(\EVENT_PASS, 'ns03\\TestNamespaces::test', null),
         ));
     }
 
@@ -147,9 +147,9 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'ns01\\ns1\\TestNamespaces::test', null),
-            array(strangetest\EVENT_PASS, 'ns01\\ns2\\TestNamespaces::test', null),
-            array(strangetest\EVENT_PASS, 'TestNamespaces::test', null),
+            array(\EVENT_PASS, 'ns01\\ns1\\TestNamespaces::test', null),
+            array(\EVENT_PASS, 'ns01\\ns2\\TestNamespaces::test', null),
+            array(\EVENT_PASS, 'TestNamespaces::test', null),
         ));
     }
 
@@ -164,9 +164,9 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'anonymous\\test_anonymous_class', null),
-            array(strangetest\EVENT_PASS, 'anonymous\\test_i_am_a_function_name', null),
-            array(strangetest\EVENT_PASS, 'anonymous\\test::test_anonymous_class', null),
+            array(\EVENT_PASS, 'anonymous\\test_anonymous_class', null),
+            array(\EVENT_PASS, 'anonymous\\test_i_am_a_function_name', null),
+            array(\EVENT_PASS, 'anonymous\\test::test_anonymous_class', null),
         ));
     }
 
@@ -176,53 +176,53 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'file_failures\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for file_failures\\test_one', '.'),
-            array(strangetest\EVENT_FAIL, 'file_failures\\test_one', 'I failed'),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test_one', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for file_failures\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'setup_function for file_failures\\test_one', '.'),
+            array(\EVENT_FAIL, 'file_failures\\test_one', 'I failed'),
+            array(\EVENT_OUTPUT, 'file_failures\\test_one', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown_function for file_failures\\test_one', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for file_failures\\test_two', '.'),
-            array(strangetest\EVENT_ERROR, 'file_failures\\test_two', 'An error happened'),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test_two', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for file_failures\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'setup_function for file_failures\\test_two', '.'),
+            array(\EVENT_ERROR, 'file_failures\\test_two', 'An error happened'),
+            array(\EVENT_OUTPUT, 'file_failures\\test_two', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown_function for file_failures\\test_two', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for file_failures\\test_three', '.'),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test_three', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for file_failures\\test_three', '.'),
-            array(strangetest\EVENT_PASS, 'file_failures\\test_three', null),
+            array(\EVENT_OUTPUT, 'setup_function for file_failures\\test_three', '.'),
+            array(\EVENT_OUTPUT, 'file_failures\\test_three', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown_function for file_failures\\test_three', '.'),
+            array(\EVENT_PASS, 'file_failures\\test_three', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for file_failures\\test_four', '.'),
-            array(strangetest\EVENT_ERROR, 'file_failures\\test_four', "I'm exceptional!"),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test_four', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for file_failures\\test_four', '.'),
+            array(\EVENT_OUTPUT, 'setup_function for file_failures\\test_four', '.'),
+            array(\EVENT_ERROR, 'file_failures\\test_four', "I'm exceptional!"),
+            array(\EVENT_OUTPUT, 'file_failures\\test_four', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown_function for file_failures\\test_four', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'file_failures\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_failures\\test::test_one', '.'),
-            array(strangetest\EVENT_FAIL, 'file_failures\\test::test_one', 'I failed'),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test::test_one', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_failures\\test::test_one', '.'),
+            array(\EVENT_OUTPUT, 'setup for file_failures\\test::test_one', '.'),
+            array(\EVENT_FAIL, 'file_failures\\test::test_one', 'I failed'),
+            array(\EVENT_OUTPUT, 'file_failures\\test::test_one', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown for file_failures\\test::test_one', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_failures\\test::test_two', '.'),
-            array(strangetest\EVENT_ERROR, 'file_failures\\test::test_two', 'An error happened'),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test::test_two', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_failures\\test::test_two', '.'),
+            array(\EVENT_OUTPUT, 'setup for file_failures\\test::test_two', '.'),
+            array(\EVENT_ERROR, 'file_failures\\test::test_two', 'An error happened'),
+            array(\EVENT_OUTPUT, 'file_failures\\test::test_two', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown for file_failures\\test::test_two', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_failures\\test::test_three', '.'),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test::test_three', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_failures\\test::test_three', '.'),
-            array(strangetest\EVENT_PASS, 'file_failures\\test::test_three', null),
+            array(\EVENT_OUTPUT, 'setup for file_failures\\test::test_three', '.'),
+            array(\EVENT_OUTPUT, 'file_failures\\test::test_three', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown for file_failures\\test::test_three', '.'),
+            array(\EVENT_PASS, 'file_failures\\test::test_three', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for file_failures\\test::test_four', '.'),
-            array(strangetest\EVENT_ERROR, 'file_failures\\test::test_four', "I'm exceptional!"),
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test::test_four', 'teardown'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for file_failures\\test::test_four', '.'),
+            array(\EVENT_OUTPUT, 'setup for file_failures\\test::test_four', '.'),
+            array(\EVENT_ERROR, 'file_failures\\test::test_four', "I'm exceptional!"),
+            array(\EVENT_OUTPUT, 'file_failures\\test::test_four', 'teardown'),
+            array(\EVENT_OUTPUT, 'teardown for file_failures\\test::test_four', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'file_failures\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'file_failures\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'file_failures\\teardown_file', '.'),
         ));
     }
 
@@ -232,7 +232,7 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, $this->root . $this->path, 'Skip me'),
+            array(\EVENT_ERROR, $this->root . $this->path, 'Skip me'),
         ));
     }
 
@@ -242,7 +242,7 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'setup_file_error\\setup_file', 'An error happened'),
+            array(\EVENT_ERROR, 'setup_file_error\\setup_file', 'An error happened'),
         ));
     }
 
@@ -252,19 +252,19 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'constructor_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'constructor_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for constructor_error\\test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for constructor_error\\test_one', '.'),
-            array(strangetest\EVENT_PASS, 'constructor_error\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup_function for constructor_error\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for constructor_error\\test_one', '.'),
+            array(\EVENT_PASS, 'constructor_error\\test_one', null),
 
-            array(strangetest\EVENT_ERROR, 'constructor_error\\test', 'Skip me'),
+            array(\EVENT_ERROR, 'constructor_error\\test', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for constructor_error\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for constructor_error\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'constructor_error\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for constructor_error\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for constructor_error\\test_two', '.'),
+            array(\EVENT_PASS, 'constructor_error\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'constructor_error\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'constructor_error\\teardown_file', '.'),
         ));
     }
 
@@ -274,19 +274,19 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'setup_object_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'setup_object_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for setup_object_error\\test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for setup_object_error\\test_one', '.'),
-            array(strangetest\EVENT_PASS, 'setup_object_error\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup_function for setup_object_error\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for setup_object_error\\test_one', '.'),
+            array(\EVENT_PASS, 'setup_object_error\\test_one', null),
 
-            array(strangetest\EVENT_ERROR, 'setup_object_error\\test::setup_object', 'An error happened'),
+            array(\EVENT_ERROR, 'setup_object_error\\test::setup_object', 'An error happened'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for setup_object_error\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for setup_object_error\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'setup_object_error\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for setup_object_error\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for setup_object_error\\test_two', '.'),
+            array(\EVENT_PASS, 'setup_object_error\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_object_error\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'setup_object_error\\teardown_file', '.'),
         ));
     }
 
@@ -296,19 +296,19 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'setup_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'setup_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_ERROR, 'setup_function for setup_error\\test_one', 'An error happened'),
-            array(strangetest\EVENT_ERROR, 'setup_function for setup_error\\test_two', 'An error happened'),
+            array(\EVENT_ERROR, 'setup_function for setup_error\\test_one', 'An error happened'),
+            array(\EVENT_ERROR, 'setup_function for setup_error\\test_two', 'An error happened'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_error\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'setup_error\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_ERROR, 'setup for setup_error\\test::test_one', 'An error happened'),
-            array(strangetest\EVENT_ERROR, 'setup for setup_error\\test::test_two', 'An error happened'),
+            array(\EVENT_ERROR, 'setup for setup_error\\test::test_one', 'An error happened'),
+            array(\EVENT_ERROR, 'setup for setup_error\\test::test_two', 'An error happened'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_error\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'setup_error\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_error\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'setup_error\\teardown_file', '.'),
         ));
     }
 
@@ -318,31 +318,31 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_test_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_test_error\\test_one', '.'),
-            array(strangetest\EVENT_ERROR, 'teardown_test_error\\test_one', 'Skip me'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\test_one', 'teardown 2'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for teardown_test_error\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_test_error\\test_one', '.'),
+            array(\EVENT_ERROR, 'teardown_test_error\\test_one', 'Skip me'),
+            array(\EVENT_OUTPUT, 'teardown_test_error\\test_one', 'teardown 2'),
+            array(\EVENT_OUTPUT, 'teardown_function for teardown_test_error\\test_one', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_test_error\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for teardown_test_error\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_test_error\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_test_error\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for teardown_test_error\\test_two', '.'),
+            array(\EVENT_PASS, 'teardown_test_error\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_test_error\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_test_error\\test::test_one', '.'),
-            array(strangetest\EVENT_ERROR, 'teardown_test_error\\test::test_one', 'Skip me'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\test::test_one', 'teardown 2'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for teardown_test_error\\test::test_one', '.'),
+            array(\EVENT_OUTPUT, 'setup for teardown_test_error\\test::test_one', '.'),
+            array(\EVENT_ERROR, 'teardown_test_error\\test::test_one', 'Skip me'),
+            array(\EVENT_OUTPUT, 'teardown_test_error\\test::test_one', 'teardown 2'),
+            array(\EVENT_OUTPUT, 'teardown for teardown_test_error\\test::test_one', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_test_error\\test::test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for teardown_test_error\\test::test_two', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_test_error\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'setup for teardown_test_error\\test::test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown for teardown_test_error\\test::test_two', '.'),
+            array(\EVENT_PASS, 'teardown_test_error\\test::test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_test_error\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_test_error\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_test_error\\teardown_file', '.'),
         ));
     }
 
@@ -352,25 +352,25 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'teardown_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_error\\test_one', '.'),
-            array(strangetest\EVENT_ERROR, 'teardown_function for teardown_error\\test_one', 'Skip me'),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_error\\test_one', '.'),
+            array(\EVENT_ERROR, 'teardown_function for teardown_error\\test_one', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_error\\test_two', '.'),
-            array(strangetest\EVENT_ERROR, 'teardown_function for teardown_error\\test_two', 'Skip me'),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_error\\test_two', '.'),
+            array(\EVENT_ERROR, 'teardown_function for teardown_error\\test_two', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_error\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_error\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_error\\test::test_one', '.'),
-            array(strangetest\EVENT_ERROR, 'teardown for teardown_error\\test::test_one', 'Skip me'),
+            array(\EVENT_OUTPUT, 'setup for teardown_error\\test::test_one', '.'),
+            array(\EVENT_ERROR, 'teardown for teardown_error\\test::test_one', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_error\\test::test_two', '.'),
-            array(strangetest\EVENT_ERROR, 'teardown for teardown_error\\test::test_two', 'Skip me'),
+            array(\EVENT_OUTPUT, 'setup for teardown_error\\test::test_two', '.'),
+            array(\EVENT_ERROR, 'teardown for teardown_error\\test::test_two', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_error\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_error\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_error\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_error\\teardown_file', '.'),
         ));
     }
 
@@ -380,30 +380,30 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'teardown_object_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_object_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_object_error\\test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for teardown_object_error\\test_one', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_object_error\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_object_error\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for teardown_object_error\\test_one', '.'),
+            array(\EVENT_PASS, 'teardown_object_error\\test_one', null),
 
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_object_error\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_object_error\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_object_error\\test::test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for teardown_object_error\\test::test_one', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_object_error\\test::test_one', null),
+            array(\EVENT_OUTPUT, 'setup for teardown_object_error\\test::test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown for teardown_object_error\\test::test_one', '.'),
+            array(\EVENT_PASS, 'teardown_object_error\\test::test_one', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_object_error\\test::test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for teardown_object_error\\test::test_two', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_object_error\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'setup for teardown_object_error\\test::test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown for teardown_object_error\\test::test_two', '.'),
+            array(\EVENT_PASS, 'teardown_object_error\\test::test_two', null),
 
-            array(strangetest\EVENT_ERROR, 'teardown_object_error\\test::teardown_object', 'Skip me'),
+            array(\EVENT_ERROR, 'teardown_object_error\\test::teardown_object', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_object_error\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for teardown_object_error\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_object_error\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_object_error\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for teardown_object_error\\test_two', '.'),
+            array(\EVENT_PASS, 'teardown_object_error\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_object_error\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_object_error\\teardown_file', '.'),
         ));
     }
 
@@ -413,30 +413,30 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'teardown_file_error\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'teardown_file_error\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_file_error\\test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for teardown_file_error\\test_one', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_file_error\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_file_error\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for teardown_file_error\\test_one', '.'),
+            array(\EVENT_PASS, 'teardown_file_error\\test_one', null),
 
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_file_error\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_file_error\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_file_error\\test::test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for teardown_file_error\\test::test_one', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_file_error\\test::test_one', null),
+            array(\EVENT_OUTPUT, 'setup for teardown_file_error\\test::test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown for teardown_file_error\\test::test_one', '.'),
+            array(\EVENT_PASS, 'teardown_file_error\\test::test_one', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for teardown_file_error\\test::test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for teardown_file_error\\test::test_two', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_file_error\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'setup for teardown_file_error\\test::test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown for teardown_file_error\\test::test_two', '.'),
+            array(\EVENT_PASS, 'teardown_file_error\\test::test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'teardown_file_error\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'teardown_file_error\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for teardown_file_error\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for teardown_file_error\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'teardown_file_error\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for teardown_file_error\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for teardown_file_error\\test_two', '.'),
+            array(\EVENT_PASS, 'teardown_file_error\\test_two', null),
 
-            array(strangetest\EVENT_ERROR, 'teardown_file_error\\teardown_file', 'Skip me'),
+            array(\EVENT_ERROR, 'teardown_file_error\\teardown_file', 'Skip me'),
         ));
     }
 
@@ -446,20 +446,20 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'SetUpObject', 'This fixture conflicts with \'setup_object\' defined on line 29'),
-            array(strangetest\EVENT_ERROR, 'TearDownObject', 'This fixture conflicts with \'teardown_object\' defined on line 37'),
+            array(\EVENT_ERROR, 'SetUpObject', 'This fixture conflicts with \'setup_object\' defined on line 29'),
+            array(\EVENT_ERROR, 'TearDownObject', 'This fixture conflicts with \'teardown_object\' defined on line 37'),
 
-            array(strangetest\EVENT_OUTPUT, 'multiple_object_fixtures\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'multiple_object_fixtures\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_one', '.'),
-            array(strangetest\EVENT_PASS, 'multiple_object_fixtures\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_one', '.'),
+            array(\EVENT_PASS, 'multiple_object_fixtures\\test_one', null),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'multiple_object_fixtures\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for multiple_object_fixtures\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for multiple_object_fixtures\\test_two', '.'),
+            array(\EVENT_PASS, 'multiple_object_fixtures\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'multiple_object_fixtures\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'multiple_object_fixtures\\teardown_file', '.'),
         ));
     }
 
@@ -469,7 +469,7 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_SKIP, 'skip_file\\setup_file', 'Skip me'),
+            array(\EVENT_SKIP, 'skip_file\\setup_file', 'Skip me'),
         ));
     }
 
@@ -479,19 +479,19 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'skip_object\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'skip_object\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for skip_object\\test_one', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for skip_object\\test_one', '.'),
-            array(strangetest\EVENT_PASS, 'skip_object\\test_one', null),
+            array(\EVENT_OUTPUT, 'setup_function for skip_object\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for skip_object\\test_one', '.'),
+            array(\EVENT_PASS, 'skip_object\\test_one', null),
 
-            array(strangetest\EVENT_SKIP, 'skip_object\\test::setup_object', 'Skip me'),
+            array(\EVENT_SKIP, 'skip_object\\test::setup_object', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for skip_object\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for skip_object\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'skip_object\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for skip_object\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for skip_object\\test_two', '.'),
+            array(\EVENT_PASS, 'skip_object\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_object\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'skip_object\\teardown_file', '.'),
         ));
     }
 
@@ -501,19 +501,19 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'skip_setup\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'skip_setup\\setup_file', '.'),
 
-            array(strangetest\EVENT_SKIP, 'setup_function for skip_setup\\test_one', 'Skip me'),
-            array(strangetest\EVENT_SKIP, 'setup_function for skip_setup\\test_two', 'Skip me'),
+            array(\EVENT_SKIP, 'setup_function for skip_setup\\test_one', 'Skip me'),
+            array(\EVENT_SKIP, 'setup_function for skip_setup\\test_two', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_setup\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'skip_setup\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_SKIP, 'setup for skip_setup\\test::test_one', 'Skip me'),
-            array(strangetest\EVENT_SKIP, 'setup for skip_setup\\test::test_two', 'Skip me'),
+            array(\EVENT_SKIP, 'setup for skip_setup\\test::test_one', 'Skip me'),
+            array(\EVENT_SKIP, 'setup for skip_setup\\test::test_two', 'Skip me'),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_setup\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'skip_setup\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_setup\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'skip_setup\\teardown_file', '.'),
         ));
     }
 
@@ -523,29 +523,29 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'skip_test\\setup_file', '.'),
+            array(\EVENT_OUTPUT, 'skip_test\\setup_file', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for skip_test\\test_one', '.'),
-            array(strangetest\EVENT_SKIP, 'skip_test\\test_one', 'Skip me'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for skip_test\\test_one', '.'),
+            array(\EVENT_OUTPUT, 'setup_function for skip_test\\test_one', '.'),
+            array(\EVENT_SKIP, 'skip_test\\test_one', 'Skip me'),
+            array(\EVENT_OUTPUT, 'teardown_function for skip_test\\test_one', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_test\\test::setup_object', '.'),
+            array(\EVENT_OUTPUT, 'skip_test\\test::setup_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for skip_test\\test::test_one', '.'),
-            array(strangetest\EVENT_SKIP, 'skip_test\\test::test_one', 'Skip me'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for skip_test\\test::test_one', '.'),
+            array(\EVENT_OUTPUT, 'setup for skip_test\\test::test_one', '.'),
+            array(\EVENT_SKIP, 'skip_test\\test::test_one', 'Skip me'),
+            array(\EVENT_OUTPUT, 'teardown for skip_test\\test::test_one', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup for skip_test\\test::test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for skip_test\\test::test_two', '.'),
-            array(strangetest\EVENT_PASS, 'skip_test\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'setup for skip_test\\test::test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown for skip_test\\test::test_two', '.'),
+            array(\EVENT_PASS, 'skip_test\\test::test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_test\\test::teardown_object', '.'),
+            array(\EVENT_OUTPUT, 'skip_test\\test::teardown_object', '.'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for skip_test\\test_two', '.'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for skip_test\\test_two', '.'),
-            array(strangetest\EVENT_PASS, 'skip_test\\test_two', null),
+            array(\EVENT_OUTPUT, 'setup_function for skip_test\\test_two', '.'),
+            array(\EVENT_OUTPUT, 'teardown_function for skip_test\\test_two', '.'),
+            array(\EVENT_PASS, 'skip_test\\test_two', null),
 
-            array(strangetest\EVENT_OUTPUT, 'skip_test\\teardown_file', '.'),
+            array(\EVENT_OUTPUT, 'skip_test\\teardown_file', '.'),
         ));
     }
 
@@ -555,9 +555,9 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, $this->root . $this->path, '.'),
-            array(strangetest\EVENT_ERROR, $this->root . $this->path, 'No tests were found in this file'),
-            array(strangetest\EVENT_ERROR, $this->root, 'No tests were found in this directory'),
+            array(\EVENT_OUTPUT, $this->root . $this->path, '.'),
+            array(\EVENT_ERROR, $this->root . $this->path, 'No tests were found in this file'),
+            array(\EVENT_ERROR, $this->root, 'No tests were found in this directory'),
         ));
     }
 
@@ -567,12 +567,12 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'constructor_output\\test_one', null),
+            array(\EVENT_PASS, 'constructor_output\\test_one', null),
 
-            array(strangetest\EVENT_OUTPUT, 'constructor_output\\test', '.'),
-            array(strangetest\EVENT_PASS, 'constructor_output\\test::test_method', null),
+            array(\EVENT_OUTPUT, 'constructor_output\\test', '.'),
+            array(\EVENT_PASS, 'constructor_output\\test::test_method', null),
 
-            array(strangetest\EVENT_PASS, 'constructor_output\\test_two', null),
+            array(\EVENT_PASS, 'constructor_output\\test_two', null),
         ));
     }
 
@@ -582,11 +582,11 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'test_output\\test', '.'),
-            array(strangetest\EVENT_PASS, 'test_output\\test', null),
+            array(\EVENT_OUTPUT, 'test_output\\test', '.'),
+            array(\EVENT_PASS, 'test_output\\test', null),
 
-            array(strangetest\EVENT_OUTPUT, 'test_output\\test::test_method', '.'),
-            array(strangetest\EVENT_PASS, 'test_output\\test::test_method', null),
+            array(\EVENT_OUTPUT, 'test_output\\test::test_method', '.'),
+            array(\EVENT_PASS, 'test_output\\test::test_method', null),
         ));
     }
 
@@ -596,39 +596,39 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_OUTPUT, 'setup_function for buffering\\test_skip', 'setup output that should be seen'),
-            array(strangetest\EVENT_SKIP, 'buffering\\test_skip', 'Skip me'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for buffering\\test_skip', 'teardown output that should be seen'),
+            array(\EVENT_OUTPUT, 'setup_function for buffering\\test_skip', 'setup output that should be seen'),
+            array(\EVENT_SKIP, 'buffering\\test_skip', 'Skip me'),
+            array(\EVENT_OUTPUT, 'teardown_function for buffering\\test_skip', 'teardown output that should be seen'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for buffering\\test_error', 'setup output that should be seen'),
-            array(strangetest\EVENT_ERROR, 'buffering\\test_error', 'Did I err?'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for buffering\\test_error', 'teardown output that should be seen'),
+            array(\EVENT_OUTPUT, 'setup_function for buffering\\test_error', 'setup output that should be seen'),
+            array(\EVENT_ERROR, 'buffering\\test_error', 'Did I err?'),
+            array(\EVENT_OUTPUT, 'teardown_function for buffering\\test_error', 'teardown output that should be seen'),
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for buffering\\test_fail', 'setup output that should be seen'),
-            array(strangetest\EVENT_FAIL, 'buffering\\test_fail', 'I failed'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for buffering\\test_fail', 'teardown output that should be seen'),
-
-
-            array(strangetest\EVENT_OUTPUT, 'setup for buffering\\test::test_skip', 'setup output that should be seen'),
-            array(strangetest\EVENT_SKIP, 'buffering\\test::test_skip', 'Skip me'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for buffering\\test::test_skip', 'teardown output that should be seen'),
-
-            array(strangetest\EVENT_OUTPUT, 'setup for buffering\\test::test_error', 'setup output that should be seen'),
-            array(strangetest\EVENT_ERROR, 'buffering\\test::test_error', 'Did I err?'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for buffering\\test::test_error', 'teardown output that should be seen'),
-
-            array(strangetest\EVENT_OUTPUT, 'setup for buffering\\test::test_fail', 'setup output that should be seen'),
-            array(strangetest\EVENT_FAIL, 'buffering\\test::test_fail', 'I failed'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for buffering\\test::test_fail', 'teardown output that should be seen'),
-
-            array(strangetest\EVENT_OUTPUT, 'setup for buffering\\test::test_pass', 'setup output that should be seen'),
-            array(strangetest\EVENT_OUTPUT, 'teardown for buffering\\test::test_pass', 'teardown output that should be seen'),
-            array(strangetest\EVENT_PASS, 'buffering\\test::test_pass', null),
+            array(\EVENT_OUTPUT, 'setup_function for buffering\\test_fail', 'setup output that should be seen'),
+            array(\EVENT_FAIL, 'buffering\\test_fail', 'I failed'),
+            array(\EVENT_OUTPUT, 'teardown_function for buffering\\test_fail', 'teardown output that should be seen'),
 
 
-            array(strangetest\EVENT_OUTPUT, 'setup_function for buffering\\test_pass', 'setup output that should be seen'),
-            array(strangetest\EVENT_OUTPUT, 'teardown_function for buffering\\test_pass', 'teardown output that should be seen'),
-            array(strangetest\EVENT_PASS, 'buffering\\test_pass', null),
+            array(\EVENT_OUTPUT, 'setup for buffering\\test::test_skip', 'setup output that should be seen'),
+            array(\EVENT_SKIP, 'buffering\\test::test_skip', 'Skip me'),
+            array(\EVENT_OUTPUT, 'teardown for buffering\\test::test_skip', 'teardown output that should be seen'),
+
+            array(\EVENT_OUTPUT, 'setup for buffering\\test::test_error', 'setup output that should be seen'),
+            array(\EVENT_ERROR, 'buffering\\test::test_error', 'Did I err?'),
+            array(\EVENT_OUTPUT, 'teardown for buffering\\test::test_error', 'teardown output that should be seen'),
+
+            array(\EVENT_OUTPUT, 'setup for buffering\\test::test_fail', 'setup output that should be seen'),
+            array(\EVENT_FAIL, 'buffering\\test::test_fail', 'I failed'),
+            array(\EVENT_OUTPUT, 'teardown for buffering\\test::test_fail', 'teardown output that should be seen'),
+
+            array(\EVENT_OUTPUT, 'setup for buffering\\test::test_pass', 'setup output that should be seen'),
+            array(\EVENT_OUTPUT, 'teardown for buffering\\test::test_pass', 'teardown output that should be seen'),
+            array(\EVENT_PASS, 'buffering\\test::test_pass', null),
+
+
+            array(\EVENT_OUTPUT, 'setup_function for buffering\\test_pass', 'setup output that should be seen'),
+            array(\EVENT_OUTPUT, 'teardown_function for buffering\\test_pass', 'teardown output that should be seen'),
+            array(\EVENT_PASS, 'buffering\\test_pass', null),
         ));
     }
 
@@ -644,62 +644,62 @@ class TestFiles
         // clean up their tests), but do not otherwise impede testing.
         $this->assert_events(array(
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'undeleted_buffers\\setup_file',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\setup_file",
             ),
 
 
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'teardown_function for undeleted_buffers\\test',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\teardown_function",
             ),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'teardown_function for undeleted_buffers\\test',
                 "An output buffer was started but never deleted.\nBuffer contents were: [the output buffer was empty]",
             ),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'teardown_function for undeleted_buffers\\test',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\setup_function",
             ),
-            array(strangetest\EVENT_PASS, 'undeleted_buffers\\test', null),
+            array(\EVENT_PASS, 'undeleted_buffers\\test', null),
 
 
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'undeleted_buffers\\test::setup_object',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\test::setup_object",
             ),
 
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'teardown for undeleted_buffers\\test::test',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\test::teardown",
             ),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'teardown for undeleted_buffers\\test::test',
                 "An output buffer was started but never deleted.\nBuffer contents were: [the output buffer was empty]",
             ),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'teardown for undeleted_buffers\\test::test',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\test::setup",
             ),
-            array(strangetest\EVENT_PASS, 'undeleted_buffers\\test::test', null),
+            array(\EVENT_PASS, 'undeleted_buffers\\test::test', null),
 
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'undeleted_buffers\\test::teardown_object',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\test::teardown_object",
             ),
 
 
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'undeleted_buffers\\teardown_file',
                 "An output buffer was started but never deleted.\nBuffer contents were: undeleted_buffers\\teardown_file",
             ),
@@ -718,25 +718,25 @@ class TestFiles
         // will clean up their tests), but do not otherwise impede testing.
         $message = "Dr. Strangetest's output buffer was deleted! Please start (and delete) your own\noutput buffer(s) using PHP's output control functions.";
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'deleted_buffers\\setup_file', $message),
+            array(\EVENT_ERROR, 'deleted_buffers\\setup_file', $message),
 
-            array(strangetest\EVENT_ERROR, 'setup_function for deleted_buffers\\test', $message),
-            array(strangetest\EVENT_ERROR, 'deleted_buffers\\test', $message),
-            array(strangetest\EVENT_ERROR, 'teardown_function for deleted_buffers\\test', $message),
-            array(strangetest\EVENT_PASS, 'deleted_buffers\\test', null),
-
-
-            array(strangetest\EVENT_ERROR, 'deleted_buffers\\test::setup_object', $message),
-
-            array(strangetest\EVENT_ERROR, 'setup for deleted_buffers\\test::test', $message),
-            array(strangetest\EVENT_ERROR, 'deleted_buffers\\test::test', $message),
-            array(strangetest\EVENT_ERROR, 'teardown for deleted_buffers\\test::test', $message),
-            array(strangetest\EVENT_PASS, 'deleted_buffers\\test::test', null),
-
-            array(strangetest\EVENT_ERROR, 'deleted_buffers\\test::teardown_object', $message),
+            array(\EVENT_ERROR, 'setup_function for deleted_buffers\\test', $message),
+            array(\EVENT_ERROR, 'deleted_buffers\\test', $message),
+            array(\EVENT_ERROR, 'teardown_function for deleted_buffers\\test', $message),
+            array(\EVENT_PASS, 'deleted_buffers\\test', null),
 
 
-            array(strangetest\EVENT_ERROR, 'deleted_buffers\\teardown_file', $message),
+            array(\EVENT_ERROR, 'deleted_buffers\\test::setup_object', $message),
+
+            array(\EVENT_ERROR, 'setup for deleted_buffers\\test::test', $message),
+            array(\EVENT_ERROR, 'deleted_buffers\\test::test', $message),
+            array(\EVENT_ERROR, 'teardown for deleted_buffers\\test::test', $message),
+            array(\EVENT_PASS, 'deleted_buffers\\test::test', null),
+
+            array(\EVENT_ERROR, 'deleted_buffers\\test::teardown_object', $message),
+
+
+            array(\EVENT_ERROR, 'deleted_buffers\\teardown_file', $message),
         ));
 
         strangetest\assert_identical('', \ob_get_contents());
@@ -748,15 +748,15 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'multiple_runs\\test_one (0)', null),
-            array(strangetest\EVENT_PASS, 'multiple_runs\\test_two (0)', null),
-            array(strangetest\EVENT_PASS, 'multiple_runs\\test::test_one (0)', null),
-            array(strangetest\EVENT_OUTPUT, 'multiple_runs\\teardown_run0', '2 4'),
+            array(\EVENT_PASS, 'multiple_runs\\test_one (0)', null),
+            array(\EVENT_PASS, 'multiple_runs\\test_two (0)', null),
+            array(\EVENT_PASS, 'multiple_runs\\test::test_one (0)', null),
+            array(\EVENT_OUTPUT, 'multiple_runs\\teardown_run0', '2 4'),
 
-            array(strangetest\EVENT_PASS, 'multiple_runs\\test_one (1)', null),
-            array(strangetest\EVENT_PASS, 'multiple_runs\\test_two (1)', null),
-            array(strangetest\EVENT_PASS, 'multiple_runs\\test::test_one (1)', null),
-            array(strangetest\EVENT_OUTPUT, 'multiple_runs\\teardown_run1', '8 16'),
+            array(\EVENT_PASS, 'multiple_runs\\test_one (1)', null),
+            array(\EVENT_PASS, 'multiple_runs\\test_two (1)', null),
+            array(\EVENT_PASS, 'multiple_runs\\test::test_one (1)', null),
+            array(\EVENT_OUTPUT, 'multiple_runs\\teardown_run1', '8 16'),
         ));
     }
 
@@ -766,15 +766,15 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_FAIL, 'subtests\\test_one', 'I fail'),
-            array(strangetest\EVENT_FAIL, 'subtests\\test_one', 'I fail again'),
+            array(\EVENT_FAIL, 'subtests\\test_one', 'I fail'),
+            array(\EVENT_FAIL, 'subtests\\test_one', 'I fail again'),
 
-            array(strangetest\EVENT_PASS, 'subtests\\test_two', null),
+            array(\EVENT_PASS, 'subtests\\test_two', null),
 
-            array(strangetest\EVENT_FAIL, 'subtests\\test::test_one', 'I fail'),
-            array(strangetest\EVENT_FAIL, 'subtests\\test::test_one', 'I fail again'),
+            array(\EVENT_FAIL, 'subtests\\test::test_one', 'I fail'),
+            array(\EVENT_FAIL, 'subtests\\test::test_one', 'I fail again'),
 
-            array(strangetest\EVENT_PASS, 'subtests\\test::test_two', null),
+            array(\EVENT_PASS, 'subtests\\test::test_two', null),
         ));
     }
 
@@ -789,9 +789,9 @@ class TestFiles
         );
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'targets\\test_two', null),
-            array(strangetest\EVENT_PASS, 'targets\\test::test_two', null),
-            array(strangetest\EVENT_PASS, 'targets\\test_one', null),
+            array(\EVENT_PASS, 'targets\\test_two', null),
+            array(\EVENT_PASS, 'targets\\test::test_two', null),
+            array(\EVENT_PASS, 'targets\\test_one', null),
         ));
 
     }
@@ -808,12 +808,12 @@ class TestFiles
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'function_one', null),
-            array(strangetest\EVENT_PASS, 'Class1::MethodToTest', null),
-            array(strangetest\EVENT_PASS, 'NumberTwo', null),
-            array(strangetest\EVENT_PASS, 'NumberTwo::number1', null),
-            array(strangetest\EVENT_PASS, 'NumberTwo::number2', null),
-            array(strangetest\EVENT_PASS, 'NumberTwo::number3', null),
+            array(\EVENT_PASS, 'function_one', null),
+            array(\EVENT_PASS, 'Class1::MethodToTest', null),
+            array(\EVENT_PASS, 'NumberTwo', null),
+            array(\EVENT_PASS, 'NumberTwo::number1', null),
+            array(\EVENT_PASS, 'NumberTwo::number2', null),
+            array(\EVENT_PASS, 'NumberTwo::number3', null),
         ));
     }
 
@@ -861,9 +861,9 @@ function test_logs_error_if_arglist_isnt_iterable() {
     $file = namespace\filepath('test_noniterable_arglist.php');
     $events = array(
         array(
-            strangetest\EVENT_ERROR, 'noniterable_arglist\\setup_file',
+            \EVENT_ERROR, 'noniterable_arglist\\setup_file',
             "Invalid return value: setup fixtures should return an iterable (or 'null')"),
-        array(strangetest\EVENT_OUTPUT, 'noniterable_arglist\\teardown_file', '.'),
+        array(\EVENT_OUTPUT, 'noniterable_arglist\\teardown_file', '.'),
     );
 
     namespace\assert_run_file($file, $events);
@@ -874,9 +874,9 @@ function test_logs_error_if_arglists_arent_iterable() {
     $file = namespace\filepath('test_noniterable_arglists.php');
     $events = array(
         array(
-            strangetest\EVENT_ERROR, 'noniterable_arglists\\setup_runs',
+            \EVENT_ERROR, 'noniterable_arglists\\setup_runs',
             "Invalid return value: setup fixtures should return an iterable (or 'null')"),
-        array(strangetest\EVENT_OUTPUT, 'noniterable_arglists\\teardown_runs', '.'),
+        array(\EVENT_OUTPUT, 'noniterable_arglists\\teardown_runs', '.'),
     );
 
     namespace\assert_run_file($file, $events);
@@ -887,15 +887,15 @@ function test_logs_error_if_any_arglist_isnt_iterable() {
     $file = namespace\filepath('test_any_noniterable_arglist.php');
     $events = array(
         array(
-            strangetest\EVENT_ERROR, 'any_noniterable_arglist\\setup_run0',
+            \EVENT_ERROR, 'any_noniterable_arglist\\setup_run0',
             "Invalid return value: setup fixtures should return an iterable (or 'null')"),
-        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run0', '1'),
-        array(strangetest\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
-        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run1', '2 3'),
+        array(\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run0', '1'),
+        array(\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
+        array(\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run1', '2 3'),
         array(
-            strangetest\EVENT_ERROR, 'any_noniterable_arglist\\setup_run2',
+            \EVENT_ERROR, 'any_noniterable_arglist\\setup_run2',
             "Invalid return value: setup fixtures should return an iterable (or 'null')"),
-        array(strangetest\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run2', '4'),
+        array(\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run2', '4'),
     );
 
     namespace\assert_run_file($file, $events);
@@ -905,9 +905,9 @@ function test_logs_error_if_any_arglist_isnt_iterable() {
 function test_converts_arglist_to_array() {
     $file = namespace\filepath('test_converts_arglist.php');
     $events = array(
-        array(strangetest\EVENT_PASS, 'converts_arglist\\test_one', null),
-        array(strangetest\EVENT_PASS, 'converts_arglist\\test_two', null),
-        array(strangetest\EVENT_OUTPUT, 'converts_arglist\\teardown_file', '.'),
+        array(\EVENT_PASS, 'converts_arglist\\test_one', null),
+        array(\EVENT_PASS, 'converts_arglist\\test_two', null),
+        array(\EVENT_OUTPUT, 'converts_arglist\\teardown_file', '.'),
     );
 
     namespace\assert_run_file($file, $events);

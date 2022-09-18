@@ -142,7 +142,7 @@ function test_handles_error_in_setup_file(Logger $logger, $path)
     // skip, is reported as an error
     $log = array(
         array(
-            strangetest\EVENT_ERROR,
+            \EVENT_ERROR,
             "{$path}setup.php",
             'Skip me',
         ),
@@ -157,12 +157,12 @@ function test_reports_error_for_multiple_directory_fixtures(Logger $logger, $pat
     $discovered = false;
     $log = array(
         array(
-            strangetest\EVENT_ERROR,
+            \EVENT_ERROR,
             'SetupDirectoryMultipleFixtures',
             'This fixture conflicts with \'setup_directory_multiple_fixtures\' defined on line 3',
         ),
         array(
-            strangetest\EVENT_ERROR,
+            \EVENT_ERROR,
             'TeardownDirectoryMultipleFixtures',
             'This fixture conflicts with \'teardown_directory_multiple_fixtures\' defined on line 7',
         ),
@@ -189,32 +189,32 @@ function assert_discovered($logger, $path, $discovered, $log)
     {
         if ($event instanceof strangetest\PassEvent)
         {
-            $type = strangetest\EVENT_PASS;
+            $type = \EVENT_PASS;
             $source = $event->source;
             $reason = null;
         }
         elseif ($event instanceof strangetest\FailEvent)
         {
-            $type = strangetest\EVENT_FAIL;
+            $type = \EVENT_FAIL;
             $source = $event->source;
             $reason = $event->reason;
         }
         elseif ($event instanceof strangetest\ErrorEvent)
         {
-            $type = strangetest\EVENT_ERROR;
+            $type = \EVENT_ERROR;
             $source = $event->source;
             $reason = $event->reason;
         }
         elseif ($event instanceof strangetest\SkipEvent)
         {
-            $type = strangetest\EVENT_SKIP;
+            $type = \EVENT_SKIP;
             $source = $event->source;
             $reason = $event->reason;
         }
         else
         {
             \assert($event instanceof strangetest\OutputEvent);
-            $type = strangetest\EVENT_OUTPUT;
+            $type = \EVENT_OUTPUT;
             $source = $event->source;
             $reason = $event->output;
         }

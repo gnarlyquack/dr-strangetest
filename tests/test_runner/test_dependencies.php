@@ -44,14 +44,14 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'depends_pass\\test_one', null),
-            array(strangetest\EVENT_PASS, 'depends_pass\\test::test_one', null),
+            array(\EVENT_PASS, 'depends_pass\\test_one', null),
+            array(\EVENT_PASS, 'depends_pass\\test::test_one', null),
 
-            array(strangetest\EVENT_PASS, 'depends_pass\\test_two', null),
-            array(strangetest\EVENT_PASS, 'depends_pass\\test_three', null),
+            array(\EVENT_PASS, 'depends_pass\\test_two', null),
+            array(\EVENT_PASS, 'depends_pass\\test_three', null),
 
-            array(strangetest\EVENT_PASS, 'depends_pass\\test::test_two', null),
-            array(strangetest\EVENT_PASS, 'depends_pass\\test::test_three', null),
+            array(\EVENT_PASS, 'depends_pass\\test::test_two', null),
+            array(\EVENT_PASS, 'depends_pass\\test::test_three', null),
         ));
     }
 
@@ -61,14 +61,14 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_FAIL, 'depends_fail\\test_one', 'I fail'),
-            array(strangetest\EVENT_FAIL, 'depends_fail\\test::test_one', 'I fail'),
+            array(\EVENT_FAIL, 'depends_fail\\test_one', 'I fail'),
+            array(\EVENT_FAIL, 'depends_fail\\test::test_one', 'I fail'),
 
-            array(strangetest\EVENT_SKIP, 'depends_fail\\test_two', "This test depends on 'depends_fail\\test_one', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'depends_fail\\test_three', "This test depends on 'depends_fail\\test_two', which did not pass"),
+            array(\EVENT_SKIP, 'depends_fail\\test_two', "This test depends on 'depends_fail\\test_one', which did not pass"),
+            array(\EVENT_SKIP, 'depends_fail\\test_three', "This test depends on 'depends_fail\\test_two', which did not pass"),
 
-            array(strangetest\EVENT_SKIP, 'depends_fail\\test::test_two', "This test depends on 'depends_fail\\test::test_one', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'depends_fail\\test::test_three', "This test depends on 'depends_fail\\test::test_two', which did not pass"),
+            array(\EVENT_SKIP, 'depends_fail\\test::test_two', "This test depends on 'depends_fail\\test::test_one', which did not pass"),
+            array(\EVENT_SKIP, 'depends_fail\\test::test_three', "This test depends on 'depends_fail\\test::test_two', which did not pass"),
         ));
     }
 
@@ -78,33 +78,33 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'depends_params\\test_one (0)', null),
-            array(strangetest\EVENT_PASS, 'depends_params\\test::test_one (0)', null),
+            array(\EVENT_PASS, 'depends_params\\test_one (0)', null),
+            array(\EVENT_PASS, 'depends_params\\test::test_one (0)', null),
 
-            array(strangetest\EVENT_PASS, 'depends_params\\test_one (1)', null),
-            array(strangetest\EVENT_PASS, 'depends_params\\test::test_one (1)', null),
+            array(\EVENT_PASS, 'depends_params\\test_one (1)', null),
+            array(\EVENT_PASS, 'depends_params\\test::test_one (1)', null),
 
             array(
-                strangetest\EVENT_FAIL, 'depends_params\\test_two (0)',
+                \EVENT_FAIL, 'depends_params\\test_two (0)',
                 "Assertion \"\$actual === \$expected\" failed\n\n- \$actual\n+ \$expected\n\n- 2\n+ 1"
             ),
             array(
-                strangetest\EVENT_SKIP, 'depends_params\\test_three (0)',
+                \EVENT_SKIP, 'depends_params\\test_three (0)',
                 "This test depends on 'depends_params\\test_two (0)', which did not pass"
             ),
             array(
-                strangetest\EVENT_FAIL, 'depends_params\\test::test_two (0)',
+                \EVENT_FAIL, 'depends_params\\test::test_two (0)',
                 "Assertion \"\$actual === \$expected\" failed\n\n- \$actual\n+ \$expected\n\n- 2\n+ 1"
             ),
             array(
-                strangetest\EVENT_SKIP, 'depends_params\\test::test_three (0)',
+                \EVENT_SKIP, 'depends_params\\test::test_three (0)',
                 "This test depends on 'depends_params\\test::test_two (0)', which did not pass"
             ),
 
-            array(strangetest\EVENT_PASS, 'depends_params\\test_two (1)', null),
-            array(strangetest\EVENT_PASS, 'depends_params\\test_three (1)', null),
-            array(strangetest\EVENT_PASS, 'depends_params\\test::test_two (1)', null),
-            array(strangetest\EVENT_PASS, 'depends_params\\test::test_three (1)', null),
+            array(\EVENT_PASS, 'depends_params\\test_two (1)', null),
+            array(\EVENT_PASS, 'depends_params\\test_three (1)', null),
+            array(\EVENT_PASS, 'depends_params\\test::test_two (1)', null),
+            array(\EVENT_PASS, 'depends_params\\test::test_three (1)', null),
         ));
     }
 
@@ -114,23 +114,23 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test_five', 'Skip me'),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test_six', "This test depends on 'unrun_depends\\test_five', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test1::setup_object', 'Skip me'),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_five', 'Skip me'),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_six', "This test depends on 'unrun_depends\\test2::test_five', which did not pass"),
+            array(\EVENT_SKIP, 'unrun_depends\\test_five', 'Skip me'),
+            array(\EVENT_SKIP, 'unrun_depends\\test_six', "This test depends on 'unrun_depends\\test_five', which did not pass"),
+            array(\EVENT_SKIP, 'unrun_depends\\test1::setup_object', 'Skip me'),
+            array(\EVENT_SKIP, 'unrun_depends\\test2::test_five', 'Skip me'),
+            array(\EVENT_SKIP, 'unrun_depends\\test2::test_six', "This test depends on 'unrun_depends\\test2::test_five', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'unrun_depends\\test_one', "This test depends on test 'foobar', which was never run"),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test_two', "This test depends on 'unrun_depends\\test_one', which did not pass"),
+            array(\EVENT_ERROR, 'unrun_depends\\test_one', "This test depends on test 'foobar', which was never run"),
+            array(\EVENT_SKIP, 'unrun_depends\\test_two', "This test depends on 'unrun_depends\\test_one', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'unrun_depends\\test_three', "This test depends on test 'unrun_depends\\test1::test_one', which was never run"),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test_four', "This test depends on 'unrun_depends\\test_three', which did not pass"),
+            array(\EVENT_ERROR, 'unrun_depends\\test_three', "This test depends on test 'unrun_depends\\test1::test_one', which was never run"),
+            array(\EVENT_SKIP, 'unrun_depends\\test_four', "This test depends on 'unrun_depends\\test_three', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'unrun_depends\\test2::test_one', "This test depends on test 'frobitz', which was never run"),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_two', "This test depends on 'unrun_depends\\test2::test_one', which did not pass"),
+            array(\EVENT_ERROR, 'unrun_depends\\test2::test_one', "This test depends on test 'frobitz', which was never run"),
+            array(\EVENT_SKIP, 'unrun_depends\\test2::test_two', "This test depends on 'unrun_depends\\test2::test_one', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'unrun_depends\\test2::test_three', "This test depends on test 'unrun_depends\\test1::test_one', which was never run"),
-            array(strangetest\EVENT_SKIP, 'unrun_depends\\test2::test_four', "This test depends on 'unrun_depends\\test2::test_three', which did not pass"),
+            array(\EVENT_ERROR, 'unrun_depends\\test2::test_three', "This test depends on test 'unrun_depends\\test1::test_one', which was never run"),
+            array(\EVENT_SKIP, 'unrun_depends\\test2::test_four', "This test depends on 'unrun_depends\\test2::test_three', which did not pass"),
         ));
     }
 
@@ -140,17 +140,17 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'cyclical_depends\\test_five', "This test has a cyclical dependency with the following tests:\n\tcyclical_depends\\test_four\n\tcyclical_depends\\test_three"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test_four', "This test depends on 'cyclical_depends\\test_five', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test_three', "This test depends on 'cyclical_depends\\test_four', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test_two', "This test depends on 'cyclical_depends\\test_three', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test_one', "This test depends on 'cyclical_depends\\test_two', which did not pass"),
+            array(\EVENT_ERROR, 'cyclical_depends\\test_five', "This test has a cyclical dependency with the following tests:\n\tcyclical_depends\\test_four\n\tcyclical_depends\\test_three"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test_four', "This test depends on 'cyclical_depends\\test_five', which did not pass"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test_three', "This test depends on 'cyclical_depends\\test_four', which did not pass"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test_two', "This test depends on 'cyclical_depends\\test_three', which did not pass"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test_one', "This test depends on 'cyclical_depends\\test_two', which did not pass"),
 
-            array(strangetest\EVENT_ERROR, 'cyclical_depends\\test::test_five', "This test has a cyclical dependency with the following tests:\n\tcyclical_depends\\test::test_four\n\tcyclical_depends\\test::test_three"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test::test_four', "This test depends on 'cyclical_depends\\test::test_five', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test::test_three', "This test depends on 'cyclical_depends\\test::test_four', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test::test_two', "This test depends on 'cyclical_depends\\test::test_three', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'cyclical_depends\\test::test_one', "This test depends on 'cyclical_depends\\test::test_two', which did not pass"),
+            array(\EVENT_ERROR, 'cyclical_depends\\test::test_five', "This test has a cyclical dependency with the following tests:\n\tcyclical_depends\\test::test_four\n\tcyclical_depends\\test::test_three"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test::test_four', "This test depends on 'cyclical_depends\\test::test_five', which did not pass"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test::test_three', "This test depends on 'cyclical_depends\\test::test_four', which did not pass"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test::test_two', "This test depends on 'cyclical_depends\\test::test_three', which did not pass"),
+            array(\EVENT_SKIP, 'cyclical_depends\\test::test_one', "This test depends on 'cyclical_depends\\test::test_two', which did not pass"),
         ));
     }
 
@@ -160,25 +160,25 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test_seven', null),
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test_ten', null),
+            array(\EVENT_PASS, 'multiple_depends\\test_seven', null),
+            array(\EVENT_PASS, 'multiple_depends\\test_ten', null),
 
-            array(strangetest\EVENT_OUTPUT, 'multiple_depends\\test', '.'),
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test::test_six', null),
-            array(strangetest\EVENT_FAIL, 'multiple_depends\\test::test_eight', 'I fail'),
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test::test_nine', null),
+            array(\EVENT_OUTPUT, 'multiple_depends\\test', '.'),
+            array(\EVENT_PASS, 'multiple_depends\\test::test_six', null),
+            array(\EVENT_FAIL, 'multiple_depends\\test::test_eight', 'I fail'),
+            array(\EVENT_PASS, 'multiple_depends\\test::test_nine', null),
 
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test_five', null),
+            array(\EVENT_PASS, 'multiple_depends\\test_five', null),
 
-            array(strangetest\EVENT_OUTPUT, 'multiple_depends\\test', '.'),
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'multiple_depends\\test', '.'),
+            array(\EVENT_PASS, 'multiple_depends\\test::test_two', null),
 
-            array(strangetest\EVENT_PASS, 'multiple_depends\\test_three', null),
+            array(\EVENT_PASS, 'multiple_depends\\test_three', null),
 
-            array(strangetest\EVENT_OUTPUT, 'multiple_depends\\test', '.'),
-            array(strangetest\EVENT_SKIP, 'multiple_depends\\test::test_four', "This test depends on 'multiple_depends\\test::test_eight', which did not pass"),
+            array(\EVENT_OUTPUT, 'multiple_depends\\test', '.'),
+            array(\EVENT_SKIP, 'multiple_depends\\test::test_four', "This test depends on 'multiple_depends\\test::test_eight', which did not pass"),
 
-            array(strangetest\EVENT_SKIP, 'multiple_depends\\test_one', "This test depends on 'multiple_depends\\test::test_four', which did not pass"),
+            array(\EVENT_SKIP, 'multiple_depends\\test_one', "This test depends on 'multiple_depends\\test::test_four', which did not pass"),
         ));
     }
 
@@ -188,25 +188,25 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_PASS, 'separate_depends\\test_seven', null),
-            array(strangetest\EVENT_PASS, 'separate_depends\\test_ten', null),
+            array(\EVENT_PASS, 'separate_depends\\test_seven', null),
+            array(\EVENT_PASS, 'separate_depends\\test_ten', null),
 
-            array(strangetest\EVENT_OUTPUT, 'separate_depends\\test', '.'),
-            array(strangetest\EVENT_PASS, 'separate_depends\\test::test_six', null),
-            array(strangetest\EVENT_FAIL, 'separate_depends\\test::test_eight', 'I fail'),
-            array(strangetest\EVENT_PASS, 'separate_depends\\test::test_nine', null),
+            array(\EVENT_OUTPUT, 'separate_depends\\test', '.'),
+            array(\EVENT_PASS, 'separate_depends\\test::test_six', null),
+            array(\EVENT_FAIL, 'separate_depends\\test::test_eight', 'I fail'),
+            array(\EVENT_PASS, 'separate_depends\\test::test_nine', null),
 
-            array(strangetest\EVENT_PASS, 'separate_depends\\test_five', null),
+            array(\EVENT_PASS, 'separate_depends\\test_five', null),
 
-            array(strangetest\EVENT_OUTPUT, 'separate_depends\\test', '.'),
-            array(strangetest\EVENT_PASS, 'separate_depends\\test::test_two', null),
+            array(\EVENT_OUTPUT, 'separate_depends\\test', '.'),
+            array(\EVENT_PASS, 'separate_depends\\test::test_two', null),
 
-            array(strangetest\EVENT_PASS, 'separate_depends\\test_three', null),
+            array(\EVENT_PASS, 'separate_depends\\test_three', null),
 
-            array(strangetest\EVENT_OUTPUT, 'separate_depends\\test', '.'),
-            array(strangetest\EVENT_SKIP, 'separate_depends\\test::test_four', "This test depends on 'separate_depends\\test::test_eight', which did not pass"),
+            array(\EVENT_OUTPUT, 'separate_depends\\test', '.'),
+            array(\EVENT_SKIP, 'separate_depends\\test::test_four', "This test depends on 'separate_depends\\test::test_eight', which did not pass"),
 
-            array(strangetest\EVENT_SKIP, 'separate_depends\\test_one', "This test depends on 'separate_depends\\test::test_four', which did not pass"),
+            array(\EVENT_SKIP, 'separate_depends\\test_one', "This test depends on 'separate_depends\\test::test_four', which did not pass"),
         ));
     }
 
@@ -219,36 +219,36 @@ class TestDependencies {
         );
 
         $events = array(
-            array(strangetest\EVENT_PASS, 'param_xdepend\\nonparam\\test_one', null),
-            array(strangetest\EVENT_FAIL, 'param_xdepend\\nonparam\\test_six', 'I fail'),
+            array(\EVENT_PASS, 'param_xdepend\\nonparam\\test_one', null),
+            array(\EVENT_FAIL, 'param_xdepend\\nonparam\\test_six', 'I fail'),
 
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_five (0)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_one (0)', null),
+            array(\EVENT_SKIP, 'param_xdepend\\param\\test_five (0)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
+            array(\EVENT_PASS, 'param_xdepend\\param\\test_one (0)', null),
 
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_five (1)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_one (1)', null),
+            array(\EVENT_SKIP, 'param_xdepend\\param\\test_five (1)', "This test depends on 'param_xdepend\\nonparam\\test_six', which did not pass"),
+            array(\EVENT_PASS, 'param_xdepend\\param\\test_one (1)', null),
 
 
-            array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_two (0)', null),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_two (1)', null),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\nonparam\\test_two', null),
+            array(\EVENT_PASS, 'param_xdepend\\param\\test_two (0)', null),
+            array(\EVENT_PASS, 'param_xdepend\\param\\test_two (1)', null),
+            array(\EVENT_PASS, 'param_xdepend\\nonparam\\test_two', null),
 
 
             array(
-                strangetest\EVENT_FAIL,
+                \EVENT_FAIL,
                 'param_xdepend\\param\\test_three (0)',
                 "Assertion \"\$actual === \$expected\" failed\n\n- \$actual\n+ \$expected\n\n- 14\n+ 10",
             ),
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_four (0)', "This test depends on 'param_xdepend\\param\\test_three (0)', which did not pass"),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_three (1)', null),
-            array(strangetest\EVENT_PASS, 'param_xdepend\\param\\test_four (1)', null),
+            array(\EVENT_SKIP, 'param_xdepend\\param\\test_four (0)', "This test depends on 'param_xdepend\\param\\test_three (0)', which did not pass"),
+            array(\EVENT_PASS, 'param_xdepend\\param\\test_three (1)', null),
+            array(\EVENT_PASS, 'param_xdepend\\param\\test_four (1)', null),
 
 
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_three', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_four', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\nonparam\\test_five', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (0)', "This test depends on 'param_xdepend\\param\\test_five (0)', which did not pass"),
-            array(strangetest\EVENT_SKIP, 'param_xdepend\\param\\test_six (1)', "This test depends on 'param_xdepend\\param\\test_five (1)', which did not pass"),
+            array(\EVENT_SKIP, 'param_xdepend\\nonparam\\test_three', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
+            array(\EVENT_SKIP, 'param_xdepend\\nonparam\\test_four', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
+            array(\EVENT_SKIP, 'param_xdepend\\nonparam\\test_five', "This test depends on 'param_xdepend\\param\\test_four', which did not pass"),
+            array(\EVENT_SKIP, 'param_xdepend\\param\\test_six (0)', "This test depends on 'param_xdepend\\param\\test_five (0)', which did not pass"),
+            array(\EVENT_SKIP, 'param_xdepend\\param\\test_six (1)', "This test depends on 'param_xdepend\\param\\test_five (1)', which did not pass"),
         );
 
         $state = new State;
@@ -269,11 +269,11 @@ class TestDependencies {
         $this->path .= 'test.php';
 
         $this->assert_events(array(
-            array(strangetest\EVENT_ERROR, 'teardown_function for error_depend\\test_one', 'I erred'),
-            array(strangetest\EVENT_PASS, 'error_depend\\test_two', null),
+            array(\EVENT_ERROR, 'teardown_function for error_depend\\test_one', 'I erred'),
+            array(\EVENT_PASS, 'error_depend\\test_two', null),
 
-            array(strangetest\EVENT_ERROR, 'teardown for error_depend\\test::test_one', 'I erred'),
-            array(strangetest\EVENT_PASS, 'error_depend\\test::test_two', null),
+            array(\EVENT_ERROR, 'teardown for error_depend\\test::test_one', 'I erred'),
+            array(\EVENT_PASS, 'error_depend\\test::test_two', null),
         ));
     }
 }

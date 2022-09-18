@@ -301,14 +301,20 @@ final class Log extends struct
 
 final class Logger extends struct
 {
-    /** @var int[] */
-    private $count = array(
-        namespace\EVENT_PASS   => 0,
-        namespace\EVENT_ERROR  => 0,
-        namespace\EVENT_FAIL   => 0,
-        namespace\EVENT_SKIP   => 0,
-        namespace\EVENT_OUTPUT => 0,
-    );
+    /** @var int */
+    private $pass_count = 0;
+
+    /** @var int */
+    private $failure_count = 0;
+
+    /** @var int */
+    private $error_count = 0;
+
+    /** @var int */
+    private $skip_count = 0;
+
+    /** @var int */
+    private $output_count = 0;
 
     /** @var Event[] */
     private $events = array();
@@ -340,7 +346,7 @@ final class Logger extends struct
      */
     public function log_pass(PassEvent $event)
     {
-        ++$this->count[namespace\EVENT_PASS];
+        ++$this->pass_count;
         if ($this->verbose & namespace\LOG_PASS)
         {
             $this->events[] = $event;
@@ -354,7 +360,7 @@ final class Logger extends struct
      */
     public function log_failure(FailEvent $event)
     {
-        ++$this->count[namespace\EVENT_FAIL];
+        ++$this->failure_count;
         $this->events[] = $event;
         $this->outputter->output_failure();
     }
@@ -365,7 +371,7 @@ final class Logger extends struct
      */
     public function log_error(ErrorEvent $event)
     {
-        ++$this->count[namespace\EVENT_ERROR];
+        ++$this->error_count;
         $this->events[] = $event;
         $this->outputter->output_error();
     }
@@ -377,7 +383,7 @@ final class Logger extends struct
      */
     public function log_skip(SkipEvent $event, $during_error = false)
     {
-        ++$this->count[namespace\EVENT_SKIP];
+        ++$this->skip_count;
         if ($during_error)
         {
             // An error could happen during a skipped test if the skip is
@@ -401,7 +407,7 @@ final class Logger extends struct
      */
     public function log_output(OutputEvent $event, $during_error = false)
     {
-        ++$this->count[namespace\EVENT_OUTPUT];
+        ++$this->output_count;
         if (($this->verbose & namespace\LOG_OUTPUT) || $during_error)
         {
             $this->events[] = $event;
@@ -451,11 +457,11 @@ final class Logger extends struct
     public function get_log()
     {
         $result = new Log;
-        $result->pass_count = $this->count[namespace\EVENT_PASS];
-        $result->error_count = $this->count[namespace\EVENT_ERROR];
-        $result->failure_count = $this->count[namespace\EVENT_FAIL];
-        $result->skip_count = $this->count[namespace\EVENT_SKIP];
-        $result->output_count = $this->count[namespace\EVENT_OUTPUT];
+        $result->pass_count = $this->pass_count;
+        $result->error_count = $this->error_count;
+        $result->failure_count = $this->failure_count;
+        $result->skip_count = $this->skip_count;
+        $result->output_count = $this->output_count;
         $result->events = $this->events;
 
         return $result;
@@ -467,10 +473,7 @@ final class Logger extends struct
      */
     public function clear()
     {
-        foreach ($this->count as $i => $_)
-        {
-            $this->count[$i] = 0;
-        }
+        $this->pass_count = $this->error_count = $this->failure_count = $this->skip_count = $this->output_count = 0;
         $this->events = array();
     }
 }

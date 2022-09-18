@@ -277,11 +277,11 @@ class TestProcessUserTargets
 
         $this->events = array(
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'foo.php',
                 'This path does not exist'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 'foo_dir',
                 'This path does not exist'),
         );
@@ -300,27 +300,27 @@ class TestProcessUserTargets
 
         $this->events = array(
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--function=',
                 'Function specifier 1 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--function=test1_1,,test1_2',
                 'Function specifier 2 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--function=,,,',
                 'Function specifier 1 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--function=,,,',
                 'Function specifier 2 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--function=,,,',
                 'Function specifier 3 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--function=,,,',
                 'Function specifier 4 is missing a name'),
         );
@@ -341,35 +341,35 @@ class TestProcessUserTargets
 
         $this->events = array(
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=',
                 'Class specifier 1 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_1;;test1_3',
                 'Class specifier 2 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_1;test1_2;::one,,two,',
                 'Class specifier 3 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=::one,two',
                 'Class specifier 1 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=;;;',
                 'Class specifier 1 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=;;;',
                 'Class specifier 2 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=;;;',
                 'Class specifier 3 is missing a name'),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=;;;',
                 'Class specifier 4 is missing a name'),
         );
@@ -388,27 +388,27 @@ class TestProcessUserTargets
 
         $this->events = array(
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_1::',
                 "Method specifier 1 for class 'test1_1' is missing a name"),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_2::testone,,testthree',
                 "Method specifier 2 for class 'test1_2' is missing a name"),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_3::,,,',
                 "Method specifier 1 for class 'test1_3' is missing a name"),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_3::,,,',
                 "Method specifier 2 for class 'test1_3' is missing a name"),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_3::,,,',
                 "Method specifier 3 for class 'test1_3' is missing a name"),
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 '--class=test1_3::,,,',
                 "Method specifier 4 for class 'test1_3' is missing a name"),
         );
@@ -421,7 +421,7 @@ class TestProcessUserTargets
 
         $this->events = array(
             array(
-                strangetest\EVENT_ERROR,
+                \EVENT_ERROR,
                 __FILE__,
                 "This path is outside the test root directory {$this->root}"),
         );
@@ -470,32 +470,32 @@ class TestProcessUserTargets
         {
             if ($event instanceof strangetest\PassEvent)
             {
-                $type = strangetest\EVENT_PASS;
+                $type = \EVENT_PASS;
                 $source = $event->source;
                 $reason = null;
             }
             elseif ($event instanceof strangetest\FailEvent)
             {
-                $type = strangetest\EVENT_FAIL;
+                $type = \EVENT_FAIL;
                 $source = $event->source;
                 $reason = $event->reason;
             }
             elseif ($event instanceof strangetest\ErrorEvent)
             {
-                $type = strangetest\EVENT_ERROR;
+                $type = \EVENT_ERROR;
                 $source = $event->source;
                 $reason = $event->reason;
             }
             elseif ($event instanceof strangetest\SkipEvent)
             {
-                $type = strangetest\EVENT_SKIP;
+                $type = \EVENT_SKIP;
                 $source = $event->source;
                 $reason = $event->reason;
             }
             else
             {
                 \assert($event instanceof strangetest\OutputEvent);
-                $type = strangetest\EVENT_OUTPUT;
+                $type = \EVENT_OUTPUT;
                 $source = $event->source;
                 $reason = $event->output;
             }
