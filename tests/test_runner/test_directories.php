@@ -21,7 +21,7 @@ class TestRunDirectories {
 
 
     public function setup() {
-        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
         $this->path = __DIR__ . '/resources/directories/';
     }
 
@@ -33,7 +33,7 @@ class TestRunDirectories {
 
         $state = new State;
         $state->logger = $this->logger;
-        $state->bufferer = new LogBufferer(\TEST_ROOT);
+        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
 
         $tests = strangetest\discover_tests($state, $root);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
@@ -258,7 +258,7 @@ class TestRunDirectories {
 
         $state = new State;
         $state->logger = $this->logger;
-        $state->bufferer = new LogBufferer(\TEST_ROOT);
+        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
 
         $tests = strangetest\discover_tests($state, $root);
         strangetest\assert_truthy($tests, "Failed to discover tests for {$root}");
@@ -310,7 +310,7 @@ class TestRunDirectories {
         $tests = make_test($tests);
         $state = new State;
         $state->logger = $this->logger;
-        $state->bufferer = new LogBufferer(\TEST_ROOT);
+        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
         strangetest\run_tests($state, $tests, $tests);
 
         $actual = $this->logger->get_log()->events;

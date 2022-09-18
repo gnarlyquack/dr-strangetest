@@ -18,7 +18,7 @@ class TestQuietOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_QUIET, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_QUIET, false, new NoOutputter);
         ob_start();
     }
 
@@ -228,7 +228,7 @@ class TestVerboseOutput {
     private $logger;
 
     public function setup() {
-        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_VERBOSE, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_VERBOSE, false, new NoOutputter);
         ob_start();
     }
 

@@ -12,13 +12,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_QUIET),
             $opts,
+            array('verbose' => strangetest\LOG_QUIET, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_identical(
-            array(),
             $args,
+            array(),
             "Arguments weren't parsed correctly"
         );
     }
@@ -30,13 +30,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_QUIET),
             $opts,
+            array('verbose' => strangetest\LOG_QUIET, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_equal(
-            array('one', 'two'),
             $args,
+            array('one', 'two'),
             "Arguments weren't parsed correctly"
         );
     }
@@ -48,13 +48,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_VERBOSE),
             $opts,
+            array('verbose' => strangetest\LOG_VERBOSE, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_identical(
-            array(),
             $args,
+            array(),
             "Arguments weren't parsed correctly"
         );
     }
@@ -66,13 +66,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_VERBOSE),
             $opts,
+            array('verbose' => strangetest\LOG_VERBOSE, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_identical(
-            array(),
             $args,
+            array(),
             "Arguments weren't parsed correctly"
         );
     }
@@ -84,13 +84,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_VERBOSE),
             $opts,
+            array('verbose' => strangetest\LOG_VERBOSE, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_identical(
-            array(),
             $args,
+            array(),
             "Arguments weren't parsed correctly"
         );
     }
@@ -102,13 +102,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_QUIET),
             $opts,
+            array('verbose' => strangetest\LOG_QUIET, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_equal(
-            array('bar', '--verbose'),
             $args,
+            array('bar', '--verbose'),
             "Arguments weren't parsed correctly"
         );
     }
@@ -120,13 +120,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_QUIET),
             $opts,
+            array('verbose' => strangetest\LOG_QUIET, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_equal(
-            array('-', '--verbose'),
             $args,
+            array('-', '--verbose'),
             "Arguments weren't parsed correctly"
         );
     }
@@ -138,13 +138,13 @@ class TestArgParse {
         list($opts, $args) = strangetest\_parse_arguments(count($argv), $argv);
 
         strangetest\assert_identical(
-            array('verbose' => strangetest\LOG_QUIET),
             $opts,
+            array('verbose' => strangetest\LOG_QUIET, 'debug' => false),
             "Options weren't parsed correctly"
         );
         strangetest\assert_identical(
-            array('--verbose'),
             $args,
+            array('--verbose'),
             "Arguments weren't parsed correctly"
         );
     }

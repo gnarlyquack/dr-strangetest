@@ -28,10 +28,10 @@ function filepath($name) {
 // helper assertions
 
 function assert_file_discovery($filepath, array $events) {
-    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
     $state = new _DiscoveryState(new State);
     $state->global->logger = $logger;
-    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT, false);
     strangetest\_discover_file($state, $filepath, 0);
 
     \assert_events($events, $logger);
@@ -104,10 +104,10 @@ function test_handles_non_test_definition() {
     }
 
     $filepath = namespace\filepath($file);
-    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
     $state = new _DiscoveryState(new State);
     $state->global->logger = $logger;
-    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT, false);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->events);
@@ -132,10 +132,10 @@ function test_does_not_discover_enumerations()
 
     $file = 'test_enumeration.php';
     $filepath = namespace\filepath($file);
-    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
     $state = new _DiscoveryState(new State);
     $state->global->logger = $logger;
-    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT, false);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->events);
@@ -160,10 +160,10 @@ function test_discovers_tests_marked_with_attributes()
 
     $file = 'test_attributes.php';
     $filepath = namespace\filepath($file);
-    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
     $state = new _DiscoveryState(new State);
     $state->global->logger = $logger;
-    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT, false);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
     strangetest\assert_identical(array(), $logger->get_log()->events);

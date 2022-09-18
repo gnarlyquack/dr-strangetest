@@ -26,8 +26,8 @@ class TestProcessUserTargets
     public function setup_object()
     {
         $state = new State;
-        $state->bufferer = new LogBufferer(\TEST_ROOT);
-        $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
+        $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
         $state->logger = $logger;
         $path = __DIR__ . '/resources/';
         $tests = strangetest\discover_tests($state, $path, 0);
@@ -41,7 +41,7 @@ class TestProcessUserTargets
 
     public function setup()
     {
-        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
         $this->targets = null;
         $this->events = array();
     }

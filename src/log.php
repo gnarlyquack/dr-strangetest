@@ -301,6 +301,18 @@ final class Log extends struct
 
 final class Logger extends struct
 {
+    /** @var string */
+    private $root;
+
+    /** @var int */
+    private $verbose;
+
+    /** @var bool */
+    private $debug;
+
+    /** @var LogOutputter */
+    private $outputter;
+
     /** @var int */
     private $pass_count = 0;
 
@@ -319,24 +331,17 @@ final class Logger extends struct
     /** @var Event[] */
     private $events = array();
 
-    /** @var string */
-    private $root;
-
-    /** @var int */
-    private $verbose;
-
-    /** @var LogOutputter */
-    private $outputter;
-
 
     /**
      * @param string $root
      * @param int $verbose
+     * @param bool $debug
      */
-    public function __construct($root, $verbose, LogOutputter $outputter)
+    public function __construct($root, $verbose, $debug, LogOutputter $outputter)
     {
         $this->root = $root;
         $this->verbose = $verbose;
+        $this->debug = $debug;
         $this->outputter = $outputter;
     }
 
@@ -423,8 +428,15 @@ final class Logger extends struct
      */
     public function failure_from_exception($source, $failure)
     {
-        $formatted = namespace\_format_exception($failure, $this->root);
-        return new FailEvent($source, $failure->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+        if ($this->debug)
+        {
+            return new FailEvent($source, $failure->getMessage(), $failure->getFile(), $failure->getLine(), $failure->getTraceAsString());
+        }
+        else
+        {
+            $formatted = namespace\_format_exception($failure, $this->root);
+            return new FailEvent($source, $failure->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+        }
     }
 
 
@@ -435,8 +447,15 @@ final class Logger extends struct
      */
     public function error_from_exception($source, $error)
     {
-        $formatted = namespace\_format_exception($error, $this->root);
-        return new ErrorEvent($source, $error->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+        if ($this->debug)
+        {
+            return new ErrorEvent($source, $error->getMessage(), $error->getFile(), $error->getLine(), $error->getTraceAsString());
+        }
+        else
+        {
+            $formatted = namespace\_format_exception($error, $this->root);
+            return new ErrorEvent($source, $error->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+        }
     }
 
 
@@ -446,8 +465,15 @@ final class Logger extends struct
      */
     public function skip_from_exception($source, Skip $skip)
     {
-        $formatted = namespace\_format_exception($skip, $this->root);
-        return new SkipEvent($source, $skip->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+        if ($this->debug)
+        {
+            return new SkipEvent($source, $skip->getMessage(), $skip->getFile(), $skip->getLine(), $skip->getTraceAsString());
+        }
+        else
+        {
+            $formatted = namespace\_format_exception($skip, $this->root);
+            return new SkipEvent($source, $skip->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
+        }
     }
 
 
@@ -502,10 +528,11 @@ final class LogBufferer extends struct implements LogOutputter
 
     /**
      * @param string $root
+     * @param bool $debug
      */
-    public function __construct($root)
+    public function __construct($root, $debug)
     {
-        $this->logger = new Logger($root, namespace\LOG_ALL, $this);
+        $this->logger = new Logger($root, namespace\LOG_ALL, $debug, $this);
     }
 
 

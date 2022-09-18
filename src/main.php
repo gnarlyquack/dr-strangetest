@@ -162,8 +162,8 @@ function main($argc, $argv)
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
     $state = new State;
-    $state->logger = new Logger($cwd, $options['verbose'], new CommandLineOutputter);
-    $state->bufferer = new LogBufferer($cwd);
+    $state->logger = new Logger($cwd, $options['verbose'], $options['debug'], new CommandLineOutputter);
+    $state->bufferer = new LogBufferer($cwd, $options['debug']);
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();
@@ -374,11 +374,11 @@ function _microtime()
 /**
  * @param int $argc
  * @param string[] $argv
- * @return array{array<string, int>, string[]}
+ * @return array{array{'verbose': int, 'debug': bool}, string[]}
  */
 function _parse_arguments($argc, $argv)
 {
-    $opts = array('verbose' => namespace\LOG_QUIET);
+    $opts = array('verbose' => namespace\LOG_QUIET, 'debug' => false);
     $args = \array_slice($argv, 1);
 
     while ($args)
@@ -414,8 +414,8 @@ function _parse_arguments($argc, $argv)
 
 /**
  * @param string[] $args
- * @param array<string, int> $opts
- * @return array{array<string, int>, string[]}
+ * @param array{'verbose': int, 'debug': bool} $opts
+ * @return array{array{'verbose': int, 'debug': bool}, string[]}
  */
 function _parse_long_option($args, $opts)
 {
@@ -429,8 +429,8 @@ function _parse_long_option($args, $opts)
 
 /**
  * @param string[] $args
- * @param array<string, int> $opts
- * @return array{array<string, int>, string[]}
+ * @param array{'verbose': int, 'debug': bool} $opts
+ * @return array{array{'verbose': int, 'debug': bool}, string[]}
  */
 function _parse_short_option($args, $opts)
 {
@@ -457,13 +457,17 @@ function _parse_short_option($args, $opts)
 /**
  * @param string $opt
  * @param string[] $args
- * @param array<string, int> $opts
- * @return array{array<string, int>, string[]}
+ * @param array{'verbose': int, 'debug': bool} $opts
+ * @return array{array{'verbose': int, 'debug': bool}, string[]}
  */
 function _parse_option($opt, $args, $opts)
 {
     switch ($opt)
     {
+        case 'debug':
+            $opts['debug'] = true;
+            break;
+
         case 'q':
         case 'quiet':
             $opts['verbose'] = namespace\LOG_QUIET;

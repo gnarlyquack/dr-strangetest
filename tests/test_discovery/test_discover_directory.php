@@ -18,7 +18,7 @@ use NoOutputter;
 function setup()
 {
     return array(
-        new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter),
+        new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter),
         __DIR__ . '/resources/directory/',
     );
 }
@@ -177,7 +177,7 @@ function assert_discovered($logger, $path, $discovered, $log)
 {
     $state = new _DiscoveryState(new State);
     $state->global->logger = $logger;
-    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT, false);
     $actual = strangetest\_discover_directory($state, $path, 0);
 
     $discovered = make_test($discovered);

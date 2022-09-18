@@ -27,7 +27,7 @@ class TestFiles
     public function setup() {
         $this->root =  __DIR__ . '/resources/files/';
         $this->path = '';
-        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
     }
 
 
@@ -37,7 +37,7 @@ class TestFiles
     {
         $state = new State;
         $state->logger = $this->logger;
-        $state->bufferer = new LogBufferer(\TEST_ROOT);
+        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
         $tests = strangetest\discover_tests($state, $this->root);
 
         if ($tests)
@@ -835,9 +835,9 @@ function filepath($name) {
 
 function assert_run_file($filepath, $events) {
     $state = new State;
-    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
     $state->logger = $logger;
-    $state->bufferer = new LogBufferer(\TEST_ROOT);
+    $state->bufferer = new LogBufferer(\TEST_ROOT, false);
     $discovery_state = new _DiscoveryState($state, $logger);
 
     $file = strangetest\_discover_file($discovery_state, $filepath, 0);
