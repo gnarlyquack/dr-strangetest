@@ -52,11 +52,6 @@ Release
 -   Ensure we're UTF-8 conformant
     https://www.php.net/manual/en/migration71.windows-support.php#migration71.windows-support.long-and-utf8-path
 
--   Any event that is logged using a string as the reason (as opposed to using
-    an exception as the reason) will not have a backtrace identifying the
-    source file name and line number. To the extent that it's possible, we
-    probably want to always log an event using an exception as the reason.
-
 -   Should we strip assert() calls (and potentially other debug activity) when
     building the phar? Since Dr. Strangetest requires assertions to be enabled,
     they will always be executed even though we would never expect them to
@@ -89,8 +84,6 @@ Release
 -   Test that we don't skip any tokens when parsing files. In many cases,
     whitespace is optional, so an off-by-one error when iterating through the
     tokens means we could potentially miss a definition.
-
--   Only show file name and line number in stack traces
 
 -   How do we (and should we) handle calling user functions with bad
     signatures, i.e., fixture functions or test functions with extraneous
