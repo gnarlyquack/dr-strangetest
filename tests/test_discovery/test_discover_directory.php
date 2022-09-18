@@ -184,7 +184,7 @@ function assert_discovered($logger, $path, $discovered, $log)
     strangetest\assert_equal($actual, $discovered);
 
 
-    $actual = $logger->get_log()->get_events();
+    $actual = $logger->get_log()->events;
     foreach ($actual as $i => $event)
     {
         if ($event instanceof strangetest\PassEvent)

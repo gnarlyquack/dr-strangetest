@@ -198,7 +198,7 @@ function main($argc, $argv)
     namespace\output_log($log);
 
     exit(
-        $log->failure_count() || $log->error_count()
+        $log->failure_count || $log->error_count
         ? namespace\EXIT_FAILURE
         : namespace\EXIT_SUCCESS
     );

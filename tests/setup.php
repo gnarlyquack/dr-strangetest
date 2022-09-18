@@ -62,7 +62,7 @@ function assert_log(array $log, strangetest\Logger $logger) {
 
 
 function assert_events($expected, strangetest\Logger $logger) {
-    $actual = $logger->get_log()->get_events();
+    $actual = $logger->get_log()->events;
     foreach ($actual as $i => $event)
     {
         if ($event instanceof strangetest\PassEvent)

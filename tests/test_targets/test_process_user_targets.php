@@ -31,7 +31,7 @@ class TestProcessUserTargets
         $state->logger = $logger;
         $path = __DIR__ . '/resources/';
         $tests = strangetest\discover_tests($state, $path, 0);
-        \assert(!$logger->get_log()->get_events());
+        \assert(!$logger->get_log()->events);
 
         $this->tests = $tests;
         $this->root = ($this->tests instanceof strangetest\DirectoryTest)
@@ -464,7 +464,7 @@ class TestProcessUserTargets
         );
 
         $expected = $this->events;
-        $events = $this->logger->get_log()->get_events();
+        $events = $this->logger->get_log()->events;
         $actual = array();
         foreach ($events as $event)
         {

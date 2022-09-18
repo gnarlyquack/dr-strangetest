@@ -126,16 +126,9 @@ function _format_message_from_event(Event $event)
  */
 function output_log(Log $log)
 {
-    $event_types = array(
-        namespace\EVENT_FAIL => 'FAILED',
-        namespace\EVENT_ERROR => 'ERROR',
-        namespace\EVENT_SKIP => 'SKIPPED',
-        namespace\EVENT_OUTPUT => 'OUTPUT',
-    );
-
     $output_count = 0;
     $skip_count = 0;
-    foreach ($log->get_events() as $event)
+    foreach ($log->events as $event)
     {
         // @fixme Figure out how/where to format messagse from events
         $message = namespace\_format_message_from_event($event);
@@ -152,17 +145,12 @@ function output_log(Log $log)
         echo "\n\n\n", $message;
     }
 
-    $passed = $log->pass_count();
-    $failed = $log->failure_count();
-    $errors = $log->error_count();
-    $skipped = $log->skip_count();
-    $output = $log->output_count();
     $omitted = array();
-    if ($output_count !== $output)
+    if ($output_count !== $log->output_count)
     {
         $omitted[] = 'output';
     }
-    if ($skip_count !== $skipped)
+    if ($skip_count !== $log->skip_count)
     {
         $omitted[] = 'skipped tests';
     }
@@ -175,33 +163,33 @@ function output_log(Log $log)
     }
 
     $summary = array();
-    if ($passed)
+    if ($log->pass_count)
     {
-        $summary[] = \sprintf('Passed: %d', $passed);
+        $summary[] = \sprintf('Passed: %d', $log->pass_count);
     }
-    if ($failed)
+    if ($log->failure_count)
     {
-        $summary[] = \sprintf('Failed: %d', $failed);
+        $summary[] = \sprintf('Failed: %d', $log->failure_count);
     }
-    if ($errors)
+    if ($log->error_count)
     {
-        $summary[] = \sprintf('Errors: %d', $errors);
+        $summary[] = \sprintf('Errors: %d', $log->error_count);
     }
-    if ($skipped)
+    if ($log->skip_count)
     {
-        $summary[] = \sprintf('Skipped: %d', $skipped);
+        $summary[] = \sprintf('Skipped: %d', $log->skip_count);
     }
-    if ($output)
+    if ($log->output_count)
     {
-        $summary[] = \sprintf('Output: %d', $output);
+        $summary[] = \sprintf('Output: %d', $log->output_count);
     }
 
     if ($summary)
     {
         echo
             ($omitted ? "\n\n" : "\n\n\n"),
-            "Seconds elapsed: ", $log->seconds_elapsed(),
-            "\nMemory used: ", $log->memory_used(), " MB\n",
+            "Seconds elapsed: ", $log->seconds_elapsed,
+            "\nMemory used: ", $log->megabytes_used, " MB\n",
             \implode(', ', $summary), "\n";
     }
     else

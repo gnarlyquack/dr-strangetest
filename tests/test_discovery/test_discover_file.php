@@ -110,7 +110,7 @@ function test_handles_non_test_definition() {
     $state->global->bufferer = new LogBufferer(\TEST_ROOT);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
-    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_identical(array(), $logger->get_log()->events);
     strangetest\assert_true(
         $result instanceof strangetest\FileTest,
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
@@ -138,7 +138,7 @@ function test_does_not_discover_enumerations()
     $state->global->bufferer = new LogBufferer(\TEST_ROOT);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
-    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_identical(array(), $logger->get_log()->events);
     strangetest\assert_true(
         $result instanceof strangetest\FileTest,
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
@@ -166,7 +166,7 @@ function test_discovers_tests_marked_with_attributes()
     $state->global->bufferer = new LogBufferer(\TEST_ROOT);
     $result = strangetest\_discover_file($state, $filepath, 0);
 
-    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_identical(array(), $logger->get_log()->events);
     strangetest\assert_true(
         $result instanceof strangetest\FileTest,
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))

@@ -44,7 +44,7 @@ class TestRunDirectories {
         $current = null;
         $directory = null;
 
-        foreach ($this->logger->get_log()->get_events() as $event) {
+        foreach ($this->logger->get_log()->events as $event) {
             if ($event instanceof strangetest\PassEvent)
             {
                 $type = strangetest\EVENT_PASS;
@@ -265,7 +265,7 @@ class TestRunDirectories {
 
         strangetest\run_tests($state, $tests, $tests);
 
-        $actual = $this->logger->get_log()->get_events();
+        $actual = $this->logger->get_log()->events;
         foreach ($actual as $i => $event) {
             if ($event instanceof strangetest\PassEvent)
             {
@@ -313,7 +313,7 @@ class TestRunDirectories {
         $state->bufferer = new LogBufferer(\TEST_ROOT);
         strangetest\run_tests($state, $tests, $tests);
 
-        $actual = $this->logger->get_log()->get_events();
+        $actual = $this->logger->get_log()->events;
         foreach ($actual as $i => $event)
         {
             if ($event instanceof strangetest\PassEvent)

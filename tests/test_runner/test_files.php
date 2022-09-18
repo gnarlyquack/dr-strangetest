@@ -841,7 +841,7 @@ function assert_run_file($filepath, $events) {
     $discovery_state = new _DiscoveryState($state, $logger);
 
     $file = strangetest\_discover_file($discovery_state, $filepath, 0);
-    strangetest\assert_identical(array(), $logger->get_log()->get_events());
+    strangetest\assert_identical(array(), $logger->get_log()->events);
     if ($file instanceof strangetest\FileTest)
     {
         strangetest\_run_file($state, $file, array(0), array());

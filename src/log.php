@@ -272,100 +272,29 @@ function _format_exception($exception, $root)
 
 final class Log extends struct
 {
-    /** @var float */
+    /** @var float Memory used during the test run */
     public $megabytes_used;
 
-    /** @var float */
+    /** @var float Duration of the test run */
     public $seconds_elapsed;
 
-    /** @var int[] $count */
-    private $count;
+    /** @var int */
+    public $pass_count;
+
+    /** @var int */
+    public $failure_count;
+
+    /** @var int */
+    public $error_count;
+
+    /** @var int */
+    public $skip_count;
+
+    /** @var int */
+    public $output_count;
 
     /** @var Event[] */
-    private $events;
-
-
-    /**
-     * @param int[] $count
-     * @param Event[] $events
-     */
-    public function __construct(array $count, array $events)
-    {
-        $this->count = $count;
-        $this->events = $events;
-    }
-
-
-    /**
-     * @return int
-     */
-    public function pass_count()
-    {
-        return $this->count[namespace\EVENT_PASS];
-    }
-
-
-    /**
-     * @return int
-     */
-    public function failure_count()
-    {
-        return $this->count[namespace\EVENT_FAIL];
-    }
-
-
-    /**
-     * @return int
-     */
-    public function error_count()
-    {
-        return $this->count[namespace\EVENT_ERROR];
-    }
-
-    /**
-     * @return int
-     */
-    public function skip_count()
-    {
-        return $this->count[namespace\EVENT_SKIP];
-    }
-
-
-    /**
-     * @return int
-     */
-    public function output_count()
-    {
-        return $this->count[namespace\EVENT_OUTPUT];
-    }
-
-
-    /**
-     * @return float
-     */
-    public function seconds_elapsed()
-    {
-        return $this->seconds_elapsed;
-    }
-
-
-    /**
-     * @return float
-     */
-    public function memory_used()
-    {
-        return $this->megabytes_used;
-    }
-
-
-    /**
-     * @return Event[]
-     */
-    public function get_events()
-    {
-        // This is safe because PHP arrays are copy-on-write
-        return $this->events;
-    }
+    public $events;
 }
 
 
@@ -521,7 +450,15 @@ final class Logger extends struct
      */
     public function get_log()
     {
-        return new Log($this->count, $this->events);
+        $result = new Log;
+        $result->pass_count = $this->count[namespace\EVENT_PASS];
+        $result->error_count = $this->count[namespace\EVENT_ERROR];
+        $result->failure_count = $this->count[namespace\EVENT_FAIL];
+        $result->skip_count = $this->count[namespace\EVENT_SKIP];
+        $result->output_count = $this->count[namespace\EVENT_OUTPUT];
+        $result->events = $this->events;
+
+        return $result;
     }
 
 
@@ -642,7 +579,7 @@ final class LogBufferer extends struct implements LogOutputter
         }
 
         // Now unbuffer the logger and log any buffered events as normal
-        foreach ($this->logger->get_log()->get_events() as $event)
+        foreach ($this->logger->get_log()->events as $event)
         {
             if ($event instanceof PassEvent)
             {
