@@ -59,11 +59,12 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
     $directory = new DirectoryTest;
     $directory->name = $dirpath;
     $directory->run_group_id = $run_group_id;
-    unset($run_group_id);
 
     $run_group = new TestRunGroup;
+    $run_group->id = $run_group_id;
     $run_group->path = $directory->name;
     $run_group->tests = $directory;
+    unset($run_group_id);
 
     $setup_filename = null;
     $tests = array();
@@ -273,11 +274,12 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
     $file = new FileTest;
     $file->name = $filepath;
     $file->run_group_id = $run_group_id;
-    unset($run_group_id);
 
     $run_group = new TestRunGroup;
+    $run_group->id = $run_group_id;
     $run_group->path = $file->name;
     $run_group->tests = $file;
+    unset($run_group_id);
 
     $namespace = '';
     $tests = array();
@@ -655,9 +657,10 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
     if ($run_group->runs)
     {
         $run_group_id = \count($state->global->groups);
-        $groups = $state->global->groups[$run_group->tests->run_group_id];
+        $groups = $state->global->groups[$run_group->id];
         $groups[] = $run_group_id;
         $state->global->groups[$run_group_id] = $groups;
+        $run_group->id = $run_group_id;
         $run_group->tests->run_group_id = $run_group_id;
 
         foreach ($run_group->runs as $run)

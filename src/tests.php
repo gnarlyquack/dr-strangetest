@@ -13,6 +13,9 @@ final class TestRunGroup extends struct
     /** @var string */
     public $path;
 
+    /** @var int */
+    public $id;
+
     /** @var TestRun[] */
     public $runs = array();
 

@@ -13,6 +13,34 @@ const RESULT_FAIL     = 0x1;
 const RESULT_POSTPONE = 0x2;
 
 
+final class RunID extends struct
+{
+    /** @var int */
+    public $group_id;
+
+    /** @var int */
+    public $run_id;
+
+    /** @var ?RunID */
+    public $parent;
+
+    /** @var string */
+    public $name;
+
+
+    /**
+     * @param int $group_id
+     * @param int $run_id
+     */
+    public function __construct($group_id, $run_id, RunID $parent = null)
+    {
+        $this->group_id = $group_id;
+        $this->run_id = $run_id;
+        $this->parent = $parent;
+        //$this->name = ;
+    }
+}
+
 /**
  * @api
  */
@@ -219,8 +247,9 @@ final class _Context extends struct implements Context
 
 
 /**
- * @param TestRunGroup|DirectoryTest $suite
- * @param TestRunGroup|DirectoryTest $tests
+ * @template T of TestRunGroup|DirectoryTest
+ * @param T $suite
+ * @param T $tests
  * @return void
  */
 function run_tests(State $state, $suite, $tests)
