@@ -128,10 +128,25 @@ final class State extends struct
     /** @var array<string, mixed[]> */
     public $fixture = array();
 
-    /** @var array<int[]> */
+    /**
+     * @todo Remove $groups array from State(?)
+     * It seems like this information could be held in:
+     * - the TestRunGroup itself
+     * - the RunId instance
+     * - the results for a particular test
+     *
+     * @var array<int[]> */
     public $groups = array(0 => array(0));
 
-    /** @var TestRun[] */
+    /**
+     * @todo Remove $runs array from State(?)
+     * It looks like this is only being used to resolved dependencies to
+     * another run, however it seems like this can just be looked up in the
+     * parent TestRunGroup? However, we need to take a closer look at what's
+     * going on with dependency resolution. It might also necessitate indexing
+     * runs in a TestRunGroup by their run id instead of their name.
+     *
+     * @var TestRun[] */
     public $runs = array();
 }
 

@@ -749,6 +749,7 @@ function _build_tests_from_specifiers($reference, array $specifiers)
 function _create_empty_run_group(TestRunGroup $source)
 {
     $group = new TestRunGroup;
+    $group->id = $source->id;
     $group->path = $source->path;
 
     $target = new _RunGroupTarget;
@@ -868,7 +869,6 @@ function _create_empty_directory_test(DirectoryTest $source)
 {
     $directory = new DirectoryTest;
     $directory->name = $source->name;
-    $directory->run_group_id = $source->run_group_id;
     $directory->setup = $source->setup;
     $directory->teardown = $source->teardown;
 
@@ -958,7 +958,6 @@ function _create_empty_file_test(FileTest $source)
 {
     $file = new FileTest;
     $file->name = $source->name;
-    $file->run_group_id = $source->run_group_id;
     $file->setup_file = $source->setup_file;
     $file->teardown_file = $source->teardown_file;
     $file->setup_function = $source->setup_function;
@@ -1060,7 +1059,6 @@ function _add_class_test_from_specifier(
     else
     {
         $child = new ClassTest;
-        $child->run_group_id = $child_specifier->test->run_group_id;
         $child->test = $child_specifier->test->test;
         $child->setup_object = $child_specifier->test->setup_object;
         $child->teardown_object = $child_specifier->test->teardown_object;

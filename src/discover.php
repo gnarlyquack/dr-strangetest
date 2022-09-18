@@ -58,7 +58,6 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
 
     $directory = new DirectoryTest;
     $directory->name = $dirpath;
-    $directory->run_group_id = $run_group_id;
 
     $run_group = new TestRunGroup;
     $run_group->id = $run_group_id;
@@ -130,11 +129,11 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
         {
             if ($is_file)
             {
-                $test = namespace\_discover_file($state, $name, $directory->run_group_id);
+                $test = namespace\_discover_file($state, $name, $run_group->id);
             }
             else
             {
-                $test = namespace\_discover_directory($state, $name, $directory->run_group_id);
+                $test = namespace\_discover_directory($state, $name, $run_group->id);
             }
 
             if ($test)
@@ -273,7 +272,6 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
 
     $file = new FileTest;
     $file->name = $filepath;
-    $file->run_group_id = $run_group_id;
 
     $run_group = new TestRunGroup;
     $run_group->id = $run_group_id;
@@ -404,7 +402,7 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
         {
             if ($reflected_test instanceof \ReflectionClass)
             {
-                $test = namespace\_discover_class($state->global->logger, $reflected_test, $file->run_group_id);
+                $test = namespace\_discover_class($state->global->logger, $reflected_test);
                 if ($test)
                 {
                     $file->tests[$test_index] = $test;
@@ -418,7 +416,6 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
             {
                 $test = new FunctionTest;
                 $test->name = $reflected_test->getName();
-                $test->run_group_id = $file->run_group_id;
                 $test->test = $reflected_test;
                 $file->tests[$test_index] = $test;
             }
@@ -448,18 +445,16 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
 
 /**
  * @param \ReflectionClass<object> $reflected_class
- * @param int $run_group_id
  * @return null|false|ClassTest Returns a ClassTest if tests were found.
  *                              Returns null if no tests were found. Returns
  *                              false if no tests were found but an error
  *                              occurred during discovery.
  */
-function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run_group_id)
+function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
 {
     $class = new ClassTest;
     $class->test = $reflected_class;
-    $class->run_group_id = $run_group_id;
-    unset($run_group_id, $reflected_class);
+    unset($reflected_class);
 
     $valid = true;
     foreach ($class->test->getMethods(\ReflectionMethod::IS_PUBLIC) as $method)
@@ -478,7 +473,6 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class, $run
         {
             $test = new MethodTest;
             $test->name = "{$class->test->name}::{$method->name}";
-            $test->run_group_id = $class->run_group_id;
             $test->test = $method;
             $class->tests[$method->name] = $test;
         }
@@ -661,7 +655,6 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
         $groups[] = $run_group_id;
         $state->global->groups[$run_group_id] = $groups;
         $run_group->id = $run_group_id;
-        $run_group->tests->run_group_id = $run_group_id;
 
         foreach ($run_group->runs as $run)
         {

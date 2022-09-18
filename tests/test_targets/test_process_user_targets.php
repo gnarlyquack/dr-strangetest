@@ -534,6 +534,7 @@ class TestProcessUserTargets
     private function make_test_from_run_target($target, strangetest\TestRunGroup $tests)
     {
         $result = new strangetest\TestRunGroup;
+        $result->id = $tests->id;
         $result->path = $tests->path;
 
         if (isset($target['runs']))
@@ -589,7 +590,6 @@ class TestProcessUserTargets
     {
         $result = new strangetest\DirectoryTest;
         $result->name = $tests->name;
-        $result->run_group_id = $tests->run_group_id;
         $result->setup = $tests->setup;
         $result->teardown = $tests->teardown;
 
@@ -626,7 +626,6 @@ class TestProcessUserTargets
     {
         $result = new strangetest\FileTest;
         $result->name = $tests->name;
-        $result->run_group_id = $tests->run_group_id;
         $result->setup_file = $tests->setup_file;
         $result->teardown_file = $tests->teardown_file;
         $result->setup_function = $tests->setup_function;
@@ -660,7 +659,6 @@ class TestProcessUserTargets
     private function make_test_from_class_target($target, strangetest\ClassTest $tests)
     {
         $result = new strangetest\ClassTest;
-        $result->run_group_id = $tests->run_group_id;
         $result->test = $tests->test;
         $result->setup_object = $tests->setup_object;
         $result->teardown_object = $tests->teardown_object;

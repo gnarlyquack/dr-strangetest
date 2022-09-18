@@ -10,11 +10,11 @@ namespace strangetest;
 
 final class TestRunGroup extends struct
 {
-    /** @var string */
-    public $path;
-
     /** @var int */
     public $id;
+
+    /** @var string */
+    public $path;
 
     /** @var TestRun[] */
     public $runs = array();
@@ -48,9 +48,6 @@ final class DirectoryTest extends struct
     /** @var string */
     public $name;
 
-    /** @var int */
-    public $run_group_id;
-
     /** @var ?\ReflectionFunction */
     public $setup;
 
@@ -66,9 +63,6 @@ final class FileTest extends struct
 {
     /** @var string */
     public $name;
-
-    /** @var int */
-    public $run_group_id;
 
     /** @var ?\ReflectionFunction */
     public $setup_file;
@@ -92,9 +86,6 @@ final class FunctionTest extends struct
     /** @var string */
     public $name;
 
-    /** @var int */
-    public $run_group_id;
-
     /** @var \ReflectionFunction */
     public $test;
 }
@@ -102,9 +93,6 @@ final class FunctionTest extends struct
 
 final class ClassTest extends struct
 {
-    /** @var int */
-    public $run_group_id;
-
     /** @var \ReflectionClass<object> */
     public $test;
 
@@ -129,9 +117,6 @@ final class MethodTest extends struct
 {
     /** @var string */
     public $name;
-
-    /** @var int */
-    public $run_group_id;
 
     /** @var \ReflectionMethod */
     public $test;

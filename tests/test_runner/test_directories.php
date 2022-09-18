@@ -301,7 +301,7 @@ class TestRunDirectories {
 
             $actual[$i] = array($type, $source, $reason);
         }
-        strangetest\assert_identical($expected, $actual);
+        strangetest\assert_identical($actual, $expected);
     }
 
 
@@ -350,7 +350,7 @@ class TestRunDirectories {
 
             $actual[$i] = array($type, $source, $reason);
         }
-        strangetest\assert_identical($expected, $actual);
+        strangetest\assert_identical($actual, $expected);
     }
 
 
