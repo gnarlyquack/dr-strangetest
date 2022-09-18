@@ -198,9 +198,16 @@ function _format_exception($exception, $root)
 {
     $result = new _FormatExceptionResult;
     $offset = \strlen($root);
-    $backtrace = array();
+
+    if (0 !== \strpos($exception->getFile(), __DIR__))
+    {
+        $file = $exception->getFile();
+        $result->file = \substr($file, $offset);
+        $result->line = $line = $exception->getLine();
+    }
 
     // Create a backtrace excluding calls made within Dr. Strangetest
+    $backtrace = array();
     foreach ($exception->getTrace() as $frame)
     {
         // There seem to be occasions (which may vary by versions of PHP) in
