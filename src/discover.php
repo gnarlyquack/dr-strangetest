@@ -19,7 +19,7 @@ namespace strangetest;
  */
 function discover_tests(State $state, $path)
 {
-    return namespace\_discover_directory(new _DiscoveryState($state), $path, 0);
+    return namespace\_discover_directory(new _DiscoveryState($state), $path);
 }
 
 
@@ -28,6 +28,9 @@ const _TEST_ATTRIBUTE = 'strangetest\\attribute\\Test';
 
 final class _DiscoveryState extends struct
 {
+    /** @var int */
+    public $next_group_id = 1;
+
     /** @var array<string, true> */
     public $seen = array();
 
@@ -44,7 +47,6 @@ final class _DiscoveryState extends struct
 
 /**
  * @param string $dirpath
- * @param int $run_group_id
  * @return null|false|DirectoryTest|TestRunGroup    Returns a test if tests
  *                                                  were found. Returns null if
  *                                                  no tests were found.
@@ -52,7 +54,7 @@ final class _DiscoveryState extends struct
  *                                                  were found and an error
  *                                                  happened during discovery.
  */
-function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
+function _discover_directory(_DiscoveryState $state, $dirpath)
 {
     \assert(\DIRECTORY_SEPARATOR === \substr($dirpath, -1));
 
@@ -60,10 +62,8 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
     $directory->name = $dirpath;
 
     $run_group = new TestRunGroup;
-    $run_group->id = $run_group_id;
     $run_group->path = $directory->name;
     $run_group->tests = $directory;
-    unset($run_group_id);
 
     $setup_filename = null;
     $tests = array();
@@ -129,11 +129,11 @@ function _discover_directory(_DiscoveryState $state, $dirpath, $run_group_id)
         {
             if ($is_file)
             {
-                $test = namespace\_discover_file($state, $name, $run_group->id);
+                $test = namespace\_discover_file($state, $name);
             }
             else
             {
-                $test = namespace\_discover_directory($state, $name, $run_group->id);
+                $test = namespace\_discover_directory($state, $name);
             }
 
             if ($test)
@@ -255,14 +255,13 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
 
 /**
  * @param string $filepath
- * @param int $run_group_id
  * @return null|false|FileTest|TestRunGroup Returns a test class if tests were
  *                                          found. Returns null if no tests
  *                                          were found. Returns false if no
  *                                          tests were found and an error
  *                                          occurred during discovery.
  */
-function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
+function _discover_file(_DiscoveryState $state, $filepath)
 {
     $iterator = namespace\_new_token_iterator($state->global, $filepath);
     if (!$iterator)
@@ -274,10 +273,8 @@ function _discover_file(_DiscoveryState $state, $filepath, $run_group_id)
     $file->name = $filepath;
 
     $run_group = new TestRunGroup;
-    $run_group->id = $run_group_id;
     $run_group->path = $file->name;
     $run_group->tests = $file;
-    unset($run_group_id);
 
     $namespace = '';
     $tests = array();
@@ -650,11 +647,7 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
     $valid = true;
     if ($run_group->runs)
     {
-        $run_group_id = \count($state->global->groups_);
-        $groups = $state->global->groups_[$run_group->id];
-        $groups[] = $run_group_id;
-        $state->global->groups_[$run_group_id] = $groups;
-        $run_group->id = $run_group_id;
+        $run_group->id = $state->next_group_id++;
 
         foreach ($run_group->runs as $run)
         {

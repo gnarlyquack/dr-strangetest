@@ -129,16 +129,6 @@ final class State extends struct
     public $fixture = array();
 
     /**
-     * @todo Remove $groups array from State(?)
-     * It seems like this information could be held in:
-     * - the TestRunGroup itself
-     * - the RunId instance
-     * - the results for a particular test
-     *
-     * @var array<int[]> */
-    public $groups_ = array(0 => array(0));
-
-    /**
      * @todo Remove $runs array from State(?)
      * It looks like this is only being used to resolved dependencies to
      * another run, however it seems like this can just be looked up in the
