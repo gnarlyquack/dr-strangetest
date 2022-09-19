@@ -845,11 +845,11 @@ function assert_run_file($filepath, $events) {
     strangetest\assert_identical(array(), $logger->get_log()->events);
     if ($file instanceof strangetest\FileTest)
     {
-        strangetest\_run_file($state, $file, new RunInstance(0, 0), array());
+        strangetest\_run_file($state, $file, new RunInstance(0, 0, ''), array());
     }
     else
     {
-        strangetest\_run_test_run_group($state, $file, new RunInstance(0, 0), array());
+        strangetest\_run_test_run_group($state, $file, new RunInstance(0, 0, ''), array());
     }
     \assert_events($events, $logger);
 }

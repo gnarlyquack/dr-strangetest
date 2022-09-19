@@ -31,6 +31,9 @@ final class _DiscoveryState extends struct
     /** @var int */
     public $next_group_id = 1;
 
+    /** @var int */
+    public $next_run_id = 1;
+
     /** @var array<string, true> */
     public $seen = array();
 
@@ -669,10 +672,8 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
             }
             else
             {
-                $run->id = \count($state->global->runs) + 1;
+                $run->id = $state->next_run_id++;
                 $run->tests = $run_group->tests;
-
-                $state->global->runs[] = $run;
             }
         }
     }

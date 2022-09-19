@@ -33,18 +33,18 @@ final class FunctionDependency extends struct
 
 final class RunDependency extends struct
 {
-    /** @var int[] */
-    public $run_ids;
+    /** @var string[] */
+    public $run_names;
 
-    /** @var array<string, ?int[]> */
+    /** @var array<string, ?string[]> */
     public $prerequisites = array();
 
     /**
-     * @param int[] $run_ids
+     * @param string[] $run_names
      */
-    public function __construct(array $run_ids)
+    public function __construct(array $run_names)
     {
-        $this->run_ids = $run_ids;
+        $this->run_names = $run_names;
     }
 }
 
@@ -209,7 +209,7 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
             foreach ($dependency->runs as $run)
             {
                 namespace\_add_run_from_dependency(
-                    $state, $tests, $result, $dependency->test, $run->run_ids, 1);
+                    $state, $tests, $result, $dependency->test, $run->run_names, 0);
             }
         }
     }
@@ -226,7 +226,7 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
             foreach ($dependency->runs as $run)
             {
                 namespace\_add_directory_test_from_dependency(
-                    $state, $tests, $result, $dependency->test, $run->run_ids, 1);
+                    $state, $tests, $result, $dependency->test, $run->run_names, 0);
             }
         }
     }
@@ -237,18 +237,17 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
 
 /**
  * @param FunctionTest|MethodTest $dependency
- * @param int[] $run_ids
+ * @param string[] $run_names
  * @param int $run_index
  * @return void
  */
 function _add_run_from_dependency(
     State $state, TestRunGroup $reference,
-    TestRunGroup $test, $dependency, array $run_ids, $run_index)
+    TestRunGroup $test, $dependency, array $run_names, $run_index)
 {
-    $run_id = $run_ids[$run_index++] - 1;
-    $run = $state->runs[$run_id];
-    $run_name = $run->name;
-    $source = $reference->runs[$run_name]->tests;
+    $run_name = $run_names[$run_index++];
+    $run = $reference->runs[$run_name];
+    $source = $run->tests;
 
     if (isset($test->runs[$run_name]))
     {
@@ -288,7 +287,7 @@ function _add_run_from_dependency(
     {
         \assert($source instanceof DirectoryTest);
         namespace\_add_directory_test_from_dependency(
-            $state, $source, $child, $dependency, $run_ids, $run_index);
+            $state, $source, $child, $dependency, $run_names, $run_index);
     }
     else
     {
@@ -300,13 +299,13 @@ function _add_run_from_dependency(
 
 /**
  * @param FunctionTest|MethodTest $dependency
- * @param int[] $run_ids
+ * @param string[] $run_names
  * @param int $run_index
  * @return void
  */
 function _add_directory_test_from_dependency(
     State $state, DirectoryTest $reference,
-    DirectoryTest $test, $dependency, array $run_ids, $run_index)
+    DirectoryTest $test, $dependency, array $run_names, $run_index)
 {
     \assert($reference->name === $test->name);
 
@@ -343,7 +342,7 @@ function _add_directory_test_from_dependency(
             $test->tests[] = $child;
         }
         namespace\_add_run_from_dependency(
-            $state, $source, $child, $dependency, $run_ids, $run_index);
+            $state, $source, $child, $dependency, $run_names, $run_index);
     }
     elseif ($source instanceof DirectoryTest)
     {
@@ -361,7 +360,7 @@ function _add_directory_test_from_dependency(
             $test->tests[] = $child;
         }
         namespace\_add_directory_test_from_dependency(
-            $state, $source, $child, $dependency, $run_ids, $run_index);
+            $state, $source, $child, $dependency, $run_names, $run_index);
     }
     else
     {

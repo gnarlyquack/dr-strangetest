@@ -41,6 +41,9 @@ final class GroupID extends struct
 
 final class RunInstance extends struct
 {
+    /** @var ?RunInstance */
+    public $parent;
+
     /** @var GroupID */
     public $group;
 
@@ -50,29 +53,50 @@ final class RunInstance extends struct
     /** @var int[] */
     public $path;
 
+    /** @var string[] */
+    public $names;
+
+    /** @var string */
+    public $hash;
+
+    /** @var string */
+    public $qualifier;
+
 
     /**
      * @param int $group_id
      * @param int $run_id
+     * @param string $name
      */
-    public function __construct($group_id, $run_id, RunInstance $parent = null)
+    public function __construct($group_id, $run_id, $name, RunInstance $parent = null)
     {
+        $this->parent = $parent;
         $this->id = $run_id;
 
         if ($parent)
         {
             $this->group = new GroupID($group_id, $parent->group);
             $this->path = $parent->path;
+            $this->names = $parent->names;
         }
         else
         {
             $this->group = new GroupID($group_id);
             $this->path = array();
+            $this->names = array();
         }
 
         $this->path[] = $run_id;
+
+        if ('' !== $name)
+        {
+            $this->names[] = $name;
+        }
+        $this->hash = namespace\_get_run_hash($this->names);
+        $this->qualifier = namespace\_format_run_qualifier($this->names);
     }
 }
+
 
 /**
  * @api
@@ -199,7 +223,7 @@ final class _Context extends struct implements Context
             }
             else
             {
-                $runs = $this->run->path;
+                $runs = $this->run->names;
                 $results = $this->state->results[$resolved];
                 if ($this->run->group->id !== $results['group']->id)
                 {
@@ -212,11 +236,24 @@ final class _Context extends struct implements Context
                             break;
                         }
                     }
+
                     \assert($i > 0);
-                    $runs = \array_slice($runs, 0, $i);
+                    // @todo Don't implicitly assign an id to top-level run group?
+                    // There is an implicit top-level group to which we assign
+                    // the id 0. This means there is also an implicit,
+                    // top-level run, but we don't want this being displayed.
+                    // Therefore, the list of run names, which excludes this
+                    // top-level run (and would just be the empty string
+                    // anyway) has one less element than the list of groups
+                    // (which includes the implicit top-level group).
+                    // Therefore, when determining the slice of common names
+                    // between two tests, we need to subtract 1 from the number
+                    // of groups they have in common.
+                    \assert(\count($runs) === (\count($us) - 1));
+                    $runs = \array_slice($runs, 0, $i-1);
                 }
 
-                $run = \implode(',', $runs);
+                $run = namespace\_get_run_hash($runs);
                 if (!isset($results['runs'][$run]))
                 {
                     // The dependency hasn't been run
@@ -224,7 +261,7 @@ final class _Context extends struct implements Context
                 }
                 elseif (!$results['runs'][$run])
                 {
-                    $run_name = namespace\_get_run_name($this->state, $runs);
+                    $run_name = namespace\_format_run_qualifier($runs);
                     throw new Skip("This test depends on '{$resolved}{$run_name}', which did not pass");
                 }
                 elseif (isset($this->state->fixture[$resolved][$run]))
@@ -243,10 +280,10 @@ final class _Context extends struct implements Context
             }
             $dependency = $this->state->postponed[$this->test->name];
 
-            $run_name = namespace\_get_run_name($this->state, $this->run->path);
+            $run_name = $this->run->hash;
             if (!isset($dependency->runs[$run_name]))
             {
-                $dependency->runs[$run_name] = new RunDependency($this->run->path);
+                $dependency->runs[$run_name] = new RunDependency($this->run->names);
             }
             $dependency = $dependency->runs[$run_name];
 
@@ -275,7 +312,7 @@ final class _Context extends struct implements Context
 
     public function set($value)
     {
-        $run = \implode(',', $this->run->path);
+        $run = namespace\_get_run_hash($this->run->names);
         $this->state->fixture[$this->test->name][$run] = $value;
     }
 }
@@ -290,7 +327,7 @@ final class _Context extends struct implements Context
 function run_tests(State $state, $suite, $tests)
 {
     $args = array();
-    $run = new RunInstance(0, 0);
+    $run = new RunInstance(0, 0, '');
     for (;;)
     {
         if ($tests instanceof TestRunGroup)
@@ -331,7 +368,7 @@ function _run_test_run_group(
     {
         \assert(isset($test->setup));
 
-        $run_name = namespace\_get_run_name($state, $run->path);
+        $run_name = $run->qualifier;
 
         $setup = $test->setup;
         $name = $setup->name . $run_name;
@@ -351,7 +388,7 @@ function _run_test_run_group(
             {
                 if ($run_args)
                 {
-                    $new_run = new RunInstance($group->id, $test->id, $run);
+                    $new_run = new RunInstance($group->id, $test->id, $test->name, $run);
                     $tests = $test->tests;
                     if ($tests instanceof DirectoryTest)
                     {
@@ -396,7 +433,7 @@ function _run_directory(
     State $state,
     DirectoryTest $directory, RunInstance $run, array $args)
 {
-    $run_name = namespace\_get_run_name($state, $run->path);
+    $run_name = $run->qualifier;
 
     $setup = namespace\RESULT_PASS;
     if ($directory->setup)
@@ -459,7 +496,7 @@ function _run_file(
     State $state,
     FileTest $file, RunInstance $run, array $args)
 {
-    $run_name = namespace\_get_run_name($state, $run->path);
+    $run_name = $run->qualifier;
 
     $setup = namespace\RESULT_PASS;
     if ($file->setup_file)
@@ -530,7 +567,7 @@ function _run_class(
 
     if ($object)
     {
-        $run_name = namespace\_get_run_name($state, $run->path);
+        $run_name = $run->qualifier;
 
         $setup = namespace\RESULT_PASS;
         if ($class->setup_object)
@@ -606,7 +643,7 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
 function _run_method(
     State $state, $object, MethodTest $test, $setup_method, $teardown_method, RunInstance $run)
 {
-    $run_name = namespace\_get_run_name($state, $run->path);
+    $run_name = $run->qualifier;
     $test_name = $test->name . $run_name;
 
     $result = namespace\RESULT_PASS;
@@ -671,7 +708,7 @@ function _run_function(
     State $state,
     FunctionTest $test, $setup_function, $teardown_function, RunInstance $run, array $args)
 {
-    $run_name = namespace\_get_run_name($state, $run->path);
+    $run_name = $run->qualifier;
     $test_name = $test->name . $run_name;
 
     $result = namespace\RESULT_PASS;
@@ -755,9 +792,9 @@ function _record_test_result(State $state, $test, RunInstance $run, $name, $resu
             \assert(\is_string($file));
             \assert(\is_int($line));
             $state->logger->log_pass(new PassEvent($name, $file, $line));
-            for ($i = 0, $c = \count($run->path); $i < $c; ++$i)
+            for ( ; $run; $run = $run->parent)
             {
-                $id = \implode(',', \array_slice($run->path, 0, $i + 1));
+                $id = $run->hash;
                 if (!isset($state->results[$test->name]['runs'][$id]))
                 {
                     $state->results[$test->name]['runs'][$id] = true;
@@ -766,9 +803,9 @@ function _record_test_result(State $state, $test, RunInstance $run, $name, $resu
         }
         elseif (namespace\RESULT_FAIL & $result)
         {
-            for ($i = 0, $c = \count($run->path); $i < $c; ++$i)
+            for ( ; $run; $run = $run->parent)
             {
-                $id = \implode(',', \array_slice($run->path, 0, $i + 1));
+                $id = $run->hash;
                 $state->results[$test->name]['runs'][$id] = false;
             }
             if (namespace\RESULT_POSTPONE & $result)
@@ -946,25 +983,30 @@ function _run_teardown(Logger $logger, $name, $callable, $args = null)
 
 
 /**
- * @param int[] $run
+ * @param string[] $names
  * @return string
  */
-function _get_run_name(State $state, array $run)
+function _get_run_hash(array $names)
 {
-    $names = array();
-    for ($i = 1, $c = \count($run); $i < $c; ++$i)
-    {
-        $id = $run[$i] - 1;
-        $names[] = $state->runs[$id]->name;
-    }
+    return \implode(',', $names);
+}
+
+
+/**
+ * @param string[] $names
+ * @return string
+ */
+function _format_run_qualifier(array $names)
+{
     if ($names)
     {
-        $result = \sprintf(' (%s)', \implode(', ', $names));
+        $result = ' ('. \implode(', ', $names) . ')';
     }
     else
     {
         $result = '';
     }
+
     return $result;
 }
 

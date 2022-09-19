@@ -127,17 +127,6 @@ final class State extends struct
 
     /** @var array<string, mixed[]> */
     public $fixture = array();
-
-    /**
-     * @todo Remove $runs array from State(?)
-     * It looks like this is only being used to resolved dependencies to
-     * another run, however it seems like this can just be looked up in the
-     * parent TestRunGroup? However, we need to take a closer look at what's
-     * going on with dependency resolution. It might also necessitate indexing
-     * runs in a TestRunGroup by their run id instead of their name.
-     *
-     * @var TestRun[] */
-    public $runs = array();
 }
 
 

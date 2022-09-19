@@ -26,7 +26,12 @@ final class TestRunGroup extends struct
 
 final class TestRun extends struct
 {
-    /** @var int */
+    /**
+     * @todo Remove the run id number
+     * It seems like we can just use the run name directly
+     *
+     * @var int
+     */
     public $id;
 
     /** @var string */
