@@ -650,10 +650,10 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
     $valid = true;
     if ($run_group->runs)
     {
-        $run_group_id = \count($state->global->groups);
-        $groups = $state->global->groups[$run_group->id];
+        $run_group_id = \count($state->global->groups_);
+        $groups = $state->global->groups_[$run_group->id];
         $groups[] = $run_group_id;
-        $state->global->groups[$run_group_id] = $groups;
+        $state->global->groups_[$run_group_id] = $groups;
         $run_group->id = $run_group_id;
 
         foreach ($run_group->runs as $run)

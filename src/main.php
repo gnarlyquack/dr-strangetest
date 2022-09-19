@@ -119,7 +119,7 @@ final class State extends struct
     /** @var LogBufferer */
     public $bufferer;
 
-    /** @var array<string, array{'group': int, 'runs': bool[]}> */
+    /** @var array<string, array{'group': GroupID, 'runs': bool[]}> */
     public $results = array();
 
     /** @var array<string, FunctionDependency> */
@@ -136,7 +136,7 @@ final class State extends struct
      * - the results for a particular test
      *
      * @var array<int[]> */
-    public $groups = array(0 => array(0));
+    public $groups_ = array(0 => array(0));
 
     /**
      * @todo Remove $runs array from State(?)

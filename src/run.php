@@ -13,13 +13,39 @@ const RESULT_FAIL     = 0x1;
 const RESULT_POSTPONE = 0x2;
 
 
-final class RunID extends struct
+final class GroupID extends struct
 {
     /** @var int */
-    public $group_id;
+    public $id;
+
+    /** @var int[] */
+    public $path;
+
+
+    /**
+     * @param int $id
+     */
+    public function __construct($id, GroupID $parent = null)
+    {
+        $this->id = $id;
+
+        if ($parent)
+        {
+            $this->path = $parent->path;
+        }
+
+        $this->path[] = $id;
+    }
+}
+
+
+final class RunInstance extends struct
+{
+    /** @var GroupID */
+    public $group;
 
     /** @var int */
-    public $run_id;
+    public $id;
 
     /** @var int[] */
     public $path;
@@ -29,15 +55,21 @@ final class RunID extends struct
      * @param int $group_id
      * @param int $run_id
      */
-    public function __construct($group_id, $run_id, RunID $parent = null)
+    public function __construct($group_id, $run_id, RunInstance $parent = null)
     {
-        $this->group_id = $group_id;
-        $this->run_id = $run_id;
+        $this->id = $run_id;
 
         if ($parent)
         {
+            $this->group = new GroupID($group_id, $parent->group);
             $this->path = $parent->path;
         }
+        else
+        {
+            $this->group = new GroupID($group_id);
+            $this->path = array();
+        }
+
         $this->path[] = $run_id;
     }
 }
@@ -85,7 +117,7 @@ final class _Context extends struct implements Context
     /** @var FunctionTest|MethodTest */
     private $test;
 
-    /** @var RunID */
+    /** @var RunInstance */
     private $run;
 
     /** @var int */
@@ -98,7 +130,7 @@ final class _Context extends struct implements Context
     /**
      * @param FunctionTest|MethodTest $test
      */
-    public function __construct(State $state, Logger $logger, $test, RunID $run)
+    public function __construct(State $state, Logger $logger, $test, RunInstance $run)
     {
         $this->state = $state;
         $this->logger = $logger;
@@ -169,10 +201,10 @@ final class _Context extends struct implements Context
             {
                 $runs = $this->run->path;
                 $results = $this->state->results[$resolved];
-                if ($this->run->group_id !== $results['group'])
+                if ($this->run->group->id !== $results['group']->id)
                 {
-                    $us = $this->state->groups[$this->run->group_id];
-                    $them = $this->state->groups[$results['group']];
+                    $us = $this->run->group->path;
+                    $them = $results['group']->path;
                     for ($i = 0, $c = \min(\count($us), \count($them)); $i < $c; ++$i)
                     {
                         if ($us[$i] !== $them[$i])
@@ -258,7 +290,7 @@ final class _Context extends struct implements Context
 function run_tests(State $state, $suite, $tests)
 {
     $args = array();
-    $run = new RunID(0, 0);
+    $run = new RunInstance(0, 0);
     for (;;)
     {
         if ($tests instanceof TestRunGroup)
@@ -293,7 +325,7 @@ function run_tests(State $state, $suite, $tests)
  */
 function _run_test_run_group(
     State $state,
-    TestRunGroup $group, RunID $run, array $args)
+    TestRunGroup $group, RunInstance $run, array $args)
 {
     foreach ($group->runs as $test)
     {
@@ -319,7 +351,7 @@ function _run_test_run_group(
             {
                 if ($run_args)
                 {
-                    $new_run = new RunID($group->id, $test->id, $run);
+                    $new_run = new RunInstance($group->id, $test->id, $run);
                     $tests = $test->tests;
                     if ($tests instanceof DirectoryTest)
                     {
@@ -362,7 +394,7 @@ function _run_test_run_group(
  */
 function _run_directory(
     State $state,
-    DirectoryTest $directory, RunID $run, array $args)
+    DirectoryTest $directory, RunInstance $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run->path);
 
@@ -425,7 +457,7 @@ function _run_directory(
  */
 function _run_file(
     State $state,
-    FileTest $file, RunID $run, array $args)
+    FileTest $file, RunInstance $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run->path);
 
@@ -485,7 +517,7 @@ function _run_file(
  */
 function _run_class(
     State $state,
-    ClassTest $class, RunID $run, array $args)
+    ClassTest $class, RunInstance $run, array $args)
 {
     $file = $class->test->getFileName();
     $line = $class->test->getStartLine();
@@ -572,7 +604,7 @@ function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
  * @return void
  */
 function _run_method(
-    State $state, $object, MethodTest $test, $setup_method, $teardown_method, RunID $run)
+    State $state, $object, MethodTest $test, $setup_method, $teardown_method, RunInstance $run)
 {
     $run_name = namespace\_get_run_name($state, $run->path);
     $test_name = $test->name . $run_name;
@@ -637,7 +669,7 @@ function _run_method(
  */
 function _run_function(
     State $state,
-    FunctionTest $test, $setup_function, $teardown_function, RunID $run, array $args)
+    FunctionTest $test, $setup_function, $teardown_function, RunInstance $run, array $args)
 {
     $run_name = namespace\_get_run_name($state, $run->path);
     $test_name = $test->name . $run_name;
@@ -703,14 +735,14 @@ function _run_function(
  * @param int $result
  * @return void
  */
-function _record_test_result(State $state, $test, RunID $run, $name, $result)
+function _record_test_result(State $state, $test, RunInstance $run, $name, $result)
 {
     if (namespace\RESULT_POSTPONE !== $result)
     {
         if (!isset($state->results[$test->name]))
         {
             $state->results[$test->name] = array(
-                'group' => $run->group_id,
+                'group' => $run->group,
                 'runs' => array(),
             );
         }
