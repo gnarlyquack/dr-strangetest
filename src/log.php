@@ -189,84 +189,144 @@ final class _FormatExceptionResult extends struct
 }
 
 
-/**
- * @param \Throwable $exception
- * @param string $root
- * @return _FormatExceptionResult
- */
-function _format_exception($exception, $root)
+
+if (\defined('strangetest\\DEBUG'))
 {
-    $result = new _FormatExceptionResult;
-    $offset = \strlen($root);
-
-    if (0 !== \strpos($exception->getFile(), __DIR__))
+    /**
+     * Format an exception for use in a test report. In debug mode, don't
+     * filter out any of an exception's backtrace. However, we can still do a
+     * some formatting on it.
+     *
+     * @param \Throwable $exception
+     * @param string $root
+     * @return _FormatExceptionResult
+     */
+    function _format_exception($exception, $root)
     {
-        $file = $exception->getFile();
-        $result->file = \substr($file, $offset);
-        $result->line = $line = $exception->getLine();
-    }
+        $offset = \strlen($root);
 
-    // Create a backtrace excluding calls made within Dr. Strangetest
-    $backtrace = array();
-    foreach ($exception->getTrace() as $frame)
-    {
-        // There seem to be occasions (which may vary by versions of PHP) in
-        // which a frame may not have a file, such as if an exception is thrown
-        // from a function invoked from call_user_func(), or if an exception is
-        // thrown from an error handler, and possibly others. It seems safe to
-        // just ignore these.
-        if (!isset($frame['file']))
-        {
-            continue;
-        }
-        if (0 === \strpos($frame['file'], __DIR__))
-        {
-            continue;
-        }
-        if ('strangetest\\main' === $frame['function'])
-        {
-            // strangetest\main is invoked from the entry point script, i.e.,
-            // bin/strangetest. So when we've reached this function, we're at
-            // the bottom of the call stack.
-            break;
-        }
-
-        \assert(isset($frame['line']));
-        if (!isset($file, $line))
-        {
-            $file = $frame['file'];
-            $result->file = \substr($file, $offset);
-            $result->line = $line = $frame['line'];
-        }
-
-        if (($line === $frame['line']) && ($file === $frame['file']))
-        {
-            continue;
-        }
-
-        $callee = $frame['function'];
-        if (isset($frame['class']))
-        {
-            \assert(isset($frame['type']));
-            $callee = $frame['class'] . $frame['type'] . $callee;
-        }
-
-        $backtrace[] = \sprintf(
-            '%s(%d): %s()',
-            \substr($frame['file'], $offset), $frame['line'], $callee);
-    }
-
-    if ($backtrace)
-    {
-        $result->trace = "Called from:\n" .  \implode("\n", $backtrace);
-    }
-    elseif (!isset($file, $line))
-    {
+        $result = new _FormatExceptionResult;
         $result->file = \substr($exception->getFile(), $offset);
         $result->line = $exception->getLine();
-    }
 
-    return $result;
+        $backtrace = array();
+        foreach ($exception->getTrace() as $frame)
+        {
+            // There seem to be occasions (which may vary by versions of PHP) in
+            // which a frame may not have a file, such as if an exception is thrown
+            // from a function invoked from call_user_func(), or if an exception is
+            // thrown from an error handler, and possibly others. It seems safe to
+            // just ignore these.
+            if (!isset($frame['file']))
+            {
+                continue;
+            }
+
+            $callee = $frame['function'];
+            if (isset($frame['class']))
+            {
+                \assert(isset($frame['type']));
+                $callee = $frame['class'] . $frame['type'] . $callee;
+            }
+
+            \assert(isset($frame['line']));
+            $backtrace[] = \sprintf(
+                '%s(%d): %s()',
+                \substr($frame['file'], $offset), $frame['line'], $callee);
+        }
+
+        if ($backtrace)
+        {
+            $result->trace = "Called from:\n" .  \implode("\n", $backtrace);
+        }
+
+        return $result;
+    }
+}
+else
+{
+    /**
+     * Format an exception for use in a test report. This filters out potions
+     * of the backtrace that occur within Dr. Strangetest, which should have no
+     * bearing on a test failure or error.
+     *
+     * @param \Throwable $exception
+     * @param string $root
+     * @return _FormatExceptionResult
+     */
+    function _format_exception($exception, $root)
+    {
+        $result = new _FormatExceptionResult;
+        $offset = \strlen($root);
+
+        if (0 !== \strpos($exception->getFile(), __DIR__))
+        {
+            $file = $exception->getFile();
+            $result->file = \substr($file, $offset);
+            $result->line = $line = $exception->getLine();
+        }
+
+        $backtrace = array();
+        foreach ($exception->getTrace() as $frame)
+        {
+            // There seem to be occasions (which may vary by versions of PHP) in
+            // which a frame may not have a file, such as if an exception is thrown
+            // from a function invoked from call_user_func(), or if an exception is
+            // thrown from an error handler, and possibly others. It seems safe to
+            // just ignore these.
+            if (!isset($frame['file']))
+            {
+                continue;
+            }
+            if (0 === \strpos($frame['file'], __DIR__))
+            {
+                continue;
+            }
+            if ('strangetest\\main' === $frame['function'])
+            {
+                // strangetest\main is invoked from the entry point script, i.e.,
+                // bin/strangetest. So when we've reached this function, we're at
+                // the bottom of the call stack.
+                break;
+            }
+
+            \assert(isset($frame['line']));
+            if (!isset($file, $line))
+            {
+                $file = $frame['file'];
+                $result->file = \substr($file, $offset);
+                $result->line = $line = $frame['line'];
+            }
+
+            if (($line === $frame['line']) && ($file === $frame['file']))
+            {
+                continue;
+            }
+
+            $callee = $frame['function'];
+            if (isset($frame['class']))
+            {
+                \assert(isset($frame['type']));
+                $callee = $frame['class'] . $frame['type'] . $callee;
+            }
+
+            $backtrace[] = \sprintf(
+                '%s(%d): %s()',
+                \substr($frame['file'], $offset), $frame['line'], $callee);
+        }
+
+        if ($backtrace)
+        {
+            $result->trace = "Called from:\n" .  \implode("\n", $backtrace);
+        }
+        elseif (!isset($file, $line))
+        {
+            $result->file = \substr($exception->getFile(), $offset);
+            $result->line = $exception->getLine();
+        }
+
+        return $result;
+    }
 }
 
 
@@ -307,9 +367,6 @@ final class Logger extends struct
     /** @var int */
     private $verbose;
 
-    /** @var bool */
-    private $debug;
-
     /** @var LogOutputter */
     private $outputter;
 
@@ -335,13 +392,11 @@ final class Logger extends struct
     /**
      * @param string $root
      * @param int $verbose
-     * @param bool $debug
      */
-    public function __construct($root, $verbose, $debug, LogOutputter $outputter)
+    public function __construct($root, $verbose, LogOutputter $outputter)
     {
         $this->root = $root;
         $this->verbose = $verbose;
-        $this->debug = $debug;
         $this->outputter = $outputter;
     }
 
@@ -428,15 +483,8 @@ final class Logger extends struct
      */
     public function failure_from_exception($source, $failure)
     {
-        if ($this->debug)
-        {
-            return new FailEvent($source, $failure->getMessage(), $failure->getFile(), $failure->getLine(), $failure->getTraceAsString());
-        }
-        else
-        {
-            $formatted = namespace\_format_exception($failure, $this->root);
-            return new FailEvent($source, $failure->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
-        }
+        $formatted = namespace\_format_exception($failure, $this->root);
+        return new FailEvent($source, $failure->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
     }
 
 
@@ -447,15 +495,8 @@ final class Logger extends struct
      */
     public function error_from_exception($source, $error)
     {
-        if ($this->debug)
-        {
-            return new ErrorEvent($source, $error->getMessage(), $error->getFile(), $error->getLine(), $error->getTraceAsString());
-        }
-        else
-        {
-            $formatted = namespace\_format_exception($error, $this->root);
-            return new ErrorEvent($source, $error->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
-        }
+        $formatted = namespace\_format_exception($error, $this->root);
+        return new ErrorEvent($source, $error->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
     }
 
 
@@ -465,15 +506,8 @@ final class Logger extends struct
      */
     public function skip_from_exception($source, Skip $skip)
     {
-        if ($this->debug)
-        {
-            return new SkipEvent($source, $skip->getMessage(), $skip->getFile(), $skip->getLine(), $skip->getTraceAsString());
-        }
-        else
-        {
-            $formatted = namespace\_format_exception($skip, $this->root);
-            return new SkipEvent($source, $skip->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
-        }
+        $formatted = namespace\_format_exception($skip, $this->root);
+        return new SkipEvent($source, $skip->getMessage(), $formatted->file, $formatted->line, $formatted->trace);
     }
 
 
@@ -528,11 +562,10 @@ final class LogBufferer extends struct implements LogOutputter
 
     /**
      * @param string $root
-     * @param bool $debug
      */
-    public function __construct($root, $debug)
+    public function __construct($root)
     {
-        $this->logger = new Logger($root, namespace\LOG_ALL, $debug, $this);
+        $this->logger = new Logger($root, namespace\LOG_ALL, $this);
     }
 
 

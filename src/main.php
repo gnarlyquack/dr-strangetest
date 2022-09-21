@@ -149,15 +149,20 @@ function main($argc, $argv)
     \assert(\DIRECTORY_SEPARATOR !== \substr($cwd, -1));
     $cwd .= \DIRECTORY_SEPARATOR;
 
-    namespace\_try_loading_composer($cwd);
-    namespace\_load_strangetest();
-
     // @todo Add configuration option to explicitly set the test root directory
     list($options, $args) = namespace\_parse_arguments($argc, $argv);
 
+    if ($options['debug'])
+    {
+        \define('strangetest\\DEBUG', true);
+    }
+
+    namespace\_try_loading_composer($cwd);
+    namespace\_load_strangetest();
+
     $state = new State;
-    $state->logger = new Logger($cwd, $options['verbose'], $options['debug'], new CommandLineOutputter);
-    $state->bufferer = new LogBufferer($cwd, $options['debug']);
+    $state->logger = new Logger($cwd, $options['verbose'], new CommandLineOutputter);
+    $state->bufferer = new LogBufferer($cwd);
 
     namespace\output_header(namespace\_get_version());
     $start = namespace\_microtime();

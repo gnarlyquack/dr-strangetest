@@ -19,7 +19,7 @@ class TestDependencies {
     public function setup() {
         $this->root = __DIR__ . '/resources/dependencies/';
         $this->path = '';
-        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, false, new NoOutputter);
+        $this->logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
     }
 
 
@@ -28,7 +28,7 @@ class TestDependencies {
     private function assert_events($expected) {
         $state = new State;
         $state->logger = $this->logger;
-        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
+        $state->bufferer = new LogBufferer(\TEST_ROOT);
         $tests = strangetest\discover_tests($state, $this->root);
         strangetest\assert_truthy($tests);
         strangetest\run_tests($state, $tests, $tests);
@@ -253,7 +253,7 @@ class TestDependencies {
 
         $state = new State;
         $state->logger = $this->logger;
-        $state->bufferer = new LogBufferer(\TEST_ROOT, false);
+        $state->bufferer = new LogBufferer(\TEST_ROOT);
         $tests = strangetest\discover_tests($state, $root);
         strangetest\assert_truthy($tests);
 
