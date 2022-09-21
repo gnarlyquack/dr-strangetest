@@ -274,7 +274,6 @@ function _add_run_from_dependency(
         }
 
         $test_run = new TestRun;
-        $test_run->id = $run->id;
         $test_run->name = $run->name;
         $test_run->setup = $run->setup;
         $test_run->teardown = $run->teardown;

@@ -832,7 +832,6 @@ function _add_runs_from_specifier(
             $target->targets[$run_name] = $child_target;
 
             $run = new TestRun;
-            $run->id = $reference->runs[$run_name]->id;
             $run->name = $reference->runs[$run_name]->name;
             $run->setup = $reference->runs[$run_name]->setup;
             $run->teardown = $reference->runs[$run_name]->teardown;

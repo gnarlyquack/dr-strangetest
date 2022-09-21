@@ -47,14 +47,8 @@ final class RunInstance extends struct
     /** @var GroupID */
     public $group;
 
-    /** @var int */
-    public $id;
-
-    /** @var int[] */
-    public $path;
-
     /** @var string[] */
-    public $names;
+    public $path;
 
     /** @var string */
     public $hash;
@@ -65,35 +59,29 @@ final class RunInstance extends struct
 
     /**
      * @param int $group_id
-     * @param int $run_id
      * @param string $name
      */
-    public function __construct($group_id, $run_id, $name, RunInstance $parent = null)
+    public function __construct($group_id, $name, RunInstance $parent = null)
     {
         $this->parent = $parent;
-        $this->id = $run_id;
 
         if ($parent)
         {
             $this->group = new GroupID($group_id, $parent->group);
             $this->path = $parent->path;
-            $this->names = $parent->names;
         }
         else
         {
             $this->group = new GroupID($group_id);
             $this->path = array();
-            $this->names = array();
         }
-
-        $this->path[] = $run_id;
 
         if ('' !== $name)
         {
-            $this->names[] = $name;
+            $this->path[] = $name;
         }
-        $this->hash = namespace\_get_run_hash($this->names);
-        $this->qualifier = namespace\_format_run_qualifier($this->names);
+        $this->hash = namespace\_get_run_hash($this->path);
+        $this->qualifier = namespace\_format_run_qualifier($this->path);
     }
 }
 
@@ -223,7 +211,7 @@ final class _Context extends struct implements Context
             }
             else
             {
-                $runs = $this->run->names;
+                $runs = $this->run->path;
                 $results = $this->state->results[$resolved];
                 if ($this->run->group->id !== $results['group']->id)
                 {
@@ -283,7 +271,7 @@ final class _Context extends struct implements Context
             $run_name = $this->run->hash;
             if (!isset($dependency->runs[$run_name]))
             {
-                $dependency->runs[$run_name] = new RunDependency($this->run->names);
+                $dependency->runs[$run_name] = new RunDependency($this->run->path);
             }
             $dependency = $dependency->runs[$run_name];
 
@@ -312,7 +300,7 @@ final class _Context extends struct implements Context
 
     public function set($value)
     {
-        $run = namespace\_get_run_hash($this->run->names);
+        $run = $this->run->hash;
         $this->state->fixture[$this->test->name][$run] = $value;
     }
 }
@@ -327,7 +315,7 @@ final class _Context extends struct implements Context
 function run_tests(State $state, $suite, $tests)
 {
     $args = array();
-    $run = new RunInstance(0, 0, '');
+    $run = new RunInstance(0, '');
     for (;;)
     {
         if ($tests instanceof TestRunGroup)
@@ -388,7 +376,7 @@ function _run_test_run_group(
             {
                 if ($run_args)
                 {
-                    $new_run = new RunInstance($group->id, $test->id, $test->name, $run);
+                    $new_run = new RunInstance($group->id, $test->name, $run);
                     $tests = $test->tests;
                     if ($tests instanceof DirectoryTest)
                     {

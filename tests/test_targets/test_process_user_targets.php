@@ -543,7 +543,6 @@ class TestProcessUserTargets
             {
                 $source = $tests->runs[$run['run']];
                 $test_run = new strangetest\TestRun;
-                $test_run->id = $source->id;
                 $test_run->name = $source->name;
                 $test_run->setup = $source->setup;
                 $test_run->teardown = $source->teardown;
@@ -565,7 +564,6 @@ class TestProcessUserTargets
             foreach ($tests->runs as $run)
             {
                 $test_run = new strangetest\TestRun;
-                $test_run->id = $run->id;
                 $test_run->name = $run->name;
                 $test_run->setup = $run->setup;
                 $test_run->teardown = $run->teardown;
