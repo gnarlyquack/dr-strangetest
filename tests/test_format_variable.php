@@ -21,6 +21,16 @@ class InheritFormat extends ObjectFormat {
 }
 
 
+class IntegerProperties extends \stdClass
+{
+    public function __construct()
+    {
+        $this->{0} = 'zero';
+        $this->{1} = 'one';
+    }
+}
+
+
 class TestFormatVariable {
 
     public function test_formats_scalars() {
@@ -229,14 +239,20 @@ EXPECTED;
 
 
     function test_formats_integer_object_properties() {
-        $variable = (object)array('zero', 'one');
+        // @bc 7.1 Test if casting classes with integer properties to an array works
+        // PHP 7.2 changelog has a note that integer properties set on classes
+        // were previously not accessible when cast to an array. This is test
+        // is to ensure what we're doing to format class variables works
+        // correctly on versions of PHP < 7.2
+        // For reference: https://www.php.net/manual/en/migration72.incompatible.php#migration72.incompatible.object-array-casts
+        $variable = new IntegerProperties;
         // @bc 7.1 use spl_object_hash instead of spl_object_id
         $id = \version_compare(\PHP_VERSION, '7.2', '<')
             ? \spl_object_hash($variable)
             : \spl_object_id($variable);
 
         $expected = <<<EXPECTED
-stdClass #$id {
+IntegerProperties #$id {
     \$0 = 'zero';
     \$1 = 'one';
 }
