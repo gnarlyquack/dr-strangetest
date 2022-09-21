@@ -544,12 +544,10 @@ function _run_class(
     State $state,
     ClassTest $class, RunInstance $run, array $args)
 {
-    $file = $class->test->getFileName();
-    $line = $class->test->getStartLine();
-    // @todo Stop asserting if reflection function returns file info
-    \assert(\is_string($file));
-    \assert(\is_int($line));
-    $logger = $state->bufferer->start_buffering($class->test->name, $file, $line);
+    $logger = $state->bufferer->start_buffering(
+        $class->test->name,
+        $class->test->file,
+        $class->test->line);
     $object = namespace\_instantiate_test($logger, $class->test, $args);
     $state->bufferer->end_buffering($state->logger);
 
@@ -598,16 +596,15 @@ function _run_class(
 
 
 /**
- * @template T of object
- * @param \ReflectionClass<T> $class
+ * @param ClassInfo $class
  * @param mixed[] $args
- * @return ?T
+ * @return ?object
  */
-function _instantiate_test(Logger $logger, \ReflectionClass $class, array $args)
+function _instantiate_test(Logger $logger, ClassInfo $class, array $args)
 {
     try
     {
-        return $class->newInstanceArgs($args);
+        return namespace\unpack_construct($class->name, $args);
     }
     // @bc 5.6 Catch Exception
     catch (\Exception $e)

@@ -8,6 +8,19 @@
 namespace strangetest;
 
 
+final class ClassInfo extends struct
+{
+    /** @var class-string */
+    public $name;
+
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+}
+
+
 final class TestRunGroup extends struct
 {
     /** @var int */
@@ -90,7 +103,7 @@ final class FunctionTest extends struct
 
 final class ClassTest extends struct
 {
-    /** @var \ReflectionClass<object> */
+    /** @var ClassInfo */
     public $test;
 
     /** @var ?\ReflectionMethod */

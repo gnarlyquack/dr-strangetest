@@ -399,7 +399,19 @@ function _discover_file(_DiscoveryState $state, $filepath)
         {
             if ($reflected_test instanceof \ReflectionClass)
             {
-                $test = namespace\_discover_class($state->global->logger, $reflected_test);
+                $class_info = new ClassInfo;
+                $class_info->name = $reflected_test->name;
+                $class_filename = $reflected_test->getFileName();
+                $class_line = $reflected_test->getStartLine();
+                \assert(\is_string($class_filename));
+                \assert(\is_int($class_line));
+                $class_info->file = $class_filename;
+                $class_info->line = $class_line;
+
+                $test = namespace\_discover_class(
+                    $state->global->logger,
+                    $class_info,
+                    $reflected_test->getMethods(\ReflectionMethod::IS_PUBLIC));
                 if ($test)
                 {
                     $file->tests[$test_index] = $test;
@@ -441,20 +453,19 @@ function _discover_file(_DiscoveryState $state, $filepath)
 
 
 /**
- * @param \ReflectionClass<object> $reflected_class
+ * @param \ReflectionMethod[] $methods
  * @return null|false|ClassTest Returns a ClassTest if tests were found.
  *                              Returns null if no tests were found. Returns
  *                              false if no tests were found but an error
  *                              occurred during discovery.
  */
-function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
+function _discover_class(Logger $logger, ClassInfo $info, array $methods)
 {
     $class = new ClassTest;
-    $class->test = $reflected_class;
-    unset($reflected_class);
+    $class->test = $info;
 
     $valid = true;
-    foreach ($class->test->getMethods(\ReflectionMethod::IS_PUBLIC) as $method)
+    foreach ($methods as $method)
     {
         if ($method->isStatic())
         {
@@ -469,7 +480,7 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
                 && $method->getAttributes(namespace\_TEST_ATTRIBUTE)))
         {
             $test = new MethodTest;
-            $test->name = "{$class->test->name}::{$method->name}";
+            $test->name = $class->test->name . '::' . $method->name;
             $test->test = $method;
             $class->tests[$method->name] = $test;
         }
@@ -477,10 +488,11 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
         {
             if ($lexer->eat_remainder(''))
             {
-                // @todo Remove asserting if reflection functions return file info
-                $file = $class->test->getFileName();
-                \assert(\is_string($file));
-                if (!namespace\_validate_fixture($logger, $file, $method, $class->setup_method))
+                if (!namespace\_validate_fixture(
+                    $logger,
+                    $class->test->file,
+                    $method,
+                    $class->setup_method))
                 {
                     $valid = false;
                 }
@@ -490,10 +502,11 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
                 $lexer->eat_underscore();
                 if ($lexer->eat_remainder('object'))
                 {
-                    // @todo Remove asserting if reflection functions return file info
-                    $file = $class->test->getFileName();
-                    \assert(\is_string($file));
-                    if (!namespace\_validate_fixture($logger, $file, $method, $class->setup_object))
+                    if (!namespace\_validate_fixture(
+                        $logger,
+                        $class->test->file,
+                        $method,
+                        $class->setup_object))
                     {
                         $valid = false;
                     }
@@ -504,10 +517,11 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
         {
             if ($lexer->eat_remainder(''))
             {
-                // @todo Remove asserting if reflection functions return file info
-                $file = $class->test->getFileName();
-                \assert(\is_string($file));
-                if (!namespace\_validate_fixture($logger, $file, $method, $class->teardown_method))
+                if (!namespace\_validate_fixture(
+                    $logger,
+                    $class->test->file,
+                    $method,
+                    $class->teardown_method))
                 {
                     $valid = false;
                 }
@@ -517,10 +531,11 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
                 $lexer->eat_underscore();
                 if ($lexer->eat_remainder('object'))
                 {
-                    // @todo Remove asserting if reflection functions return file info
-                    $file = $class->test->getFileName();
-                    \assert(\is_string($file));
-                    if (!namespace\_validate_fixture($logger, $file, $method, $class->teardown_object))
+                    if (!namespace\_validate_fixture(
+                        $logger,
+                        $class->test->file,
+                        $method,
+                        $class->teardown_object))
                     {
                         $valid = false;
                     }
@@ -538,12 +553,11 @@ function _discover_class(Logger $logger, \ReflectionClass $reflected_class)
         }
         else
         {
-            // @todo Remove asserting if reflection functions return file info
-            $file = $class->test->getFileName();
-            $line = $class->test->getStartLine();
-            \assert(\is_string($file));
-            \assert(\is_int($line));
-            $logger->log_error(new ErrorEvent($class->test->name, 'No tests were found in this class', $file, $line));
+            $logger->log_error(new ErrorEvent(
+                $class->test->name,
+                'No tests were found in this class',
+                $class->test->file,
+                $class->test->line));
         }
     }
     else

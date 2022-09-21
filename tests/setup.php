@@ -236,12 +236,15 @@ function make_class_test($spec, $file)
     );
     $spec = \array_merge($defaults, $spec);
     \assert(isset($spec['class']));
-    \assert(!isset($spec['group']));
 
     $namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
 
     $class = new strangetest\ClassTest;
-    $class->test = new \ReflectionClass("{$namespace}{$spec['class']}");
+    $r = new \ReflectionClass("{$namespace}{$spec['class']}");
+    $class->test = new strangetest\ClassInfo;
+    $class->test->name = $r->name;
+    $class->test->file = $r->getFileName();
+    $class->test->line = $r->getStartLine();
 
     if ($spec['setup_object'])
     {
