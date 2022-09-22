@@ -8,6 +8,25 @@
 namespace strangetest;
 
 
+final class FunctionInfo extends struct
+{
+    /** @var callable-string Full, namespace-qualified name of function */
+    public $name;
+
+    /** @var string */
+    public $namespace;
+
+    /** @var string Function name without the namespace */
+    public $short_name;
+
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+}
+
+
 final class ClassInfo extends struct
 {
     /** @var class-string Full, namespace-qualified name of class */
@@ -64,10 +83,10 @@ final class TestRun extends struct
     /** @var DirectoryTest|FileTest */
     public $tests;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $setup;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $teardown;
 }
 
@@ -77,10 +96,10 @@ final class DirectoryTest extends struct
     /** @var string */
     public $name;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $setup;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $teardown;
 
     /** @var array<TestRunGroup|DirectoryTest|FileTest> */
@@ -93,16 +112,16 @@ final class FileTest extends struct
     /** @var string */
     public $name;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $setup_file;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $teardown_file;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $setup_function;
 
-    /** @var ?\ReflectionFunction */
+    /** @var ?FunctionInfo */
     public $teardown_function;
 
     /** @var array<ClassTest|FunctionTest> */
@@ -115,7 +134,7 @@ final class FunctionTest extends struct
     /** @var string */
     public $name;
 
-    /** @var \ReflectionFunction */
+    /** @var FunctionInfo */
     public $test;
 }
 

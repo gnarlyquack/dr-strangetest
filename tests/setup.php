@@ -8,6 +8,7 @@
 
 use strangetest\ClassInfo;
 use strangetest\ClassTest;
+use strangetest\FunctionInfo;
 use strangetest\MethodInfo;
 
 
@@ -152,8 +153,10 @@ function make_directory_test($spec, $parent = null)
 
     $dir = new strangetest\DirectoryTest;
     $dir->name = $parent ? "{$parent->name}{$spec['directory']}" : $spec['directory'];
-    $dir->setup = new \ReflectionFunction($spec['setup']);
-    $dir->teardown = new \ReflectionFunction($spec['teardown']);
+    $dir->setup = _function_from_reflection(
+        new \ReflectionFunction($spec['setup']));
+    $dir->teardown = _function_from_reflection(
+        new \ReflectionFunction($spec['teardown']));
 
     foreach ($spec['tests'] as $test)
     {
@@ -299,18 +302,6 @@ function make_method_test($spec, ClassTest $class)
 }
 
 
-function _method_from_reflection(ClassInfo $class, \ReflectionMethod $method)
-{
-    $result = new MethodInfo;
-    $result->name = $method->name;
-    $result->class = $class;
-    $result->file = $method->getFileName();
-    $result->line = $method->getStartLine();
-
-    return $result;
-}
-
-
 function make_function_test($spec, $file)
 {
     $defaults = array(
@@ -324,6 +315,36 @@ function make_function_test($spec, $file)
 
     $test = new strangetest\FunctionTest;
     $test->name = "{$namespace}{$spec['function']}";
-    $test->test = new \ReflectionFunction($test->name);
+    $test->test = _function_from_reflection(new \ReflectionFunction($test->name));
     $file->tests["function $test->name"] = $test;
+}
+
+
+function _method_from_reflection(ClassInfo $class, \ReflectionMethod $method)
+{
+    $result = new MethodInfo;
+    $result->name = $method->name;
+    $result->class = $class;
+    $result->file = $method->getFileName();
+    $result->line = $method->getStartLine();
+
+    return $result;
+}
+
+
+function _function_from_reflection(\ReflectionFunction $function)
+{
+    $result = new FunctionInfo;
+    $result->name = $function->name;
+    $result->namespace = $function->getNamespaceName();
+    $result->short_name = $function->getShortName();
+    $result->file = $function->getFileName();
+    $result->line = $function->getStartLine();
+
+    if (\strlen($result->namespace))
+    {
+        $result->namespace .= '\\';
+    }
+
+    return $result;
 }

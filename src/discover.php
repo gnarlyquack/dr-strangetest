@@ -193,9 +193,21 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
             if (!isset($state->seen[$function_index]) && \is_callable($function_name))
             {
                 $function = new \ReflectionFunction($function_name);
+
                 if ($token->line === $function->getStartLine() && $filepath === $function->getFileName())
                 {
                     $state->seen[$function_index] = true;
+
+                    $function_info = new FunctionInfo;
+                    $function_info->name = $function_name;
+                    $function_info->namespace = $function->getNamespaceName();
+                    if (\strlen($function_info->namespace))
+                    {
+                        $function_info->namespace .= '\\';
+                    }
+                    $function_info->short_name = $function->getShortName();
+                    $function_info->file = $filepath;
+                    $function_info->line = $token->line;
 
                     $lexer = new StringLexer($token->name);
                     if ($lexer->eat_string('setup'))
@@ -204,14 +216,24 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
                         if ($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
+                            if (!namespace\_validate_run_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $run_group,
+                                    $function_info,
+                                    $lexer->get_remainder(),
+                                    true))
                             {
                                 $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $directory->setup))
+                            if (!namespace\_validate_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $function_info,
+                                    $directory->setup))
                             {
                                 $valid = false;
                             }
@@ -223,14 +245,24 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
                         if ($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
+                            if (!namespace\_validate_run_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $run_group,
+                                    $function_info,
+                                    $lexer->get_remainder(),
+                                    false))
                             {
                                $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $directory->teardown))
+                            if (!namespace\_validate_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $function_info,
+                                    $directory->teardown))
                             {
                                 $valid = false;
                             }
@@ -317,6 +349,18 @@ function _discover_file(_DiscoveryState $state, $filepath)
                 {
                     $state->seen[$test_index] = true;
 
+                    $function_info = new FunctionInfo;
+                    $function_info->name = $function_name;
+                    $function_info->namespace = $function->getNamespaceName();
+                    if (\strlen($function_info->namespace))
+                    {
+                        $function_info->namespace .= '\\';
+                    }
+                    $function_info->short_name = $function->getShortName();
+                    $function_info->file = $filepath;
+                    $function_info->line = $token->line;
+
+
                     $lexer = new StringLexer($token->name);
                     if ($lexer->eat_string('test')
                         // @bc 7.4 Check that attributes exist
@@ -330,7 +374,11 @@ function _discover_file(_DiscoveryState $state, $filepath)
                         $lexer->eat_underscore();
                         if ($lexer->eat_string('file'))
                         {
-                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->setup_file))
+                            if (!namespace\_validate_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $function_info,
+                                    $file->setup_file))
                             {
                                 $valid = false;
                             }
@@ -338,14 +386,24 @@ function _discover_file(_DiscoveryState $state, $filepath)
                         elseif($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), true))
+                            if (!namespace\_validate_run_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $run_group,
+                                    $function_info,
+                                    $lexer->get_remainder(),
+                                    true))
                             {
                                 $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->setup_function))
+                            if (!namespace\_validate_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $function_info,
+                                    $file->setup_function))
                             {
                                 $valid = false;
                             }
@@ -356,7 +414,11 @@ function _discover_file(_DiscoveryState $state, $filepath)
                         $lexer->eat_underscore();
                         if ($lexer->eat_string('file'))
                         {
-                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->teardown_file))
+                            if (!namespace\_validate_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $function_info,
+                                    $file->teardown_file))
                             {
                                 $valid = false;
                             }
@@ -364,14 +426,24 @@ function _discover_file(_DiscoveryState $state, $filepath)
                         elseif ($lexer->eat_string('run'))
                         {
                             $lexer->eat_underscore();
-                            if (!namespace\_validate_run_fixture($state->global->logger, $filepath, $run_group, $function, $lexer->get_remainder(), false))
+                            if (!namespace\_validate_run_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $run_group,
+                                    $function_info,
+                                    $lexer->get_remainder(),
+                                    false))
                             {
                                 $valid = false;
                             }
                         }
                         else
                         {
-                            if (!namespace\_validate_fixture($state->global->logger, $filepath, $function, $file->teardown_function))
+                            if (!namespace\_validate_fixture(
+                                    $state->global->logger,
+                                    $filepath,
+                                    $function_info,
+                                    $file->teardown_function))
                             {
                                 $valid = false;
                             }
@@ -428,9 +500,27 @@ function _discover_file(_DiscoveryState $state, $filepath)
             }
             else
             {
+                $function_filename = $reflected_test->getFileName();
+                $function_line = $reflected_test->getStartLine();
+                \assert(\is_string($function_filename));
+                \assert(\is_int($function_line));
+
+                $function_info = new FunctionInfo;
+                // @todo Remove asserting that ReflectionFunction->name is callable
+                \assert(\is_callable($reflected_test->name));
+                $function_info->name = $reflected_test->name;
+                $function_info->namespace = $reflected_test->getNamespaceName();
+                if (\strlen($function_info->namespace))
+                {
+                    $function_info->namespace .= '\\';
+                }
+                $function_info->short_name = $reflected_test->getShortName();
+                $function_info->file = $function_filename;
+                $function_info->line = $function_line;
+
                 $test = new FunctionTest;
                 $test->name = $reflected_test->getName();
-                $test->test = $reflected_test;
+                $test->test = $function_info;
                 $file->tests[$test_index] = $test;
             }
         }
@@ -585,7 +675,7 @@ function _discover_class(Logger $logger, ClassInfo $class_info, array $methods)
 
 
 /**
- * @template T of \ReflectionFunction|MethodInfo
+ * @template T of FunctionInfo|MethodInfo
  * @param string $filepath
  * @param T $new
  * @param ?T $old
@@ -598,14 +688,14 @@ function _validate_fixture(Logger $logger, $filepath, $new, &$old)
     if ($old)
     {
         $valid = false;
-        $message = \sprintf(
-            'This fixture conflicts with \'%s\' defined on line %d',
-            $old->name, ($old instanceof MethodInfo) ? $old->line : $old->getStartLine());
-
-        // @todo Remove asserting that reflection function returns file info
-        $line = ($new instanceof MethodInfo) ? $new->line : $new->getStartLine();
-        \assert(\is_int($line));
-        $logger->log_error(new ErrorEvent($new->name, $message, $filepath, $line));
+        $logger->log_error(
+            new ErrorEvent(
+                $new->name,
+                \sprintf(
+                    'This fixture conflicts with \'%s\' defined on line %d',
+                    $old->name, $old->line),
+                $filepath,
+                $new->line));
     }
     else
     {
@@ -622,23 +712,27 @@ function _validate_fixture(Logger $logger, $filepath, $new, &$old)
  * @param bool $setup
  * @return bool
  */
-function _validate_run_fixture(Logger $logger, $filepath, TestRunGroup $run_group, \ReflectionFunction $function, $run_name, $setup)
+function _validate_run_fixture(
+    Logger $logger,
+    $filepath,
+    TestRunGroup $run_group,
+    FunctionInfo $function,
+    $run_name,
+    $setup)
 {
     $valid = true;
 
     if (0 === \strlen($run_name))
     {
         $valid = false;
-        $message = \sprintf(
-            'Unable to determine run name from run fixture function %s',
-            $function->getName());
-
-        $file = $function->getFileName();
-        $line = $function->getStartLine();
-        // @todo Remove asserting if reflection function returns file info
-        \assert(\is_string($file));
-        \assert(\is_int($line));
-        $logger->log_error(new ErrorEvent($function->getName(), $message, $file, $line));
+        $logger->log_error(
+            new ErrorEvent(
+                $function->name,
+                \sprintf(
+                    'Unable to determine run name from run fixture function %s',
+                    $function->name),
+                $function->file,
+                $function->line));
     }
     else
     {
@@ -655,11 +749,19 @@ function _validate_run_fixture(Logger $logger, $filepath, TestRunGroup $run_grou
 
         if ($setup)
         {
-            $valid = namespace\_validate_fixture($logger, $filepath, $function, $run->setup);
+            $valid = namespace\_validate_fixture(
+                $logger,
+                $filepath,
+                $function,
+                $run->setup);
             }
         else
         {
-            $valid = namespace\_validate_fixture($logger, $filepath, $function, $run->teardown);
+            $valid = namespace\_validate_fixture(
+                $logger,
+                $filepath,
+                $function,
+                $run->teardown);
         }
     }
 
@@ -685,15 +787,14 @@ function _validate_runs(_DiscoveryState $state, TestRunGroup $run_group, $filepa
                 \assert(isset($run->teardown));
                 $valid = false;
 
-                $file = $run->teardown->getFileName();
-                $line = $run->teardown->getStartLine();
+                $file = $run->teardown->file;
+                $line = $run->teardown->line;
                 // @todo Remove asserting if reflection function returns file info
                 \assert(\is_string($file));
                 \assert(\is_int($line));
                 $message = \sprintf(
                     "Teardown run function '%s' has no matching setup run function",
-                    $run->teardown->getName()
-                );
+                    $run->teardown->name);
                 $state->global->logger->log_error(new ErrorEvent($filepath, $message, $file, $line));
             }
             else
