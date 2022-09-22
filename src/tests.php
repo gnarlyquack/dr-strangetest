@@ -10,7 +10,26 @@ namespace strangetest;
 
 final class ClassInfo extends struct
 {
-    /** @var class-string */
+    /** @var class-string Full, namespace-qualified name of class */
+    public $name;
+
+    /** @var string */
+    public $namespace;
+
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+}
+
+
+final class MethodInfo extends struct
+{
+    /** @var ClassInfo */
+    public $class;
+
+    /** @var string The method name (without the class name prepended) */
     public $name;
 
     /** @var string */
@@ -106,16 +125,16 @@ final class ClassTest extends struct
     /** @var ClassInfo */
     public $test;
 
-    /** @var ?\ReflectionMethod */
+    /** @var ?MethodInfo */
     public $setup_object;
 
-    /** @var ?\ReflectionMethod */
+    /** @var ?MethodInfo */
     public $teardown_object;
 
-    /** @var ?\ReflectionMethod */
+    /** @var ?MethodInfo */
     public $setup_method;
 
-    /** @var ?\ReflectionMethod */
+    /** @var ?MethodInfo */
     public $teardown_method;
 
     /** @var MethodTest[] */
@@ -128,7 +147,7 @@ final class MethodTest extends struct
     /** @var string */
     public $name;
 
-    /** @var \ReflectionMethod */
+    /** @var MethodInfo */
     public $test;
 }
 

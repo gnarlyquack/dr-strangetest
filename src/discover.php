@@ -401,6 +401,11 @@ function _discover_file(_DiscoveryState $state, $filepath)
             {
                 $class_info = new ClassInfo;
                 $class_info->name = $reflected_test->name;
+                $class_info->namespace = $reflected_test->getNamespaceName();
+                if (\strlen($class_info->namespace))
+                {
+                    $class_info->namespace .= '\\';
+                }
                 $class_filename = $reflected_test->getFileName();
                 $class_line = $reflected_test->getStartLine();
                 \assert(\is_string($class_filename));
@@ -459,10 +464,10 @@ function _discover_file(_DiscoveryState $state, $filepath)
  *                              false if no tests were found but an error
  *                              occurred during discovery.
  */
-function _discover_class(Logger $logger, ClassInfo $info, array $methods)
+function _discover_class(Logger $logger, ClassInfo $class_info, array $methods)
 {
     $class = new ClassTest;
-    $class->test = $info;
+    $class->test = $class_info;
 
     $valid = true;
     foreach ($methods as $method)
@@ -471,6 +476,16 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
         {
             continue;
         }
+
+        \assert($class->test->file === $method->getFileName());
+        $method_line = $method->getStartLine();
+        \assert(\is_int($method_line));
+
+        $method_info = new MethodInfo;
+        $method_info->class = $class_info;
+        $method_info->name = $method->name;
+        $method_info->file = $class->test->file;
+        $method_info->line = $method_line;
 
         $lexer = new StringLexer($method->getName());
 
@@ -481,8 +496,8 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
         {
             $test = new MethodTest;
             $test->name = $class->test->name . '::' . $method->name;
-            $test->test = $method;
-            $class->tests[$method->name] = $test;
+            $test->test = $method_info;
+            $class->tests[$method_info->name] = $test;
         }
         elseif ($lexer->eat_string('setup'))
         {
@@ -491,7 +506,7 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
                 if (!namespace\_validate_fixture(
                     $logger,
                     $class->test->file,
-                    $method,
+                    $method_info,
                     $class->setup_method))
                 {
                     $valid = false;
@@ -505,7 +520,7 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
                     if (!namespace\_validate_fixture(
                         $logger,
                         $class->test->file,
-                        $method,
+                        $method_info,
                         $class->setup_object))
                     {
                         $valid = false;
@@ -520,7 +535,7 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
                 if (!namespace\_validate_fixture(
                     $logger,
                     $class->test->file,
-                    $method,
+                    $method_info,
                     $class->teardown_method))
                 {
                     $valid = false;
@@ -534,7 +549,7 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
                     if (!namespace\_validate_fixture(
                         $logger,
                         $class->test->file,
-                        $method,
+                        $method_info,
                         $class->teardown_object))
                     {
                         $valid = false;
@@ -570,7 +585,7 @@ function _discover_class(Logger $logger, ClassInfo $info, array $methods)
 
 
 /**
- * @template T of \ReflectionFunctionAbstract
+ * @template T of \ReflectionFunction|MethodInfo
  * @param string $filepath
  * @param T $new
  * @param ?T $old
@@ -585,12 +600,12 @@ function _validate_fixture(Logger $logger, $filepath, $new, &$old)
         $valid = false;
         $message = \sprintf(
             'This fixture conflicts with \'%s\' defined on line %d',
-            $old->getName(), $old->getStartLine());
+            $old->name, ($old instanceof MethodInfo) ? $old->line : $old->getStartLine());
 
         // @todo Remove asserting that reflection function returns file info
-        $line = $new->getStartLine();
+        $line = ($new instanceof MethodInfo) ? $new->line : $new->getStartLine();
         \assert(\is_int($line));
-        $logger->log_error(new ErrorEvent($new->getName(), $message, $filepath, $line));
+        $logger->log_error(new ErrorEvent($new->name, $message, $filepath, $line));
     }
     else
     {

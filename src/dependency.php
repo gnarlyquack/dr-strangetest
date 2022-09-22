@@ -118,19 +118,26 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                         } while ($key !== $pre_name);
 
                         $valid = false;
-
-                        $file = $dependency->test->test->getFileName();
-                        $line = $dependency->test->test->getStartLine();
-                        // @todo Eliminate asserting if reflection function returns file info
-                        \assert(\is_string($file));
-                        \assert(\is_int($line));
+                        if ($dependency->test instanceof MethodTest)
+                        {
+                            $file = $dependency->test->test->file;
+                            $line = $dependency->test->test->line;
+                        }
+                        else
+                        {
+                            $file = $dependency->test->test->getFileName();
+                            $line = $dependency->test->test->getStartLine();
+                            \assert(\is_string($file));
+                            \assert(\is_int($line));
+                        }
                         $graph->state->logger->log_error(
                             new ErrorEvent(
                                 $name,
                                 \sprintf(
                                     "This test has a cyclical dependency with the following tests:\n\t%s",
                                     \implode("\n\t", \array_slice($cycle, 1))),
-                                $file, $line));
+                                $file,
+                                $line));
                     }
                     else
                     {
@@ -138,32 +145,53 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                             $graph, $graph->state->postponed[$pre_name]);
                         if (!$valid)
                         {
-                            $file = $dependency->test->test->getFileName();
-                            $line = $dependency->test->test->getStartLine();
-                            // @todo Eliminate asserting if reflection function returns file info
-                            \assert(\is_string($file));
-                            \assert(\is_int($line));
+                            if ($dependency->test instanceof MethodTest)
+                            {
+                                $file = $dependency->test->test->file;
+                                $line = $dependency->test->test->line;
+                            }
+                            else
+                            {
+                                $file = $dependency->test->test->getFileName();
+                                $line = $dependency->test->test->getStartLine();
+                                \assert(\is_string($file));
+                                \assert(\is_int($line));
+                            }
                             $graph->state->logger->log_skip(
                                 new SkipEvent(
                                     $name,
-                                    "This test depends on '{$pre_name}', which did not pass",
-                                    $file, $line));
+                                    \sprintf(
+                                        "This test depends on '%s', which did not pass",
+                                        $pre_name),
+                                    $file,
+                                    $line));
                         }
                     }
                 }
                 elseif (!isset($graph->state->results[$pre_name]))
                 {
+                    if ($dependency->test instanceof MethodTest)
+                    {
+                        $file = $dependency->test->test->file;
+                        $line = $dependency->test->test->line;
+                    }
+                    else
+                    {
+                        $file = $dependency->test->test->getFileName();
+                        $line = $dependency->test->test->getStartLine();
+                        \assert(\is_string($file));
+                        \assert(\is_int($line));
+                    }
+
                     $valid = false;
-                    $file = $dependency->test->test->getFileName();
-                    $line = $dependency->test->test->getStartLine();
-                    // @todo Eliminate asserting if reflection function returns file info
-                    \assert(\is_string($file));
-                    \assert(\is_int($line));
                     $graph->state->logger->log_error(
                         new ErrorEvent(
                             $name,
-                            "This test depends on test '{$pre_name}', which was never run",
-                            $file, $line));
+                            \sprintf(
+                                "This test depends on test '%s', which was never run",
+                                $pre_name),
+                            $file,
+                            $line));
                 }
                 else
                 {
@@ -311,8 +339,8 @@ function _add_directory_test_from_dependency(
     // ReflectionFunctionAbstract should always return an actual filename here
     // (instead of false) because we only ever reflect functions and methods
     // that have been discovered in a test file
-    $file = $dependency->test->getFileName();
-    \assert($file !== false);
+    $file = ($dependency instanceof MethodTest) ? $dependency->test->file : $dependency->test->getFileName();
+    \assert(\is_string($file));
     \assert(0 === \substr_compare($file, $test->name, 0, \strlen($test->name)));
 
     $pos = \strpos($file, \DIRECTORY_SEPARATOR, \strlen($test->name));
@@ -391,17 +419,17 @@ function _add_file_test_from_dependency(
     FileTest $test, $dependency)
 {
     \assert($reference->name === $test->name);
-    \assert($test->name === $dependency->test->getFileName());
+    \assert($test->name === (($dependency instanceof MethodTest) ? $dependency->test->file : $dependency->test->getFileName()));
 
     if ($dependency instanceof MethodTest)
     {
-        $name = 'class ' . $dependency->test->class;
+        $name = 'class ' . $dependency->test->class->name;
         $class = $reference->tests[$name];
         \assert($class instanceof ClassTest);
         $last = \end($test->tests);
         if ($last
             && ($last instanceof ClassTest)
-            && ($last->test->name === $dependency->test->class))
+            && ($last->test->name === $dependency->test->class->name))
         {
             $child = $last;
         }

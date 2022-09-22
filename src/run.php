@@ -188,8 +188,8 @@ final class _Context extends struct implements Context
         {
             if ($this->test instanceof MethodTest)
             {
-                $namespace = $this->test->test->getDeclaringClass()->getNamespaceName() . '\\';
-                $class = $this->test->test->class;
+                $namespace = $this->test->test->class->namespace;
+                $class = $this->test->test->class->name;
             }
             else
             {
@@ -559,14 +559,19 @@ function _run_class(
         if ($class->setup_object)
         {
             $name = $class->test->name . '::' . $class->setup_object->name . $run_name;
-            $method = namespace\_get_callable_method($class->setup_object, $object);
-            $file = $class->setup_object->getFileName();
-            $line = $class->setup_object->getStartLine();
-            // @todo Stop asserting if reflection function returns file info
-            \assert(\is_string($file));
-            \assert(\is_int($line));
-            $logger = $state->bufferer->start_buffering($name, $file, $line);
-            list($setup,) = namespace\_run_setup($logger, $name, $file, $line, $method);
+            $method = namespace\_get_callable_method(
+                $class->setup_object->name,
+                $object);
+            $logger = $state->bufferer->start_buffering(
+                $name,
+                $class->setup_object->file,
+                $class->setup_object->line);
+            list($setup,) = namespace\_run_setup(
+                $logger,
+                $name,
+                $class->setup_object->file,
+                $class->setup_object->line,
+                $method);
             $state->bufferer->end_buffering($state->logger);
         }
 
@@ -580,13 +585,13 @@ function _run_class(
             if ($class->teardown_object)
             {
                 $name = $class->test->name . '::' . $class->teardown_object->name . $run_name;
-                $method = namespace\_get_callable_method($class->teardown_object, $object);
-                $file = $class->teardown_object->getFileName();
-                $line = $class->teardown_object->getStartLine();
-                // @todo Stop asserting if reflection function returns file info
-                \assert(\is_string($file));
-                \assert(\is_int($line));
-                $logger = $state->bufferer->start_buffering($name, $file, $line);
+                $method = namespace\_get_callable_method(
+                    $class->teardown_object->name,
+                    $object);
+                $logger = $state->bufferer->start_buffering(
+                    $name,
+                    $class->teardown_object->file,
+                    $class->teardown_object->line);
                 namespace\_run_teardown($logger, $name, $method);
                 $state->bufferer->end_buffering($state->logger);
             }
@@ -621,8 +626,8 @@ function _instantiate_test(Logger $logger, ClassInfo $class, array $args)
 
 /**
  * @param object $object
- * @param ?\ReflectionMethod $setup_method
- * @param ?\ReflectionMethod $teardown_method
+ * @param ?MethodInfo $setup_method
+ * @param ?MethodInfo $teardown_method
  * @return void
  */
 function _run_method(
@@ -635,26 +640,28 @@ function _run_method(
     if ($setup_method)
     {
         $name = $setup_method->name . ' for ' . $test_name;
-        $setup = namespace\_get_callable_method($setup_method, $object);
-        $file = $setup_method->getFileName();
-        $line = $setup_method->getStartLine();
-        // @todo Stop asserting if reflection function returns file info
-        \assert(\is_string($file));
-        \assert(\is_int($line));
-        $logger = $state->bufferer->start_buffering($name, $file, $line);
-        list($result, ) = namespace\_run_setup($logger, $name, $file, $line, $setup);
+        $setup = namespace\_get_callable_method(
+            $setup_method->name,
+            $object);
+        $logger = $state->bufferer->start_buffering(
+            $name,
+            $setup_method->file,
+            $setup_method->line);
+        list($result, ) = namespace\_run_setup(
+            $logger,
+            $name,
+            $setup_method->file,
+            $setup_method->line,
+            $setup);
     }
 
     if (namespace\RESULT_PASS === $result)
     {
-        $method = namespace\_get_callable_method($test->test, $object);
-        $file = $test->test->getFileName();
-        $line = $test->test->getStartLine();
-        // @todo Stop asserting if reflection function returns file info
-        \assert(\is_string($file));
-        \assert(\is_int($line));
-
-        $logger = $state->bufferer->start_buffering($test_name, $file, $line);
+        $method = namespace\_get_callable_method($test->test->name, $object);
+        $logger = $state->bufferer->start_buffering(
+            $test_name,
+            $test->test->file,
+            $test->test->line);
         $context = new _Context($state, $logger, $test, $run);
         $result = namespace\_run_test($logger, $test_name, $method, $context);
 
@@ -668,13 +675,13 @@ function _run_method(
         if ($teardown_method)
         {
             $name = $teardown_method->name . ' for ' . $test_name;
-            $teardown = namespace\_get_callable_method($teardown_method, $object);
-            $file = $teardown_method->getFileName();
-            $line = $teardown_method->getStartLine();
-            // @todo Stop asserting if reflection function returns file info
-            \assert(\is_string($file));
-            \assert(\is_int($line));
-            $logger = $state->bufferer->start_buffering($name, $file, $line);
+            $teardown = namespace\_get_callable_method(
+                $teardown_method->name,
+                $object);
+            $logger = $state->bufferer->start_buffering(
+                $name,
+                $teardown_method->file,
+                $teardown_method->line);
             $result |= namespace\_run_teardown($logger, $name, $teardown);
         }
     }
@@ -771,11 +778,19 @@ function _record_test_result(State $state, $test, RunInstance $run, $name, $resu
 
         if (namespace\RESULT_PASS === $result)
         {
-            $file = $test->test->getFileName();
-            $line = $test->test->getStartLine();
-            // @todo Eliminate asserting if reflection function returns file info
-            \assert(\is_string($file));
-            \assert(\is_int($line));
+            if ($test instanceof MethodTest)
+            {
+                $file = $test->test->file;
+                $line = $test->test->line;
+            }
+            else
+            {
+                $file = $test->test->getFileName();
+                $line = $test->test->getStartLine();
+                // @todo Eliminate asserting if reflection function returns file info
+                \assert(\is_string($file));
+                \assert(\is_int($line));
+            }
             $state->logger->log_pass(new PassEvent($name, $file, $line));
             for ( ; $run; $run = $run->parent)
             {
@@ -1021,26 +1036,25 @@ function _get_callable_function(\ReflectionFunction $function)
 
 
 /**
+ * @param string $method
  * @param object $object
  * @return callable
  */
-function _get_callable_method(\ReflectionMethod $method, $object)
+function _get_callable_method($method, $object)
 {
-    // @bc 5.3 Ensure ReflectionMethod has getClosure method
-    if (\method_exists($method, 'getClosure'))
+    $result = array($object, $method);
+    \assert(\is_callable($result));
+
+    // @bc 7.1 Ensure Closure has fromCallable method
+    if (\method_exists('Closure', 'fromCallable'))
     {
-        // @todo Handle failure of ReflectionMethod::getClosure()?
-        // We only reflect methods that we have already discovered and know
-        // exist, so it doesn't seem like this should ever fail. However this
-        // method is also undocumented, so it's unclear what could cause a
-        // failure here
-        $result = $method->getClosure($object);
-    }
-    else
-    {
-        $result = array($object, $method->getName());
+        // @todo Handle Closure::fromCallable potentially throwing a TypeError?
+        // A TypeError can be thrown if the method isn't callable from the
+        // current scope, but this should never happen because we only reflect
+        // on public methods. Also, we literally just asserted above that this
+        // is callable.
+        $result = \Closure::fromCallable($result);
     }
 
-    \assert(\is_callable($result));
     return $result;
 }

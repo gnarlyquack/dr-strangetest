@@ -6,6 +6,11 @@
 // LICENSE.txt file.
 
 
+use strangetest\ClassInfo;
+use strangetest\ClassTest;
+use strangetest\MethodInfo;
+
+
 const TEST_ROOT = __DIR__;
 
 const EVENT_PASS   = 1;
@@ -241,27 +246,36 @@ function make_class_test($spec, $file)
 
     $class = new strangetest\ClassTest;
     $r = new \ReflectionClass("{$namespace}{$spec['class']}");
-    $class->test = new strangetest\ClassInfo;
+    $class->test = new ClassInfo;
     $class->test->name = $r->name;
+    $class->test->namespace = $namespace;
     $class->test->file = $r->getFileName();
     $class->test->line = $r->getStartLine();
 
     if ($spec['setup_object'])
     {
-        $class->setup_object = new \ReflectionMethod($spec['class'], $spec['setup_object']);
+        $class->setup_object = _method_from_reflection(
+            $class->test,
+            new \ReflectionMethod($spec['class'], $spec['setup_object']));
     }
     if ($spec['teardown_object'])
     {
-        $class->teardown_object = new \ReflectionMethod($spec['class'], $spec['teardown_object']);
+        $class->teardown_object = _method_from_reflection(
+            $class->test,
+            new \ReflectionMethod($spec['class'], $spec['teardown_object']));
     }
 
     if ($spec['setup_method'])
     {
-        $class->setup_method = new \ReflectionMethod($spec['class'], $spec['setup_method']);
+        $class->setup_method = _method_from_reflection(
+            $class->test,
+            new \ReflectionMethod($spec['class'], $spec['setup_method']));
     }
     if ($spec['teardown_method'])
     {
-        $class->teardown_method = new \ReflectionMethod($spec['class'], $spec['teardown_method']);
+        $class->teardown_method = _method_from_reflection(
+            $class->test,
+            new \ReflectionMethod($spec['class'], $spec['teardown_method']));
     }
 
     $file->tests["class {$class->test->name}"] = $class;
@@ -272,15 +286,28 @@ function make_class_test($spec, $file)
 }
 
 
-function make_method_test($spec, $class)
+function make_method_test($spec, ClassTest $class)
 {
     \assert(isset($spec['function']));
-    \assert(!isset($spec['group_id']));
 
     $test = new strangetest\MethodTest;
     $test->name = "{$class->test->name}::{$spec['function']}";
-    $test->test = new \ReflectionMethod($class->test->name, $spec['function']);
+    $test->test = _method_from_reflection(
+        $class->test,
+        new \ReflectionMethod($class->test->name, $spec['function']));
     $class->tests[$spec['function']] = $test;
+}
+
+
+function _method_from_reflection(ClassInfo $class, \ReflectionMethod $method)
+{
+    $result = new MethodInfo;
+    $result->name = $method->name;
+    $result->class = $class;
+    $result->file = $method->getFileName();
+    $result->line = $method->getStartLine();
+
+    return $result;
 }
 
 
