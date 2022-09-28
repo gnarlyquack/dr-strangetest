@@ -63,65 +63,6 @@ function output_header($text)
 
 
 /**
- * @return string
- */
-function _format_message_from_event(Event $event)
-{
-    $message = '';
-
-    if ($event instanceof PassEvent)
-    {
-        $message = \sprintf("PASS: %s\nin %s:%d\n",
-            $event->source, $event->file, $event->line);
-    }
-    elseif ($event instanceof FailEvent)
-    {
-        $message = \sprintf("FAILED: %s\n%s\nin %s:%d\n",
-            $event->source, $event->reason, $event->file, $event->line);
-        if (isset($event->additional))
-        {
-            $message .= "\n" . $event->additional . "\n";
-        }
-    }
-    elseif ($event instanceof ErrorEvent)
-    {
-        $message = \sprintf("ERROR: %s\n%s\n", $event->source, $event->reason);
-
-        if (isset($event->file, $event->line))
-        {
-            $message .= \sprintf("in %s:%d\n", $event->file, $event->line);
-        }
-
-        if (isset($event->additional))
-        {
-            $message .= "\n" . $event->additional . "\n";
-        }
-    }
-    elseif ($event instanceof SkipEvent)
-    {
-        $message = \sprintf("SKIPPED: %s\n%s\nin %s:%d\n",
-            $event->source, $event->reason, $event->file, $event->line);
-        if (isset($event->additional))
-        {
-            $message .= "\n" . $event->additional . "\n";
-        }
-    }
-    else
-    {
-        \assert($event instanceof OutputEvent);
-        $message = \sprintf("OUTPUT: %s\n%s\n", $event->source, $event->output);
-
-        if (isset($event->file, $event->line))
-        {
-            $message .= \sprintf("in %s:%d\n", $event->file, $event->line);
-        }
-    }
-
-    return $message;
-}
-
-
-/**
  * @return void
  */
 function output_log(Log $log)
@@ -130,16 +71,54 @@ function output_log(Log $log)
     $skip_count = 0;
     foreach ($log->events as $event)
     {
-        // @fixme Figure out how/where to format messagse from events
-        $message = namespace\_format_message_from_event($event);
-
-        if ($event instanceof OutputEvent)
+        if ($event instanceof PassEvent)
         {
-            ++$output_count;
+            $message = \sprintf("PASSED: %s\nin %s:%d\n",
+                $event->source, $event->file, $event->line);
+        }
+        elseif ($event instanceof FailEvent)
+        {
+            $message = \sprintf("FAILED: %s\n%s\nin %s:%d\n",
+                $event->source, $event->reason, $event->file, $event->line);
+            if (isset($event->additional))
+            {
+                $message .= "\n" . $event->additional . "\n";
+            }
+        }
+        elseif ($event instanceof ErrorEvent)
+        {
+            $message = \sprintf("ERROR: %s\n%s\n", $event->source, $event->reason);
+            if (isset($event->file, $event->line))
+            {
+                $message .= \sprintf("in %s:%d\n", $event->file, $event->line);
+            }
+            if (isset($event->additional))
+            {
+                $message .= "\n" . $event->additional . "\n";
+            }
         }
         elseif ($event instanceof SkipEvent)
         {
             ++$skip_count;
+
+            $message = \sprintf("SKIPPED: %s\n%s\nin %s:%d\n",
+                $event->source, $event->reason, $event->file, $event->line);
+            if (isset($event->additional))
+            {
+                $message .= "\n" . $event->additional . "\n";
+            }
+        }
+        else
+        {
+            \assert($event instanceof OutputEvent);
+
+            ++$output_count;
+
+            $message = \sprintf("OUTPUT: %s\n%s\n", $event->source, $event->output);
+            if (isset($event->file, $event->line))
+            {
+                $message .= \sprintf("in %s:%d\n", $event->file, $event->line);
+            }
         }
 
         echo "\n\n\n", $message;
