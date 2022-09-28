@@ -186,9 +186,9 @@ function _discover_directory_setup(_DiscoveryState $state, DirectoryTest $direct
     {
         if ($token instanceof _FunctionToken)
         {
-            $function_name = "{$namespace}{$token->name}";
+            $function_name = $namespace . $token->name;
             // classes and functions can have identical names
-            $function_index = "function {$function_name}";
+            $function_index = 'function ' . namespace\normalize_identifier($function_name);
 
             if (!isset($state->seen[$function_index]) && \is_callable($function_name))
             {
@@ -315,9 +315,9 @@ function _discover_file(_DiscoveryState $state, $filepath)
     {
         if ($token instanceof _ClassToken)
         {
-            $class_name = "{$namespace}{$token->name}";
+            $class_name = $namespace . $token->name;
             // classes and functions can have the same name!
-            $test_index = "class {$class_name}";
+            $test_index = 'class '. namespace\normalize_identifier($class_name);
 
             if (!isset($state->seen[$test_index]) && \class_exists($class_name))
             {
@@ -338,9 +338,9 @@ function _discover_file(_DiscoveryState $state, $filepath)
         }
         elseif ($token instanceof _FunctionToken)
         {
-            $function_name = "{$namespace}{$token->name}";
+            $function_name = $namespace . $token->name;
             // classes and functions can have the same name!
-            $test_index = "function {$function_name}";
+            $test_index = 'function ' . namespace\normalize_identifier($function_name);
 
             if (!isset($state->seen[$test_index]) && \is_callable($function_name))
             {
@@ -488,6 +488,7 @@ function _discover_file(_DiscoveryState $state, $filepath)
                     $state->global->logger,
                     $class_info,
                     $reflected_test->getMethods(\ReflectionMethod::IS_PUBLIC));
+
                 if ($test)
                 {
                     $file->tests[$test_index] = $test;
@@ -586,7 +587,9 @@ function _discover_class(Logger $logger, ClassInfo $class_info, array $methods)
             $test = new MethodTest;
             $test->name = $class->test->name . '::' . $method->name;
             $test->test = $method_info;
-            $class->tests[$method_info->name] = $test;
+
+            $index = namespace\normalize_identifier($method_info->name);
+            $class->tests[$index] = $test;
         }
         elseif ($lexer->eat_string('setup'))
         {
@@ -735,8 +738,7 @@ function _validate_run_fixture(
     }
     else
     {
-        // @todo only ascii characters should be lowercased for function names
-        $run_index = \strtolower($run_name);
+        $run_index = namespace\normalize_identifier($run_name);
 
         if (!isset($run_group->runs[$run_index]))
         {

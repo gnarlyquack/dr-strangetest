@@ -116,7 +116,7 @@ function test_handles_non_test_definition() {
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
     );
     strangetest\assert_identical(
-        array('class definitions\\Test'),
+        array('class definitions\\test'),
         \array_keys($result->tests)
     );
 }
@@ -144,7 +144,7 @@ function test_does_not_discover_enumerations()
         'result is ' . (\is_object($result) ? get_class($result) : gettype($result))
     );
     strangetest\assert_identical(
-        array('class TestClass'),
+        array('class testclass'),
         \array_keys($result->tests)
     );
 }
@@ -174,7 +174,7 @@ function test_discovers_tests_marked_with_attributes()
     strangetest\assert_identical(
         array(
             'function test_attribute\\function_is_found',
-            'class test_attribute\\ClassIsFound',
+            'class test_attribute\\classisfound',
         ),
         \array_keys($result->tests)
     );

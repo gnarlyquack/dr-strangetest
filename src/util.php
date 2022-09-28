@@ -8,6 +8,79 @@
 namespace strangetest;
 
 
+// Valid PHP identifiers are represented by the following regex:
+//      ^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$
+//
+// This maps to the following ascii characters:
+//  48 -  57: Numbers, but not for the first character
+//  65 -  90: Uppercase ascii characters
+//        95: Underscore
+//  97 - 122: Lowercase ascii characters
+// 128 - 255: "Extended" ascii characters
+//
+// Note that lowercase and uppercase ascii characters are treated
+// case-insensitively by the PHP parser
+
+
+/**
+ * @param string $identifier A valid identifier
+ * @return string The identifier with ascii letters normalized to lowercase
+ */
+function normalize_identifier($identifier)
+{
+    $result = '';
+    for ($i = 0, $c = \strlen($identifier); $i < $c; ++$i)
+    {
+        $chr = $identifier[$i];
+        $ord = \ord($chr);
+        if (($ord >= 65) && ($ord <= 90))
+        {
+            $ord += 32; // Make uppercase ascii characters lowercase
+        }
+        $result .= \chr($ord);
+    }
+
+    return $result;
+}
+
+
+/**
+ * @param string $identifier The identifier to validate
+ * @return string|false False if the identifier is invalid, otherwise the
+ *     identifier with ascii letters normalized to lowercase
+ */
+function validate_identifier($identifier)
+{
+    $result = '';
+    for ($i = 0, $c = \strlen($identifier); $i < $c; ++$i)
+    {
+        $chr = $identifier[$i];
+        $ord = \ord($chr);
+        if (($ord >= 65) && ($ord <= 90))
+        {
+            $ord += 32; // Make uppercase ascii characters lowercase
+        }
+        elseif (!(
+            // numbers allowed other than as initial character
+            (($ord >= 48) && ($ord <= 57) && $i)
+            // underscore
+            || ($ord === 95)
+            // lowercase ascii characters
+            || (($ord >= 97) && ($ord <= 122))
+            // extended ascii characters
+            || ($ord >= 128)))
+        {
+            $result = false;
+            break;
+        }
+
+        $result .= \chr($ord);
+    }
+
+    return $result;
+}
+
+
 final class ReferenceChecker extends struct
 {
     /** @var null */

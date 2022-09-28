@@ -281,7 +281,8 @@ function make_class_test($spec, $file)
             new \ReflectionMethod($spec['class'], $spec['teardown_method']));
     }
 
-    $file->tests["class {$class->test->name}"] = $class;
+    $index = 'class ' . strangetest\normalize_identifier($class->test->name);
+    $file->tests[$index] = $class;
     foreach ($spec['tests'] as $test)
     {
         make_method_test($test, $class);
@@ -298,7 +299,9 @@ function make_method_test($spec, ClassTest $class)
     $test->test = _method_from_reflection(
         $class->test,
         new \ReflectionMethod($class->test->name, $spec['function']));
-    $class->tests[$spec['function']] = $test;
+
+    $index = strangetest\normalize_identifier($spec['function']);
+    $class->tests[$index] = $test;
 }
 
 
@@ -316,7 +319,9 @@ function make_function_test($spec, $file)
     $test = new strangetest\FunctionTest;
     $test->name = "{$namespace}{$spec['function']}";
     $test->test = _function_from_reflection(new \ReflectionFunction($test->name));
-    $file->tests["function $test->name"] = $test;
+
+    $index = 'function ' . strangetest\normalize_identifier($test->name);
+    $file->tests[$index] = $test;
 }
 
 
