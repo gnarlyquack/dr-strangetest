@@ -153,6 +153,7 @@ final class _Context extends struct implements Context
 
     public function subtest($callback)
     {
+        // @todo assign a more descriptive name to subtests?
         try
         {
             $callback();
@@ -360,7 +361,6 @@ function _run_test_run_group(
 
         $setup = $test->setup;
         $name = $setup->name . $run_name;
-        $callable = namespace\_get_callable_function($setup->name);
         $logger = $state->bufferer->start_buffering(
             $name,
             $setup->file,
@@ -370,7 +370,7 @@ function _run_test_run_group(
             $name,
             $setup->file,
             $setup->line,
-            $callable,
+            $setup->name,
             $args);
         $state->bufferer->end_buffering($state->logger);
 
@@ -406,12 +406,15 @@ function _run_test_run_group(
             {
                 $teardown = $test->teardown;
                 $name = $teardown->name . $run_name;
-                $callable = namespace\_get_callable_function($teardown->name);
                 $logger = $state->bufferer->start_buffering(
                     $name,
                     $teardown->file,
                     $teardown->line);
-                namespace\_run_teardown($logger, $name, $callable, $run_args);
+                namespace\_run_teardown(
+                    $logger,
+                    $name,
+                    $teardown->name,
+                    $run_args);
                 $state->bufferer->end_buffering($state->logger);
             }
         }
@@ -433,7 +436,6 @@ function _run_directory(
     if ($directory->setup)
     {
         $name = $directory->setup->name . $run_name;
-        $callable = namespace\_get_callable_function($directory->setup->name);
         $logger = $state->bufferer->start_buffering(
             $name,
             $directory->setup->file,
@@ -443,7 +445,7 @@ function _run_directory(
             $name,
             $directory->setup->file,
             $directory->setup->line,
-            $callable,
+            $directory->setup->name,
             $args);
         $state->bufferer->end_buffering($state->logger);
     }
@@ -472,12 +474,15 @@ function _run_directory(
         if ($directory->teardown)
         {
             $name = $directory->teardown->name . $run_name;
-            $callable = namespace\_get_callable_function($directory->teardown->name);
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $directory->teardown->file,
                 $directory->teardown->line);
-            namespace\_run_teardown($logger, $name, $callable, $args);
+            namespace\_run_teardown(
+                $logger,
+                $name,
+                $directory->teardown->name,
+                $args);
             $state->bufferer->end_buffering($state->logger);
         }
     }
@@ -498,7 +503,6 @@ function _run_file(
     if ($file->setup_file)
     {
         $name = $file->setup_file->name . $run_name;
-        $callable = namespace\_get_callable_function($file->setup_file->name);
         $logger = $state->bufferer->start_buffering(
             $name,
             $file->setup_file->file,
@@ -508,7 +512,7 @@ function _run_file(
             $name,
             $file->setup_file->file,
             $file->setup_file->line,
-            $callable,
+            $file->setup_file->name,
             $args);
         $state->bufferer->end_buffering($state->logger);
     }
@@ -534,12 +538,15 @@ function _run_file(
         if ($file->teardown_file)
         {
             $name = $file->teardown_file->name . $run_name;
-            $callable = namespace\_get_callable_function($file->teardown_file->name);
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $file->teardown_file->file,
                 $file->teardown_file->line);
-            namespace\_run_teardown($logger, $name, $callable, $args);
+            namespace\_run_teardown(
+                $logger,
+                $name,
+                $file->teardown_file->name,
+                $args);
             $state->bufferer->end_buffering($state->logger);
         }
     }
@@ -569,9 +576,8 @@ function _run_class(
         if ($class->setup_object)
         {
             $name = $class->test->name . '::' . $class->setup_object->name . $run_name;
-            $method = namespace\_get_callable_method(
-                $class->setup_object->name,
-                $object);
+            $method = array($object, $class->setup_object->name);
+            \assert(\is_callable($method));
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $class->setup_object->file,
@@ -595,9 +601,8 @@ function _run_class(
             if ($class->teardown_object)
             {
                 $name = $class->test->name . '::' . $class->teardown_object->name . $run_name;
-                $method = namespace\_get_callable_method(
-                    $class->teardown_object->name,
-                    $object);
+                $method = array($object, $class->teardown_object->name);
+                \assert(\is_callable($method));
                 $logger = $state->bufferer->start_buffering(
                     $name,
                     $class->teardown_object->file,
@@ -650,9 +655,8 @@ function _run_method(
     if ($setup_method)
     {
         $name = $setup_method->name . ' for ' . $test_name;
-        $setup = namespace\_get_callable_method(
-            $setup_method->name,
-            $object);
+        $setup = array($object, $setup_method->name);
+        \assert(\is_callable($setup));
         $logger = $state->bufferer->start_buffering(
             $name,
             $setup_method->file,
@@ -667,7 +671,8 @@ function _run_method(
 
     if (namespace\RESULT_PASS === $result)
     {
-        $method = namespace\_get_callable_method($test->test->name, $object);
+        $method = array($object, $test->test->name);
+        \assert(\is_callable($method));
         $logger = $state->bufferer->start_buffering(
             $test_name,
             $test->test->file,
@@ -678,6 +683,7 @@ function _run_method(
         // @todo Buffer function-specific teardown functions separately from test function?
         while ($context->teardowns)
         {
+            // @todo assign a more descriptive name to test-specific teardowns?
             $teardown = \array_pop($context->teardowns);
             $result |= namespace\_run_teardown($logger, $test_name, $teardown);
         }
@@ -685,9 +691,8 @@ function _run_method(
         if ($teardown_method)
         {
             $name = $teardown_method->name . ' for ' . $test_name;
-            $teardown = namespace\_get_callable_method(
-                $teardown_method->name,
-                $object);
+            $teardown = array($object, $teardown_method->name);
+            \assert(\is_callable($teardown));
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $teardown_method->file,
@@ -717,7 +722,6 @@ function _run_function(
     if ($setup_function)
     {
         $name = $setup_function->short_name . ' for ' . $test_name;
-        $callable = namespace\_get_callable_function($setup_function->name);
         $logger = $state->bufferer->start_buffering(
             $name,
             $setup_function->file,
@@ -727,7 +731,7 @@ function _run_function(
             $name,
             $setup_function->file,
             $setup_function->line,
-            $callable,
+            $setup_function->name,
             $args);
     }
 
@@ -735,17 +739,22 @@ function _run_function(
     {
         if (\is_array($args))
         {
-            $callable = namespace\_get_callable_function($test->test->name);
             $logger = $state->bufferer->start_buffering(
                 $test_name,
                 $test->test->file,
                 $test->test->line);
             $context = new _Context($state, $logger, $test, $run);
-            $result = namespace\_run_test($logger, $test_name, $callable, $context, $args);
+            $result = namespace\_run_test(
+                $logger,
+                $test_name,
+                $test->test->name,
+                $context,
+                $args);
 
             // @todo Buffer test-specific teardown functions separately from the test?
             while ($context->teardowns)
             {
+                // @todo assign a more descriptive name to test-specific teardowns?
                 $teardown = \array_pop($context->teardowns);
                 $result |= namespace\_run_teardown($logger, $test_name, $teardown);
             }
@@ -754,12 +763,15 @@ function _run_function(
         if ($teardown_function)
         {
             $name = $teardown_function->short_name . ' for ' . $test_name;
-            $callable = namespace\_get_callable_function($teardown_function->name);
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $teardown_function->file,
                 $teardown_function->line);
-            $result |= namespace\_run_teardown($logger, $name, $callable, $args);
+            $result |= namespace\_run_teardown(
+                $logger,
+                $name,
+                $teardown_function->name,
+                $args);
         }
     }
     $state->bufferer->end_buffering($state->logger);
@@ -1002,55 +1014,6 @@ function _format_run_qualifier(array $names)
     else
     {
         $result = '';
-    }
-
-    return $result;
-}
-
-
-/**
- * @param callable-string $function
- * @return callable
- */
-function _get_callable_function($function)
-{
-    $result = $function;
-    //\assert(\is_callable($result));
-
-    // @bc 7.1 Ensure Closure has fromCallable method
-    if (\method_exists('Closure', 'fromCallable'))
-    {
-        // @todo Handle Closure::fromCallable potentially throwing a TypeError?
-        // A TypeError can be thrown if the method isn't callable from the
-        // current scope, but this should never happen because we only reflect
-        // on public methods. Also, we literally just asserted above that this
-        // is callable.
-        $result = \Closure::fromCallable($result);
-    }
-
-    return $result;
-}
-
-
-/**
- * @param string $method
- * @param object $object
- * @return callable
- */
-function _get_callable_method($method, $object)
-{
-    $result = array($object, $method);
-    \assert(\is_callable($result));
-
-    // @bc 7.1 Ensure Closure has fromCallable method
-    if (\method_exists('Closure', 'fromCallable'))
-    {
-        // @todo Handle Closure::fromCallable potentially throwing a TypeError?
-        // A TypeError can be thrown if the method isn't callable from the
-        // current scope, but this should never happen because we only reflect
-        // on public methods. Also, we literally just asserted above that this
-        // is callable.
-        $result = \Closure::fromCallable($result);
     }
 
     return $result;

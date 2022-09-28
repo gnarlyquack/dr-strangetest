@@ -360,7 +360,6 @@ function _discover_file(_DiscoveryState $state, $filepath)
                     $function_info->file = $filepath;
                     $function_info->line = $token->line;
 
-
                     $lexer = new StringLexer($token->name);
                     if ($lexer->eat_string('test')
                         // @bc 7.4 Check that attributes exist
