@@ -579,10 +579,19 @@ function _compare_equal_values(_Value $from, _Value $to, $strict)
     }
     else
     {
-        if ($from->value == $to->value)
+        try
         {
-            $result = namespace\_CMP_EQ_VALUES_ONLY;
+            if ($from->value == $to->value)
+            {
+                $result = namespace\_CMP_EQ_VALUES_ONLY;
+            }
         }
+        // Some loose comparisons between certain types will actually trigger a
+        // PHP error (e.g., comparing an integer to an object). Instead of
+        // throwing, we just want the comparison to fail.
+        // @bc 5.6 Catch Exception
+        catch (\Exception $e) {}
+        catch (\Throwable $e) {}
     }
 
     if ($result)
