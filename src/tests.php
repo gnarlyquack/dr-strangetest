@@ -200,9 +200,8 @@ function resolve_test_name($name, $default_namespace = '', $default_class = '')
     // @fixme Correctly parse identifier when resolving test name
     // Instead of just matching on word characters, identifiers should be
     // matched on valid identifier characters
-    // @todo Don't allow trailing whitespace when resolving test name?
     if (\preg_match(
-            '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*?$~',
+            '~^(\\\\?(?:\\w+\\\\)*)?((?:^\\w*::)|(?:\\w+::))?(\\w+)$~',
             $name,
             $matches))
     {

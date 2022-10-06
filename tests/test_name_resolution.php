@@ -79,9 +79,17 @@ function test_empty_class_resolves_to_function_in_current_namespace()
 }
 
 
-function test_globally_namespaced_name_with_empty_class_resolves_to_global_function()
+function test_globally_namespaced_name_with_empty_class_is_an_error()
 {
-    $name = '\::bar';
-    strangetest\assert_identical('bar', resolve_function($name));
-    strangetest\assert_identical('bar', resolve_method($name));
+    $name = '\\::bar';
+    strangetest\assert_identical(null, resolve_function($name));
+    strangetest\assert_identical(null, resolve_method($name));
+}
+
+
+function test_namespaced_name_with_empty_class_is_an_error()
+{
+    $name = '\\foo\\::bar';
+    strangetest\assert_identical(null, resolve_function($name));
+    strangetest\assert_identical(null, resolve_method($name));
 }
