@@ -134,6 +134,9 @@ final class FunctionTest extends struct
     /** @var string */
     public $name;
 
+    /** @var string case-insensitive test identifier*/
+    public $hash;
+
     /** @var FunctionInfo */
     public $test;
 }
@@ -166,6 +169,9 @@ final class MethodTest extends struct
     /** @var string */
     public $name;
 
+    /** @var string case-insensitive test identifier*/
+    public $hash;
+
     /** @var MethodInfo */
     public $test;
 }
@@ -191,6 +197,10 @@ function resolve_test_name($name, $default_namespace = '', $default_class = '')
         || ((\strlen($default_namespace) > 0) && (0 === \strpos($default_class, $default_namespace))));
 
     $result = null;
+    // @fixme Correctly parse identifier when resolving test name
+    // Instead of just matching on word characters, identifiers should be
+    // matched on valid identifier characters
+    // @todo Don't allow trailing whitespace when resolving test name?
     if (\preg_match(
             '~^(\\\\?(?:\\w+\\\\)*)?(\\w*::)?(\\w+)\\s*?$~',
             $name,
@@ -225,7 +235,8 @@ function resolve_test_name($name, $default_namespace = '', $default_class = '')
         {
             $class = '';
         }
-        $result = $namespace . $class . $function;
+
+        $result = namespace\normalize_identifier($namespace . $class . $function);
     }
     return $result;
 }

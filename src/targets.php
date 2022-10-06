@@ -536,7 +536,7 @@ function _parse_function_specifier(
     {
         if (\strlen($function))
         {
-            $name = 'function ' . $function;
+            $name = 'function ' . namespace\normalize_identifier($function);
             if (isset($reference->tests[$name]))
             {
                 $function = $reference->tests[$name];
@@ -1025,10 +1025,10 @@ function _add_file_tests_from_specifier(
                 \assert($child instanceof _FunctionSpecifier);
                 $file = $target->test;
                 $test = $child->test;
-                $name = 'function ' . $test->name;
-                if (!isset($file->tests[$name]))
+                $index = 'function ' . $test->hash;
+                if (!isset($file->tests[$index]))
                 {
-                    $file->tests[$name] = $test;
+                    $file->tests[$index] = $test;
                     ++$target->count;
                 }
             }

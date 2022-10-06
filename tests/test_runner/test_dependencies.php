@@ -276,4 +276,21 @@ class TestDependencies {
             array(\EVENT_PASS, 'error_depend\\test::test_two', null),
         ));
     }
+
+
+    public function test_dependencies_are_case_insensitive() {
+        $this->root .= 'depends_case/';
+        $this->path .= 'test.php';
+
+        $this->assert_events(array(
+            array(\EVENT_PASS, 'depends_case\\TEST_ONE', null),
+            array(\EVENT_PASS, 'depends_case\\TEST::TEST_ONE', null),
+
+            array(\EVENT_PASS, 'depends_case\\TEST_TWO', null),
+            array(\EVENT_PASS, 'depends_case\\TEST_THREE', null),
+
+            array(\EVENT_PASS, 'depends_case\\TEST::TEST_TWO', null),
+            array(\EVENT_PASS, 'depends_case\\TEST::TEST_THREE', null),
+        ));
+    }
 }

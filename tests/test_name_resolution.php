@@ -35,7 +35,7 @@ function test_unqualified_function_resolves_to_current_class_or_namespace()
 {
     $name = 'bar';
     strangetest\assert_identical('example\\bar', resolve_function($name));
-    strangetest\assert_identical('example\\Example::bar', resolve_method($name));
+    strangetest\assert_identical('example\\example::bar', resolve_method($name));
 }
 
 
@@ -50,24 +50,24 @@ function test_globally_namespaced_function_resolves_to_global_namespace()
 function test_qualified_method_resolves_to_itself()
 {
     $name = 'foo\\Foo::bar';
-    strangetest\assert_identical('foo\\Foo::bar', resolve_function($name));
-    strangetest\assert_identical('foo\\Foo::bar', resolve_method($name));
+    strangetest\assert_identical('foo\\foo::bar', resolve_function($name));
+    strangetest\assert_identical('foo\\foo::bar', resolve_method($name));
 }
 
 
 function test_unqualified_method_resolves_to_current_namespace()
 {
     $name = 'Foo::bar';
-    strangetest\assert_identical('example\\Foo::bar', resolve_function($name));
-    strangetest\assert_identical('example\\Foo::bar', resolve_method($name));
+    strangetest\assert_identical('example\\foo::bar', resolve_function($name));
+    strangetest\assert_identical('example\\foo::bar', resolve_method($name));
 }
 
 
 function test_globally_namespaced_method_resolves_to_global_namespace()
 {
     $name = '\\Foo::bar';
-    strangetest\assert_identical('Foo::bar', resolve_function($name));
-    strangetest\assert_identical('Foo::bar', resolve_method($name));
+    strangetest\assert_identical('foo::bar', resolve_function($name));
+    strangetest\assert_identical('foo::bar', resolve_method($name));
 }
 
 

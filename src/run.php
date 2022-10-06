@@ -251,6 +251,7 @@ final class _Context extends struct implements Context
                 elseif (!$results['runs'][$run])
                 {
                     $run_name = namespace\_format_run_qualifier($runs);
+                    // @fixme Show resolved test name with correct casing
                     throw new Skip("This test depends on '{$resolved}{$run_name}', which did not pass");
                 }
                 elseif (isset($this->state->fixture[$resolved][$run]))
@@ -262,12 +263,13 @@ final class _Context extends struct implements Context
 
         if ($dependees)
         {
-            if (!isset($this->state->postponed[$this->test->name]))
+            $index = $this->test->hash;
+            if (!isset($this->state->postponed[$index]))
             {
-                $this->state->postponed[$this->test->name]
+                $this->state->postponed[$index]
                     = new FunctionDependency($this->test);
             }
-            $dependency = $this->state->postponed[$this->test->name];
+            $dependency = $this->state->postponed[$index];
 
             $run_name = $this->run->hash;
             if (!isset($dependency->runs[$run_name]))
@@ -302,7 +304,7 @@ final class _Context extends struct implements Context
     public function set($value)
     {
         $run = $this->run->hash;
-        $this->state->fixture[$this->test->name][$run] = $value;
+        $this->state->fixture[$this->test->hash][$run] = $value;
     }
 }
 
@@ -787,11 +789,12 @@ function _run_function(
  */
 function _record_test_result(State $state, $test, RunInstance $run, $name, $result)
 {
+    $index = $test->hash;
     if (namespace\RESULT_POSTPONE !== $result)
     {
-        if (!isset($state->results[$test->name]))
+        if (!isset($state->results[$index]))
         {
-            $state->results[$test->name] = array(
+            $state->results[$index] = array(
                 'group' => $run->group,
                 'runs' => array(),
             );
@@ -804,9 +807,9 @@ function _record_test_result(State $state, $test, RunInstance $run, $name, $resu
             for ( ; $run; $run = $run->parent)
             {
                 $id = $run->hash;
-                if (!isset($state->results[$test->name]['runs'][$id]))
+                if (!isset($state->results[$index]['runs'][$id]))
                 {
-                    $state->results[$test->name]['runs'][$id] = true;
+                    $state->results[$index]['runs'][$id] = true;
                 }
             }
         }
@@ -815,11 +818,11 @@ function _record_test_result(State $state, $test, RunInstance $run, $name, $resu
             for ( ; $run; $run = $run->parent)
             {
                 $id = $run->hash;
-                $state->results[$test->name]['runs'][$id] = false;
+                $state->results[$index]['runs'][$id] = false;
             }
             if (namespace\RESULT_POSTPONE & $result)
             {
-                unset($state->postponed[$test->name]);
+                unset($state->postponed[$index]);
             }
         }
     }

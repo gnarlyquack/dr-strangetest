@@ -295,7 +295,8 @@ function make_method_test($spec, ClassTest $class)
     \assert(isset($spec['function']));
 
     $test = new strangetest\MethodTest;
-    $test->name = "{$class->test->name}::{$spec['function']}";
+    $test->name = $class->test->name . '::' . $spec['function'];
+    $test->hash = strangetest\normalize_identifier($test->name);
     $test->test = _method_from_reflection(
         $class->test,
         new \ReflectionMethod($class->test->name, $spec['function']));
@@ -315,13 +316,15 @@ function make_function_test($spec, $file)
     \assert(!isset($spec['group']));
 
     $namespace = $spec['namespace'] ? "{$spec['namespace']}\\" : '';
+    $test_name = $namespace . $spec['function'];
+    $test_hash = strangetest\normalize_identifier($test_name);
 
     $test = new strangetest\FunctionTest;
-    $test->name = "{$namespace}{$spec['function']}";
+    $test->name = $test_name;
+    $test->hash = $test_hash;
     $test->test = _function_from_reflection(new \ReflectionFunction($test->name));
 
-    $index = 'function ' . strangetest\normalize_identifier($test->name);
-    $file->tests[$index] = $test;
+    $file->tests['function ' . $test_hash] = $test;
 }
 
 

@@ -520,6 +520,7 @@ function _discover_file(_DiscoveryState $state, $filepath)
 
                 $test = new FunctionTest;
                 $test->name = $reflected_test->getName();
+                $test->hash = namespace\normalize_identifier($test->name);
                 $test->test = $function_info;
                 $file->tests[$test_index] = $test;
             }
@@ -586,6 +587,7 @@ function _discover_class(Logger $logger, ClassInfo $class_info, array $methods)
         {
             $test = new MethodTest;
             $test->name = $class->test->name . '::' . $method->name;
+            $test->hash = namespace\normalize_identifier($test->name);
             $test->test = $method_info;
 
             $index = namespace\normalize_identifier($method_info->name);

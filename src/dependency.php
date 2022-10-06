@@ -91,14 +91,14 @@ function resolve_dependencies(State $state)
  */
 function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $dependency)
 {
-    $name = $dependency->test->name;
-    if (isset($graph->marked[$name]))
+    $index = $dependency->test->hash;
+    if (isset($graph->marked[$index]))
     {
-        $valid = $graph->marked[$name];
+        $valid = $graph->marked[$index];
     }
     else
     {
-        $graph->stack[$name] = true;
+        $graph->stack[$index] = true;
         $valid = true;
         foreach ($dependency->runs as $run)
         {
@@ -120,7 +120,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                         $valid = false;
                         $graph->state->logger->log_error(
                             new ErrorEvent(
-                                $name,
+                                $dependency->test->name,
                                 \sprintf(
                                     "This test has a cyclical dependency with the following tests:\n\t%s",
                                     \implode("\n\t", \array_slice($cycle, 1))),
@@ -135,7 +135,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                         {
                             $graph->state->logger->log_skip(
                                 new SkipEvent(
-                                    $name,
+                                    $dependency->test->name,
                                     \sprintf(
                                         "This test depends on '%s', which did not pass",
                                         $pre_name),
@@ -149,7 +149,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
                     $valid = false;
                     $graph->state->logger->log_error(
                         new ErrorEvent(
-                            $name,
+                            $dependency->test->name,
                             \sprintf(
                                 "This test depends on test '%s', which was never run",
                                 $pre_name),
@@ -172,7 +172,7 @@ function _resolve_dependency(_DependencyGraph $graph, FunctionDependency $depend
             }
         }
         \array_pop($graph->stack);
-        $graph->marked[$name] = $valid;
+        $graph->marked[$index] = $valid;
 
         if ($valid)
         {
@@ -382,7 +382,8 @@ function _add_file_test_from_dependency(
 
     if ($dependency instanceof MethodTest)
     {
-        $name = 'class ' . $dependency->test->class->name;
+        // @todo Save hash for ClassTest
+        $name = 'class ' . namespace\normalize_identifier($dependency->test->class->name);
         $class = $reference->tests[$name];
         \assert($class instanceof ClassTest);
         $last = \end($test->tests);
@@ -402,11 +403,12 @@ function _add_file_test_from_dependency(
             $child->teardown_method = $class->teardown_method;
             $test->tests[] = $child;
         }
-        $child->tests[] = $class->tests[$dependency->test->name];
+        // @todo Save short hash for method name (without class)?
+        $child->tests[] = $class->tests[namespace\normalize_identifier($dependency->test->name)];
     }
     else
     {
-        $name = 'function ' . $dependency->name;
+        $name = 'function ' . $dependency->hash;
         $test->tests[] = $reference->tests[$name];
     }
 }
