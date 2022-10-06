@@ -166,6 +166,11 @@ function _parse_path_specifier(
 
     $arg = $iter->args[$iter->index++];
     $target = (\DIRECTORY_SEPARATOR === \substr($arg, 0, 1)) ? $arg : ($root . $arg);
+    // @todo Handle paths case-insensitvely on case-insensitive file systems?
+    // It's not clear if we can generically determine this (other than
+    // detecting what OS we're running on), or how exactly we'd handle this.
+    // Ideally, realpath would normalize the path for us to the correct case,
+    // but it's not clear that it does
     $target = \realpath($target);
     if (false === $target)
     {

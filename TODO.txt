@@ -39,11 +39,6 @@ Release
         command line. This will probably require caching the list of declared
         namespaces within a file test
 
-    -   Class and function targets should be found without regard to case
-        since PHP identifiers are case-insensitive. Presumably, this isn't an
-        issue with paths since we're validating all user-provided paths with
-        realpath()?
-
 -   Add support for config files(?)
 
 -   Implement additional CLI options(?)
