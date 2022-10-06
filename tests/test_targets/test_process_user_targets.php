@@ -447,6 +447,90 @@ class TestProcessUserTargets
     }
 
 
+    public function test_processes_function_targets_case_insensitively(Context $context)
+    {
+        $this->args = array('test1.php', '--function=TEST1_2,TEST1_1');
+
+        $this->targets = array(
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array('function test1_2', 'function test1_1'),
+                ),
+            ),
+        );
+        $this->assert_targets($context);
+    }
+
+
+    public function test_processes_class_targets_case_insensitively(Context $context)
+    {
+        $this->args = array('test1.php', '--class=TEST1_2;TEST1_3');
+
+        $this->targets = array(
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        array('class' => 'class test1_2'),
+                        array('class' => 'class test1_3'),
+                    ),
+                ),
+            ),
+        );
+        $this->assert_targets($context);
+    }
+
+
+    public function test_processes_method_targets_case_insensitively(Context $context)
+    {
+        $this->args = array(
+            'test1.php',
+            '--class=TEST1_1::TESTONE,TESTTWO;TEST1_2::TESTONE,TESTTWO');
+
+        $this->targets = array(
+            'path' => $this->root,
+            'tests' => array(
+                array(
+                    'path' => "{$this->root}test1.php",
+                    'tests' => array(
+                        array(
+                            'class' => 'class test1_1',
+                            'tests' => array('testone', 'testtwo'),
+                        ),
+                        array(
+                            'class' => 'class test1_2',
+                            'tests' => array('testone', 'testtwo'),
+                        )
+                    ),
+                ),
+            ),
+        );
+        $this->assert_targets($context);
+    }
+
+
+    public function test_parses_runs_case_insensitively(Context $context)
+    {
+        $this->args = array('test1.php', '--run=RUN1');
+
+        $this->targets = array(
+            'path' => $this->root,
+            'runs' => array(
+                array(
+                    'run' => 'run1',
+                    'tests' => array(
+                        array('path' => "{$this->root}test1.php"),
+                    ),
+                ),
+            ),
+        );
+        $this->assert_targets($context);
+    }
+
+
     // helper methods
 
     private function assert_targets(Context $context)
@@ -458,7 +542,7 @@ class TestProcessUserTargets
             function() use ($expected, $actual)
             {
                 strangetest\assert_equal(
-                    $expected, $actual,
+                    $actual, $expected,
                     'Incorrect targets');
             }
         );
@@ -506,7 +590,7 @@ class TestProcessUserTargets
             function() use ($expected, $actual)
             {
                 strangetest\assert_identical(
-                    $expected, $actual,
+                    $actual, $expected,
                     'Unexpected events');
             }
         );

@@ -390,18 +390,22 @@ function _parse_run_specifier(
             $name = $names[$name_index];
             if (strlen($name))
             {
-                if (isset($reference->runs[$name]))
-                {
-                    ++$name_index;
-                }
-                elseif ('*' === $name)
+                if ('*' === $name)
                 {
                     $name = '';
                     ++$name_index;
                 }
                 else
                 {
-                    $name = '';
+                    $name = namespace\normalize_identifier($name);
+                    if (isset($reference->runs[$name]))
+                    {
+                        ++$name_index;
+                    }
+                    else
+                    {
+                        $name = '';
+                    }
                 }
             }
             else
@@ -462,7 +466,7 @@ function _parse_class_specifier(
 
         if (\strlen($class))
         {
-            $name = 'class ' . $class;
+            $name = 'class ' . namespace\normalize_identifier($class);
             if (isset($reference->tests[$name]))
             {
                 $test = $reference->tests[$name];
@@ -475,9 +479,10 @@ function _parse_class_specifier(
                 {
                     if (\strlen($method))
                     {
-                        if (isset($test->tests[$method]))
+                        $normalized = namespace\normalize_identifier($method);
+                        if (isset($test->tests[$normalized]))
                         {
-                            $method = $test->tests[$method];
+                            $method = $test->tests[$normalized];
                             $specifier->specifiers[] = new _MethodSpecifier($method);
                         }
                         else
@@ -1049,7 +1054,8 @@ function _add_file_tests_from_specifier(
 function _add_class_test_from_specifier(
     _FileTarget $parent_target, _ClassSpecifier $child_specifier)
 {
-    $child_name = 'class ' . $child_specifier->test->test->name;
+    // @todo Save case-insensitive hash for ClassTest
+    $child_name = 'class ' . namespace\normalize_identifier($child_specifier->test->test->name);
     $parent = $parent_target->test;
     if (isset($parent->tests[$child_name]))
     {
@@ -1080,7 +1086,8 @@ function _add_class_test_from_specifier(
             $child = $child_target->test;
             foreach ($child_specifier->specifiers as $method)
             {
-                $name = $method->test->test->name;
+                // @todo Make case-insensitive hash for method name
+                $name = namespace\normalize_identifier($method->test->test->name);
                 if (!isset($child->tests[$name]))
                 {
                     $child->tests[$name] = $method->test;
