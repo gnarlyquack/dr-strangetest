@@ -455,6 +455,26 @@ function _discover_file(_DiscoveryState $state, $filepath)
         {
             $namespace = $token->name;
         }
+        elseif ($token instanceof _UseToken)
+        {
+            if (!isset($file->namespaces[$namespace]))
+            {
+                $file->namespaces[$namespace] = new NamespaceInfo($namespace);
+            }
+            $uses = $file->namespaces[$namespace];
+            foreach ($token->uses as $use)
+            {
+                if ($use->type === _UseStatement::TYPE_FUNCTION)
+                {
+                    $uses->use_function[$use->as] = $use->use;
+                }
+                else
+                {
+                    \assert($use->type === _UseStatement::TYPE_IDENTIFIER);
+                    $uses->use[$use->as] = $use->use;
+                }
+            }
+        }
     }
     unset($namespace, $class_name, $function_name, $test_index, $class, $function, $lexer);
 
@@ -879,6 +899,50 @@ final class _NamespaceToken extends struct implements _Token {
 }
 
 
+final class _UseToken extends struct implements _Token
+{
+    /** @var _UseStatement[] */
+    public $uses;
+
+    /**
+     * @param _UseStatement[] $uses
+     */
+    public function __construct(array $uses)
+    {
+        $this->uses = $uses;
+    }
+}
+
+
+final class _UseStatement extends struct
+{
+    const TYPE_IDENTIFIER = 1;
+    const TYPE_FUNCTION = 2;
+
+    /** @var self::TYPE_* */
+    public $type;
+
+    /** @var string */
+    public $use;
+
+    /** @var string */
+    public $as;
+
+
+    /**
+     * @param self::TYPE_* $type
+     * @param string $use
+     * @param string $as
+     */
+    public function __construct($type, $use, $as)
+    {
+        $this->type = $type;
+        $this->use = $use;
+        $this->as = $as;
+    }
+}
+
+
 /**
  * @param string $filepath
  * @return ?_TokenIterator
@@ -952,7 +1016,8 @@ function _next_token(_TokenIterator $iterator)
         elseif (\T_USE === $token[0])
         {
             // don't discover 'use function <function name>', etc.
-            namespace\_consume_statement($iterator);
+            $uses = namespace\_parse_use_statement($iterator);
+            $result = new _UseToken($uses);
         }
         elseif (
             (\T_INTERFACE === $token[0]) || (\T_ABSTRACT === $token[0])
@@ -1162,6 +1227,231 @@ function _parse_namespace(_TokenIterator $iterator)
         $namespace .= '\\';
     }
     return $namespace;
+}
+
+
+/**
+ * @return _UseStatement[]
+ */
+function _parse_use_statement(_TokenIterator $iterator)
+{
+    // $iterator->pos is advanced after the T_USE token
+
+    $result = array();
+    $parsing = true;
+    while ($parsing)
+    {
+        $token = $iterator->tokens[$iterator->pos++];
+
+        if (\is_array($token))
+        {
+            if (\T_CONST === $token[0])
+            {
+                // We don't care about 'use const' statements
+                namespace\_consume_statement($iterator);
+                $parsing = false;
+            }
+            elseif (\T_FUNCTION === $token[0])
+            {
+                // parse 'use function' statement(s)
+                $result = namespace\_parse_use_identifier($iterator, _UseStatement::TYPE_FUNCTION);
+                $parsing = false;
+            }
+            elseif((\T_STRING === $token[0])
+                // @bc 7.4 Check if T_NAME_QUALIFIED is defined
+                || (\defined('T_NAME_QUALIFIED')
+                    && (\T_NAME_QUALIFIED === $token[0]))
+                // @bc 7.4 Check if T_NAME_FULLY_QUALIFIED is defined
+                || (\defined('T_NAME_FULLY_QUALIFIED')
+                    && (\T_NAME_FULLY_QUALIFIED === $token[0])))
+            {
+                // parse 'use' statement(s)
+                // we need the identifier we just consumed
+                --$iterator->pos;
+                $result = namespace\_parse_use_identifier($iterator, _UseStatement::TYPE_IDENTIFIER);
+                $parsing = false;
+            }
+        }
+        elseif (';' === $token)
+        {
+            $parsing = false;
+        }
+    }
+
+    return $result;
+}
+
+
+/**
+ * @param _UseStatement::TYPE_* $type
+ * @return _UseStatement[]
+ */
+function _parse_use_identifier(_TokenIterator $iterator, $type)
+{
+    $result = array();
+    $use = '';
+    $as = '';
+    $set_as = false;
+    $parsing = true;
+
+    while ($parsing)
+    {
+        $token = $iterator->tokens[$iterator->pos++];
+
+        if (\is_array($token))
+        {
+            if (\T_STRING === $token[0])
+            {
+                if ($set_as)
+                {
+                    $as = $token[1];
+                }
+                else
+                {
+                    $use .= $token[1];
+                }
+            }
+            elseif((\T_NS_SEPARATOR === $token[0])
+                // @bc 7.4 Check if T_NAME_QUALIFIED is defined
+                || (\defined('T_NAME_QUALIFIED')
+                    && (\T_NAME_QUALIFIED === $token[0]))
+                // @bc 7.4 Check if T_NAME_FULLY_QUALIFIED is defined
+                || (\defined('T_NAME_FULLY_QUALIFIED')
+                    && (\T_NAME_FULLY_QUALIFIED === $token[0])))
+            {
+                $use .= $token[1];
+            }
+            elseif(\T_AS === $token[0])
+            {
+                $set_as = true;
+            }
+        }
+        elseif (',' === $token)
+        {
+            $as = namespace\_resolve_use_identifier($use, $as);
+            $result[] = new _UseStatement($type, $use, $as);
+            $use = $as = '';
+            $set_as = false;
+        }
+        elseif ('{' === $token)
+        {
+            $result = namespace\_parse_use_group($iterator, $use, $type);
+            $parsing = false;
+        }
+        elseif (';' === $token)
+        {
+            $as = namespace\_resolve_use_identifier($use, $as);
+            $result[] = new _UseStatement($type, $use, $as);
+            $parsing = false;
+        }
+    }
+
+    return $result;
+}
+
+
+/**
+ * @param string $prefix;
+ * @param _UseStatement::TYPE_* $default_type
+ * @return _UseStatement[]
+ */
+function _parse_use_group(_TokenIterator $iterator, $prefix, $default_type)
+{
+    $result = array();
+    $type = $default_type;
+    $use = '';
+    $as = '';
+    $set_as = false;
+    $parsing = true;
+
+    while ($parsing)
+    {
+        $token = $iterator->tokens[$iterator->pos++];
+        if (\is_array($token))
+        {
+            if (\T_CONST === $token[0])
+            {
+                // We don't care about this use declaration, so invalidate
+                // the type. However, parse the rest of the declaration
+                $type = 0;
+            }
+            elseif (\T_FUNCTION === $token[0])
+            {
+                $type = _UseStatement::TYPE_FUNCTION;
+            }
+            elseif (\T_STRING === $token[0])
+            {
+                if ($set_as)
+                {
+                    $as = $token[1];
+                }
+                else
+                {
+                    $use .= $token[1];
+                }
+            }
+            elseif ((\T_NS_SEPARATOR === $token[0])
+                // @bc 7.4 Check if T_NAME_QUALIFIED is defined
+                || (\defined('T_NAME_QUALIFIED')
+                    && (\T_NAME_QUALIFIED === $token[0])))
+            {
+                $use .= $token[1];
+            }
+            elseif (\T_AS === $token[0])
+            {
+                $set_as = true;
+            }
+        }
+        elseif (',' === $token)
+        {
+            if ($type)
+            {
+                $use = $prefix . $use;
+                $as = namespace\_resolve_use_identifier($use, $as);
+                $result[] = new _UseStatement($type, $use, $as);
+                $type = $default_type;
+                $use = $as = '';
+                $set_as = false;
+            }
+        }
+        elseif ('}' === $token)
+        {
+            if (\strlen($use) && $type)
+            {
+                $use = $prefix . $use;
+                $as = namespace\_resolve_use_identifier($use, $as);
+                $result[] = new _UseStatement($type, $use, $as);
+            }
+            $parsing = false;
+        }
+    }
+
+    namespace\_consume_statement($iterator);
+    return $result;
+}
+
+
+/**
+ * @param string $use
+ * @param string $as
+ * @return string
+ */
+function _resolve_use_identifier($use, $as)
+{
+    if (!\strlen($as))
+    {
+        $pos = \strrpos($use, '\\');
+        if (false === $pos)
+        {
+            $as = $use;
+        }
+        else
+        {
+            $as = \substr($use, $pos + 1);
+        }
+    }
+
+    return $as;
 }
 
 

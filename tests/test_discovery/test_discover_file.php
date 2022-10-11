@@ -179,3 +179,145 @@ function test_discovers_tests_marked_with_attributes()
         \array_keys($result->tests)
     );
 }
+
+
+function test_parses_use()
+{
+    $file = 'test_use.php';
+    $filepath = namespace\filepath($file);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $state = new _DiscoveryState(new State);
+    $state->global->logger = $logger;
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $actual = strangetest\_discover_file($state, $filepath, 0);
+
+    strangetest\assert_identical(array(), $logger->get_log()->events);
+
+    $spec = array(
+        'file' => $file,
+        'namespaces' => array(
+            'test_use\\' => array(
+                'use' => array(
+                    'three' => 'three',
+                    'classes' => 'three',
+                    'One' => 'three\\One',
+                    'ClassTwo' => 'three\\Two',
+                    'OneAgain' => 'three\\one',
+                    'four' => 'four',
+                    'TwoTwo' => 'three\\two',
+                    'five' => 'three\\four\\five',
+                ),
+            ),
+        ),
+        'tests' => array(
+            array('function' => 'test', 'namespace' => 'test_use'),
+        ),
+    );
+
+    $dir = new strangetest\DirectoryTest;
+    $dir->name = dirname($filepath) . '/';
+    make_file_test($spec, $dir);
+    $expected = $dir->tests[$filepath];
+
+    strangetest\assert_equal($actual, $expected);
+}
+
+
+function test_parses_use_function()
+{
+    // @bc 5.5 Check is 'use function' is supported
+    if (\version_compare(\PHP_VERSION, '5.6', '<'))
+    {
+        strangetest\skip('PHP 5.6 added \'use function\' statements');
+    }
+
+    $file = 'test_use_function.php';
+    $filepath = namespace\filepath($file);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $state = new _DiscoveryState(new State);
+    $state->global->logger = $logger;
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $actual = strangetest\_discover_file($state, $filepath, 0);
+
+    strangetest\assert_identical(array(), $logger->get_log()->events);
+
+    $spec = array(
+        'file' => $file,
+        'namespaces' => array(
+            'test_use_function\\' => array(
+                'use_function' => array(
+                    'three' => 'three',
+                    'classes' => 'three',
+                    'One' => 'three\\One',
+                    'ClassTwo' => 'three\\Two',
+                    'OneAgain' => 'three\\one',
+                    'four' => 'four',
+                    'TwoTwo' => 'three\\two',
+                    'five' => 'three\\four\\five',
+                ),
+            ),
+        ),
+        'tests' => array(
+            array('function' => 'test', 'namespace' => 'test_use_function'),
+        ),
+    );
+
+    $dir = new strangetest\DirectoryTest;
+    $dir->name = dirname($filepath) . '/';
+    make_file_test($spec, $dir);
+    $expected = $dir->tests[$filepath];
+
+    strangetest\assert_equal($actual, $expected);
+}
+
+
+function test_parses_use_group()
+{
+    // @bc 5.6 check is group 'use' statements are supported
+    if (\version_compare(\PHP_VERSION, '7.0', '<'))
+    {
+        strangetest\skip('PHP 7.0 added group \'use\' statements');
+    }
+
+    // @bc 7.1 check if optional trailing commas are allowed in group 'use'
+    $file = \version_compare(\PHP_VERSION, '7.2', '<')
+        ? 'test_use_group7.0.php'
+        : 'test_use_group7.2.php';
+    $filepath = namespace\filepath($file);
+    $logger = new Logger(\TEST_ROOT, strangetest\LOG_ALL, new NoOutputter);
+    $state = new _DiscoveryState(new State);
+    $state->global->logger = $logger;
+    $state->global->bufferer = new LogBufferer(\TEST_ROOT);
+    $actual = strangetest\_discover_file($state, $filepath, 0);
+
+    strangetest\assert_identical(array(), $logger->get_log()->events);
+
+    $spec = array(
+        'file' => $file,
+        'namespaces' => array(
+            'test_use_group\\' => array(
+                'use' => array(
+                    'One' => 'three\\One',
+                    'two' => 'three\\three\\two',
+                ),
+                'use_function' => array(
+                    'one' => 'three\\one',
+                    'one_again' => 'three\\three\\one',
+                    'two' => 'three\\three\\two',
+                    'one_fun' => 'three\\one',
+                    'two_again' => 'three\\three\\two',
+                ),
+            ),
+        ),
+        'tests' => array(
+            array('function' => 'test', 'namespace' => 'test_use_group'),
+        ),
+    );
+
+    $dir = new strangetest\DirectoryTest;
+    $dir->name = dirname($filepath) . '/';
+    make_file_test($spec, $dir);
+    $expected = $dir->tests[$filepath];
+
+    strangetest\assert_equal($actual, $expected);
+}

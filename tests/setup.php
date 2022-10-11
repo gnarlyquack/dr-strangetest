@@ -192,6 +192,7 @@ function make_directory_test($spec, $parent = null)
 function make_file_test($spec, $dir)
 {
     $default = array(
+        'namespaces' => array(),
         'setup_file' => null,
         'teardown_file' => null,
         'setup_function' => null,
@@ -199,16 +200,36 @@ function make_file_test($spec, $dir)
     );
     $spec = \array_merge($default, $spec);
     \assert(isset($spec['file']));
-    \assert(!isset($spec['group']));
+    \assert(isset($spec['tests']));
 
     $file = new strangetest\FileTest;
-    $file->name = "{$dir->name}{$spec['file']}";
+    $file->name = $dir->name . $spec['file'];
     $file->setup_file = $spec['setup_file'];
     $file->teardown_file = $spec['teardown_file'];
     $file->setup_function = $spec['setup_function'];
     $file->teardown_function = $spec['teardown_function'];
 
-    $dir->tests[$file->name] = $file;
+    foreach ($spec['namespaces'] as $namespace => $uses)
+    {
+        $namespace = new strangetest\NamespaceInfo($namespace);
+        $file->namespaces[$namespace->name] = $namespace;
+
+        if (isset($uses['use']))
+        {
+            foreach ($uses['use'] as $use => $as)
+            {
+                $namespace->use[$use] = $as;
+            }
+        }
+        if (isset($uses['use_function']))
+        {
+            foreach ($uses['use_function'] as $use => $as)
+            {
+                $namespace->use_function[$use] = $as;
+            }
+        }
+    }
+
     foreach ($spec['tests'] as $test)
     {
         if (isset($test['function']))
@@ -228,6 +249,8 @@ function make_file_test($spec, $dir)
             );
         }
     }
+
+    $dir->tests[$file->name] = $file;
 
     \assert(!isset($spec['runs']));
 }

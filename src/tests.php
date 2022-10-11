@@ -8,6 +8,28 @@
 namespace strangetest;
 
 
+final class NamespaceInfo extends struct
+{
+    /** @var string */
+    public $name;
+
+    /** @var array<string, string> */
+    public $use;
+
+    /** @var array<string, string> */
+    public $use_function;
+
+
+    /**
+     * @param string $name
+     */
+    public function __construct($name)
+    {
+        $this->name = $name;
+    }
+}
+
+
 final class FunctionInfo extends struct
 {
     /** @var callable-string Full, namespace-qualified name of function */
@@ -111,6 +133,9 @@ final class FileTest extends struct
 {
     /** @var string */
     public $name;
+
+    /** @var array<string, NamespaceInfo> */
+    public $namespaces = array();
 
     /** @var ?FunctionInfo */
     public $setup_file;

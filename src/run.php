@@ -181,6 +181,11 @@ final class _Context extends struct implements Context
 
     public function requires($name)
     {
+        // @todo Handle first class callables in Context::requires()?
+        // In PHP 8.1+(?), functions/methods can be passed as func(...) or
+        // $instance->test(...). This appears to result in a Closure that we
+        // can reflect and determine what the passed function or method was
+
         $dependees = array();
         $result = array();
         $nnames = 0;
