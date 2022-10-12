@@ -295,7 +295,14 @@ class TestDependencies {
     }
 
 
-    public function test_can_use_first_class_callables_for_dependencies() {
+    public function test_can_use_first_class_callables_for_dependencies()
+    {
+        // @bc 8.0 Check if first class callables are supported
+        if (\version_compare(\PHP_VERSION, '8.1', '<'))
+        {
+            strangetest\skip('PHP 8.1 added first class callables');
+        }
+
         $this->root .= 'first_class_callables/';
         $this->path .= 'test.php';
 
