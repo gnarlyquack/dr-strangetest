@@ -370,6 +370,10 @@ class TestRunDirectories {
                     'tests' => array(
                         array(
                             'file' => 'test2.php',
+                            'namespaces' => array(
+                                '' => array(),
+                                __NAMESPACE__ . '\\' => array()
+                            ),
                             'tests' => array(
                                 array(
                                     'function' => 'dir1_test3',
@@ -383,6 +387,10 @@ class TestRunDirectories {
                         ),
                         array(
                             'file' => 'test3.php',
+                            'namespaces' => array(
+                                '' => array(),
+                                __NAMESPACE__ . '\\' => array()
+                            ),
                             'tests' => array(
                                 array(
                                     'function' => 'dir1_test5',
@@ -408,6 +416,10 @@ class TestRunDirectories {
                             'tests' => array(
                                 array(
                                     'file' => 'test1.php',
+                                    'namespaces' => array(
+                                        '' => array(),
+                                        __NAMESPACE__ . '\\' => array()
+                                    ),
                                     'tests' => array(
                                         array(
                                             'function' => 'subdir_test1',
@@ -421,6 +433,10 @@ class TestRunDirectories {
                                 ),
                                 array(
                                     'file' => 'test2.php',
+                                    'namespaces' => array(
+                                        '' => array(),
+                                        __NAMESPACE__ . '\\' => array()
+                                    ),
                                     'tests' => array(
                                         array(
                                             'function' => 'subdir_test3',

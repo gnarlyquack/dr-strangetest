@@ -54,7 +54,7 @@ final class ClassInfo extends struct
     /** @var class-string Full, namespace-qualified name of class */
     public $name;
 
-    /** @var string */
+    /** @var NamespaceInfo */
     public $namespace;
 
     /** @var string */
@@ -162,6 +162,9 @@ final class FunctionTest extends struct
     /** @var string case-insensitive test identifier*/
     public $hash;
 
+    /** @var NamespaceInfo */
+    public $namespace;
+
     /** @var FunctionInfo */
     public $test;
 }
@@ -204,22 +207,21 @@ final class MethodTest extends struct
 
 /**
  * @param string $name
- * @param string $default_namespace
  * @param string $default_class
  * @return ?string
  */
-function resolve_test_name($name, $default_namespace = '', $default_class = '')
+function resolve_test_name($name, NamespaceInfo $default_namespace, $default_class = '')
 {
     // Ensure that the namespace ends in a trailing namespace separator
     \assert(
-        (0 === \strlen($default_namespace))
-        || ('\\' === \substr($default_namespace, -1)));
+        (0 === \strlen($default_namespace->name))
+        || ('\\' === \substr($default_namespace->name, -1)));
     // Ensure that the namespace is included in the classname (because we
     // probably want want to change this)
     \assert(
         (0 === \strlen($default_class))
-        || ((0 === \strlen($default_namespace)) && (false === \strpos($default_class, '\\')))
-        || ((\strlen($default_namespace) > 0) && (0 === \strpos($default_class, $default_namespace))));
+        || ((0 === \strlen($default_namespace->name)) && (false === \strpos($default_class, '\\')))
+        || ((\strlen($default_namespace->name) > 0) && (0 === \strpos($default_class, $default_namespace->name))));
 
     $result = null;
     // @fixme Correctly parse identifier when resolving test name
@@ -234,33 +236,74 @@ function resolve_test_name($name, $default_namespace = '', $default_class = '')
         list(, $namespace, $class, $function) = $matches;
         if ($namespace)
         {
-            // This is a qualified name, so don't attempt any name resolution
-            $namespace = \ltrim($namespace, '\\');
+            $pos = \strpos($namespace, '\\');
+            if (0 === $pos)
+            {
+                // The namespace is explicitly global, so don't attempyt any
+                // further name resolution
+                $namespace = \ltrim($namespace, '\\');
+            }
+            else
+            {
+                \assert($pos !== false);
+                $stem = \substr($namespace, 0, $pos);
+                if (isset($default_namespace->use[$stem]))
+                {
+                    $stem = $default_namespace->use[$stem];
+                    $rest = \substr($namespace, $pos);
+                    $namespace = $stem . $rest;
+                }
+            }
+
+            \assert('::' !== $class);
+        }
+        elseif ($class)
+        {
+            // @todo An "unbound" function should only be specified from within a class
+            if ('::' === $class)
+            {
+                $class = '';
+                if (isset($default_namespace->use_function[$function]))
+                {
+                    $function = $default_namespace->use_function[$function];
+                }
+                else
+                {
+                    $namespace = $default_namespace->name;
+                }
+            }
+            else
+            {
+                $stem = \rtrim($class, ':');
+                if (isset($default_namespace->use[$stem]))
+                {
+                    $class = $default_namespace->use[$stem] . '::';
+                }
+                else
+                {
+                    $namespace = $default_namespace->name;
+                }
+            }
         }
         else
         {
-            // Resolve the unqualified name to the current namespace and/or class
-            if ($class)
-            {
-                $namespace = $default_namespace;
-            }
-            elseif ($default_class)
+            if ($default_class)
             {
                 // the namespace is already included in the class name
                 $class = $default_class . '::';
             }
+            elseif (isset($default_namespace->use_function[$function]))
+            {
+                $function = $default_namespace->use_function[$function];
+            }
             else
             {
-                $namespace = $default_namespace;
+                $namespace = $default_namespace->name;
             }
-        }
-
-        if ('::' === $class)
-        {
-            $class = '';
         }
 
         $result = namespace\normalize_identifier($namespace . $class . $function);
     }
+
     return $result;
 }

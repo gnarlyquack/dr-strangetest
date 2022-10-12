@@ -196,6 +196,7 @@ function test_parses_use()
     $spec = array(
         'file' => $file,
         'namespaces' => array(
+            '' => array(),
             'test_use\\' => array(
                 'use' => array(
                     'three' => 'three',
@@ -244,6 +245,7 @@ function test_parses_use_function()
     $spec = array(
         'file' => $file,
         'namespaces' => array(
+            '' => array(),
             'test_use_function\\' => array(
                 'use_function' => array(
                     'three' => 'three',
@@ -295,6 +297,7 @@ function test_parses_use_group()
     $spec = array(
         'file' => $file,
         'namespaces' => array(
+            '' => array(),
             'test_use_group\\' => array(
                 'use' => array(
                     'One' => 'three\\One',

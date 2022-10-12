@@ -308,14 +308,17 @@ function _discover_file(_DiscoveryState $state, $filepath)
     $run_group->path = $file->name;
     $run_group->tests = $file;
 
-    $namespace = '';
+    // @todo Only retain NamespaceInfo for namespaces containing tests?
+    $namespace = new NamespaceInfo('');
+    $file->namespaces[''] = $namespace;
+
     $tests = array();
     $valid = true;
     while ($token = namespace\_next_token($iterator))
     {
         if ($token instanceof _ClassToken)
         {
-            $class_name = $namespace . $token->name;
+            $class_name = $namespace->name . $token->name;
             // classes and functions can have the same name!
             $test_index = 'class '. namespace\normalize_identifier($class_name);
 
@@ -338,7 +341,7 @@ function _discover_file(_DiscoveryState $state, $filepath)
         }
         elseif ($token instanceof _FunctionToken)
         {
-            $function_name = $namespace . $token->name;
+            $function_name = $namespace->name . $token->name;
             // classes and functions can have the same name!
             $test_index = 'function ' . namespace\normalize_identifier($function_name);
 
@@ -351,11 +354,7 @@ function _discover_file(_DiscoveryState $state, $filepath)
 
                     $function_info = new FunctionInfo;
                     $function_info->name = $function_name;
-                    $function_info->namespace = $function->getNamespaceName();
-                    if (\strlen($function_info->namespace))
-                    {
-                        $function_info->namespace .= '\\';
-                    }
+                    $function_info->namespace = $namespace->name;
                     $function_info->short_name = $function->getShortName();
                     $function_info->file = $filepath;
                     $function_info->line = $token->line;
@@ -453,25 +452,24 @@ function _discover_file(_DiscoveryState $state, $filepath)
         }
         elseif ($token instanceof _NamespaceToken)
         {
-            $namespace = $token->name;
+            if (!isset($file->namespaces[$token->name]))
+            {
+                $file->namespaces[$token->name] = new NamespaceInfo($token->name);
+            }
+            $namespace = $file->namespaces[$token->name];
         }
         elseif ($token instanceof _UseToken)
         {
-            if (!isset($file->namespaces[$namespace]))
-            {
-                $file->namespaces[$namespace] = new NamespaceInfo($namespace);
-            }
-            $uses = $file->namespaces[$namespace];
             foreach ($token->uses as $use)
             {
                 if ($use->type === _UseStatement::TYPE_FUNCTION)
                 {
-                    $uses->use_function[$use->as] = $use->use;
+                    $namespace->use_function[$use->as] = $use->use;
                 }
                 else
                 {
                     \assert($use->type === _UseStatement::TYPE_IDENTIFIER);
-                    $uses->use[$use->as] = $use->use;
+                    $namespace->use[$use->as] = $use->use;
                 }
             }
         }
@@ -492,11 +490,12 @@ function _discover_file(_DiscoveryState $state, $filepath)
             {
                 $class_info = new ClassInfo;
                 $class_info->name = $reflected_test->name;
-                $class_info->namespace = $reflected_test->getNamespaceName();
-                if (\strlen($class_info->namespace))
+                $namespace = $reflected_test->getNamespaceName();
+                if (\strlen($namespace))
                 {
-                    $class_info->namespace .= '\\';
+                    $namespace .= '\\';
                 }
+                $class_info->namespace = $file->namespaces[$namespace];
                 $class_filename = $reflected_test->getFileName();
                 $class_line = $reflected_test->getStartLine();
                 \assert(\is_string($class_filename));
@@ -541,6 +540,7 @@ function _discover_file(_DiscoveryState $state, $filepath)
                 $test = new FunctionTest;
                 $test->name = $reflected_test->getName();
                 $test->hash = namespace\normalize_identifier($test->name);
+                $test->namespace = $file->namespaces[$function_info->namespace];
                 $test->test = $function_info;
                 $file->tests[$test_index] = $test;
             }

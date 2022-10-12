@@ -199,7 +199,7 @@ final class _Context extends struct implements Context
             }
             else
             {
-                $namespace = $this->test->test->namespace;
+                $namespace = $this->test->namespace;
                 $class = '';
             }
 

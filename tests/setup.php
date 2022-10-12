@@ -274,7 +274,7 @@ function make_class_test($spec, $file)
     $r = new \ReflectionClass("{$namespace}{$spec['class']}");
     $class->test = new ClassInfo;
     $class->test->name = $r->name;
-    $class->test->namespace = $namespace;
+    $class->test->namespace = $file->namespaces[$namespace];
     $class->test->file = $r->getFileName();
     $class->test->line = $r->getStartLine();
 
@@ -346,6 +346,7 @@ function make_function_test($spec, $file)
     $test->name = $test_name;
     $test->hash = $test_hash;
     $test->test = _function_from_reflection(new \ReflectionFunction($test->name));
+    $test->namespace = $file->namespaces[$test->test->namespace];
 
     $file->tests['function ' . $test_hash] = $test;
 }

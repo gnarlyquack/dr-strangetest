@@ -38,6 +38,10 @@ function test_discover_directory(
         'tests' => array(
             array(
                 'file' => 'test.php',
+                'namespaces' => array(
+                    '' => array(),
+                    'discovery\\' => array(),
+                ),
                 'tests' => array(
                     array('function' => 'test_one', 'namespace' => 'discovery'),
                 ),
@@ -49,12 +53,14 @@ function test_discover_directory(
                 'tests' => array(
                     array(
                         'file' => 'TEST1.PHP',
+                        'namespaces' => array('' => array()),
                         'tests' => array(
                             array('function' => 'TEST_TWO'),
                         ),
                     ),
                     array(
                         'file' => 'TEST2.PHP',
+                        'namespaces' => array('' => array()),
                         'tests' => array(
                             array('function' => 'TEST_THREE'),
                         ),
@@ -68,12 +74,14 @@ function test_discover_directory(
                 'tests' => array(
                     array(
                         'file' => 'test1.php',
+                        'namespaces' => array('' => array()),
                         'tests' => array(
                             array('function' => 'test_four'),
                         ),
                     ),
                     array(
                         'file' => 'test2.php',
+                        'namespaces' => array('' => array()),
                         'tests' => array(
                             array('function' => 'test_five'),
                         ),
@@ -97,6 +105,10 @@ function test_does_not_find_conditionally_nondeclared_tests(Logger $logger, $pat
         'tests' => array(
             array(
                 'file' => 'test_conditional_a.php',
+                'namespaces' => array(
+                    '' => array(),
+                    'condition\\' => array('condition\\' => array()),
+                ),
                 'tests' => array(
                     array(
                         'namespace' => 'condition',
@@ -113,6 +125,10 @@ function test_does_not_find_conditionally_nondeclared_tests(Logger $logger, $pat
             ),
             array(
                 'file' => 'test_conditional_b.php',
+                'namespaces' => array(
+                    '' => array(),
+                    'condition\\' => array('condition\\' => array()),
+                ),
                 'tests' => array(
                     array(
                         'namespace' => 'condition',
