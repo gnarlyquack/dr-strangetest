@@ -293,4 +293,21 @@ class TestDependencies {
             array(\EVENT_PASS, 'depends_case\\TEST::TEST_THREE', null),
         ));
     }
+
+
+    public function test_can_use_first_class_callables_for_dependencies() {
+        $this->root .= 'first_class_callables/';
+        $this->path .= 'test.php';
+
+        $this->assert_events(array(
+            array(\EVENT_PASS, 'first_class_callables\\test_one', null),
+            array(\EVENT_PASS, 'first_class_callables\\test::test_one', null),
+
+            array(\EVENT_PASS, 'first_class_callables\\test_two', null),
+            array(\EVENT_PASS, 'first_class_callables\\test_three', null),
+
+            array(\EVENT_PASS, 'first_class_callables\\test::test_two', null),
+            array(\EVENT_PASS, 'first_class_callables\\test::test_three', null),
+        ));
+    }
 }

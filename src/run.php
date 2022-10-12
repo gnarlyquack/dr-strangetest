@@ -103,7 +103,7 @@ interface Context {
     public function teardown($callback);
 
     /**
-     * @param string... $name
+     * @param string|\Closure... $name
      * @return mixed
      * @throws Postpone
      */
@@ -181,32 +181,51 @@ final class _Context extends struct implements Context
 
     public function requires($name)
     {
-        // @todo Handle first class callables in Context::requires()?
-        // In PHP 8.1+(?), functions/methods can be passed as func(...) or
-        // $instance->test(...). This appears to result in a Closure that we
-        // can reflect and determine what the passed function or method was
-
         $dependees = array();
         $result = array();
         $nnames = 0;
         // @bc 5.5 Use func_get_args instead of argument unpacking
         foreach (\func_get_args() as $nnames => $name)
         {
-            if ($this->test instanceof MethodTest)
+            if (\is_string($name))
             {
-                $namespace = $this->test->test->class->namespace;
-                $class = $this->test->test->class->name;
+                if ($this->test instanceof MethodTest)
+                {
+                    $namespace = $this->test->test->class->namespace;
+                    $class = $this->test->test->class->name;
+                }
+                else
+                {
+                    $namespace = $this->test->namespace;
+                    $class = '';
+                }
+
+                $resolved = namespace\resolve_test_name($name, $namespace, $class);
+                if (!isset($resolved))
+                {
+                    \trigger_error("Invalid test name: $name");
+                }
+                unset($namespace, $class);
+            }
+            elseif ($name instanceof \Closure)
+            {
+                $reflected = new \ReflectionFunction($name);
+                $class = $reflected->getClosureScopeClass();
+                if ($class)
+                {
+                    $resolved = $class->name . '::' . $reflected->name;
+                }
+                else
+                {
+                    $resolved = $reflected->name;
+                }
+
+                $name = $resolved;
+                unset($class, $reflected);
             }
             else
             {
-                $namespace = $this->test->namespace;
-                $class = '';
-            }
-
-            $resolved = namespace\resolve_test_name($name, $namespace, $class);
-            if (!isset($resolved))
-            {
-                \trigger_error("Invalid test name: $name");
+                throw new \Exception('Prerequisite tests must be specified as either a string or first-class callable');
             }
 
             if (!isset($this->state->results[$resolved]))
@@ -292,6 +311,7 @@ final class _Context extends struct implements Context
             throw new Postpone();
         }
 
+        \assert(\is_string($name));
         $nresults = \count($result);
         ++$nnames;
         if ($nresults)
