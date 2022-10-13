@@ -71,7 +71,7 @@ function resolve_test_name($name, NamespaceInfo $default_namespace, $default_cla
             {
                 $namespace_part = \substr($name, $start, $i - $start);
 
-                if ($namespace)
+                if ($namespace || ($status == namespace\_RESOLVE_GLOBAL))
                 {
                     $namespace .= $namespace_part;
                 }
@@ -83,8 +83,7 @@ function resolve_test_name($name, NamespaceInfo $default_namespace, $default_cla
                     }
                     else
                     {
-                        // @todo always prepend the current namespace
-                        $namespace = $namespace_part;
+                        $namespace = $default_namespace->name . $namespace_part;
                     }
                 }
 

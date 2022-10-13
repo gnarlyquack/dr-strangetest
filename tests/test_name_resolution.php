@@ -94,8 +94,8 @@ function test_qualified_function_resolves_to_itself(Context $context)
 {
     $name = 'foo\\bar';
 
-    assert_function($name, 'foo\\bar', $context);
-    assert_method($name, 'foo\\bar', $context);
+    assert_function($name, 'example\\foo\\bar', $context);
+    assert_method($name, 'example\\foo\\bar', $context);
 }
 
 
@@ -121,8 +121,8 @@ function test_qualified_method_resolves_to_itself(Context $context)
 {
     $name = 'foo\\Foo::bar';
 
-    assert_function($name, 'foo\\foo::bar', $context);
-    assert_method($name, 'foo\\foo::bar', $context);
+    assert_function($name, 'example\\foo\\foo::bar', $context);
+    assert_method($name, 'example\\foo\\foo::bar', $context);
 }
 
 

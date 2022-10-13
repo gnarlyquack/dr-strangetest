@@ -3,6 +3,7 @@
 namespace param_xdepend\param;
 
 use strangetest;
+use param_xdepend\nonparam;
 
 
 function setup_run0() {
@@ -21,7 +22,7 @@ function test_six($arg, strangetest\Context $context) {
 }
 
 function test_five($arg, strangetest\Context $context) {
-    $actual = $context->requires('param_xdepend\\nonparam\\test_six');
+    $actual = $context->requires('nonparam\\test_six');
     strangetest\assert_identical(4 * $arg + 6, $actual);
     $context->set($arg + $actual);
 }
@@ -45,7 +46,7 @@ function test_two($arg, strangetest\Context $context) {
 }
 
 function test_one($arg, strangetest\Context $context) {
-    $actual = $context->requires('param_xdepend\\nonparam\\test_one');
+    $actual = $context->requires('nonparam\\test_one');
     strangetest\assert_identical(6, $actual);
     $context->set($arg + $actual);
 }
