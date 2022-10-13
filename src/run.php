@@ -103,11 +103,11 @@ interface Context {
     public function teardown($callback);
 
     /**
-     * @param string|\Closure... $name
+     * @param string|\Closure... $tests
      * @return mixed
      * @throws Postpone
      */
-    public function requires($name);
+    public function requires($tests);
 
     /**
      * @param mixed $value
@@ -179,15 +179,16 @@ final class _Context extends struct implements Context
     }
 
 
-    public function requires($name)
+    public function requires($tests)
     {
         $dependees = array();
         $result = array();
-        $nnames = 0;
+        $ntests = 0;
         // @bc 5.5 Use func_get_args instead of argument unpacking
-        foreach (\func_get_args() as $nnames => $name)
+        \assert(\count(\func_get_args()) > 0);
+        foreach (\func_get_args() as $ntests => $test)
         {
-            if (\is_string($name))
+            if (\is_string($test))
             {
                 if ($this->test instanceof MethodTest)
                 {
@@ -200,12 +201,12 @@ final class _Context extends struct implements Context
                     $class = '';
                 }
 
-                $resolved = namespace\resolve_test_name($name, $namespace, $class);
+                $resolved = namespace\resolve_test_name($test, $namespace, $class);
                 unset($namespace, $class);
             }
-            elseif ($name instanceof \Closure)
+            elseif ($test instanceof \Closure)
             {
-                $reflected = new \ReflectionFunction($name);
+                $reflected = new \ReflectionFunction($test);
                 $class = $reflected->getClosureScopeClass();
                 if ($class)
                 {
@@ -216,7 +217,7 @@ final class _Context extends struct implements Context
                     $resolved = $reflected->name;
                 }
 
-                $name = $resolved;
+                $test = $resolved;
                 unset($class, $reflected);
             }
             else
@@ -276,7 +277,7 @@ final class _Context extends struct implements Context
                 }
                 elseif (isset($this->state->fixture[$resolved][$run]))
                 {
-                    $result[$name] = $this->state->fixture[$resolved][$run];
+                    $result[$test] = $this->state->fixture[$resolved][$run];
                 }
             }
         }
@@ -307,14 +308,13 @@ final class _Context extends struct implements Context
             throw new Postpone();
         }
 
-        \assert(\is_string($name));
         $nresults = \count($result);
-        ++$nnames;
+        ++$ntests;
         if ($nresults)
         {
-            if (1 === $nresults && 1 === $nnames)
+            if (1 === $nresults && 1 === $ntests)
             {
-                return $result[$name];
+                return $result[$test];
             }
             return $result;
         }
