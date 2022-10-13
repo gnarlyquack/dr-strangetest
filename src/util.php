@@ -8,20 +8,6 @@
 namespace strangetest;
 
 
-// Valid PHP identifiers are represented by the following regex:
-//      ^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$
-//
-// This maps to the following ascii characters:
-//  48 -  57: Numbers, but not for the first character
-//  65 -  90: Uppercase ascii characters
-//        95: Underscore
-//  97 - 122: Lowercase ascii characters
-// 128 - 255: "Extended" ascii characters
-//
-// Note that lowercase and uppercase ascii characters are treated
-// case-insensitively by the PHP parser
-
-
 /**
  * @param string $identifier A valid identifier
  * @return string The identifier with ascii letters normalized to lowercase
@@ -44,40 +30,215 @@ function normalize_identifier($identifier)
 }
 
 
-/**
- * @param string $identifier The identifier to validate
- * @return string|false False if the identifier is invalid, otherwise the
- *     identifier with ascii letters normalized to lowercase
- */
-function validate_identifier($identifier)
-{
-    $result = '';
-    for ($i = 0, $c = \strlen($identifier); $i < $c; ++$i)
-    {
-        $chr = $identifier[$i];
-        $ord = \ord($chr);
-        if (($ord >= 65) && ($ord <= 90))
-        {
-            $ord += 32; // Make uppercase ascii characters lowercase
-        }
-        elseif (!(
-            // numbers allowed other than as initial character
-            (($ord >= 48) && ($ord <= 57) && $i)
-            // underscore
-            || ($ord === 95)
-            // lowercase ascii characters
-            || (($ord >= 97) && ($ord <= 122))
-            // extended ascii characters
-            || ($ord >= 128)))
-        {
-            $result = false;
-            break;
-        }
+const _RESOLVE_INVALID  = 0;
+const _RESOLVE_DEFAULT  = 1;
+const _RESOLVE_GLOBAL   = 2;
+const _RESOLVE_FUNCTION = 3;
 
-        $result .= \chr($ord);
+/**
+ * @param string $name
+ * @param string $default_class
+ * @return ?string
+ */
+function resolve_test_name($name, NamespaceInfo $default_namespace, $default_class = '')
+{
+    // Ensure that the namespace ends in a trailing namespace separator
+    \assert(
+        (0 === \strlen($default_namespace->name))
+        || ('\\' === \substr($default_namespace->name, -1)));
+    // Ensure that the namespace is included in the classname (because we
+    // probably want want to change this)
+    \assert(
+        (0 === \strlen($default_class))
+        || ((0 === \strlen($default_namespace->name)) && (false === \strpos($default_class, '\\')))
+        || ((\strlen($default_namespace->name) > 0) && (0 === \strpos($default_class, $default_namespace->name))));
+
+    $namespace = '';
+    $class = '';
+    $function = '';
+    $status = namespace\_RESOLVE_DEFAULT;
+    $start = 0;
+    for ($i = 0, $c = \strlen($name); $status && ($i < $c); ++$i)
+    {
+        $char = $name[$i];
+
+        if ('\\' === $char)
+        {
+            if ($i === 0)
+            {
+                $status = namespace\_RESOLVE_GLOBAL;
+                ++$start;
+            }
+            else
+            {
+                if ($i > $start)
+                {
+                    $namespace_part = \substr($name, $start, $i - $start);
+                    if ($namespace)
+                    {
+                        $namespace .= $namespace_part;
+                    }
+                    elseif ($status !== namespace\_RESOLVE_GLOBAL)
+                    {
+                        if (isset($default_namespace->use[$namespace_part]))
+                        {
+                            $namespace = $default_namespace->use[$namespace_part];
+                        }
+                        else
+                        {
+                            // @todo always prepend the current namespace
+                            $namespace = $namespace_part;
+                        }
+                    }
+
+                    $namespace .= '\\';
+                    $start = $i + 1;
+                }
+                else
+                {
+                    $status = namespace\_RESOLVE_INVALID;
+                }
+            }
+        }
+        elseif (':' === $char)
+        {
+            if ((($i + 1) < $c) && (':' === $name[$i + 1]))
+            {
+                if ($i === 0)
+                {
+                    if ($default_class)
+                    {
+                        $status = namespace\_RESOLVE_FUNCTION;
+                    }
+                    else
+                    {
+                        throw new \Exception(
+                            \sprintf('Tried to force-resolve \'%s\' as a function, but this can only be done from within a method', $name));
+                    }
+                }
+                elseif ($i > $start)
+                {
+                    $class = \substr($name, $start, $i - $start);
+                    if (($status === namespace\_RESOLVE_DEFAULT) && !$namespace)
+                    {
+                        if (isset($default_namespace->use[$class]))
+                        {
+                            $class = $default_namespace->use[$class];
+                        }
+                        else
+                        {
+                            $namespace = $default_namespace->name;
+                        }
+                    }
+                    $class .= '::';
+                }
+                else
+                {
+                    $status = namespace\_RESOLVE_INVALID;
+                }
+
+                ++$i;
+                $start = $i + 1;
+            }
+            else
+            {
+                $status = namespace\_RESOLVE_INVALID;
+            }
+        }
+        else
+        {
+            $char = namespace\_validate_identifier_char($char, $i - $start);
+            if ($char === null)
+            {
+                $status = namespace\_RESOLVE_INVALID;
+            }
+            else
+            {
+                $name[$i] = $char;
+            }
+        }
+    }
+
+    if ($i > $start)
+    {
+        $function = \substr($name, $start, $i);
+
+        if (!$class && !$namespace && ($status !== namespace\_RESOLVE_GLOBAL))
+        {
+            if ($default_class && ($status === namespace\_RESOLVE_DEFAULT))
+            {
+                // @todo Pass is normalized class name to resolve_test_name()
+                $class = namespace\normalize_identifier($default_class) . '::';
+            }
+            elseif (isset($default_namespace->use_function[$function]))
+            {
+                $function = $default_namespace->use_function[$function];
+            }
+            else
+            {
+                $namespace = $default_namespace->name;
+            }
+        }
+    }
+    else
+    {
+        $status = namespace\_RESOLVE_INVALID;
+    }
+
+    if ($status)
+    {
+        $result = $namespace . $class . $function;
+    }
+    else
+    {
+        $result = null;
     }
 
     return $result;
+}
+
+
+/**
+ * Valid PHP identifiers are represented by the following regex:
+ *      ^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$
+ *
+ * This maps to the following ascii characters:
+ *  48 -  57: Numbers, but not for the first character
+ *  65 -  90: Uppercase ascii characters
+ *        95: Underscore
+ *  97 - 122: Lowercase ascii characters
+ * 128 - 255: "Extended" ascii characters
+ *
+ * Note that lowercase and uppercase ascii characters are treated
+ * case-insensitively by the PHP parser
+ *
+ * @param string $char
+ * @param int $pos
+ * @return ?string
+ */
+function _validate_identifier_char($char, $pos)
+{
+    \assert($pos >= 0);
+
+    $ord = \ord($char);
+    if (($ord >= 65) && ($ord <= 90))
+    {
+        $char = \chr($ord + 32); // Make uppercase ascii characters lowercase
+    }
+    elseif (!(
+        // numbers allowed other than as initial character
+        (($ord >= 48) && ($ord <= 57) && $pos)
+        // underscore
+        || ($ord === 95)
+        // lowercase ascii characters
+        || (($ord >= 97) && ($ord <= 122))
+        // extended ascii characters
+        || ($ord >= 128)))
+    {
+        $char = null;
+    }
+
+    return $char;
 }
 
 

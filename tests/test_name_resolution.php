@@ -82,7 +82,10 @@ function test_globally_namespaced_method_resolves_to_global_namespace()
 function test_empty_class_resolves_to_function_in_current_namespace()
 {
     $name = '::bar';
-    strangetest\assert_identical('example\\bar', resolve_function($name));
+    strangetest\assert_throws(
+        'Exception',
+        function() use ($name) { resolve_function($name); }
+    );
     strangetest\assert_identical('example\\bar', resolve_method($name));
 }
 
@@ -114,7 +117,10 @@ function test_function_resolves_to_used_function()
 function test_unbound_function_resolves_to_used_function()
 {
     $name = '::three';
-    strangetest\assert_identical(resolve_function($name), 'one\\two\\three');
+    strangetest\assert_throws(
+        'Exception',
+        function() use ($name) { resolve_function($name); }
+    );
     strangetest\assert_identical(resolve_method($name), 'one\\two\\three');
 }
 
