@@ -201,10 +201,6 @@ final class _Context extends struct implements Context
                 }
 
                 $resolved = namespace\resolve_test_name($name, $namespace, $class);
-                if (!isset($resolved))
-                {
-                    \trigger_error("Invalid test name: $name");
-                }
                 unset($namespace, $class);
             }
             elseif ($name instanceof \Closure)
