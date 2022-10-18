@@ -577,11 +577,12 @@ function _run_class(
     State $state,
     ClassTest $class, RunInstance $run, array $args)
 {
+    $test_name = $class->test->name . $run->qualifier;
     $logger = $state->bufferer->start_buffering(
-        $class->test->name,
+        $test_name,
         $class->test->file,
         $class->test->line);
-    $object = namespace\_instantiate_test($logger, $class->test, $args);
+    $object = namespace\_instantiate_test($logger, $test_name, $class->test->name, $args);
     $state->bufferer->end_buffering($state->logger);
 
     if ($object)
@@ -630,26 +631,30 @@ function _run_class(
 
 
 /**
- * @param ClassInfo $class
+ * @param string $class_name
+ * @param class-string $class
  * @param mixed[] $args
  * @return ?object
  */
-function _instantiate_test(Logger $logger, ClassInfo $class, array $args)
+function _instantiate_test(Logger $logger, $class_name, $class, array $args)
 {
+    $result = null;
+
     try
     {
-        return namespace\unpack_construct($class->name, $args);
+        $result = namespace\unpack_construct($class, $args);
     }
     // @bc 5.6 Catch Exception
     catch (\Exception $e)
     {
-        $logger->log_error($logger->error_from_exception($class->name, $e));
+        $logger->log_error($logger->error_from_exception($class_name, $e));
     }
     catch (\Throwable $e)
     {
-        $logger->log_error($logger->error_from_exception($class->name, $e));
+        $logger->log_error($logger->error_from_exception($class_name, $e));
     }
-    return null;
+
+    return $result;
 }
 
 
