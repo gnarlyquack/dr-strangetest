@@ -271,9 +271,11 @@ final class _Context extends struct implements Context
                 }
                 elseif (!$results['runs'][$run])
                 {
-                    $run_name = namespace\_format_run_qualifier($runs);
                     // @fixme Show resolved test name with correct casing
-                    throw new Skip("This test depends on '{$resolved}{$run_name}', which did not pass");
+                    throw new Skip(
+                        \sprintf(
+                            "This test depends on '%s%s', which did not pass",
+                            $resolved, namespace\_format_run_qualifier($runs)));
                 }
                 elseif (isset($this->state->fixture[$resolved][$run]))
                 {
@@ -292,12 +294,11 @@ final class _Context extends struct implements Context
             }
             $dependency = $this->state->postponed[$index];
 
-            $run_name = $this->run->hash;
-            if (!isset($dependency->runs[$run_name]))
+            if (!isset($dependency->runs[$this->run->hash]))
             {
-                $dependency->runs[$run_name] = new RunDependency($this->run->path);
+                $dependency->runs[$this->run->hash] = new RunDependency($this->run->path);
             }
-            $dependency = $dependency->runs[$run_name];
+            $dependency = $dependency->runs[$this->run->hash];
 
             foreach ($dependees as $prerequisite)
             {
@@ -380,20 +381,17 @@ function _run_test_run_group(
     {
         \assert(isset($test->setup));
 
-        $run_name = $run->qualifier;
-
-        $setup = $test->setup;
-        $name = $setup->name . $run_name;
+        $name = $test->setup->name . $run->qualifier;
         $logger = $state->bufferer->start_buffering(
             $name,
-            $setup->file,
-            $setup->line);
+            $test->setup->file,
+            $test->setup->line);
         list($result, $run_args) = namespace\_run_setup(
             $logger,
             $name,
-            $setup->file,
-            $setup->line,
-            $setup->name,
+            $test->setup->file,
+            $test->setup->line,
+            $test->setup->name,
             $args);
         $state->bufferer->end_buffering($state->logger);
 
@@ -404,14 +402,13 @@ function _run_test_run_group(
                 if ($run_args)
                 {
                     $new_run = new RunInstance($group->id, $test->name, $run);
-                    $tests = $test->tests;
-                    if ($tests instanceof DirectoryTest)
+                    if ($test->tests instanceof DirectoryTest)
                     {
-                        namespace\_run_directory($state, $tests, $new_run, $run_args);
+                        namespace\_run_directory($state, $test->tests, $new_run, $run_args);
                     }
                     else
                     {
-                        namespace\_run_file($state, $tests, $new_run, $run_args);
+                        namespace\_run_file($state, $test->tests, $new_run, $run_args);
                     }
                 }
                 else
@@ -420,15 +417,15 @@ function _run_test_run_group(
                         new ErrorEvent(
                             $test->tests->name,
                             \sprintf("'%s' did not return any arguments", $name),
-                            $setup->file,
-                            $setup->line));
+                            $test->setup->file,
+                            $test->setup->line));
                 }
             }
 
             if (isset($test->teardown))
             {
                 $teardown = $test->teardown;
-                $name = $teardown->name . $run_name;
+                $name = $teardown->name . $run->qualifier;
                 $logger = $state->bufferer->start_buffering(
                     $name,
                     $teardown->file,
@@ -453,12 +450,10 @@ function _run_directory(
     State $state,
     DirectoryTest $directory, RunInstance $run, array $args)
 {
-    $run_name = $run->qualifier;
-
     $setup = namespace\RESULT_PASS;
     if ($directory->setup)
     {
-        $name = $directory->setup->name . $run_name;
+        $name = $directory->setup->name . $run->qualifier;
         $logger = $state->bufferer->start_buffering(
             $name,
             $directory->setup->file,
@@ -496,7 +491,7 @@ function _run_directory(
 
         if ($directory->teardown)
         {
-            $name = $directory->teardown->name . $run_name;
+            $name = $directory->teardown->name . $run->qualifier;
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $directory->teardown->file,
@@ -520,12 +515,10 @@ function _run_file(
     State $state,
     FileTest $file, RunInstance $run, array $args)
 {
-    $run_name = $run->qualifier;
-
     $setup = namespace\RESULT_PASS;
     if ($file->setup_file)
     {
-        $name = $file->setup_file->name . $run_name;
+        $name = $file->setup_file->name . $run->qualifier;
         $logger = $state->bufferer->start_buffering(
             $name,
             $file->setup_file->file,
@@ -560,7 +553,7 @@ function _run_file(
 
         if ($file->teardown_file)
         {
-            $name = $file->teardown_file->name . $run_name;
+            $name = $file->teardown_file->name . $run->qualifier;
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $file->teardown_file->file,
@@ -593,12 +586,10 @@ function _run_class(
 
     if ($object)
     {
-        $run_name = $run->qualifier;
-
         $setup = namespace\RESULT_PASS;
         if ($class->setup_object)
         {
-            $name = $class->test->name . '::' . $class->setup_object->name . $run_name;
+            $name = $class->test->name . '::' . $class->setup_object->name . $run->qualifier;
             $method = array($object, $class->setup_object->name);
             \assert(\is_callable($method));
             $logger = $state->bufferer->start_buffering(
@@ -623,7 +614,7 @@ function _run_class(
 
             if ($class->teardown_object)
             {
-                $name = $class->test->name . '::' . $class->teardown_object->name . $run_name;
+                $name = $class->test->name . '::' . $class->teardown_object->name . $run->qualifier;
                 $method = array($object, $class->teardown_object->name);
                 \assert(\is_callable($method));
                 $logger = $state->bufferer->start_buffering(
@@ -671,8 +662,7 @@ function _instantiate_test(Logger $logger, ClassInfo $class, array $args)
 function _run_method(
     State $state, $object, MethodTest $test, $setup_method, $teardown_method, RunInstance $run)
 {
-    $run_name = $run->qualifier;
-    $test_name = $test->name . $run_name;
+    $test_name = $test->name . $run->qualifier;
 
     $result = namespace\RESULT_PASS;
     if ($setup_method)
@@ -738,8 +728,7 @@ function _run_function(
     State $state,
     FunctionTest $test, $setup_function, $teardown_function, RunInstance $run, array $args)
 {
-    $run_name = $run->qualifier;
-    $test_name = $test->name . $run_name;
+    $test_name = $test->name . $run->qualifier;
 
     $result = namespace\RESULT_PASS;
     if ($setup_function)
