@@ -569,6 +569,22 @@ function _run_file(
 }
 
 
+final class _MethodInstance extends struct
+{
+    /** @var string */
+    public $name;
+
+    /** @var string */
+    public $file;
+
+    /** @var int */
+    public $line;
+
+    /** @var callable */
+    public $callable;
+}
+
+
 /**
  * @param mixed[] $args
  * @return void
@@ -584,9 +600,40 @@ function _run_class(
         $class->test->line);
     $object = namespace\_instantiate_test($logger, $test_name, $class->test->name, $args);
     $state->bufferer->end_buffering($state->logger);
+    unset($test_name);
 
     if ($object)
     {
+        $setup_method = null;
+        if ($class->setup_method)
+        {
+            $callable = array($object, $class->setup_method->name);
+            \assert(\is_callable($callable));
+
+            $setup_method = new _MethodInstance;
+            $setup_method->name = $class->setup_method->name;
+            $setup_method->file = $class->setup_method->file;
+            $setup_method->line = $class->setup_method->line;
+            $setup_method->callable = $callable;
+
+            unset($callable);
+        }
+
+        $teardown_method = null;
+        if ($class->teardown_method)
+        {
+            $callable = array($object, $class->teardown_method->name);
+            \assert(\is_callable($callable));
+
+            $teardown_method = new _MethodInstance;
+            $teardown_method->name = $class->teardown_method->name;
+            $teardown_method->file = $class->teardown_method->file;
+            $teardown_method->line = $class->teardown_method->line;
+            $teardown_method->callable = $callable;
+
+            unset($callable);
+        }
+
         $setup = namespace\RESULT_PASS;
         if ($class->setup_object)
         {
@@ -610,7 +657,7 @@ function _run_class(
         {
             foreach ($class->tests as $test)
             {
-                namespace\_run_method($state, $object, $test, $class->setup_method, $class->teardown_method, $run);
+                namespace\_run_method($state, $object, $test, $setup_method, $teardown_method, $run);
             }
 
             if ($class->teardown_object)
@@ -660,8 +707,8 @@ function _instantiate_test(Logger $logger, $class_name, $class, array $args)
 
 /**
  * @param object $object
- * @param ?MethodInfo $setup_method
- * @param ?MethodInfo $teardown_method
+ * @param ?_MethodInstance $setup_method
+ * @param ?_MethodInstance $teardown_method
  * @return void
  */
 function _run_method(
@@ -672,9 +719,7 @@ function _run_method(
     $result = namespace\RESULT_PASS;
     if ($setup_method)
     {
-        $name = $setup_method->name . ' for ' . $test_name;
-        $setup = array($object, $setup_method->name);
-        \assert(\is_callable($setup));
+        $name = \sprintf('%s for %s', $setup_method->name, $test_name);
         $logger = $state->bufferer->start_buffering(
             $name,
             $setup_method->file,
@@ -684,7 +729,7 @@ function _run_method(
             $name,
             $setup_method->file,
             $setup_method->line,
-            $setup);
+            $setup_method->callable);
     }
 
     if (namespace\RESULT_PASS === $result)
@@ -708,14 +753,12 @@ function _run_method(
 
         if ($teardown_method)
         {
-            $name = $teardown_method->name . ' for ' . $test_name;
-            $teardown = array($object, $teardown_method->name);
-            \assert(\is_callable($teardown));
+            $name = \sprintf('%s for %s', $teardown_method->name, $test_name);
             $logger = $state->bufferer->start_buffering(
                 $name,
                 $teardown_method->file,
                 $teardown_method->line);
-            $result |= namespace\_run_teardown($logger, $name, $teardown);
+            $result |= namespace\_run_teardown($logger, $name, $teardown_method->callable);
         }
     }
     $state->bufferer->end_buffering($state->logger);
