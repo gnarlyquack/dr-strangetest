@@ -415,8 +415,8 @@ function _run_test_run_group(
                 {
                     $state->logger->log_error(
                         new ErrorEvent(
-                            $test->tests->name,
-                            \sprintf("'%s' did not return any arguments", $name),
+                            $name,
+                            'A run setup function must return a non-empty array of arguments',
                             $test->setup->file,
                             $test->setup->line));
                 }
@@ -878,7 +878,7 @@ function _run_setup(Logger $logger, $name, $file, $line, $callable, array $args 
                 }
                 else
                 {
-                    $message = "Invalid return value: setup fixtures should return an iterable (or 'null')";
+                    $message = 'Invalid return value: setup fixtures should return an iterable (or NULL)';
                     $logger->log_error(new ErrorEvent($name, $message, $file, $line));
                 }
             }

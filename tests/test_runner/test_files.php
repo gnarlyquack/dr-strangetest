@@ -863,7 +863,7 @@ function test_logs_error_if_arglist_isnt_iterable() {
     $events = array(
         array(
             \EVENT_ERROR, 'noniterable_arglist\\setup_file',
-            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
+            "Invalid return value: setup fixtures should return an iterable (or NULL)"),
         array(\EVENT_OUTPUT, 'noniterable_arglist\\teardown_file', '.'),
     );
 
@@ -876,7 +876,7 @@ function test_logs_error_if_arglists_arent_iterable() {
     $events = array(
         array(
             \EVENT_ERROR, 'noniterable_arglists\\setup_runs',
-            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
+            "Invalid return value: setup fixtures should return an iterable (or NULL)"),
         array(\EVENT_OUTPUT, 'noniterable_arglists\\teardown_runs', '.'),
     );
 
@@ -889,13 +889,13 @@ function test_logs_error_if_any_arglist_isnt_iterable() {
     $events = array(
         array(
             \EVENT_ERROR, 'any_noniterable_arglist\\setup_run0',
-            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
+            "Invalid return value: setup fixtures should return an iterable (or NULL)"),
         array(\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run0', '1'),
         array(\EVENT_PASS, 'any_noniterable_arglist\\test_one (1)', null),
         array(\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run1', '2 3'),
         array(
             \EVENT_ERROR, 'any_noniterable_arglist\\setup_run2',
-            "Invalid return value: setup fixtures should return an iterable (or 'null')"),
+            "Invalid return value: setup fixtures should return an iterable (or NULL)"),
         array(\EVENT_OUTPUT, 'any_noniterable_arglist\\teardown_run2', '4'),
     );
 
