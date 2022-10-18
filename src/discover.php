@@ -62,7 +62,7 @@ function _discover_directory(_DiscoveryState $state, $dirpath)
     $directory->name = $dirpath;
 
     $run_group = new TestRunGroup;
-    $run_group->path = $directory->name;
+    $run_group->filepath = $directory->name;
     $run_group->tests = $directory;
 
     $setup_filename = null;
@@ -305,7 +305,7 @@ function _discover_file(_DiscoveryState $state, $filepath)
     $file->name = $filepath;
 
     $run_group = new TestRunGroup;
-    $run_group->path = $file->name;
+    $run_group->filepath = $file->name;
     $run_group->tests = $file;
 
     // @todo Only retain NamespaceInfo for namespaces containing tests?

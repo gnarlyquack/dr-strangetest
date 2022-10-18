@@ -83,11 +83,11 @@ final class MethodInfo extends struct
 
 final class TestRunGroup extends struct
 {
-    /** @var int */
+    /** @var int Unique framework-generated run group id */
     public $id;
 
-    /** @var string */
-    public $path;
+    /** @var string The test file or directory which declared this run group */
+    public $filepath;
 
     /** @var TestRun[] */
     public $runs = array();

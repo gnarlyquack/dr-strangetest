@@ -162,7 +162,7 @@ function _parse_path_specifier(
     $valid = false;
     $specifier = $leaf = null;
     $runs = array();
-    $root = ($reference instanceof TestRunGroup) ? $reference->path : $reference->name;
+    $root = ($reference instanceof TestRunGroup) ? $reference->filepath : $reference->name;
 
     $arg = $iter->args[$iter->index++];
     $target = (\DIRECTORY_SEPARATOR === \substr($arg, 0, 1)) ? $arg : ($root . $arg);
@@ -760,7 +760,7 @@ function _create_empty_run_group(TestRunGroup $source)
 {
     $group = new TestRunGroup;
     $group->id = $source->id;
-    $group->path = $source->path;
+    $group->filepath = $source->filepath;
 
     $target = new _RunGroupTarget;
     $target->group = $group;

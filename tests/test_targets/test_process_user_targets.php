@@ -36,7 +36,7 @@ class TestProcessUserTargets
         $this->tests = $tests;
         $this->root = ($this->tests instanceof strangetest\DirectoryTest)
             ? $this->tests->name
-            : $this->tests->path;
+            : $this->tests->filepath;
     }
 
     public function setup()
@@ -619,7 +619,7 @@ class TestProcessUserTargets
     {
         $result = new strangetest\TestRunGroup;
         $result->id = $tests->id;
-        $result->path = $tests->path;
+        $result->filepath = $tests->filepath;
 
         if (isset($target['runs']))
         {

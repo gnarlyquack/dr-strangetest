@@ -194,7 +194,7 @@ function build_tests_from_dependencies(State $state, $tests, array $dependencies
     {
         $result = new TestRunGroup;
         $result->id = $tests->id;
-        $result->path = $tests->path;
+        $result->filepath = $tests->filepath;
         foreach ($dependencies as $dependency)
         {
             foreach ($dependency->runs as $run)
@@ -316,7 +316,7 @@ function _add_directory_test_from_dependency(
     $last = \end($test->tests);
     if ($source instanceof TestRunGroup)
     {
-        if (($last instanceof TestRunGroup) && ($last->path === $source->path))
+        if (($last instanceof TestRunGroup) && ($last->filepath === $source->filepath))
         {
             $child = $last;
         }
@@ -324,7 +324,7 @@ function _add_directory_test_from_dependency(
         {
             $child = new TestRunGroup;
             $child->id = $source->id;
-            $child->path = $source->path;
+            $child->filepath = $source->filepath;
             $test->tests[] = $child;
         }
         namespace\_add_run_from_dependency(
